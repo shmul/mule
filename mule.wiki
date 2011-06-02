@@ -1,0 +1,139 @@
+==== General ====
+An RRD library, which shamelessly borrows from [[ http://graphite.wikidot.com/ | graphite]]
+  - metrics need not be declared in advance
+  - can keep multiple data sequences for the same metric
+  - can aggregate data for the metrics categories
+
+==== Requirments ====
+  - plain lua for the library and command line version
+  - copas for the http daemon. Install via luarocks.
+  
+==== Interfaces ====
+  - command line processing and retrieving of data
+  - a simple http daemon that supports data retrieval only
+
+==== Configuration ====
+The configuration uses one line per metric in the form of 
+<code>
+<metric-pattern> <list-of-retentions>
+</code>
+
+ e.g.
+
+<code>
+event.phishing 60s:12h 1h:30d
+</code>
+
+A line can include multiple retentions. Additionally the same pattern can appear in multiple lines. A union of all the retentions will be kept for the metric.
+
+== metric-pattern ==
+  * can be any lua string
+  * it is treated as a prefix of metric names. i.e. a single metric pattern and its associated retentions will be used to generate sequences for all the other metrics it is a prefix of. For example the configuration line ''event.phishing 60s:12h 1h:30d'' suffices for generating sequences for ''event.phishing.com.google'', ''event.phishing.com.yahoo''
+
+== retention units ==
+  * ''s'' - sec
+  * ''m'' - min
+  * ''h'' - hour
+  * ''d'' - day
+  * ''w'' - week
+  * ''m'' - month (30 days)
+  * ''y'' - year (365 days)
+
+
+=== Input format ===
+Each line is of the form
+<code>
+<metric> <value> <timestamp (unix epoch)>
+
+or
+
+.<command> ...
+</code>
+
+e.g.
+<code>
+event.phishing.phishing-host 20 74857843
+</code>
+
+impling 20 accesses to the ''phishing-host'' in the given timestamp.
+
+=== commands ===
+== stdout ==
+''stdout <metric>'' - serialize matching sequences (json format).
+
+== graph ==
+''graph <metric>'' - serialize matching sequences in a formar suitable for displaying graphs:
+  - the data is sorted
+  - empty slots are skipped
+  - slots whose update time is too old, i.e. lower than <maximal update time>-<retention period>, are skipped
+
+The data is returned as a javascript invocation of a function, with a name ''mule_graph'', e.g.
+<code>
+mule_graph({"version": 2,
+"data": {
+"event.risk_score.allianceleicester;1d:3y":
+[
+[959,400,1293321600,],
+[1489,493,1293408000,],
+...
+[291,27,1294840800,],
+[3,3,1294841100,],
+]
+}
+})
+</code>
+
+== keys ==
+''keys <metric>'' - returns the list of matching keys.
+
+The data is returned as a javascript invocation of a function, with a name ''mule_keys'', e.g.
+<code>
+mule_keys({"version": 2,
+"data": [
+"event.risk_score.allianceleicester;1d:3y",
+"event.risk_score.allianceleicester;1h:30d",
+"event.risk_score.allianceleicester;5m:2d",
+"event.risk_score.bancfirst;1d:3y",
+....
+"event.risk_score;1h:30d",
+"event.risk_score;5m:2d"]
+
+})
+</code>
+
+== reset ==
+''reset <metric>'' - clear all slots in the metric
+
+== gc ==
+''gc <metric> <timestamp>'' - erase all metrics who haven't changed since timestamp
+
+==== Implementation ====
+=== Data processing ===
+== Generating new metrics ==
+The configuration determines which patterns are used to generate new metrics. When processing an input line, the metric is checked against the patterns and when a match is found, a new sequence is created (if required). Every metric is inited so all of its slots are empty.
+
+== line processing ==
+  - every line is processed by every sequence of every matched metric.
+  - the value is added to a sum counter in the relevant slot (see below)
+  - the number of additions to the slot is incremented (to facilitate average calculations)
+
+
+== Choosing the slot ==
+Each metric keeps track of the current slot and the first time the current slot was updated. When processing a new line, we:
+  - find the right slot
+  - if the slot was last updated too long ago, i.e. prior to <line-timestamp>-<retention eriod> all its data is cleared.
+  - the sum, count and timestamp are updated
+
+This simplistic strategy works great if the input is continuous, i.e. new values are updated every ''step'' seconds or less. Otherwise, we get //holes// in the sequence. These don'[t really bother us as once we output the sequence we sort its values based on update time.
+
+=== Storage ===
+== Memory ==
+A simple in-memory store is implemented primarily for testing purposes. It can be persisted to disk and read from it but only through mulelib api calls.
+
+== Tokyo cabinet ==
+The default storage is a tokyo cabinet B+ tree database.
+
+== Other databases ==
+Any DB can be used as long as it implementes:
+  - getting a list of keys matching a prefix (the empty prefix should match all the keys).
+  - storing multiple sequences per metric.
