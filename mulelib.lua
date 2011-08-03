@@ -1,6 +1,7 @@
 --TODO
 -- save metadata under multiple ''metadata#ABC'' keys and not a single one
-
+-- reload config while running
+-- support graceful shutdown via http interface
 require "helpers"
 
 local CURRENT_VERSION = 2
