@@ -100,7 +100,7 @@ function in_memory_sequences(store_factory_)
 	pairs = function(metric_)
 			  return coroutine.wrap(function()
 									  for k,items in pairs(_seqs) do
-										if not metric_ or is_matching(k,metric_) then
+										if not metric_ or is_matching(metric_,k) then
 										  for _,s in ipairs(items) do
 											coroutine.yield(s)
 										  end

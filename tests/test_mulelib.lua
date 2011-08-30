@@ -337,51 +337,113 @@ function test_process_in_memory()
   assert(non_empty_metrics(seqs.get("event.pharming")))
 end
 
+function test_top_level_factories()
+
+  function helper(m) 
+	m.configure(table_itr({"event. 60s:12h 1h:30d","event 3m:1h"}))
+	local seqs = m.get_sequences()
+	assert(not seqs.get("event.phishing"))
+	local factories = m.get_factories()
+	assert_equal(1,table_size(factories))
+	assert(factories["event"])
+	assert(not factories["event.out_of_range"])
+	assert_equal(nil,factories["event.phishing"])
+	assert_equal(nil,factories["event.phishing.google.com"])
+
+	m.process("event.phishing.phishing-host 20 74857843")
+	
+	assert(empty_metrics(seqs.get("event.pharming")))
+
+	assert(empty_metrics(seqs.get("event.phishing.google.com")))
+	assert(non_empty_metrics(seqs.get("event")))
+	assert(non_empty_metrics(seqs.get("event.phishing")))
+	assert(non_empty_metrics(seqs.get("event.phishing.phishing-host")))
+	assert(string.find(m.latest("event;1m:12h"),"20,1,74857800"))
+
+	m.process("event.phishing.google.com 98 74857954")
+	assert(seqs.get("event.phishing.google.com"))
+	assert(non_empty_metrics(seqs.get("event.phishing.google.com")))
+
+	m.process("event.pharming.pigs.pharm.com 98 74857954")
+	assert(non_empty_metrics(seqs.get("event.pharming.pigs.pharm.com")))
+	assert(non_empty_metrics(seqs.get("event.pharming")))
+	assert(empty_metrics(seqs.get("event.akl")))
+
+
+	m.process("event.pharming 143 74858731")
+	assert(non_empty_metrics(seqs.get("event.pharming")))
+  end
+
+  local m = mule(in_memory_sequences(in_memory_store))
+  helper(m)
+  local bdb = tokyocabinet_db("./tests/temp/top_level.bdb")
+  local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
+  tc_init(bdb)
+  m = mule(tokyocabinet_sequences(
+			 function(metric_,step_,period_) 
+			   return tokyocabinet_store(bdb,metric_,step_,period_) 
+			 end,tc_get,tc_fwmkeys))
+  helper(m)
+end
+
 
 
 function test_reset()
-  local m = mule(in_memory_sequences(in_memory_store))
-  m.configure(table_itr({"event.phishing 60s:12h 1h:30d","event.pharming 3m:1h"}))
-  assert(not m.get_sequences().get("event.phishing"))
-  local factories = m.get_factories()
-  assert(factories["event.phishing"])
+  function helper(m)
+	m.configure(table_itr({"event 60s:12h 1h:30d","event.pharming 3m:1h"}))
+	assert(not m.get_sequences().get("event.phishing"))
+	local factories = m.get_factories()
+	assert(factories["event.pharming"])
 
-  assert_equal(0,#m.matching_sequences("event.pharming"))
-  assert_equal(0,#m.matching_sequences("event.phishing.google.com"))
+	assert_equal(0,#m.matching_sequences("event.pharming"))
+	assert_equal(0,#m.matching_sequences("event.phishing.google.com"))
 
-  m.process("event.phishing.phishing-host 20 74857843")
+	m.process("event.phishing.phishing-host 20 74857843")
+	
+	assert(non_empty_metrics(m.get_sequences().get("event")))
+	assert(empty_metrics(m.get_sequences().get("event.pharming")))
+	assert(2,#m.matching_sequences("event.phishing"))
+	assert(2,#m.matching_sequences("event.phishing.phishing-host"))
+
+	assert(empty_metrics(m.get_sequences().get("event.phishing.google.com")))
+	assert(non_empty_metrics(m.get_sequences().get("event.phishing.phishing-host")))
+
+	m.process("event.phishing.google.com 98 74857954")
+	assert(m.get_sequences().get("event.phishing.google.com"))
+	assert(non_empty_metrics(m.get_sequences().get("event.phishing.google.com")))
+
+	m.process("event.pharming.pigs.pharm.com 98 74857954")
+	assert(non_empty_metrics(m.get_sequences().get("event.pharming.pigs.pharm.com")))
+	assert(non_empty_metrics(m.get_sequences().get("event.pharming")))
+
+
+	m.process("event.pharming 143 74858731")
+	assert(non_empty_metrics(m.get_sequences().get("event.pharming")))
+
+	m.process(".reset event.pharming")
+	assert(empty_metrics(m.get_sequences().get("event.pharming")))
+	assert(empty_metrics(m.get_sequences().get("event.phishing.pigs.pharm.com")))
+	assert(non_empty_metrics(m.get_sequences().get("event.phishing.google.com")))
+
+
+	m.process(".reset event.phishing")
+	assert(non_empty_metrics(m.get_sequences().get("event")))
+	assert(empty_metrics(m.get_sequences().get("event.phishing")))
+	assert(empty_metrics(m.get_sequences().get("event.phishing.google")))
+	assert(empty_metrics(m.get_sequences().get("event.phishing.google.com")))
+  end
   
-  assert(empty_metrics(m.get_sequences().get("event")))
-  assert(empty_metrics(m.get_sequences().get("event.pharming")))
-  assert(2,#m.matching_sequences("event.phishing"))
-  assert(2,#m.matching_sequences("event.phishing.phishing-host"))
-
-  assert(empty_metrics(m.get_sequences().get("event.phishing.google.com")))
-  assert(non_empty_metrics(m.get_sequences().get("event.phishing.phishing-host")))
-
-  m.process("event.phishing.google.com 98 74857954")
-  assert(m.get_sequences().get("event.phishing.google.com"))
-  assert(non_empty_metrics(m.get_sequences().get("event.phishing.google.com")))
-
-  m.process("event.pharming.pigs.pharm.com 98 74857954")
-  assert(non_empty_metrics(m.get_sequences().get("event.pharming.pigs.pharm.com")))
-  assert(non_empty_metrics(m.get_sequences().get("event.pharming")))
-
-
-  m.process("event.pharming 143 74858731")
-  assert(non_empty_metrics(m.get_sequences().get("event.pharming")))
-
-  m.process(".reset event.pharming")
-  assert(empty_metrics(m.get_sequences().get("event.pharming")))
-  assert(empty_metrics(m.get_sequences().get("event.phishing.pigs.pharm.com")))
-  assert(non_empty_metrics(m.get_sequences().get("event.phishing.google.com")))
-
-
-  m.process(".reset event.phishing")
-  assert(empty_metrics(m.get_sequences().get("event.phishing")))
-  assert(empty_metrics(m.get_sequences().get("event.phishing.google.com")))
+  local m = mule(in_memory_sequences(in_memory_store))
+--  helper(m)
+  local bdb = tokyocabinet_db("./tests/temp/reset.bdb")
+  local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
+  tc_init(bdb)
+  m = mule(tokyocabinet_sequences(
+					  function(metric_,step_,period_) 
+						return tokyocabinet_store(bdb,metric_,step_,period_) 
+					  end,tc_get,tc_fwmkeys))
+  helper(m)
 end
-
 
 function test_save_load()
   local m = mule(in_memory_sequences(in_memory_store))

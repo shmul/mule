@@ -228,6 +228,7 @@ function mule(sequences_)
   local _sequences = sequences_
 
   local function add_factory(pattern_,retentions_)
+	local pattern = string.match(pattern_,"^(.-)%.*$")
 	for _,rp in ipairs(retentions_) do
 	  local step,period = parse_time_pair(rp)
 	  if step and period then
@@ -237,8 +238,8 @@ function mule(sequences_)
 		  return nil
 		end
 		
-		_factories[pattern_] = _factories[pattern_] or {}
-		table.insert(_factories[pattern_],{step,period})
+		_factories[pattern] = _factories[pattern] or {}
+		table.insert(_factories[pattern],{step,period})
 	  end
 	end
 	return true
@@ -428,6 +429,7 @@ function mule(sequences_)
 	end
 	-- a line is of the format event.phishing.phishing-host, 20, 74857843
 	local matches = matching_sequences(items[1])
+
 	concat_arrays(matches,factory(items[1]))
 	for _,s in ipairs(matches or {}) do
 	  s.update(tonumber(items[3]),tonumber(items[2]))
