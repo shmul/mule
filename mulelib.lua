@@ -429,12 +429,11 @@ function mule(sequences_)
 	end
 	-- a line is of the format event.phishing.phishing-host, 20, 74857843
 	local matches = matching_sequences(items[1])
-
 	concat_arrays(matches,factory(items[1]))
 	for _,s in ipairs(matches or {}) do
 	  s.update(tonumber(items[3]),tonumber(items[2]))
 	end
-	return #matches
+	return tostring(#matches)
   end
 
   local function serialize(out_)
@@ -469,6 +468,7 @@ function mule(sequences_)
   local function process(data_)
 	-- strings are handled as file pointers if they exist or as a line
 	-- tables as arrays of lines
+	-- functions as iterators of lines
 	if type(data_)=="string" then
 	  local file_exists = with_file(data_,function(f)
 											for l in f:lines() do
@@ -482,6 +482,12 @@ function mule(sequences_)
 	elseif type(data_)=="table" then
 	  local rv
 	  for _,d in ipairs(data_) do
+		rv = process_line(d)
+	  end
+	  return rv
+	elseif type(data_)=="function" then
+	  local rv
+	  for d in data_ do
 		rv = process_line(d)
 	  end
 	  return rv

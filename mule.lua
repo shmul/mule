@@ -71,7 +71,7 @@ function main(opts,out_)
 
   if opts["t"] then
 	logi("http daemon",opts["t"])
-	http_loop(opts["t"],readonly_mule,function()
+	http_loop(opts["t"],writable_mule,function()
 										return false -- don't ever stop
 									  end)
   end

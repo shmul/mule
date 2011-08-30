@@ -53,9 +53,9 @@ local function standard_response(status_,content_)
   return build_response(string.format("HTTP/1.1 %s",status_),{{"Connection","close"}},content_)
 end
 
-local handlers = { keys=true, graph=true, latest=true, slot=true }
+local handlers = { keys=true, graph=true, latest=true, slot=true, update=true }
 
-local function send_response(socket_,req_,with_mule_)
+local function send_response(socket_,req_,content_,with_mule_)
   if not req_ then
 	socket_:send(standard_response("400 Bad Request"))
 	return
@@ -75,8 +75,14 @@ local function send_response(socket_,req_,with_mule_)
   local qs = string.match(path,"%?(.+)$")
 
   if handlers[resource] then
+	local params
+	if resource=="update" then
+	  params = lines_without_comments(string_lines(content_))
+	elseif req_.verb=="GET" then
+	  params = {string.format(".%s %s %s",resource,path_no_qs or "*",qs or "")}
+	end
 	local rv = with_mule_(function(mule_)
-							return mule_.process({string.format(".%s %s %s",resource,path_no_qs or "*",qs or "")})
+							return mule_.process(params)
 						  end)
 	if rv and #rv>0 then
 	  headers = standard_response("200 OK",rv)
@@ -98,8 +104,8 @@ end
 
 
 local function handle_request(socket_,with_mule_)
-  local req = read_request(socket_)
-  send_response(socket_,req,with_mule_)
+  local req,content = read_request(socket_)
+  send_response(socket_,req,content,with_mule_)
 end
 
 function http_loop(host_port_,with_mule_,stop_cond_)
