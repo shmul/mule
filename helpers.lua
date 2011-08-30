@@ -516,8 +516,8 @@ function max_timestamp(size_,get_slot_)
   return idx
 end
 
-function is_matching(metric_,pattern_)
-  return pattern_=="*" or string.find(metric_,pattern_,1,true)==1
+function is_prefix(metric_,prefix_)
+  return prefix_=="*" or string.find(metric_,prefix_,1,true)==1
 end
 
 function parse_time_pair(str_)

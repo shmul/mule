@@ -264,10 +264,10 @@ function mule(sequences_)
 
 
   local function factory(metric_)
-	local function matching_sequences_not_inited(metric_,pattern_)
+	local function matching_sequences_not_inited(metric_,prefix_)
 	  return coroutine.wrap(function()
 							  for m in metric_hierarchy(metric_) do
-								if not _sequences.get(m) and is_matching(m,pattern_) then
+								if not _sequences.get(m) and is_prefix(m,prefix_) then
 								  coroutine.yield(m)
 								end
 							  end
@@ -313,7 +313,7 @@ function mule(sequences_)
 	local str = strout(",")
 	for m in split_helper(metrics_,"/") do
 	  for seq in _sequences.pairs(m) do
-		seq.serialize(str{deep=true})
+		seq.serialize(str,{deep=true})
 	  end
 	end
 	return str.get_string()

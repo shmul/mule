@@ -133,10 +133,15 @@ function tokyocabinet_store(db_)
 	return slots
   end
 
+  local function reset()
+	local ns = new_sequence()
+	tc_put(_seq_name,ns)
+  end
+
   return {
 	create = create,
 	load = load_metadata,
-	reset = new_sequence,
+	reset = reset,
 	get_slot = get,
 	set_slot = put,
 	size = function() return _size end,

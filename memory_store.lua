@@ -89,7 +89,7 @@ function in_memory_sequences(store_factory_)
 	keys = function(metric_)
 			 local keys = {}
 			 for k,_ in pairs(_seqs) do
-			   if not metric_ or is_matching(k,metric_) then
+			   if not metric_ or is_prefix(k,metric_) then
 				 table.insert(keys,k)
 			   end
 			 end
@@ -100,7 +100,7 @@ function in_memory_sequences(store_factory_)
 	pairs = function(metric_)
 			  return coroutine.wrap(function()
 									  for k,items in pairs(_seqs) do
-										if not metric_ or is_matching(metric_,k) then
+										if not metric_ or is_prefix(k,metric_) then
 										  for _,s in ipairs(items) do
 											coroutine.yield(s)
 										  end

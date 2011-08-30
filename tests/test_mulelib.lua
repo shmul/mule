@@ -358,7 +358,7 @@ function test_top_level_factories()
 	assert(non_empty_metrics(seqs.get("event")))
 	assert(non_empty_metrics(seqs.get("event.phishing")))
 	assert(non_empty_metrics(seqs.get("event.phishing.phishing-host")))
-	assert(string.find(m.latest("event;1m:12h"),"20,1,74857800"))
+	assert(string.find(m.latest("event"),"20,1,74857800"))
 
 	m.process("event.phishing.google.com 98 74857954")
 	assert(seqs.get("event.phishing.google.com"))
@@ -419,8 +419,10 @@ function test_reset()
 
 	m.process("event.pharming 143 74858731")
 	assert(non_empty_metrics(m.get_sequences().get("event.pharming")))
+	assert(non_empty_metrics(m.get_sequences().get("event")))
 
 	m.process(".reset event.pharming")
+	assert(non_empty_metrics(m.get_sequences().get("event")))
 	assert(empty_metrics(m.get_sequences().get("event.pharming")))
 	assert(empty_metrics(m.get_sequences().get("event.phishing.pigs.pharm.com")))
 	assert(non_empty_metrics(m.get_sequences().get("event.phishing.google.com")))
@@ -434,7 +436,7 @@ function test_reset()
   end
   
   local m = mule(in_memory_sequences(in_memory_store))
---  helper(m)
+  helper(m)
   local bdb = tokyocabinet_db("./tests/temp/reset.bdb")
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
   tc_init(bdb)
