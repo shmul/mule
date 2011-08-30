@@ -1,6 +1,5 @@
 --TODO
 -- save metadata under multiple ''metadata#ABC'' keys and not a single one
--- reload config while running
 -- support graceful shutdown via http interface
 require "helpers"
 
@@ -438,7 +437,8 @@ function mule(sequences_)
 	-- a line is of the format event.phishing.phishing-host, 20, 74857843
 	local matches = matching_sequences(items[1])
 	concat_arrays(matches,factory(items[1]))
-	for _,s in ipairs(matches or {}) do
+	matches = matches or {}
+	for _,s in ipairs(matches) do
 	  s.update(tonumber(items[3]),tonumber(items[2]))
 	end
 	return tostring(#matches)

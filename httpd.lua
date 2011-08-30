@@ -53,7 +53,7 @@ local function standard_response(status_,content_)
   return build_response(string.format("HTTP/1.1 %s",status_),{{"Connection","close"}},content_)
 end
 
-local handlers = { keys=true, graph=true, latest=true, slot=true, update=true }
+local handlers = { keys="process", graph="process", latest="process", slot="process", update="process", config="config" }
 
 local function send_response(socket_,req_,content_,with_mule_)
   if not req_ then
@@ -73,16 +73,20 @@ local function send_response(socket_,req_,content_,with_mule_)
   local path = table.concat(decoded_segments,"/")
   local path_no_qs = string.match(path,"^([^&%?]+)")
   local qs = string.match(path,"%?(.+)$")
-
-  if handlers[resource] then
+  local handler = handlers[resource]
+  if handler then
 	local params
-	if resource=="update" then
+	if req_.verb=="POST" then
 	  params = lines_without_comments(string_lines(content_))
 	elseif req_.verb=="GET" then
 	  params = {string.format(".%s %s %s",resource,path_no_qs or "*",qs or "")}
 	end
 	local rv = with_mule_(function(mule_)
-							return mule_.process(params)
+							if handler=="process" then
+							  return mule_.process(params)
+							elseif handler=="config" then
+							  return mule_.configure(params)
+							end
 						  end)
 	if rv and #rv>0 then
 	  headers = standard_response("200 OK",rv)
