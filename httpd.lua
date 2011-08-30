@@ -53,9 +53,9 @@ local function standard_response(status_,content_)
   return build_response(string.format("HTTP/1.1 %s",status_),{{"Connection","close"}},content_)
 end
 
-local handlers = { keys="process", graph="process", latest="process", slot="process", update="process", config="config" }
+local handlers = { keys="process", graph="process", latest="process", slot="process", update="process", config="config", stop="stop" }
 
-local function send_response(socket_,req_,content_,with_mule_)
+local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
   if not req_ then
 	socket_:send(standard_response("400 Bad Request"))
 	return
@@ -102,15 +102,13 @@ local function send_response(socket_,req_,content_,with_mule_)
   if body and #body>0 then
 	s,err = socket_:send(body)
   end
-  logi("send_response",s,err)
-  
+  if handler=="stop" then
+	logw("stopping")
+	stop_cond_(true)
+  end
+  logi("send_response",s,err)  
 end
 
-
-local function handle_request(socket_,with_mule_)
-  local req,content = read_request(socket_)
-  send_response(socket_,req,content,with_mule_)
-end
 
 function http_loop(host_port_,with_mule_,stop_cond_)
   local host,port = string.match(host_port_,"(%S-):(%d+)")
@@ -119,7 +117,9 @@ function http_loop(host_port_,with_mule_,stop_cond_)
 					--socket_:setoption ("linger", {on=true,timeout=7})
 					socket_:settimeout(0)
 					--socket_:setoption ("tcp-nodelay", true)
-					return handle_request(copas.wrap(socket_),with_mule_)
+					local wrapped_socket = copas.wrap(socket_)
+					local req,content = read_request(wrapped_socket)
+					send_response(wrapped_socket,req,content,with_mule_,stop_cond_)
 				  end)
   while not stop_cond_() do
 	copas.step()

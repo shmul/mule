@@ -34,7 +34,7 @@ end
 
 local function usage()
   return [[
-		-h (help) -v (verbose) -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-o (serialize to stdout)]  [-g <path|*> (graph)]  [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] files....
+		-h (help) -v (verbose) -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-o (serialize to stdout)]  [-g <path|*> (graph)]  [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] files....
 
 	  If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
 	  Files are processed in order
@@ -71,9 +71,19 @@ function main(opts,out_)
 
   if opts["t"] then
 	logi("http daemon",opts["t"])
-	http_loop(opts["t"],writable_mule,function()
-										return false -- don't ever stop
-									  end)
+	local stopped = false
+	local httpd_can_be_stopped = opts["x"]
+	http_loop(opts["t"],writable_mule,
+			  function(stop_)
+				-- this is confusing: when the function is called with param we set the
+				-- stop flag.
+				-- when it is called without a param we simply return the flag
+				-- BUT we check that the stop functionality is supported at all
+				if httpd_can_be_stopped and type(stop_)=="boolean" then
+				  stopped = stop_
+				end
+				return stopped
+			  end)
   end
 
   local db_exists = file_exists(opts["d"])

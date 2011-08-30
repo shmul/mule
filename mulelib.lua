@@ -1,6 +1,5 @@
 --TODO
 -- save metadata under multiple ''metadata#ABC'' keys and not a single one
--- support graceful shutdown via http interface
 require "helpers"
 
 local CURRENT_VERSION = 2
