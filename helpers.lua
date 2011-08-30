@@ -532,8 +532,19 @@ function calculate_slot(timestamp_,step_,period_)
   return slot+1,math.floor(timestamp_/step_)*step_  
 end
 
-function to_timestamp(expr_,now_,latest_)
+local function to_timestamp_helper(expr_,now_,latest_)
   local interpolated = string.gsub(expr_,"(%l+)",{now=now_, latest=latest_})
   interpolated = string.gsub(interpolated,"(%w+)",parse_time_unit)
   return string.match(interpolated,"^[%s%d%-%+]+$") and loadstring("return "..interpolated)() or nil
+end
+
+function to_timestamp(expr_,now_,latest_)
+  local from,to = string.match(expr_,"(.+)%.%.(.+)")
+  if not from then
+	return to_timestamp_helper(expr_,now_,latest_)
+  end
+
+  from = to_timestamp_helper(from,now_,latest_)
+  to = to_timestamp_helper(to,now_,latest_)
+  return {from,to}
 end

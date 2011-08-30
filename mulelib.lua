@@ -149,23 +149,31 @@ function sequence(metric_)
 						serialize_slot(out_stream_,s,opts_.skip_empty)
 					  end
 					end
+
 				  elseif opts_.timestamps then
+					local function one_slot(ts_)
+					  local idx,_ = find_slot(ts_)
+					  local slot = _store.get_slot(idx)
+					  if ts_-slot._timestamp<_period then
+						serialize_slot(out_stream_,slot)
+					  end
+					end
+
 					for _,t in ipairs(opts_.timestamps) do
 					  local ts = interpolate_timestamp(t)
-					  local slot
 					  if ts then
-						local idx,_ = find_slot(ts)
-						slot = _store.get_slot(idx)
-						if ts-slot._timestamp>=_period then
-						  slot = nil
+						if type(ts)=="number" then
+						  one_slot(ts)
+						else
+						  for t = ts[1],ts[2],(ts[1]<ts[2] and _step or -_step) do
+							one_slot(t)
+						  end
 						end
 					  end
-					  serialize_slot(out_stream_,slot)
 					end
+
 				  elseif opts_.latest then
-					local latest_idx = _store.latest()
-					local latest_slot = _store.get_slot(latest_idx)
-					serialize_slot(out_stream_,latest_slot)
+					serialize_slot(out_stream_,_store.get_slot(_store.latest()))
 				  end
 				end,
 

@@ -178,11 +178,23 @@ function test_to_timestamp()
 	{"latest-7",60,10,3},
 	{"latest-1m",60,120,60},
 	{"now + latest - 1m",61,121,122},
+	{"1..",60,0,nil},
+	{"1..2",60,0,{1,2}},
+	{"31..2",60,0,{31,2}},
+	{"now + latest - 1m..1",61,121,{122,1}},
+	{"latest-1m..latest-1m",60,120,{60,60}},
   }
 
   for i,t in ipairs(tests) do
-	assert_equal(t[4],to_timestamp(t[1],t[2],t[3]),i)
+	local ts = to_timestamp(t[1],t[2],t[3])
+	if ts and type(t[4])=="table" then
+	  assert_equal(t[4][1],ts[1],i)
+	  assert_equal(t[4][2],ts[2],i)
+	else
+	  assert_equal(t[4],ts,i)
+	end
   end
+
 end
 
 
@@ -545,6 +557,16 @@ function test_latest()
   -- the latest is not affected
   assert(string.find(m.latest("event.phishing;1h:30d"),"2,1,3600"))
   assert(string.find(m.graph("event.phishing.yahoo;1h:30d","latest-56m"),"7,1,0"))
+  -- lets check the range
+  local g = m.graph("event.phishing.yahoo;1h:30d","0..latest")
+  assert(string.find(g,"2,1,3600"))
+  assert(string.find(g,"7,1,0"))
+  g = m.graph("event.phishing.yahoo;1h:30d","latest..0")
+  assert(string.find(g,"[[2,1,3600,],[7,1,0,],]"))
+  m.process("event.phishing.yahoo 9 64")
+  g = m.graph("event.phishing.yahoo;1m:12h","latest..0")
+  assert(string.find(g,"[[2,1,3600,],[9,1,60,],[7,1,0,],]"))
+
   m.process("event.phishing.google 90 4400")
   assert(string.find(m.latest("event.phishing;1h:30d"),"92,2,3600"))
   -- we have two hits 3+7 at times 3 and 4 which are adjusted to 0
