@@ -7,9 +7,9 @@ local CURRENT_VERSION = 2
 
 
 
-local function update_slot_helper(slot_,timestamp_,value_,reset_)
+local function update_slot_helper(slot_,timestamp_,value_,hits_,reset_)
   if not reset_ and slot_._hits>0 then
-	slot_._hits = slot_._hits+1
+	slot_._hits = slot_._hits+hits_
 	slot_._sum = slot_._sum+value_
 	return slot_
   end
@@ -96,7 +96,7 @@ function sequence(metric_)
 			   return _store.latest()
 			 end,
 
-	update = function(timestamp_,value_)
+	update = function(timestamp_,value_,hits_)
 			   local idx,adjusted_timestamp = find_slot(timestamp_)
 			   local slot = _store.get_slot(idx)
 			   -- if this value is way back (but still fits in this slot)
@@ -109,7 +109,7 @@ function sequence(metric_)
 			   -- over-write its value
 			   local reset = not slot or math.abs(adjusted_timestamp-slot._timestamp)>_step
 			   _store.set_slot(idx,update_slot_helper(slot,adjusted_timestamp,
-													  value_,reset))
+													  value_,hits_,reset))
 			 end,
 
 
@@ -332,14 +332,14 @@ function mule(sequences_)
 	return true
   end
 
-  local function stdout(metrics_)
-	local str = strout(",")
+  local function dump(metrics_)
+	local str = stdout(" "," ")
 	for m in split_helper(metrics_,"/") do
 	  for seq in _sequences.pairs(m) do
-		seq.serialize(str,{deep=true})
+		seq.serialize(str,{deep=true,skip_empty=true,pretty_print=true})
+		str.write_string("\n")
 	  end
 	end
-	return str.get_string()
   end
 
   local function wrap_json(stream_,javascript_callback_)
@@ -436,7 +436,7 @@ function mule(sequences_)
   local function command(items_)
 	local dispatch_table = {
 	  reset = reset,
-	  stdout = stdout,
+	  dump = dump,
 	  graph = graph,
 	  piechart = piechart,
 	  keys = keys,
@@ -467,24 +467,57 @@ function mule(sequences_)
 
   end
 
-  local function process_line(metric_line_)
-	local items,type = parse_input_line(metric_line_)
-	if type=="command" then
-	  return command(items)
-	end
-	-- a line is of the format event.phishing.phishing-host, 20, 74857843
-	local matches = matching_sequences(items[1])
-	concat_arrays(matches,factory(items[1]))
+  local function update_line(metric_,value_,timestamp_)
+	local matches = matching_sequences(metric_)
+	concat_arrays(matches,factory(metric_))
 	matches = matches or {}
 	if not matches then
 	  loge("couldn't find a match for",metric_line_)
 	  return "0"
 	end
-
+	
 	for _,s in ipairs(matches) do
-	  s.update(tonumber(items[3]),tonumber(items[2]))
+	  s.update(timestamp_,value_,1)
 	end
 	return tostring(#matches)
+  end
+
+
+  local function update_sequence(seq_,slots_)
+	local j = 1
+	while j<#slots_ do
+	  local sum,hits,timestamp = tonumber(slots_[j]),tonumber(slots_[j+1]),tonumber(slots_[j+2])
+	  j = j + 3
+	  seq_.update(timestamp,sum,hits)
+	end
+
+	return j-1
+  end
+
+  local function process_line(metric_line_)
+	local items,type = parse_input_line(metric_line_)
+	if type=="command" then
+	  return command(items)
+	end
+	-- there are 2 line formats:
+	-- 1) of the format event.phishing.phishing-host 20 74857843
+	-- 2) of the format (without the brackets) event.phishing.phishing-host;1h:30d (sum hits timestamp)+
+
+	-- 1) standard update
+	if not string.find(items[1],";",1,true) then
+	  return update_line(items[1],items[2],items[3])
+	else
+	  -- 2) an entire line
+	  local metric = items[1]
+	  local seq = _sequences.get(metric)
+	  table.remove(items,1)
+	  if not seq then
+		local metric_name,time_pair = string.match(metric_,"(.-);(.+)")
+		local step,period = parse_time_pair(time_pair)
+		seq = {_sequences.add(metric_name,step,period)}
+	  end
+	  return update_sequence(seq[1],items)
+	end
   end
 
   local function serialize(out_)
@@ -556,7 +589,7 @@ function mule(sequences_)
 	serialize = serialize,
 	deserialize = deserialize,
 	reset = reset,
-	stdout = stdout,
+	dump = dump,
 	graph = graph,
 	piechart = piechart,
 	gc = gc,

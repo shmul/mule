@@ -34,7 +34,7 @@ end
 
 local function usage()
   return [[
-		-h (help) -v (verbose) -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-o (serialize to stdout)]  [-g <path|*> (graph)] [-p <path> (piechart)] [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] [-e (extra params)] files....
+		-h (help) -v (verbose) -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-u (dump; compatible with restore)] [-g <path|*> (graph)] [-p <path> (piechart)] [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] [-e (extra params)] files....
 
 	  If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
 	  Files are processed in order
@@ -137,12 +137,14 @@ function main(opts,out_)
 					local arg = string.match(opts[opt_] or "","^([^%?]+)")
 					local qs = string.match(opts[opt_],"?(.+)$") or ""
 					local rv = m.process({string.format(".%s %s %s",command_,arg or "*",qs)})
-					out_.write_string(rv)
+					if rv then
+					  out_.write_string(rv)
+					end
 				  end)
 	return true
   end
 
-  generic_process("o","stdout")
+  generic_process("u","dump")
   generic_process("g","graph")
   generic_process("p","piechart")
   generic_process("k","keys")
@@ -163,7 +165,7 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcngksamotxpe")
+  opts = getopt(arg,"ldcngksamotxpeu")
   
   if opts.p then 
 	logd("starting profiler")

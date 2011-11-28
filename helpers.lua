@@ -118,14 +118,14 @@ function tablein(tbl_)
 
 end
 
-function ioout_generic(writer_,delim_)
+function ioout_generic(writer_,delim_,eol_)
   local function write(o_)
 	writer_(tostring(o_))
 	writer_(delim_)
   end
   
   local function endof()
-	writer_("\n")
+	writer_(eol_)
   end
 
   return {
@@ -141,14 +141,14 @@ function ioout_generic(writer_,delim_)
 
 end
 
-function ioout(io_,delim_)
+function ioout(io_,delim_,eol_)
   return ioout_generic(function(o_)
 						 io_:write(o_)
-					   end,delim_)
+					   end,delim_,eol_ or "\n")
 end
 
-function stdout(delim_)
-  return ioout(io.output(),delim_)
+function stdout(delim_,eol_)
+  return ioout(io.output(),delim_,eol_)
 end
 
 function ioin_generic(lines_itr_,delim_)
@@ -178,11 +178,11 @@ function ioin(io_,delim_)
   return ioin_generic(io_.lines,delim_)
 end
 
-function strout(delim_)
+function strout(delim_,eol_)
   local str = {}
   local out = ioout_generic(function(o_)
 							  table.insert(str,o_)
-							end,delim_ or ",")
+							end,delim_ or ",",eol_ or "\n")
   out.get_string = function()
 					 return table.concat(str,"")
 				   end
