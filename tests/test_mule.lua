@@ -18,7 +18,7 @@ function test_create()
   main({ v=false,c="./tests/fixtures/mule.cfg", r=true,d=new_db("test_create")})
   local str = strout("")
   main({ v=false,d=db("test_create"),k="*"},str)
-  assert_equal("nil",str.get_string())
+  assert_equal("",str.get_string())
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest={"./tests/fixtures/judo_add/judo_20101231-225901.mule.20101231-230001.pid-7780.in_work"}},str)

@@ -496,6 +496,8 @@ function mule(sequences_)
 
   local function process_line(metric_line_)
 	local items,type = parse_input_line(metric_line_)
+	if #items==0 then return nil end
+
 	if type=="command" then
 	  return command(items)
 	end
@@ -505,14 +507,14 @@ function mule(sequences_)
 
 	-- 1) standard update
 	if not string.find(items[1],";",1,true) then
-	  return update_line(items[1],items[2],items[3])
+	  return update_line(items[1],tonumber(items[2]),tonumber(items[3]))
 	else
 	  -- 2) an entire line
 	  local metric = items[1]
 	  local seq = _sequences.get(metric)
 	  table.remove(items,1)
 	  if not seq then
-		local metric_name,time_pair = string.match(metric_,"(.-);(.+)")
+		local metric_name,time_pair = string.match(metric,"(.-);(.+)")
 		local step,period = parse_time_pair(time_pair)
 		seq = {_sequences.add(metric_name,step,period)}
 	  end
