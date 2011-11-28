@@ -227,6 +227,23 @@ function metric_hierarchy(metric_)
 end
 
 
+function metric_one_level_childs(sequences_,metric_)
+  local m,ts = string.match(metric_,"(.-);(.+)")
+
+  return coroutine.wrap(function()
+						  if not m then return end
+						  for child in sequences_.keys(m) do
+							local cm,cts = string.match(child,"(.-);(.+)")
+							-- we are intersted only in child metrics of the format
+							-- m.sub-key;ts where sub-key contains no dots
+							local i = string.find(cm,m,1,true)
+							if i==1 and cts==ts and m~=cm and not string.find(cm,".",#m+2,true) then
+							  coroutine.yield(child)
+							end
+						  end
+						end
+					   )
+end
 
 
 function mule(sequences_)
@@ -352,6 +369,27 @@ function mule(sequences_)
 	return wrap_json(str,"mule_graph")
   end
 
+  local function piechart(metrics_,timestamps_)
+	local str = jsonout(true)
+	local timestamps = timestamps_ and split(timestamps_,',') or nil
+
+	local opts = { deep=false,
+				   timestamps = timestamps,
+				   sorted=false,
+				   skip_empty=true,
+				   pretty_print=true,
+				   period_only=true}
+
+	for m in split_helper(metrics_,"/") do
+	  for k in metric_one_level_childs(_sequences,m) do
+		for seq in _sequences.pairs(k) do
+		  seq.serialize(str,opts)
+		end
+	  end
+	end
+	return wrap_json(str,"mule_graph")
+  end
+
   local function latest_helper(metrics_,flag_,wrapper_)
 	local str = jsonout(true)
 	local flags = {pretty_print=true}
@@ -400,6 +438,7 @@ function mule(sequences_)
 	  reset = reset,
 	  stdout = stdout,
 	  graph = graph,
+	  piechart = piechart,
 	  keys = keys,
 	  gc = gc,
 	  latest = latest,
@@ -437,6 +476,11 @@ function mule(sequences_)
 	local matches = matching_sequences(items[1])
 	concat_arrays(matches,factory(items[1]))
 	matches = matches or {}
+	if not matches then
+	  loge("couldn't find a match for",metric_line_)
+	  return "0"
+	end
+
 	for _,s in ipairs(matches) do
 	  s.update(tonumber(items[3]),tonumber(items[2]))
 	end
@@ -514,6 +558,7 @@ function mule(sequences_)
 	reset = reset,
 	stdout = stdout,
 	graph = graph,
+	piechart = piechart,
 	gc = gc,
 	latest = latest,
 	slot = slot,

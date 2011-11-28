@@ -53,7 +53,7 @@ local function standard_response(status_,content_)
   return build_response(string.format("HTTP/1.1 %s",status_),{{"Connection","close"}},content_)
 end
 
-local handlers = { keys="process", graph="process", latest="process", slot="process", update="process", config="config", stop="stop" }
+local handlers = { keys="process", graph="process", piechart="process", latest="process", slot="process", update="process", config="config", stop="stop" }
 
 local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
   if not req_ then

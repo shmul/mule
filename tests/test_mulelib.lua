@@ -610,3 +610,43 @@ function test_update_only_relevant()
 
   --print(m.graph("*"))
 end
+
+
+function test_metric_one_level_childs()
+  local bdb = tokyocabinet_db("./tests/temp/one_level_childs.bdb")
+  local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
+  tc_init(bdb)
+  local m = mule(tokyocabinet_sequences(
+					  function(metric_,step_,period_) 
+						return tokyocabinet_store(bdb,metric_,step_,period_) 
+					  end,tc_get,tc_fwmkeys))
+  
+  m.configure(table_itr({"event.phishing 60s:12h 1h:30d","event.pharming 3m:1h","event.akl 10m:1y"}))
+
+  m.process("event.phishing.yahoo 7 4")
+  m.process("event.phishing.yahoo.hello 7 4")
+  m.process("event.phishing.yahoo.hello.cruel 7 4")
+  m.process("event.phishing.google 6 54")
+  m.process("event.phishing.google.world 6 54")
+  m.process("event.phishing.apple 32 91")
+  m.process("event.phishing 132 121")
+
+  local tests = {
+	{"event.phishing.google;1h:30d",1},
+	{"event.phishing;1m:12h",3},
+	{"event;1m:12h",1},
+	{"",0},
+	{"foo",0},
+  }
+  
+  for j,t in ipairs(tests) do
+	local childs = {}
+
+	for i in metric_one_level_childs(m.get_sequences(),t[1]) do
+	  table.insert(childs,i)
+	end
+	assert_equal(t[2],#childs,j)
+  end
+
+end
+

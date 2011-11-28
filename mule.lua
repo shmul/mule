@@ -34,7 +34,7 @@ end
 
 local function usage()
   return [[
-		-h (help) -v (verbose) -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-o (serialize to stdout)]  [-g <path|*> (graph)]  [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] files....
+		-h (help) -v (verbose) -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-o (serialize to stdout)]  [-g <path|*> (graph)] [-p <path> (piechart)] [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] [-e (extra params)] files....
 
 	  If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
 	  Files are processed in order
@@ -144,6 +144,7 @@ function main(opts,out_)
 
   generic_process("o","stdout")
   generic_process("g","graph")
+  generic_process("p","piechart")
   generic_process("k","keys")
   generic_process("s","slot")
   generic_process("a","latest")
@@ -162,7 +163,7 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcngksamotx")
+  opts = getopt(arg,"ldcngksamotxpe")
   
   if opts.p then 
 	logd("starting profiler")
