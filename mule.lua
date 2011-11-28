@@ -74,14 +74,12 @@ function main(opts,out_)
 	local stopped = false
 	local httpd_can_be_stopped = opts["x"]
 	http_loop(opts["t"],writable_mule,
-			  function(stop_)
-				-- this is confusing: when the function is called with param we set the
-				-- stop flag.
+			  function(password_)
+				-- this is confusing: when the function is called with param we match
+				-- it against the stop shared secret
 				-- when it is called without a param we simply return the flag
 				-- BUT we check that the stop functionality is supported at all
-				if httpd_can_be_stopped and type(stop_)=="boolean" then
-				  stopped = stop_
-				end
+				stopped = stopped or httpd_can_be_stopped and password_==httpd_can_be_stopped
 				return stopped
 			  end)
   end
@@ -164,7 +162,7 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcngksamot")
+  opts = getopt(arg,"ldcngksamotx")
   
   if opts.p then 
 	logd("starting profiler")

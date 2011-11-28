@@ -62,7 +62,9 @@ local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
   end
 
   local headers,body
-  local segments = split(req_.url,"/")
+  local url_no_qs = string.match(req_.url,"^([^%?]+)")
+  local qs = string.match(req_.url,"%?(.+)$")
+  local segments = split(url_no_qs,"/")
   local resource = segments[1]
   table.remove(segments,1)
   local decoded_segments = {}
@@ -70,9 +72,8 @@ local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
 	local unescaped,_ = url.unescape(s)
 	table.insert(decoded_segments,unescaped)
   end
-  local path = table.concat(decoded_segments,"/")
-  local path_no_qs = string.match(path,"^([^&%?]+)")
-  local qs = string.match(path,"%?(.+)$")
+  local path_no_qs = string.match(table.concat(decoded_segments,"/"),"^([^&%?]+)")
+
   local handler = handlers[resource]
   if handler then
 	local params
@@ -103,8 +104,10 @@ local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
 	s,err = socket_:send(body)
   end
   if handler=="stop" then
-	logw("stopping")
-	stop_cond_(true)
+	local password = qs and string.match(qs,"password=([^&]+)")
+
+	logw("stopping, using: ",password)
+	stop_cond_(password)
   end
   logi("send_response",s,err)  
 end
