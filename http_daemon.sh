@@ -15,6 +15,6 @@ log() {
 log "Start"
 
 cd $muledir
-/usr/local/bin/lua mule.lua -l $logfile -d $muledb -t $hostport
+/usr/local/bin/lua mule.lua -l $logfile -d $muledb -t $hostport -x nomoremule
 
 log "End"
