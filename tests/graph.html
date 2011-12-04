@@ -1,0 +1,211 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+	<title>mule graph</title>
+	<base href="file:///Users/shmul/dev/local/server/nightwatch/public/" />
+	<script language="javascript" type="text/javascript" src="javascripts/jquery.js"></script>
+	<script language="javascript" type="text/javascript" src="javascripts/jquery.flot.js"></script>
+	<script language="javascript" type="text/javascript" src="javascripts/excanvas.min.js"></script>
+	<script language="javascript" type="text/javascript" src="javascripts/jquery.flot.crosshair.js"></script>
+	<script language="javascript" type="text/javascript" src="javascripts/jquery.flot.axislabels.js"></script>
+	<link href="stylesheets/display.css" media="all" rel="Stylesheet" type="text/css" />
+  </head>
+  <body class="display_detail">
+	<br />
+	<div id="placeholder" class="detail_div"></div>
+	
+	<table style=width:"900px" align="center">
+	  <tr id="vals" align="left">
+		<td> <p class="results_td">Minimum Value: <span id="min" class="results"></span></p> </td>
+		<td> <p class="results_td">Maximum Value: <span id="max" class="results"></span></p> </td>
+		<td> <p class="results_td">Average: <span id="avg" class="results"></span></p> </td>
+		<td> <p class="results_td">Last Value: <span id="last" class="results"></span></p> </td>
+	  </tr>
+	</table>
+	<table style=width:"900px" align="center">
+	  <tr id="pos" align="left" style="visibility: hidden">
+		<td> <p ass="results_td">You Are Now At:</p> </td>
+		<td> <p align="left"><span id="selection"></span> </p></td>
+		<td> <p align="left">, Sum: </p></td>
+		<td> <p align="left"><span id="sum"  class="results"></span></p></td>
+	  </tr>
+	  <tr id="mem" align="left" style="visibility: hidden">
+		<br />
+		<td> <p  class="results_td">Point To Remember: </p></td>
+		<td> <p  align="left" ><span id="sel2"></span> </p></td>
+		<td> <p  align="left" >, Sum: </p></td>
+		<td> <p  align="left" ><span id="sum2" class="results"></span> </p></td>
+	  </tr>
+	</table>
+	<p width="100%" align="center" style="font-size:7pt"><a href="/screens">Manage Screens</a>   </p>
+	<script id="source" language="javascript" type="text/javascript">
+	  function mule_graph(data){
+		  for (key in data["data"]){
+			  var json_data=data["data"][key];
+
+			  // Sort the data according to the timestamp field
+			  json_data.sort(function(a,b) { return a[2] - b[2] });
+			  max = 0;
+			  sum = 0;
+			  min = 99999999999;
+			  last = 0;
+			  var skip_samples = 0;
+			  var samples = 0;
+			  sum_final = new Array(json_data.length - skip_samples);
+			  avg_final = new Array(json_data.length - skip_samples);
+			  for (i=0 ; i<json_data.length ; i++){
+				  if ((json_data[i] != null) && (i >= skip_samples)) {
+					  sum_final[samples] =  new Array(2);
+					  sum_final[samples][1] = json_data[i][0];
+					  sum_final[samples][0] = json_data[i][2]*1000;
+					  avg_final[samples] =  new Array(2);
+					  avg_final[samples][1] = json_data[i][0]/json_data[i][1];
+					  avg_final[samples][0] = json_data[i][2]*1000;
+					  if (json_data[i][0] > max)
+						  max = json_data[i][0];
+					  if (json_data[i][0] < min)
+						  min = json_data[i][0];
+					  last = json_data[i][0];
+					  sum = sum + json_data[i][0];
+					  samples++;
+				  }
+			  }
+			  avg = sum / samples;
+			  $("#max").text(max);
+			  $("#min").text(min);
+			  $("#avg").text(avg.toFixed(3));
+			  $("#last").text(last);
+			  var title = key
+			  var length = avg_final.length-1
+			  if (avg_final[avg_final.length-1] == null){
+				  length = avg_final.length-2
+			  }
+			  url=title.split(':');
+			  title = title.replace("." , '').replace(";" , '').replace(":", "").replace("." , '');
+			  title = "#" + title;
+			  last_date=sum_final[sum_final.length-1][0];
+			  var trusteer_green = "rgb(92,162,72)";
+			  now = new Date()
+			  last = new Date()
+			  last.setTime(last_date)
+			  var time_frame= url[url.length-1];
+			  if (time_frame == "2d" && last < now-1800000){
+				  trusteer_green="rgb(255,153,0)";
+			  }
+			  if (time_frame == "30d" && last < now-21600000){
+				  trusteer_green="rgb(255,153,0)";
+			  }
+			  if (time_frame == "3y" && last < now-518400000){
+				  trusteer_green="rgb(255,153,0)";
+			  }
+			  plot = $.plot($("#placeholder"),  [ { data: sum_final, label: "Sum = 0000000", color: trusteer_green } ],
+							{
+								xaxis: {
+									axisLabel: 'Time',
+									axisLabelUseCanvas: true,
+									mode: "time",
+									min: avg_final[0][0],
+									max: avg_final[length][0]
+								},
+								yaxis: {
+									axisLabel: 'Sum',
+									axisLabelUseCanvas: true
+								},
+								legend: { position: 'nw' },
+								crosshair: { mode: "x" },
+								grid: { hoverable: true, ahtoHighlight: false, clickable: true }
+							});
+
+			  var legends = $("#placeholder .legendLabel");
+			  legends.each(function () {
+				  // fix the widths so they don't jump around
+				  $(this).css('width', $(this).width());
+			  });
+
+			  var updateLegendTimeout = null;
+			  var latestPosition = null;
+
+			  function updateLegend() {
+				  updateLegendTimeout = null;
+				  var pos = latestPosition;
+				  var x;
+				  var j;
+				  var axes = plot.getAxes();
+				  if (pos.x < axes.xaxis.min || pos.x > axes.xaxis.max || pos.y < axes.yaxis.min || pos.y > axes.yaxis.max)
+					  return;
+				  var i, j, dataset = plot.getData();
+				  for (i = 0; i < dataset.length; ++i) {
+					  var series = dataset[i];
+					  // find the nearest points, x-wise
+					  for (j = 0; j < series.data.length; ++j)
+						  if (series.data[j][0] > pos.x)
+							  break;
+					  // now interpolate
+					  var y, p1 = series.data[j - 1], p2 = series.data[j];
+					  if (p1 == null)
+						  y = p2[1];
+					  else if (p2 == null)
+						  y = p1[1];
+					  else if (Math.abs(pos.x-p1[0]) > Math.abs(pos.x-p2[0])){
+						  y = p2[1];
+						  x = p2[0];}
+					  else{
+						  y = p1[1];
+						  x = p1[0];}
+					  legends.eq(i).text(series.label.replace(/=.*/, "= " + y.toFixed(2)));
+				  }
+				  dDate = new Date()
+				  dDate.setTime(dataset[0].data[j][0])
+				  $("#selection").text(dDate.toUTCString().replace('GMT', 'UTC'));
+				  $("#sum").text(dataset[0].data[j][1]);
+			  }
+
+			  $("#placeholder").bind("plothover",  function (event, pos, item) {
+				  $("#pos").css("visibility", "visible");
+				  latestPosition = pos;
+				  if (!updateLegendTimeout)
+					  updateLegendTimeout = setTimeout(updateLegend, 50);
+			  });
+
+			  $("#placeholder").bind("plotclick", function (event, pos, item) {
+				  if (item) {
+					  var dataset = plot.getData();
+					  $("#sel2").text(document.getElementById('selection').innerHTML );
+					  $("#sum2").text(document.getElementById('sum').innerHTML );
+					  $("#mem").css("visibility", "visible");
+					  plot.unhighlight();
+					  plot.highlight(item.series, item.datapoint);
+				  }
+			  });
+
+		  };
+	  }
+
+	  function getMuleData(url){
+		  var s = document.createElement('script');
+		  s.type = 'text/javascript';
+		  s.async = true;
+		  s.src = url;
+		  document.getElementsByTagName('head')[0].appendChild(s);
+	  }
+
+	  function querySt(ji) {
+		  hu = window.location.search.substring(1);
+		  gy = hu.split("&");
+		  for (i=0;i<gy.length;i++) {
+			  ft = gy[i].split("=");
+			  if (ft[0] == ji) {
+				  return ft[1];
+			  }
+		  }
+	  }
+
+
+	  $(document).ready(function(){
+		  u = querySt("m");
+		  getMuleData("http://localhost:3012/graph/"+u);
+	  });
+	</script>
+  </body>
+</html>
