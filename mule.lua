@@ -34,7 +34,7 @@ end
 
 local function usage()
   return [[
-		-h (help) -v (verbose) -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-u (dump; compatible with restore)] [-g <path|*> (graph)] [-p <path> (piechart)] [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] [-e (extra params)] files....
+		-h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-u (dump; compatible with restore)] [-g <path|*> (graph)] [-p <path> (piechart)] [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] [-e (extra params)] files....
 
 	  If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
 	  Files are processed in order
@@ -165,16 +165,16 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcngksamotxpeu")
+  opts = getopt(arg,"ldcngksamotxpeuy")
   
-  if opts.p then 
+  if opts.y then 
 	logd("starting profiler")
 	profiler.start("profiler.out") 
   end
   
   local rv = main(opts,stdout("\n"))
   
-  if opts.p then 
+  if opts.y then 
 	logd("stopping profiler")
 	profiler.stop() 
   end
