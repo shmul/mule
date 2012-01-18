@@ -1,4 +1,5 @@
 --TODO
+-- support ''not'' patterns
 -- save metadata under multiple ''metadata#ABC'' keys and not a single one
 require "helpers"
 

@@ -282,8 +282,7 @@ end
 function split_helper(str_,delim_)
   return coroutine.wrap(function()
 						  local start = 1
-						  local t,s
-						  local items = {}
+						  local t
 						  local ds = #delim_
 						  local find,sub = string.find,string.sub
 						  local yield = coroutine.yield
