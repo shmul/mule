@@ -21,37 +21,37 @@ function in_memory_store(key_)
 
   return {
 	create = function(key_,step_,period_) 
-			   if not step_ or step_==0 then return nil end
-			   init(step_,period_)
-			   reset()
-			 end,
+      if not step_ or step_==0 then return nil end
+      init(step_,period_)
+      reset()
+    end,
 
 	load = init,
 
 	reset = reset,
 	get_slot = function(idx_)
-				 if idx_==0 then idx_ = _size end
-				 return _slots[idx_]
-			   end,
+      if idx_==0 then idx_ = _size end
+      return _slots[idx_]
+    end,
 
 	set_slot = function(idx_,slot_)
-				 if idx_==0 then idx_ = _size end
-				 _slots[idx_] = slot_
-			   end,
+      if idx_==0 then idx_ = _size end
+      _slots[idx_] = slot_
+    end,
 
 	size = function()
-			 return _period/_step
-		   end,
+      return _period/_step
+    end,
 
 	latest = function()
-			   return max_timestamp(_period/_step,function(idx_)
-													return _slots[idx_]
-												  end)
-			 end,
+      return max_timestamp(_period/_step,function(idx_)
+                             return _slots[idx_]
+                                         end)
+    end,
 
 	slots = function () return shallow_clone_array(_slots) end,
 
-  }
+         }
 end
 
 function in_memory_sequences(store_factory_)
@@ -59,7 +59,7 @@ function in_memory_sequences(store_factory_)
 
   local function serialize(out_stream_)
 	return serialize_table_of_arrays(out_stream_,_seqs,function(out_stream_,item_)
-														 item_.serialize(out_stream_)
+                                       item_.serialize(out_stream_)
 													   end)
   end
 
@@ -74,43 +74,45 @@ function in_memory_sequences(store_factory_)
 
   return {
 	add = function(metric_,step_,period_)
-			local seq = sequence(metric_)
-			local store = store_factory_()
-			store.create(metric_,step_,period_)
-			seq.init(step_,period_,store)
-			_seqs[metric_] = _seqs[metric_] or {}
-			table.insert(_seqs[metric_],seq)
-			return seq
-		  end,
+      local seq = sequence(metric_)
+      local store = store_factory_()
+      store.create(metric_,step_,period_)
+      seq.init(step_,period_,store)
+      _seqs[metric_] = _seqs[metric_] or {}
+      table.insert(_seqs[metric_],seq)
+      return seq
+    end,
 	get = function(metric_)
-			return _seqs[metric_]
-		  end,
-	
+      return _seqs[metric_]
+    end,
+    out = function(metric_)
+      _seqs[metric_] = nil
+    end,
 	keys = function(metric_)
-			 local keys = {}
-			 for k,_ in pairs(_seqs) do
-			   if not metric_ or is_prefix(k,metric_) then
-				 table.insert(keys,k)
-			   end
-			 end
+      local keys = {}
+      for k,_ in pairs(_seqs) do
+        if not metric_ or is_prefix(k,metric_) then
+          table.insert(keys,k)
+        end
+      end
 
-			 return keys
-		   end,
+      return keys
+    end,
 
 	pairs = function(metric_)
-			  return coroutine.wrap(function()
-									  for k,items in pairs(_seqs) do
-										if not metric_ or is_prefix(k,metric_) then
-										  for _,s in ipairs(items) do
-											coroutine.yield(s)
-										  end
-										end
-									  end
-									end)
-			end,
+      return coroutine.wrap(function()
+                              for k,items in pairs(_seqs) do
+                                if not metric_ or is_prefix(k,metric_) then
+                                  for _,s in ipairs(items) do
+                                    coroutine.yield(s)
+                                  end
+                                end
+                              end
+                            end)
+    end,
 	serialize = serialize,
 	deserialize = deserialize,
-  }
+         }
 
 end
 

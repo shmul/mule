@@ -1,3 +1,4 @@
+
 tokyo = require "tokyocabinet" 
 
 if not tokyo then
@@ -8,7 +9,7 @@ function generate_fuctions()
   local db
 
   return 
-  function(database_)
+    function(database_)
 	-- we use this either to open a file, or to set the db value to an externally
 	-- opened db
 	if type(database_)=="string" then
@@ -23,14 +24,14 @@ function generate_fuctions()
 	  db = database_
 	end
 	return db
-  end,
-  function() db:close() end,
-  function(k) return db:get(k) end,
-  function(k,v) return db:put(k,v) end,
-  function(k) return db:fwmkeys(k) end,
-  tokyocabinet.pack,
-  tokyocabinet.unpack,
-  function(k) return db:out(k) end
+    end,
+    function() db:close() end,
+    function(k) return db:get(k) end,
+    function(k,v) return db:put(k,v) end,
+    function(k) return db:fwmkeys(k) end,
+    tokyocabinet.pack,
+    tokyocabinet.unpack,
+    function(k) return db:out(k) end
 end
 
 
@@ -50,7 +51,7 @@ local function tokyocabinet_metric_from_metadata_key(metadata_)
 end
 
 function tokyocabinet_store(db_)
-  local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
+  local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack,tc_out = generate_fuctions()
   local _size = 0
   local _step,_period,_latest,_key,_seq_name,_seq_metadata
 
@@ -105,7 +106,7 @@ function tokyocabinet_store(db_)
 	  _timestamp = slot[1],
 	  _hits = slot[2],
 	  _sum = slot[3]
-	}
+           }
   end
 
   local function get(idx_)
@@ -144,17 +145,18 @@ function tokyocabinet_store(db_)
 	reset = reset,
 	get_slot = get,
 	set_slot = put,
+    out = tc_out,
 	size = function() return _size end,
 	step = function() return _step end,
 	period = function() return _period end,
 	latest = function()
-			   return max_timestamp(_size,function(idx_)
-											return get(idx_)
-										  end)
-			 end,
+      return max_timestamp(_size,function(idx_)
+                             return get(idx_)
+                                 end)
+    end,
 
 	slots = slots
-  }
+         }
 end
 
 function tokyocabinet_sequences(store_factory_,tc_get,tc_fwmkeys)
@@ -170,54 +172,58 @@ function tokyocabinet_sequences(store_factory_,tc_get,tc_fwmkeys)
 
   return {
 	add = function(metric_,step_,period_)
-			local seq = sequence(metric_)
-			local store = store_factory_()
-			store.create(metric_,step_,period_)
-			seq.init(step_,period_,store)
-			return seq
-		  end,
+      local seq = sequence(metric_)
+      local store = store_factory_()
+      store.create(metric_,step_,period_)
+      seq.init(step_,period_,store)
+      return seq
+    end,
 	
 	get = function(metric_)
-			local keys = tc_fwmkeys(metric_..";") -- we want the specific metrics, not the decendents
-			local seqs = {}
-			for _,k in ipairs(keys) do
-			  if string.find(k,";metadata",1,true) then
-				local seq = create_sequence(k)
-				table.insert(seqs,seq)
-			  end
-			end
-			return #seqs>0 and seqs
-		  end,
+      local keys = tc_fwmkeys(metric_..";") -- we want the specific metrics, not the decendents
+      local seqs = {}
+      for _,k in ipairs(keys) do
+        if string.find(k,";metadata",1,true) then
+          local seq = create_sequence(k)
+          table.insert(seqs,seq)
+        end
+      end
+      return #seqs>0 and seqs
+    end,
+
+	out = function(metric_)
+      store.out(metric_)
+    end,
 
 	keys = function(metric_)
-			 local keys = tc_fwmkeys((not metric_ or metric_=="*") and "" or metric_)
-			 local find = string.find
-			 return coroutine.wrap(function()
-									 for _,k in ipairs(keys)  do
-									   if 1~=find(k,"metrics;",1,true) and not find(k,";metadata",1,true) then
-										 coroutine.yield(k)
-									   end
-									 end
-								   end)
-		   end,
+      local keys = tc_fwmkeys((not metric_ or metric_=="*") and "" or metric_)
+      local find = string.find
+      return coroutine.wrap(function()
+                              for _,k in ipairs(keys)  do
+                                if 1~=find(k,"metrics;",1,true) and not find(k,";metadata",1,true) then
+                                  coroutine.yield(k)
+                                end
+                              end
+                            end)
+    end,
 
 	
 	pairs = function(metric_)
-			  local keys = tc_fwmkeys((not metric_ or metric_=="*") and "" or metric_)
-			  local find = string.find
-			  return coroutine.wrap(function()
-									  for _,k in ipairs(keys)  do
-										if 1~=find(k,"metrics;",1,true) and find(k,";metadata",1,true) then
-										  coroutine.yield(create_sequence(k))
-										end
-									  end
-									end)
-			end,
+      local keys = tc_fwmkeys((not metric_ or metric_=="*") and "" or metric_)
+      local find = string.find
+      return coroutine.wrap(function()
+                              for _,k in ipairs(keys)  do
+                                if 1~=find(k,"metrics;",1,true) and find(k,";metadata",1,true) then
+                                  coroutine.yield(create_sequence(k))
+                                end
+                              end
+                            end)
+    end,
 	-- no need for serialize/deserialize on tokyo as it is already
 	-- supported via the keys iteration and put
 	serialize = function() end,
 	deserialize = function() end,
-  }
+         }
 
 end
 
@@ -229,42 +235,42 @@ function tc_mule()
   local function open_db(db_path_)
 	local db = tc_init(db_path_)
 	local abstract_mule = mule(tokyocabinet_sequences(
-								   function(metric_,step_,period_)
-									 return tokyocabinet_store(db,metric_,step_,period_)
-								   end,tc_get,tc_fwmkeys ))
+                                 function(metric_,step_,period_)
+                                   return tokyocabinet_store(db,metric_,step_,period_)
+                                 end,tc_get,tc_fwmkeys ))
 	copy_table(abstract_mule,_mule)
   end
   _mule.config_file = function(config_file_)
-						with_file(config_file_,
-								  function(f)
-									_mule.configure(f:lines())
-								  end)
-					  end
+    with_file(config_file_,
+              function(f)
+                _mule.configure(f:lines())
+              end)
+  end
 
   _mule.create = function(db_path_)
-				   open_db(db_path_)
-				 end
+    open_db(db_path_)
+  end
   _mule.load = function(db_path_,readonly_)
-				 open_db(db_path_)
-				 if not readonly_ then
-				   local config = tc_get("metrics;metadata")
-				   if config then
-					 _mule.deserialize(strin(config))
-				   end
-				 end
-			   end
+    open_db(db_path_)
+    if not readonly_ then
+      local config = tc_get("metrics;metadata")
+      if config then
+        _mule.deserialize(strin(config))
+      end
+    end
+  end
   _mule.save = function()
-				 local config = strout()
-				 if config then
-				   _mule.serialize(config)
-				   tc_put("metrics;metadata",config.get_string())
-				 end
-			   end
-	
+    local config = strout()
+    if config then
+      _mule.serialize(config)
+      tc_put("metrics;metadata",config.get_string())
+    end
+  end
+  
   _mule.close = function()
-				  tc_done()
-				  _mule = nil
-				end
+    tc_done()
+    _mule = nil
+  end
 
   return _mule
 end

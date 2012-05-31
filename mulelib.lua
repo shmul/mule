@@ -312,18 +312,27 @@ function mule(sequences_)
 	return matches
   end
 
-  local function gc(metric_,timestamp_)
+  local function gc(metric_,timestamp_,dry_run_)
 	local garbage = {}
 
 	for seq in _sequences.pairs(metric_) do
-	  local retain = {}
-	  local dirty = false
-	  if seq.latest()>=timestamp_ then
-		retain[#retain+1] = seq
-	  else
-		-- TODO
+	  local garbage = {}
+      local str = jsonout(false)
+	  if seq.latest()<timestamp_ then
+		str.start_of_header()
+		str.write_string(seq.get_metric())
+		str.end_of_header()
+		garbage[#garbage+1] = seq
 	  end
 	end
+
+    if not dry_run_ then
+      for _,metric in ipairs(garbage) do
+        _sequences.out(metric)
+      end
+    end
+
+ 	return wrap_json(str,"mule_gc")
   end
 
   local function reset(metric_)
