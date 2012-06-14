@@ -2,7 +2,11 @@
 #
 # mule     Startup script for mule
 #
-# processname: mule
+# chkconfig:   - 64 36
+# description: Startup script for mule
+# processname: lua
+# config:      /etc/sysconfig/mule
+# pidfile:     /var/run/mule/mule.pid
 
 # Source function library
 . /etc/rc.d/init.d/functions
