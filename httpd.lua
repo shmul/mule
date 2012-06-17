@@ -18,7 +18,7 @@ local function read_request(socket_)
 	if not data or #data==0 then 
 	  local content_len = tonumber(req["Content-Length"])
 	  local content
-	  if content_len then
+	  if content_len and content_len>0 then
 		content = socket_:receive(content_len)
 		if content and #content<content_len then
 		  logw("insufficient content received",#content,content_len)
@@ -104,10 +104,10 @@ local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
 	s,err = socket_:send(body)
   end
   if handler=="stop" then
-	local password = qs and string.match(qs,"password=([^&]+)")
+	local token = qs and string.match(qs,"token=([^&]+)")
 
-	logw("stopping, using: ",password)
-	stop_cond_(password)
+	logw("stopping, using: ",token)
+	stop_cond_(token)
   end
   logi("send_response",s,err)  
 end

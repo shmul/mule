@@ -14,7 +14,7 @@
 prog="mule.lua"
 stop_password="nomoremule"
 mule_port=8980
-luaexec=/usr/local/bin/lua
+luaexec=/usr/bin/lua
 shareddir=/home/ranger/mule/shared
 currentdir=/home/ranger/mule/current
 #export FCGI_CHILDREN FCGI_MAX_REQUESTS
@@ -24,7 +24,8 @@ RETVAL=0
 start() {
   echo -n $"Starting $prog: "
   echo
-  $luaexec $currentdir/mule.lua -l $shareddir/mule_http_daemon.log -d $shareddir/db/mule.tcb -t 0.0.0.0:$mule_port -x $stop_password
+  cd $currentdir
+  $luaexec $currentdir/mule.lua -l $shareddir/mule_http_daemon.log -d $shareddir/db/mule.tcb -t 0.0.0.0:$mule_port -x $stop_password &
   RETVAL=$?
   if [ $RETVAL -eq 0 ]
   then
@@ -38,13 +39,13 @@ start() {
 
 stop() {
 
-  for i in 0 1 2 3; do
+  for i in 1 2 3; do
       echo -n $"Stopping $prog. Attempt $i"
       curl http://localhost:$mule_port/stop?password=$stop_password
       sleep 4
       curl http://localhost:$mule_port
       if [ $?==7 ]; then
-          echo -n "successfully stopped"
+          echo "\nsuccessfully stopped"
           return 0
       fi
   done

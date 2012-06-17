@@ -74,12 +74,12 @@ function main(opts,out_)
 	local stopped = false
 	local httpd_can_be_stopped = opts["x"]
 	http_loop(opts["t"],writable_mule,
-			  function(password_)
+			  function(token_)
 				-- this is confusing: when the function is called with param we match
 				-- it against the stop shared secret
 				-- when it is called without a param we simply return the flag
 				-- BUT we check that the stop functionality is supported at all
-				stopped = stopped or httpd_can_be_stopped and password_==httpd_can_be_stopped
+				stopped = stopped or httpd_can_be_stopped and token_==httpd_can_be_stopped
 				return stopped
 			  end)
   end
