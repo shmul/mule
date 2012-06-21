@@ -4,6 +4,7 @@
 -- stats call
 -- more logging, especially for deamon
 -- support kyotocabinet
+-- work within redis
 
 require "helpers"
 
