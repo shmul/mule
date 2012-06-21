@@ -24,7 +24,7 @@ RETVAL=0
 start() {
   echo "starting $prog: "
   cd $currentdir
-  $luaexec $currentdir/mule.lua -l $shareddir/mule_http_daemon.log -d $shareddir/db/mule.tcb -t 0.0.0.0:$mule_port -x $stop_token &
+  $luaexec $currentdir/mule.lua -l $shareddir/log/mule_http_daemon.log -d $shareddir/db/mule.tcb -t 0.0.0.0:$mule_port -x $stop_token &
   RETVAL=$?
   if [ $RETVAL -eq 0 ]
   then
