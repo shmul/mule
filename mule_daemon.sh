@@ -15,8 +15,9 @@ prog="mule.lua"
 stop_token="nomoremule"
 mule_port=8980
 luaexec=/usr/bin/lua
-shareddir=/home/ranger/mule/shared
-currentdir=/home/ranger/mule/current
+muleuser=`ls -l -H /etc/init.d/mule_daemon | awk '{ print $3}'`
+shareddir=/home/$muleuser/mule/shared
+currentdir=/home/$muleuser/mule/current
 #export FCGI_CHILDREN FCGI_MAX_REQUESTS
 
 RETVAL=0
