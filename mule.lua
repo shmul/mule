@@ -34,7 +34,7 @@ end
 
 local function usage()
   return [[
-		-h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-u (dump; compatible with restore)] [-g <path|*> (graph)] [-p <path> (piechart)] [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] [-e (extra params)] files....
+		-h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c (configure) <cfg-file>] [-r (create)] [-f (force)] [-n <line>] [-u <gc-timestamp> (dump; compatible with restore)] [-g <path|*> (graph)] [-p <path> (piechart)] [-k <path|*> (keys)] [-s <path|*> (slot)] [-a <path|*> (latest)] [-m <migrate_name>] [-t <host:port> (http daemon)] [-x (httpd stoppable)] [-e (extra params)] files....
 
 	  If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
 	  Files are processed in order
@@ -64,7 +64,7 @@ function main(opts,out_)
   local function writable_mule(callback_)
 	return with_mule(opts["d"],false,function(m) return callback_(m) end)
   end
-  
+
   local function readonly_mule(callback_)
 	return with_mule(opts["d"],true,function(m) return callback_(m) end)
   end
@@ -129,6 +129,12 @@ function main(opts,out_)
 				  end)
   end
 
+  if opts["u"] then
+    readonly_mule(function(m)
+					return m.dump("*",tonumber(opts["u"]))
+				  end)
+  end
+
   local function generic_process(opt_,command_)
 	if not opts[opt_] then
 	  return false
@@ -144,7 +150,6 @@ function main(opts,out_)
 	return true
   end
 
-  generic_process("u","dump")
   generic_process("g","graph")
   generic_process("p","piechart")
   generic_process("k","keys")
@@ -166,19 +171,18 @@ end
 
 if not lunit then
   opts = getopt(arg,"ldcngksamotxpeuy")
-  
-  if opts.y then 
+
+  if opts.y then
 	logd("starting profiler")
-	profiler.start("profiler.out") 
+	profiler.start("profiler.out")
   end
-  
+
   local rv = main(opts,stdout("\n"))
-  
-  if opts.y then 
+
+  if opts.y then
 	logd("stopping profiler")
-	profiler.stop() 
+	profiler.stop()
   end
-  
+
   os.exit(rv and 0 or -1)
 end
-

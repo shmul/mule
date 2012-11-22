@@ -94,6 +94,10 @@ function sequence(metric_)
 			   return _store.latest()
 			 end,
 
+	latest_timestamp = function()
+			   return _store.get_slot(_store.latest())._timestamp
+			 end,
+
 	update = function(timestamp_,value_,hits_)
 			   local idx,adjusted_timestamp = find_slot(timestamp_)
 			   local slot = _store.get_slot(idx)
@@ -258,7 +262,7 @@ function mule(sequences_)
 		  error("step greater than period")
 		  return nil
 		end
-		
+
 		_factories[pattern] = _factories[pattern] or {}
 		table.insert(_factories[pattern],{step,period})
 	  end
@@ -339,12 +343,14 @@ function mule(sequences_)
 	return true
   end
 
-  local function dump(metrics_)
+  local function dump(metrics_,gc_timestamp_)
 	local str = stdout(" "," ")
 	for m in split_helper(metrics_,"/") do
 	  for seq in _sequences.pairs(m) do
-		seq.serialize(str,{deep=true,skip_empty=true,pretty_print=true})
-		str.write_string("\n")
+        if not gc_timestamp_ or seq.latest_timestamp()>=gc_timestamp_ then
+          seq.serialize(str,{deep=true,skip_empty=true,pretty_print=true})
+          str.write_string("\n")
+        end
 	  end
 	end
   end
@@ -482,7 +488,7 @@ function mule(sequences_)
 	  loge("couldn't find a match for",metric_line_)
 	  return "0"
 	end
-	
+
 	for _,s in ipairs(matches) do
 	  s.update(timestamp_,value_,1)
 	end
@@ -607,4 +613,3 @@ function mule(sequences_)
 	process = process
   }
 end
-
