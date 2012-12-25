@@ -228,6 +228,6 @@ TODO provide nginx proxying configuration
 
 ### CLI
 
-Mule also has a command line interface which is useful for tests (and development), but less os for an interactive use. Run `lua mule.lua -h` for a (terse) usage description.
+Mule also has a command line interface which is useful for tests (and development), but less so for an interactive use. Run `lua mule.lua -h` for a (terse) usage description.
 
 TODO provide a list of the common commands
