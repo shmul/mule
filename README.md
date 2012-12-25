@@ -153,7 +153,7 @@ TODO - more commands
 
 * install either lua 5.1 or 5.2, preferably using your standard package manager. Alternatively installation [from source](http://www.lua.org/download.html) is also very simple.
 * luarocks should also be installed using the package manager or (from source)[http://luarocks.org/en/Download].
-* install additional rocks - cmsgpack, copas
+* install additional rocks - copas
 
 ### Kyotocabinet (or tokyocabinet)
 

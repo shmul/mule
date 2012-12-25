@@ -1,5 +1,5 @@
 require "helpers"
-local mp = require "cmsgpack"
+local mp = require "purepack"
 require "conf"
 
 local function name(metric_,step_,period_)
