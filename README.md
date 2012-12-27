@@ -167,7 +167,7 @@ cd kyotocabinet-1.2.76/
 configure
 make
 sudo make install
-</pre<
+</pre>
 
 #### Kyotocabinet-lua
 
