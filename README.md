@@ -129,7 +129,7 @@ mule_graph({"version": 3,
 
 #### key
 
-    http://muleserver/graph/<metric>
+    http://muleserver/key/<metric>
 
 Returns all the names for which metric is a prefix. Example output is
 
