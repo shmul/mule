@@ -14,18 +14,21 @@
 prog="mule.lua"
 stop_token="nomoremule"
 mule_port=8980
-luaexec=/usr/bin/lua
+muleuser=trusteer
+luaexe=/usr/bin/lua
+luarocks=/usr/local/bin/luarocks
 muleuser=`ls -l -H /etc/init.d/mule_daemon | awk '{ print $3}'`
 shareddir=/home/$muleuser/mule/shared
 currentdir=/home/$muleuser/mule/current
 #export FCGI_CHILDREN FCGI_MAX_REQUESTS
-
 RETVAL=0
 
 start() {
   echo "starting $prog: "
-  cd $currentdir
-  $luaexec $currentdir/mule.lua -l $shareddir/log/mule_http_daemon.log -d $shareddir/db/mule.tcb -t 0.0.0.0:$mule_port -x $stop_token &
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib;
+  eval `$luarocks path`
+  cmd="cd $currentdir && $luaexe $currentdir/mule.lua -l $shareddir/log/mule_http_daemon.log -d $shareddir/db/mule.tcb -t 0.0.0.0:$mule_port -x $stop_token &"
+  su $muleuser sh -c "$cmd"
   RETVAL=$?
   if [ $RETVAL -eq 0 ]
   then
