@@ -1,5 +1,5 @@
 require "helpers"
-local mp = require "purepack"
+local pp = require "purepack"
 require "conf"
 
 local function name(metric_,step_,period_)
@@ -17,12 +17,12 @@ function sequence(db_,name_)
     -- idx_ is zero based
     local sub = string.sub
     local format = string.format
-    local i = 1+(idx_*24)+offset_*8
+    local i = 1+(idx_*18)+offset_*6
     if not value_ then
-      return tonumber(format("0x%s",sub(_slots,i,i+7)))
+      return pp.from_binary(sub(_slots,i,i+5))
     end
 
-    _slots = format("%s%s%s",sub(_slots,1,i-1),format("%08x",value_),sub(_slots,i+8))
+    _slots = sub(_slots,1,i-1)..pp.to_binary(value_)..sub(_slots,i+6)
   end
 
   local function get_timestamp(idx_)
@@ -65,7 +65,8 @@ function sequence(db_,name_)
 
   local function reset()
     local numslots = _period/_step
-    _slots = string.rep("0",24*numslots+8)
+--    _slots = string.rep("0",24*numslots+8)
+    _slots = string.rep(pp.to_binary(0),3*numslots+1)
     save()
   end
 
@@ -624,9 +625,9 @@ function mule(db_)
 
   local function save()
     logi("save",table_size(_factories))
-    _db.put("metadata=version",mp.pack(CURRENT_VERSION))
-    _db.put("metadata=factories",mp.pack(_factories))
-    _db.put("metadata=alerts",mp.pack(_alerts))
+    _db.put("metadata=version",pp.pack(CURRENT_VERSION))
+    _db.put("metadata=factories",pp.pack(_factories))
+    _db.put("metadata=alerts",pp.pack(_alerts))
   end
 
 
@@ -635,13 +636,13 @@ function mule(db_)
     local ver = _db.get("metadata=version")
     local factories = _db.get("metadata=factories")
     local alerts = _db.get("metadata=alerts")
-	local version = ver and mp.unpack(ver) or CURRENT_VERSION
+	local version = ver and pp.unpack(ver) or CURRENT_VERSION
 	if not version==CURRENT_VERSION then
 	  error("unknown version")
 	  return nil
 	end
-	_factories = factories and mp.unpack(factories) or {}
-	_alerts = alerts and mp.unpack(alerts) or {}
+	_factories = factories and pp.unpack(factories) or {}
+	_alerts = alerts and pp.unpack(alerts) or {}
   end
 
 

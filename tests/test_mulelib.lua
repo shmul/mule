@@ -90,7 +90,6 @@ function test_calculate_idx()
   end
 end
 
-
 function helper_time_sequence(db_)
   local step,period = parse_time_pair("1m:60m")
   assert_equal(60,step)

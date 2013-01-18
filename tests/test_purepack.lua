@@ -71,3 +71,10 @@ function test_table_of_arrays()
   }
   assert(compare_tables(t,upp(t)))
 end
+
+function test_binary()
+  local tests = {0, 10, 8, 256, 65536, 16777216,math.pow(2,33)-1,math.pow(2,48)-1}
+  for i,v in ipairs(tests) do
+    assert_equal(v,p.from_binary(p.to_binary(v)),i)
+  end
+end
