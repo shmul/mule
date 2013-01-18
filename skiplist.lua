@@ -30,144 +30,145 @@ local log, floor, ceil, min, random
 
 local _,p = pcall(require,"purepack")
 
-local makeNode = function(value,size)
-    return {
-        value=value,
-        next={},
-        width={},
-        size=size
-    }
+local makeNode = function(key,size)
+  return {
+    key=key,
+    next={},
+    width={},
+    size=size
+         }
 end
 
 local End ={}
 local NIL = makeNode(End,0)
 
-local find_helper = function(self,value)
-    local node, chain, stepsAtLevel = self.head, {}, {}
-    for i=1, self.maxLevel do stepsAtLevel[i]=0 end
-    for level = self.maxLevel, 1, -1 do
-        while node.next[level] ~= NIL and node.next[level].value <= value do
-            stepsAtLevel[level] = ( stepsAtLevel[level] or 0 ) + node.width[level]
-            node = node.next[level]
-            --print(level, stepsAtLevel[level],value)
-        end
-        chain[level]=node
+local find_helper = function(self,key)
+  local node, chain, stepsAtLevel = self.head, {}, {}
+  for i=1, self.maxLevel do stepsAtLevel[i]=0 end
+  for level = self.maxLevel, 1, -1 do
+    while node.next[level] ~= NIL and node.next[level].key <= key do
+      stepsAtLevel[level] = ( stepsAtLevel[level] or 0 ) + node.width[level]
+      node = node.next[level]
+      --print(level, stepsAtLevel[level],key)
     end
-    return node, chain, stepsAtLevel
+    chain[level]=node
+  end
+  return node, chain, stepsAtLevel
 end
 
-local find = function(self,value)
-  local node,_,_ = find_helper(self,value)
+local find = function(self,key)
+  local node,_,_ = find_helper(self,key)
   return node
 end
 
-local insert = function(self,value)
-  local node, chain, stepsAtLevel = find_helper(self,value)
+local insert = function(self,key)
+  local node, chain, stepsAtLevel = find_helper(self,key)
 
-    local nodeLevel = min( self.maxLevel, - floor(log(random()) / log(2) ) )
-    local newNode = makeNode( value,  nodeLevel)
-    local steps, prevNode = 0
-    for level= 1, nodeLevel do
-        prevNode = chain[level]
-        newNode.next[level] = prevNode.next[level]
-        prevNode.next[level] = newNode
-        newNode.width[level] = prevNode.width[level] - steps
-        prevNode.width[level] = steps + 1
-        steps = steps + stepsAtLevel[level]
-    end
-    for level = nodeLevel + 1, self.maxLevel do
-        chain[level].width[level] = chain[level].width[level] +1
-    end
-    self.size = self.size + 1
+  local nodeLevel = min( self.maxLevel, - floor(log(random()) / log(2) ) )
+  local newNode = makeNode( key,  nodeLevel)
+  local steps, prevNode = 0
+  for level= 1, nodeLevel do
+    prevNode = chain[level]
+    newNode.next[level] = prevNode.next[level]
+    prevNode.next[level] = newNode
+    newNode.width[level] = prevNode.width[level] - steps
+    prevNode.width[level] = steps + 1
+    steps = steps + stepsAtLevel[level]
+  end
+  for level = nodeLevel + 1, self.maxLevel do
+    chain[level].width[level] = chain[level].width[level] +1
+  end
+  self.size = self.size + 1
+  return newNode
 end
 
-local delete = function(self,value)
-    -- find first node on each level where node.next[levels].value >= value
+local delete = function(self,key)
+  -- find first node on each level where node.next[levels].key >= key
 
-    node, chain = self.head, {}
-    for level = self.maxLevel, 1, -1 do
-        while node.next[level] ~= NIL and node.next[level].value < value do
-            node = node.next[level]
-        end
-        chain[level] = node
+  node, chain = self.head, {}
+  for level = self.maxLevel, 1, -1 do
+    while node.next[level] ~= NIL and node.next[level].key < key do
+      node = node.next[level]
     end
-    if value ~= chain[1].next[1].value then
-        return nil, "value not found: "..value
-    end
+    chain[level] = node
+  end
+  if key ~= chain[1].next[1].key then
+    return nil, "key not found: "..key
+  end
 
-    -- remove one link at each level
-    nodeLevel = chain[1].next[1].size
-    for level = 1, nodeLevel do
-        prevnode = chain[level]
-        prevnode.width[level] = prevnode.width[level] + prevnode.next[level].width[level] - 1
-        prevnode.next[level] = prevnode.next[level].next[level]
-    end
-    for level = nodeLevel+1, self.maxLevel do
-        chain[level].width[level] = chain[level].width[level] - 1
-    end
-    self.size = self.size - 1
-    return true --success
+  -- remove one link at each level
+  nodeLevel = chain[1].next[1].size
+  for level = 1, nodeLevel do
+    prevnode = chain[level]
+    prevnode.width[level] = prevnode.width[level] + prevnode.next[level].width[level] - 1
+    prevnode.next[level] = prevnode.next[level].next[level]
+  end
+  for level = nodeLevel+1, self.maxLevel do
+    chain[level].width[level] = chain[level].width[level] - 1
+  end
+  self.size = self.size - 1
+  return true --success
 end
 
 
 local first = function(self)
-    return self.head.next[1].value
+  return self.head.next[1].key
 end
 
 local pop=function (self)
-    if self.size == 0 then return nil, "Trying to pop an empty list" end
+  if self.size == 0 then return nil, "Trying to pop an empty list" end
 
-    local node, head = self.head.next[1], self.head
-    for level = 1, node.size do
-        head.next[level]=node.next[level]
-        head.width[level]=node.width[level]
-    end
-    for level = node.size + 1, self.maxLevel do
-        head.width[level] = head.width[level] -1
-    end
-    self.size = self.size - 1
-    return node.value
+  local node, head = self.head.next[1], self.head
+  for level = 1, node.size do
+    head.next[level]=node.next[level]
+    head.width[level]=node.width[level]
+  end
+  for level = node.size + 1, self.maxLevel do
+    head.width[level] = head.width[level] -1
+  end
+  self.size = self.size - 1
+  return node.key
 end
 
--- get the value of the node at index i ( O( log( n ) ) )
+-- get the key of the node at index i ( O( log( n ) ) )
 
 local tostring = function (self)
-    local t = {}
-    for k,v in self:ipairs() do table.insert(t,v) end
-    return "( "..table.concat(t,", ").. " )"
+  local t = {}
+  for k,v in self:ipairs() do table.insert(t,v) end
+  return "( "..table.concat(t,", ").. " )"
 end
 
 
 local islMT = {
-    __index = function(self,i)
-      if type(i)=="string" then
-        local node = find(self,i)
-        return (node and node.value==i and node) or nil
-      end
-        if i > self.size then return end
-        local node = self.head
+  __index = function(self,i)
+    if type(i)=="string" then
+      local node = find(self,i)
+      return (node and node.key==i and node) or nil
+    end
+    if i > self.size then return end
+    local node = self.head
 
-        for level=self.maxLevel, 1, -1 do
-            while node.width[level] <= i do
-                i = i - node.width[level]
-                node = node.next[level]
-            end
-        end
-        return node.value
-    end,
-    __tostring=tostring
+    for level=self.maxLevel, 1, -1 do
+      while node.width[level] <= i do
+        i = i - node.width[level]
+        node = node.next[level]
+      end
+    end
+    return node.key
+  end,
+  __tostring=tostring
 }
 
 
 local ipairs = function (self)
-    local node, size = self.head.next[1] , self.size
-    local count = 0
-    return function()
-        local value = node.value
-        node = node.next[1]
-        count = count+1
-        return count <= size and count or nil, value
-    end
+  local node, size = self.head.next[1] , self.size
+  local count = 0
+  return function()
+    local key = node.key
+    node = node.next[1]
+    count = count+1
+    return count <= size and count or nil, key
+         end
 end
 
 local pack = function (self)
@@ -181,30 +182,30 @@ local unpack = function (self,packed_)
 end
 
 local function new (expected_size)
-    local maxLevel = floor( log(expected_size) / log(2) )
-    local head = makeNode("HEAD",maxLevel)
-    for i=1,maxLevel do
-        head.next[i] = NIL
-        head.width[i] = 1
-    end
+  local maxLevel = floor( log(expected_size) / log(2) )
+  local head = makeNode("HEAD",maxLevel)
+  for i=1,maxLevel do
+    head.next[i] = NIL
+    head.width[i] = 1
+  end
 
-    return setmetatable( {
-        size = 0,
-        head = head,
-        maxLevel = maxLevel,
-        find = find,
-        insert = insert,
-        delete = delete,
-        first = first,
-        tostring = tostring,
-        ipairs=ipairs,
-        pop = pop,
-        pack = pack,
-        unpack = unpack
-        }, islMT
-    )
+  return setmetatable( {
+                         size = 0,
+                         head = head,
+                         maxLevel = maxLevel,
+                         find = find,
+                         insert = insert,
+                         delete = delete,
+                         first = first,
+                         tostring = tostring,
+                         ipairs=ipairs,
+                         pop = pop,
+                         pack = pack,
+                         unpack = unpack
+                       }, islMT
+                     )
 end
 
 return {
-    new=new
-}
+  new=new
+       }

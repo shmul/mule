@@ -13,10 +13,10 @@ function test_find()
   assert_equal(3,sl.size)
   assert_equal(3,sl.maxLevel)
   assert_equal("cruel",sl[1])
-  assert_equal("cruel",sl["cruel"].value)
+  assert_equal("cruel",sl["cruel"].key)
   assert_nil(sl["crul"])
-  assert_equal("cruel",sl:find("crul").value)
-  assert_equal("hello",sl:find("jello").value)
+  assert_equal("cruel",sl:find("crul").key)
+  assert_equal("hello",sl:find("jello").key)
 end
 
 function test_pack()
