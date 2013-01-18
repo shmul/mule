@@ -28,6 +28,8 @@ THE SOFTWARE.
 local log, floor, ceil, min, random
 = math.log, math.floor, math.ceil, math.min, math.random
 
+local _,p = pcall(require,"purepack")
+
 local makeNode = function(value,size)
     return {
         value=value,
@@ -131,7 +133,7 @@ end
 
 local tostring = function (self)
     local t = {}
-    for k,v in self:iter() do table.insert(t,v) end
+    for k,v in self:ipairs() do table.insert(t,v) end
     return "( "..table.concat(t,", ").. " )"
 end
 
@@ -159,13 +161,23 @@ local islMT = {
 
 local ipairs = function (self)
     local node, size = self.head.next[1] , self.size
-    count = 0
+    local count = 0
     return function()
-        value=node.value
+        local value = node.value
         node = node.next[1]
         count = count+1
         return count <= size and count or nil, value
     end
+end
+
+local pack = function (self)
+  return p.pack(self.head)
+end
+
+local unpack = function (self,packed_)
+  self.head = p.unpack(packed_)
+  self.maxLevel = #self.head.width
+  self.size = self.head.size
 end
 
 local function new (expected_size)
@@ -186,7 +198,9 @@ local function new (expected_size)
         first = first,
         tostring = tostring,
         ipairs=ipairs,
-        pop = pop
+        pop = pop,
+        pack = pack,
+        unpack = unpack
         }, islMT
     )
 end

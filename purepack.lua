@@ -30,7 +30,8 @@ else
                       )
   end
 
-  function from_binary(str_)
+  function from_binary(str_,s)
+    s = s or 1
     local by = string.byte
     return (by(str_,1,1) or 0) +
       (by(str_,2,2) or 0)*256 +
@@ -45,7 +46,6 @@ local END_OF_TABLE_MARK = "end.of.table.mark"
 
 function pack(obj_)
   local insert = table.insert
-  local format = string.format
   local out = {}
 
   local function push(type,len,val)
@@ -67,12 +67,13 @@ function pack(obj_)
   elseif type(obj_)=="table" then
     insert(out,"t")
     for k,v in pairs(obj_) do
-      insert(out,pack(k))
-      insert(out,pack(v))
+      if type(v)~="function" then
+        insert(out,pack(k))
+        insert(out,pack(v))
+      end
     end
     insert(out,"e")
   end
-
   return table.concat(out,"")
 end
 
@@ -84,12 +85,12 @@ local function unpack_helper(str_,i)
   end
 
   local function as_number(u)
-    return tonumber(from_binary(string.sub(str_,u,u+5)))
+    return tonumber(from_binary(string.sub(str_,u)))
   end
 
   if s=="s" then
     local len = as_number(i)
-    return string.sub(str_,i+6,i+len+5),i+len+6
+    return string.sub(str_,i+6,i+5+len),i+len+6
   end
   if s=="i" then
     return as_number(i),i+6
