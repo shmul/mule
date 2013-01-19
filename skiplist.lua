@@ -25,8 +25,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 --]]------------------------------------------------------------------
 
-local log, floor, ceil, min, random
-= math.log, math.floor, math.ceil, math.min, math.random
+local log, floor, ceil, min, random, pow
+= math.log, math.floor, math.ceil, math.min, math.random, math.pow
 
 local _,p = pcall(require,"purepack")
 
@@ -49,7 +49,6 @@ local find_helper = function(self,key)
     while node.next[level] ~= NIL and node.next[level].key <= key do
       stepsAtLevel[level] = ( stepsAtLevel[level] or 0 ) + node.width[level]
       node = node.next[level]
-      --print(level, stepsAtLevel[level],key)
     end
     chain[level]=node
   end
@@ -79,6 +78,21 @@ local insert = function(self,key)
     chain[level].width[level] = chain[level].width[level] +1
   end
   self.size = self.size + 1
+
+  -- automatically adjust the maxLevel to handle larger number of elements
+
+  if self.size*2>pow(2,self.maxLevel) then
+    local new_width = 0
+    local node = self.head
+    while node~=NIL do
+      new_width = new_width + node.width[self.maxLevel]
+      node = node.next[self.maxLevel]
+    end
+    self.maxLevel = self.maxLevel + 1
+    self.head.width[self.maxLevel] = new_width
+    self.head.next[self.maxLevel] = NIL
+  end
+
   return newNode
 end
 
@@ -181,8 +195,8 @@ local unpack = function (self,packed_)
   self.size = self.head.size
 end
 
-local function new (expected_size)
-  local maxLevel = floor( log(expected_size) / log(2) )
+local function new ()
+  local maxLevel = 2
   local head = makeNode("HEAD",maxLevel)
   for i=1,maxLevel do
     head.next[i] = NIL
