@@ -318,8 +318,8 @@ function deserialize_table_of_arrays(in_,callback_)
 end
 
 
-function with_file(file_,func_)
-  local f = io.open(file_,"r")
+function with_file(file_,func_,mode_)
+  local f = io.open(file_,mode_ or "r")
   if not f then return false end
   func_(f)
   f:close()
