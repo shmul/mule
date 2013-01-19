@@ -8,21 +8,54 @@ local function name(metric_,step_,period_)
                            secs_to_time_unit(period_))
 end
 
+local function sequence_storage(db_)
+  local _data = nil
+
+  local function get_raw(idx_,offset_)
+    -- idx_ is zero based
+    local i = 1+(idx_*18)+offset_*6
+    return pp.from_binary(string.sub(_data,i,i+5))
+  end
+
+  local function set_raw(idx_,offset_,value_)
+    -- idx_ is zero based
+    local i = 1+(idx_*18)+offset_*6
+    _data = string.sub(_data,1,i-1)..pp.to_binary(value_)..string.sub(_data,i+6)
+  end
+
+  local function save(name_)
+    db_.put(name_,_data)
+  end
+
+  local function init(numslots_)
+    _data = string.rep(pp.to_binary(0),3*numslots_+1)
+    return _data
+  end
+
+  local function get_or_init(name_,numslots_)
+    _data = db_.get(name_) or init(numslots_)
+    return _data
+  end
+
+  return {
+    get_raw = get_raw,
+    set_raw = set_raw,
+    save = save,
+    init = init,
+    get_or_init = get_or_init,
+         }
+end
 
 function sequence(db_,name_)
   local _metric,_step,_period,_name
-  local _slots = nil
+  local _seq_storage = sequence_storage(db_)
 
   local function at(idx_,offset_,value_)
-    -- idx_ is zero based
-    local sub = string.sub
-    local format = string.format
-    local i = 1+(idx_*18)+offset_*6
     if not value_ then
-      return pp.from_binary(sub(_slots,i,i+5))
+      return _seq_storage.get_raw(idx_,offset_)
     end
 
-    _slots = sub(_slots,1,i-1)..pp.to_binary(value_)..sub(_slots,i+6)
+    _seq_storage.set_raw(idx_,offset_,value_)
   end
 
   local function get_timestamp(idx_)
@@ -47,10 +80,6 @@ function sequence(db_,name_)
     at(idx_,2,sum_)
   end
 
-  local function save()
-    db_.put(_name,_slots)
-  end
-
   local function latest(idx_)
     local pos = (_period/_step)
     if not idx_ then
@@ -64,10 +93,8 @@ function sequence(db_,name_)
   end
 
   local function reset()
-    local numslots = _period/_step
---    _slots = string.rep("0",24*numslots+8)
-    _slots = string.rep(pp.to_binary(0),3*numslots+1)
-    save()
+    _seq_storage.init(_period/_step)
+    _seq_storage.save(_name)
   end
 
   _name = name_
@@ -75,13 +102,10 @@ function sequence(db_,name_)
   _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
   _step = parse_time_unit(_step)
   _period = parse_time_unit(_period)
-  _slots = db_.get(name_)
-  if not _slots then
-    reset()
-  end
+  _seq_storage.get_or_init(name_,_period/_step)
 
 
-  local function update(timestamp_,sum_,hits_)
+  local function update(timestamp_,sum_,hits_,replace_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
     -- if this value is way back (but still fits in this slot)
     -- we discard it
@@ -93,17 +117,17 @@ function sequence(db_,name_)
     -- or if are way ahead of the previous time the slot was updated
     -- over-write its value
     local timestamp,hits,sum = get_slot(idx)
-    if adjusted_timestamp==timestamp and hits>0 then
+    if replace_ or (adjusted_timestamp==timestamp and hits>0) then
       -- no need to worry about the latest here, as we have the same (adjusted) timestamp
       set_slot(idx,adjusted_timestamp,hits+(hits_ or 1),sum+sum_)
     else
-      set_slot(idx,adjusted_timestamp,1,sum_)
+      set_slot(idx,adjusted_timestamp,hits_ or 1,sum_)
       if adjusted_timestamp>latest_timestamp() then
         latest(idx)
       end
     end
 
-    save()
+    _seq_storage.save(_name)
   end
 
   local function indices(sorted_)
