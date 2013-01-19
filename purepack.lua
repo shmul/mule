@@ -44,15 +44,25 @@ end
 
 local END_OF_TABLE_MARK = "end.of.table.mark"
 
-function pack(obj_)
+function pack(obj_,visited_,id_)
   local insert = table.insert
   local out = {}
+  visited_ = visited_ or {}
+  id_ = id_ or 0
 
   local function push(type,len,val)
     insert(out,type)
     insert(out,to_binary(len))
     if val then
       insert(out,val)
+    end
+  end
+
+  local function push_value_or_ref(p)
+    if type(p)~="table" or not visited_[p] then
+      insert(out,pack(p,visited_,id_))
+    else
+      push("r",visited_[p])
     end
   end
 
@@ -65,11 +75,13 @@ function pack(obj_)
   elseif obj_==true or obj_==false then
     insert(out,obj_ and "T" or "F")
   elseif type(obj_)=="table" then
-    insert(out,"t")
+    push("t",id_)
+    visited_[obj_] = id_
+    id_ = id_ + 1
     for k,v in pairs(obj_) do
       if type(v)~="function" then
-        insert(out,pack(k))
-        insert(out,pack(v))
+        push_value_or_ref(k)
+        push_value_or_ref(v)
       end
     end
     insert(out,"e")
@@ -77,8 +89,10 @@ function pack(obj_)
   return table.concat(out,"")
 end
 
-local function unpack_helper(str_,i)
+local function unpack_helper(str_,i,visited_)
   local s = string.sub(str_,i,i)
+  visited_ = visited_ or {}
+
   i = i + 1
   if s=="l" then
     return nil,i
@@ -95,6 +109,9 @@ local function unpack_helper(str_,i)
   if s=="i" then
     return as_number(i),i+6
   end
+  if s=="r" then
+    return visited_[as_number(i)],i+6
+  end
   if s=="T" or s=="F" then
     return s=="T",i
   end
@@ -104,12 +121,14 @@ local function unpack_helper(str_,i)
   if s=="t" then
     local t = {}
     local k,v
+    visited_[as_number(i)] = t
+    i = i + 6
     repeat
-      k,i = unpack_helper(str_,i)
+      k,i = unpack_helper(str_,i,visited_)
       if k==END_OF_TABLE_MARK then
         return t,i
       end
-      v,i = unpack_helper(str_,i)
+      v,i = unpack_helper(str_,i,visited_)
       t[k] = v
     until i>=#str_
     return t,i

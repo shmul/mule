@@ -78,3 +78,20 @@ function test_binary()
     assert_equal(v,p.from_binary(p.to_binary(v)),i)
   end
 end
+
+function test_circular()
+  local a = { val = 1 }
+  local b = { val = 2 }
+  local c = { val = 3 }
+  a.next = b
+  a.double_next = c
+  b.next = c
+  c.next = a
+
+  local v = upp(a)
+  assert_equal(v,v.next.next.next)
+  assert_equal(2,v.next.val)
+  assert_equal(3,v.next.next.val)
+  assert_equal(3,v.double_next.val)
+
+end
