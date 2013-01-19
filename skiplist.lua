@@ -186,13 +186,14 @@ local ipairs = function (self)
 end
 
 local pack = function (self)
-  return p.pack(self.head)
+  return p.pack({self.head,self.size})
 end
 
 local unpack = function (self,packed_)
-  self.head = p.unpack(packed_)
-  self.maxLevel = #self.head.width
-  self.size = self.head.size
+  local a =  p.unpack(packed_)
+  self.head = a[1]
+  self.maxLevel = #self.head.next
+  self.size = a[2]
 end
 
 local function new ()

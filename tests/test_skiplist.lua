@@ -31,6 +31,10 @@ function test_pack()
     sl:insert(v)
   end
   assert_equal(3,sl.maxLevel)
+  assert_equal("cruel",sl[1])
+  assert_equal("hello",sl[2])
+  assert_equal("world",sl[3])
+
   local k = sl:pack()
 
   sl = skip.new()
