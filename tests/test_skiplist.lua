@@ -46,3 +46,16 @@ function test_pack()
   assert_equal("hello",sl[2])
   assert_equal("world",sl[3])
 end
+
+
+function test_next()
+  local sl = skip.new()
+  for _,v in ipairs({"hello","cruel","world"}) do
+    sl:insert(v)
+  end
+
+  local f = sl:find("hello")
+  assert_equal("hello",f.key)
+  assert_equal("world",sl:next(f).key)
+  assert_nil(sl:next(sl:next(f)))
+end

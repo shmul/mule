@@ -185,6 +185,11 @@ local ipairs = function (self)
          end
 end
 
+local next = function (self,node)
+  local n = node.next[1]
+  return n.size>0 and n or nil
+end
+
 local pack = function (self)
   return p.pack({self.head,self.size})
 end
@@ -213,7 +218,8 @@ local function new ()
                          delete = delete,
                          first = first,
                          tostring = tostring,
-                         ipairs=ipairs,
+                         ipairs = ipairs,
+                         next = next,
                          pop = pop,
                          pack = pack,
                          unpack = unpack
