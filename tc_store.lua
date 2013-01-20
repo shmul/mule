@@ -87,13 +87,21 @@ function cabinet_db(db_name_,readonly_)
       end)
   end
 
-  return {
+  local self = {
     get = tc_get,
     put = tc_put,
     out = tc_out,
     matching_keys = matching_keys,
     close = tc_done,
-    sequence_storage = sequence_storage
-         }
+    sort_updated_names = function(names_)
+      table.sort(names_)
+      return names_
+    end
 
+  }
+  self.sequence_storage = function()
+    return sequence_storage(self)
+  end
+
+  return self
 end

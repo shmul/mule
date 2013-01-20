@@ -8,47 +8,10 @@ local function name(metric_,step_,period_)
                            secs_to_time_unit(period_))
 end
 
-local function sequence_storage(db_)
-  local _data = nil
-
-  local function get_raw(idx_,offset_)
-    -- idx_ is zero based
-    local i = 1+(idx_*18)+offset_*6
-    return pp.from_binary(string.sub(_data,i,i+5))
-  end
-
-  local function set_raw(idx_,offset_,value_)
-    -- idx_ is zero based
-    local i = 1+(idx_*18)+offset_*6
-    _data = string.sub(_data,1,i-1)..pp.to_binary(value_)..string.sub(_data,i+6)
-  end
-
-  local function save(name_)
-    db_.put(name_,_data)
-  end
-
-  local function init(numslots_)
-    _data = string.rep(pp.to_binary(0),3*numslots_+1)
-    return _data
-  end
-
-  local function get_or_init(name_,numslots_)
-    _data = db_.get(name_) or init(numslots_)
-    return _data
-  end
-
-  return {
-    get_raw = get_raw,
-    set_raw = set_raw,
-    save = save,
-    init = init,
-    get_or_init = get_or_init,
-         }
-end
 
 function sequence(db_,name_)
   local _metric,_step,_period,_name
-  local _seq_storage = sequence_storage(db_)
+  local _seq_storage = db_.sequence_storage()
 
   local function at(idx_,offset_,value_)
     if not value_ then
@@ -775,8 +738,10 @@ function mule(db_)
     -- 2) an entire sequence
     local name = items[1]
     table.remove(items,1)
+    -- here we DON'T use the sparse sequence as they aren't needed when reading an
+    -- entire sequence
     local seq = sequence(_db,name)
-    return update_sequence(seq,items,update_sequences_)
+    return update_sequence(seq,items)
   end
 
 
@@ -822,8 +787,10 @@ function mule(db_)
     local rv = helper()
     -- we now update the real sequences
     local now = os.time()
-    for n,s in pairs(updated_sequences) do
+    local sorted_updated_names = _db.sort_updated_names(keys(updated_sequences))
+    for _,n in ipairs(sorted_updated_names) do
       local seq = sequence(_db,n)
+      local s = updated_sequences[n]
       for _,sl in ipairs(s.slots()) do
         seq.update(sl._timestamp,sl._sum,sl._hits)
       end

@@ -513,3 +513,14 @@ function qs_params(raw_qs_)
   end
   return params
 end
+
+function keys(table_)
+  local ks = {}
+  local insert = table.insert
+
+  for k,_ in pairs(table_) do
+    insert(ks,k)
+  end
+
+  return ks
+end
