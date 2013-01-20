@@ -1,4 +1,4 @@
-
+require "sequence_store"
 local ks,kyoto = pcall(require,"kyotocabinet")
 local ts,tokyo = pcall(require,"tokyocabinet") -- tokyocabinet require returns true/false
 
@@ -92,7 +92,8 @@ function cabinet_db(db_name_,readonly_)
     put = tc_put,
     out = tc_out,
     matching_keys = matching_keys,
-    close = tc_done
+    close = tc_done,
+    sequence_storage = sequence_storage
          }
 
 end

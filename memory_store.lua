@@ -1,3 +1,5 @@
+require "sequence_store"
+
 function in_memory_db()
   local _storage = {}
 
@@ -18,6 +20,7 @@ function in_memory_db()
     put = function(key_,value_) _storage[key_] = value_ end,
     out = function(key_) _storage[key_] = nil end,
     matching_keys = matching_keys,
-    close = function () end
+    close = function () end,
+    sequence_storage = sequence_storage
          }
 end
