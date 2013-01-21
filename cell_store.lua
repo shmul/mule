@@ -1,5 +1,9 @@
 require "helpers"
 
+
+-- row - every name/metric is a row
+-- column - the slot index
+
 function cell_store(file_,num_rows_,cell_size_)
   local file = nil
   local dirty = false

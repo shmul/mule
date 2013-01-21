@@ -1,30 +1,16 @@
 local pp = require "purepack"
+require "helpers"
 
 function sequence_storage(db_,name_,numslots_)
   local _data = nil
 
-  local function get_cell(idx_,offset_)
-    -- idx_ is zero based
-    local fromb,sub = pp.from_binary,string.sub
-    if offset_ then
-      local i = 1+(idx_*18)+offset_*6
-      return fromb(sub(_data,i,i+5))
-    end
-    local i = 1+(idx_*18)
-    return fromb(sub(_data,i,i+5)),fromb(sub(_data,i+6,i+11)),fromb(sub(_data,i+12,i+17))
+  local function internal_get_slot(idx_,offset_)
+    return get_slot(_data,idx_,offset_)
   end
 
 
-  local function set_cell(idx_,offset_,a,b,c)
-    -- idx_ is zero based
-    local tob,sub = pp.to_binary,string.sub
-    if offset_ then
-      local i = 1+(idx_*18)+offset_*6
-      _data = sub(_data,1,i-1)..tob(a)..sub(_data,i+6)
-      return
-    end
-    local i = 1+(idx_*18)
-    _data = sub(_data,1,i-1)..tob(a)..tob(b)..tob(c)..sub(_data,i+18)
+  local function internal_set_slot(idx_,offset_,a,b,c)
+    _data = set_slot(_data,idx_,offset_,a,b,c)
   end
 
   local function save()
@@ -40,8 +26,8 @@ function sequence_storage(db_,name_,numslots_)
   _data = db_.get(name_) or reset()
 
   return {
-    get_cell = get_cell,
-    set_cell = set_cell,
+    get_slot = internal_get_slot,
+    set_slot = internal_set_slot,
     save = save,
     reset = reset
          }
