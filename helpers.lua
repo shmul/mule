@@ -1,4 +1,5 @@
 local s,url = pcall(require,"socket.url")
+local pp = require "purepack"
 
 -- file/stdout logging
 local logfile = nil
@@ -523,4 +524,33 @@ function keys(table_)
   end
 
   return ks
+end
+
+function split_name(name_)
+  local metric,step,period = string.match(name_,"^(.+);(%w+):(%w+)$")
+  return metric,step and parse_time_unit(step),period and parse_time_unit(period)
+end
+
+
+function get_slot(data_,idx_,offset_)
+  -- idx_ is zero based
+  local fromb,sub = pp.from_binary,string.sub
+  if offset_ then
+    local i = 1+(idx_*18)+offset_*6
+    return fromb(sub(data_,i,i+5))
+  end
+  local i = 1+(idx_*18)
+  return fromb(sub(data_,i,i+5)),fromb(sub(data_,i+6,i+11)),fromb(sub(data_,i+12,i+17))
+end
+
+
+function set_slot(data_,idx_,offset_,a,b,c)
+  -- idx_ is zero based
+  local tob,sub = pp.to_binary,string.sub
+  if offset_ then
+    local i = 1+(idx_*18)+offset_*6
+    return sub(data_,1,i-1)..tob(a)..sub(data_,i+6)
+  end
+  local i = 1+(idx_*18)
+  return sub(data_,1,i-1)..tob(a)..tob(b)..tob(c)..sub(data_,i+18)
 end

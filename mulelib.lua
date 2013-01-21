@@ -12,12 +12,13 @@ end
 function sequence(db_,name_)
   local _metric,_step,_period,_name,_seq_storage
 
-  local function at(idx_,offset_,value_)
-    if not value_ then
-      return _seq_storage.get_cell(idx_,offset_)
+  local function at(idx_,offset_,a_,b_,c_)
+    -- a nil offset_ is translated to reading/writing the entire cell (3 items)
+    if not a_ then
+      return _seq_storage.get_slot(idx_,offset_)
     end
 
-    _seq_storage.set_cell(idx_,offset_,value_)
+    _seq_storage.set_slot(idx_,offset_,a_,b_,c_)
   end
 
   local function get_timestamp(idx_)
@@ -33,13 +34,11 @@ function sequence(db_,name_)
   end
 
   local function get_slot(idx_)
-    return at(idx_,0), at(idx_,1), at(idx_,2)
+    return at(idx_)
   end
 
   local function set_slot(idx_,timestamp_,hits_,sum_)
-    at(idx_,0,timestamp_)
-    at(idx_,1,hits_)
-    at(idx_,2,sum_)
+    at(idx_,nil,timestamp_,hits_,sum_)
   end
 
   local function latest(idx_)
@@ -61,9 +60,7 @@ function sequence(db_,name_)
 
   _name = name_
 
-  _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
-  _step = parse_time_unit(_step)
-  _period = parse_time_unit(_period)
+  _metric,_step,_period = split_name(name_)
   _seq_storage = db_.sequence_storage(name_,_period/_step)
 
 
@@ -174,9 +171,10 @@ function sequence(db_,name_)
     local slots = {}
     local insert = table.insert
     for i=0,_period/_step do
-      insert(slots,at(i,0))
-      insert(slots,at(i,1))
-      insert(slots,at(i,2))
+      local a,b,c = at(i)
+      insert(slots,a)
+      insert(slots,b)
+      insert(slots,c)
     end
     return slots
   end

@@ -5,14 +5,26 @@ function sequence_storage(db_,name_,numslots_)
 
   local function get_cell(idx_,offset_)
     -- idx_ is zero based
-    local i = 1+(idx_*18)+offset_*6
-    return pp.from_binary(string.sub(_data,i,i+5))
+    local fromb,sub = pp.from_binary,string.sub
+    if offset_ then
+      local i = 1+(idx_*18)+offset_*6
+      return fromb(sub(_data,i,i+5))
+    end
+    local i = 1+(idx_*18)
+    return fromb(sub(_data,i,i+5)),fromb(sub(_data,i+6,i+11)),fromb(sub(_data,i+12,i+17))
   end
 
-  local function set_cell(idx_,offset_,value_)
+
+  local function set_cell(idx_,offset_,a,b,c)
     -- idx_ is zero based
-    local i = 1+(idx_*18)+offset_*6
-    _data = string.sub(_data,1,i-1)..pp.to_binary(value_)..string.sub(_data,i+6)
+    local tob,sub = pp.to_binary,string.sub
+    if offset_ then
+      local i = 1+(idx_*18)+offset_*6
+      _data = sub(_data,1,i-1)..tob(a)..sub(_data,i+6)
+      return
+    end
+    local i = 1+(idx_*18)
+    _data = sub(_data,1,i-1)..tob(a)..tob(b)..tob(c)..sub(_data,i+18)
   end
 
   local function save()
