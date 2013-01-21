@@ -26,8 +26,8 @@ function in_memory_db()
     end
   }
 
-  self.sequence_storage = function()
-    return sequence_storage(self)
+  self.sequence_storage = function(name_,numslots_)
+    return sequence_storage(self,name_,numslots_)
   end
 
   return self

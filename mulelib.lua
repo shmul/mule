@@ -10,15 +10,14 @@ end
 
 
 function sequence(db_,name_)
-  local _metric,_step,_period,_name
-  local _seq_storage = db_.sequence_storage()
+  local _metric,_step,_period,_name,_seq_storage
 
   local function at(idx_,offset_,value_)
     if not value_ then
-      return _seq_storage.get_raw(idx_,offset_)
+      return _seq_storage.get_cell(idx_,offset_)
     end
 
-    _seq_storage.set_raw(idx_,offset_,value_)
+    _seq_storage.set_cell(idx_,offset_,value_)
   end
 
   local function get_timestamp(idx_)
@@ -56,8 +55,8 @@ function sequence(db_,name_)
   end
 
   local function reset()
-    _seq_storage.init(_period/_step)
-    _seq_storage.save(_name)
+    _seq_storage.reset()
+    _seq_storage.save()
   end
 
   _name = name_
@@ -65,7 +64,7 @@ function sequence(db_,name_)
   _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
   _step = parse_time_unit(_step)
   _period = parse_time_unit(_period)
-  _seq_storage.get_or_init(name_,_period/_step)
+  _seq_storage = db_.sequence_storage(name_,_period/_step)
 
 
   local function update(timestamp_,sum_,hits_,replace_)
