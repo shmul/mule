@@ -4,6 +4,7 @@ require "tests.strict"
 require "lunit"
 require "tc_store"
 require "memory_store"
+local cdb = require "column_db"
 
 module( "test_mulelib", lunit.testcase,package.seeall )
 
@@ -11,6 +12,12 @@ module( "test_mulelib", lunit.testcase,package.seeall )
 local function cabinet_db_factory(name_)
   os.remove(name_..cabinet.suffix)
   return cabinet_db(name_..cabinet.suffix)
+end
+
+local function column_db_factory(name_)
+  os.execute("rm -rf "..name_.."_cdb")
+  os.execute("mkdir -p "..name_.."_cdb")
+  return cdb.column_db(name_.."_cdb")
 end
 
 local function insert_all_args(tbl_)
@@ -216,6 +223,7 @@ end
 function test_sequences()
   helper_time_sequence(in_memory_db())
   helper_time_sequence(cabinet_db_factory("./tests/temp/test_sequences"))
+  helper_time_sequence(column_db_factory("./tests/temp/test_sequences"))
 end
 
 local function table_itr(tbl_)
@@ -695,3 +703,5 @@ function test_dump_restore()
   m.process(line)
   assert(string.find(m.graph("beer.stout.irish;5m:2d"),'"data": {"beer.stout.irish;5m:2d": [[1,1,1353074400],[1,1,1353087600],[1,1,1353179400],[2,1,1353019200]]',1,true))
 end
+
+verbose_log(true)

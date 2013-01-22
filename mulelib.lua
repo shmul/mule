@@ -17,7 +17,6 @@ function sequence(db_,name_)
     if not a_ then
       return _seq_storage.get_slot(idx_,offset_)
     end
-
     _seq_storage.set_slot(idx_,offset_,a_,b_,c_)
   end
 

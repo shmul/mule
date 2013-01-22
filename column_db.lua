@@ -1,22 +1,29 @@
 module("column_db",package.seeall)
 require "helpers"
+require "cell_store"
 
 local _,p = pcall(require,"purepack")
 local _,sl = pcall(require,"skiplist")
 
-COLUMN_DB_PER_FILE = 200
+COLUMN_DB_PER_FILE = 2000
 function column_db(base_dir_)
-  local index = sl:new(NUMBER_OF_KEYS)
+  local index = sl:new()
   local meta_file = base_dir_.."/db.meta"
-  local metric_files = {}
+  local cell_store_cache = {}
 
+  local function read_meta_file()
+    with_file(meta_file,
+              function(f_)
+                index:unpack(f_:read("*a"))
+              end,"r+b")
+  end
 
-
-  with_file(meta_file,
-            function(f_)
-              index = p.unpack(f_:read("*a"))
-            end,"r+b")
-
+  local function save_meta_file()
+    with_file(meta_file,
+              function(f_)
+                f_:write(index.pack())
+              end,"w+b")
+  end
 
   local function extract_from_name(name_)
     local node = index[name_]
@@ -27,23 +34,44 @@ function column_db(base_dir_)
       node.metric = metric
       node.step = step
       node.period = period
+      node.value = index.size-1
     end
+
     return node.metric,node.step,node.period,node.value
   end
 
   local function find_file(name_)
     local metric,step,period,id = extract_from_name(name_)
     -- we normalize the step,period variables to canonical time units
-    return string.format("%s/%s.%s.%d.cdb",base_dir_,
-                         secs_to_time_unit(step),
-                         secs_to_time_unit(period),
-                         id / COLUMN_DB_PER_FILE),period/step,id % COLUMN_DB_PER_FILE
+    -- we add 1 to the period/step to accomodate the latest value at the last slot
+    local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
+                                    secs_to_time_unit(step),
+                                    secs_to_time_unit(period),
+                                    id / COLUMN_DB_PER_FILE)
+    local cdb = cell_store_cache[file_name]
+    if not cdb then
+      cdb = cell_store(file_name,1+period/step,COLUMN_DB_PER_FILE,18) -- 3 items per slot, 6 bytes per one
+      cell_store_cache[file_name] = cdb
+    end
+
+    return cdb,id % COLUMN_DB_PER_FILE
+  end
+
+  local function save_all(close_)
+    for k,cdb in pairs(cell_store_cache) do
+      cdb:flush()
+      if close_ then
+        cdb:close()
+      end
+    end
+    if close_ then
+      cell_store_cache = {}
+    end
+    save_meta_file()
   end
 
   local function with_cell_db(name_,func_)
-  -- TODO add open cell_db cache
-    local filename,num_rows,row = find_file(name_)
-    local cdb = cell_store(filename,size,18) -- 3 items per slot, 6 bytes per one
+    local cdb,row = find_file(name_)
     -- TODO it is preferable to use pcall and to close/flush (or something) when
     -- the func returns. However, it can doesn't play well with multiple return values
     -- from func_
@@ -111,22 +139,28 @@ function column_db(base_dir_)
       end)
   end
 
-  local function internal_get_cell(name_,idx_,offset_)
-    return with_cell_db(name_,function(cdb,row)
+  local function internal_get_slot(name_,idx_,offset_)
+    return with_cell_db(name_,
+                        function(cdb,row)
                           local cell = cdb.read(row,idx_)
                           local a,b,c = get_slot(cell,idx_,offset_)
-                          release_cell_db(cdb)
+                          print("get",row,idx_,offset_,a,b,c)
                           return a,b,c
+                        end
                        )
   end
 
-  local function internal_set_cell(name_idx_,offset_,a,b,c)
-    return with_cell_db(name_,function(cdb,row)
-                          local cell = set_slot(cdb.read(row,idx_),idx_,offset_,a,b,c)
-                          cdb.write(idx_,row,cell)
+  local function internal_set_slot(name_,idx_,offset_,a,b,c)
+    return with_cell_db(name_,
+                        function(cdb,row)
+                          print("set",row,idx_,offset_,a,b,c)
+                          local t,u,v,w,x = set_slot(cdb.read(row,idx_),idx_,offset_,a,b,c)
+                          cdb.write_cells(idx_,row,{t,u,v,w,x})
+                        end
                        )
   end
 
+  read_meta_file()
   local self = {
     save = save,
     put = put,
@@ -146,8 +180,23 @@ function column_db(base_dir_)
     end
   }
 
+
   self.sequence_storage = function(name_,numslots_)
-    return sequence_storage(self,name_,numslots_)
+    return {
+      get_slot = function(idx_,offset_)
+        return self.get_slot(name_,idx_,offset_)
+      end,
+      set_slot = function(idx_,offset_,a,b,c)
+        return self.set_slot(name_,idx_,offset_,a,b,c)
+      end,
+      save = function()
+        return with_cell_db(name_,
+                            function(cdb,row)
+                              cdb:flush()
+                            end)
+      end,
+      reset = function() print("reset",name_) end
+           }
   end
 
   return self

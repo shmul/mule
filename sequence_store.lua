@@ -10,7 +10,8 @@ function sequence_storage(db_,name_,numslots_)
 
 
   local function internal_set_slot(idx_,offset_,a,b,c)
-    _data = set_slot(_data,idx_,offset_,a,b,c)
+    local a,b,c,d,e = set_slot(_data,idx_,offset_,a,b,c)
+    _data = table.concat({a,b,c,d,e})
   end
 
   local function save()

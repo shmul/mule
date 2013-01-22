@@ -549,8 +549,12 @@ function set_slot(data_,idx_,offset_,a,b,c)
   local tob,sub = pp.to_binary,string.sub
   if offset_ then
     local i = 1+(idx_*18)+offset_*6
-    return sub(data_,1,i-1)..tob(a)..sub(data_,i+6)
+    return sub(data_,1,i-1),tob(a),sub(data_,i+6)
   end
   local i = 1+(idx_*18)
-  return sub(data_,1,i-1)..tob(a)..tob(b)..tob(c)..sub(data_,i+18)
+  return sub(data_,1,i-1),tob(a),tob(b),tob(c),sub(data_,i+18)
+end
+
+function printf(format_,...)
+  print(string.format(format_,...))
 end
