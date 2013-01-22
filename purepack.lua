@@ -30,15 +30,15 @@ else
                       )
   end
 
-  function from_binary(str_,s)
+  function from_binary(str_)
     s = s or 1
-    local by = string.byte
-    return (by(str_,1,1) or 0) +
-      (by(str_,2,2) or 0)*256 +
-      (by(str_,3,3) or 0)*65536 +
-      (by(str_,4,4) or 0)*16777216 +
-      (by(str_,5,5) or 0)*4294967296 +
-      (by(str_,6,6) or 0)*1099511627776
+    local a,b,c,d,e,f = string.byte(str_,1,-1)
+    return (a or 0) +
+      (b or 0)*256 +
+      (c or 0)*65536 +
+      (d or 0)*16777216 +
+      (e or 0)*4294967296 +
+      (f or 0)*1099511627776
   end
 end
 

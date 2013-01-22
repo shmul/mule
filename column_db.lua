@@ -1,11 +1,98 @@
 module("column_db",package.seeall)
 require "helpers"
-require "cell_store"
 
 local _,p = pcall(require,"purepack")
 local _,sl = pcall(require,"skiplist")
 
-COLUMN_DB_PER_FILE = 2000
+--[[
+Sequences are stored column by column, i.e. all the Nth slots of each sequences are stored
+sequentially. Every sequence is assigned a global id which places it in a "bucket" file with M many other sequences.
+
+definitions:
+  - cell - a single numeric value, 6 bytes long
+  - slot - trio of cells, timestamp, value, sum
+  - offset - the cell index within the slot
+  - id - a global running counter of the name
+  - idx - the column to updated
+  - sid - sequence id with in the store
+
+--]]
+
+function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
+  local file = nil
+  local dirty = false
+
+  local function reset()
+    local cmd = string.format("dd if=/dev/zero of=%s bs=%d count=%d &> /dev/null",
+                              file_,num_sequences_*slots_per_sequence_,slot_size_)
+    logi("creating file",file_)
+    os.execute(cmd)
+  end
+
+  if not file_exists(file_) then
+    reset()
+  end
+
+  file = io.open(file_,"r+b") --or io.open(file_,"w+b")
+  if not file then
+    loge("unable to open column store",file_)
+    return nil
+  end
+  logd("opened column store",file_)
+
+  local function close()
+    if file then
+      logd("closed column store",file_)
+      file:close()
+    end
+  end
+
+
+  local function flush()
+    if file and dirty then
+      logd("flush",file_)
+      file:flush()
+      dirty = false
+    end
+  end
+
+  -- zero based
+  local function seek(sid_,idx_)
+    if not file then
+      logw("no file")
+      return nil
+    end
+    local cell_pos = slot_size_*(idx_*slots_per_sequence_+sid_)
+    logd("seek",file_,cell_pos)
+    file:seek("set",cell_pos)
+    return true
+  end
+
+  local function read_cell(sid_,idx_)
+    flush()
+    if seek(sid_,idx_) then
+      return file:read(slot_size_)
+    end
+  end
+
+  local function write_cell(sid_,idx_,slot_)
+    if seek(sid_,idx_) then
+      dirty = true
+      return file:write(string.sub(slot_,1,slot_size_))
+    end
+  end
+
+
+  return {
+    close = close,
+    flush = flush,
+    read = read_cell,
+    write = write_cell,
+         }
+end
+
+
+SEQUENCES_PER_FILE = 2000
 function column_db(base_dir_)
   local index = sl:new()
   local meta_file = base_dir_.."/db.meta"
@@ -21,7 +108,7 @@ function column_db(base_dir_)
   local function save_meta_file()
     with_file(meta_file,
               function(f_)
-                f_:write(index.pack())
+                f_:write(index:pack())
               end,"w+b")
   end
 
@@ -47,14 +134,14 @@ function column_db(base_dir_)
     local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
                                     secs_to_time_unit(step),
                                     secs_to_time_unit(period),
-                                    id / COLUMN_DB_PER_FILE)
+                                    id / SEQUENCES_PER_FILE)
     local cdb = cell_store_cache[file_name]
     if not cdb then
-      cdb = cell_store(file_name,1+period/step,COLUMN_DB_PER_FILE,18) -- 3 items per slot, 6 bytes per one
+      cdb = cell_store(file_name,SEQUENCES_PER_FILE,1+period/step,18) -- 3 items per slot, 6 bytes per one
       cell_store_cache[file_name] = cdb
     end
 
-    return cdb,id % COLUMN_DB_PER_FILE
+    return cdb,id % SEQUENCES_PER_FILE
   end
 
   local function save_all(close_)
@@ -70,12 +157,12 @@ function column_db(base_dir_)
     save_meta_file()
   end
 
-  local function with_cell_db(name_,func_)
-    local cdb,row = find_file(name_)
+  local function with_cell_store(name_,func_)
+    local cdb,sid = find_file(name_)
     -- TODO it is preferable to use pcall and to close/flush (or something) when
     -- the func returns. However, it can doesn't play well with multiple return values
     -- from func_
-    return func_(cdb,row)
+    return func_(cdb,sid)
   end
 
   local function save()
@@ -96,15 +183,12 @@ function column_db(base_dir_)
       -- to all non metadata keys we assign a global id. This id is used for storing
       -- the actual sequences
       if not is_metadata then
-        index.head.id = index.head.id + 1
+        index.head.id = (index.head.id or -1) + 1
         node.value = index.head.id
       end
     end
     if is_metadata then
       node.value = value_
-    else
-      -- TODO - find the file for the key (graph) and update the content with the
-      -- value
     end
   end
 
@@ -114,9 +198,6 @@ function column_db(base_dir_)
     if string.find(key_,"metadata=",1,true) then
       return node.value
     end
-
-    -- TODO - find the file for the key (graph) and return all of its data
-
   end
 
   local function out(key_)
@@ -127,35 +208,33 @@ function column_db(base_dir_)
     return coroutine.wrap(
       function()
         local find = string.find
-        local node = sl:find(prefix_)
+        local node = index:find(prefix_)
         -- first node may not match the prefix as it the largest element <= prefix_
         if node.key<prefix_ then
-          node = sl:next(node)
+          node = index:next(node)
         end
         while node and node.key and find(node.key,prefix_,1,true) do
-          coroutine.yield(node)
-          node = sl:next(node)
+          coroutine.yield(node.key)
+          node = index:next(node)
         end
       end)
   end
 
   local function internal_get_slot(name_,idx_,offset_)
-    return with_cell_db(name_,
-                        function(cdb,row)
-                          local cell = cdb.read(row,idx_)
-                          local a,b,c = get_slot(cell,idx_,offset_)
-                          print("get",row,idx_,offset_,a,b,c)
+    return with_cell_store(name_,
+                        function(cdb_,sid_)
+                          local slot = cdb_.read(sid_,idx_)
+                          local a,b,c = get_slot(slot,0,offset_)
                           return a,b,c
                         end
                        )
   end
 
   local function internal_set_slot(name_,idx_,offset_,a,b,c)
-    return with_cell_db(name_,
-                        function(cdb,row)
-                          print("set",row,idx_,offset_,a,b,c)
-                          local t,u,v,w,x = set_slot(cdb.read(row,idx_),idx_,offset_,a,b,c)
-                          cdb.write_cells(idx_,row,{t,u,v,w,x})
+    return with_cell_store(name_,
+                        function(cdb_,sid_)
+                          local _,u,v,w,_ = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
+                          cdb_.write(sid_,idx_,offset_ and u or (u..v..w))
                         end
                        )
   end
@@ -177,6 +256,7 @@ function column_db(base_dir_)
                    local _,_,_,b = extract_from_name(b_)
                    return a<b
                  end)
+      return names_
     end
   }
 
@@ -190,7 +270,7 @@ function column_db(base_dir_)
         return self.set_slot(name_,idx_,offset_,a,b,c)
       end,
       save = function()
-        return with_cell_db(name_,
+        return with_cell_store(name_,
                             function(cdb,row)
                               cdb:flush()
                             end)

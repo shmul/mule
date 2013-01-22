@@ -99,7 +99,7 @@ end
 local delete = function(self,key)
   -- find first node on each level where node.next[levels].key >= key
 
-  node, chain = self.head, {}
+  local node, chain = self.head, {}
   for level = self.maxLevel, 1, -1 do
     while node.next[level] ~= NIL and node.next[level].key < key do
       node = node.next[level]
@@ -111,9 +111,9 @@ local delete = function(self,key)
   end
 
   -- remove one link at each level
-  nodeLevel = chain[1].next[1].size
+  local nodeLevel = chain[1].next[1].size
   for level = 1, nodeLevel do
-    prevnode = chain[level]
+    local prevnode = chain[level]
     prevnode.width[level] = prevnode.width[level] + prevnode.next[level].width[level] - 1
     prevnode.next[level] = prevnode.next[level].next[level]
   end
