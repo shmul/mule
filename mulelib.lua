@@ -822,3 +822,5 @@ function mule(db_)
     alert = alert
   }
 end
+
+--verbose_log(true)

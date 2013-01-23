@@ -23,8 +23,9 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
   local dirty = false
 
   local function reset()
-    local cmd = string.format("dd if=/dev/zero of=%s bs=%d count=%d &> /dev/null",
-                              file_,num_sequences_*slots_per_sequence_,slot_size_)
+    local file_size = num_sequences_*slots_per_sequence_*slot_size_
+    local cmd = string.format("dd if=/dev/zero of=%s bs=%d count=1 skip=%d &> /dev/null",
+                              file_,file_size,file_size)
     logi("creating file",file_)
     os.execute(cmd)
   end
