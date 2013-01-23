@@ -33,7 +33,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
     reset()
   end
 
-  file = io.open(file_,"r+b") --or io.open(file_,"w+b")
+  file = io.open(file_,"r+b") or io.open(file_,"w+b")
   if not file then
     loge("unable to open column store",file_)
     return nil
@@ -109,6 +109,7 @@ function column_db(base_dir_)
     with_file(meta_file,
               function(f_)
                 f_:write(index:pack())
+                f_:flush()
               end,"w+b")
   end
 
@@ -145,6 +146,7 @@ function column_db(base_dir_)
   end
 
   local function save_all(close_)
+    logi("save_all",close_)
     for k,cdb in pairs(cell_store_cache) do
       cdb:flush()
       if close_ then
@@ -165,16 +167,8 @@ function column_db(base_dir_)
     return func_(cdb,sid)
   end
 
-  local function save()
-    with_file(meta_file,
-            function(f_)
-              f:write(p.pack(index))
-            end,"w+b")
-    -- TODO save all files
-  end
-
   local function put(key_,value_)
-    local node = index:find(key_)
+    local node = index[key_]
     local is_metadata = string.find(key_,"metadata=",1,true)
 
     -- value is updated only for metadata nodes
@@ -194,8 +188,7 @@ function column_db(base_dir_)
 
   local function get(key_)
     local node = index[key_]
-
-    if string.find(key_,"metadata=",1,true) then
+    if node and string.find(key_,"metadata=",1,true) then
       return node.value
     end
   end
@@ -210,7 +203,7 @@ function column_db(base_dir_)
         local find = string.find
         local node = index:find(prefix_)
         -- first node may not match the prefix as it the largest element <= prefix_
-        if node.key<prefix_ then
+        if node.key<prefix_ or node.key=="HEAD" then
           node = index:next(node)
         end
         while node and node.key and find(node.key,prefix_,1,true) do
@@ -241,10 +234,13 @@ function column_db(base_dir_)
 
   read_meta_file()
   local self = {
-    save = save,
+    save = save_meta_file,
     put = put,
     get = get,
     out = out,
+    close = function()
+      save_all()
+    end,
     set_slot = internal_set_slot,
     get_slot = internal_get_slot,
     matching_keys = matching_keys,
@@ -275,7 +271,7 @@ function column_db(base_dir_)
                               cdb:flush()
                             end)
       end,
-      reset = function() print("reset",name_) end
+      reset = function() print("reset",name_) end,
            }
   end
 

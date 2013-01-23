@@ -32,9 +32,6 @@ function sequence(db_,name_)
     return at(idx_,2)
   end
 
-  local function get_slot(idx_)
-    return at(idx_)
-  end
 
   local function set_slot(idx_,timestamp_,hits_,sum_)
     at(idx_,nil,timestamp_,hits_,sum_)
@@ -74,7 +71,7 @@ function sequence(db_,name_)
     -- we need to check whether we should update the current slot
     -- or if are way ahead of the previous time the slot was updated
     -- over-write its value
-    local timestamp,hits,sum = get_slot(idx)
+    local timestamp,hits,sum = at(idx)
     if replace_ or (adjusted_timestamp==timestamp and hits>0) then
       -- no need to worry about the latest here, as we have the same (adjusted) timestamp
       set_slot(idx,adjusted_timestamp,hits+(hits_ or 1),sum+sum_)
@@ -107,7 +104,7 @@ function sequence(db_,name_)
   local function serialize(opts_,metric_cb_,slot_cb_)
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
-      local timestamp,hits,sum = get_slot(idx_)
+      local timestamp,hits,sum = at(idx_)
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
         slot_cb_(sum,hits,timestamp)
       end
@@ -162,7 +159,7 @@ function sequence(db_,name_)
   end
 
   local function slot(idx_)
-    local ts,h,s = get_slot(idx_)
+    local ts,h,s = at(idx_)
     return { _timestamp = ts, _hits = h, _sum = s }
   end
 

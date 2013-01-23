@@ -30,9 +30,9 @@ else
                       )
   end
 
-  function from_binary(str_)
+  function from_binary(str_,s)
     s = s or 1
-    local a,b,c,d,e,f = string.byte(str_,1,-1)
+    local a,b,c,d,e,f = string.byte(str_,s,s+5)
     return (a or 0) +
       (b or 0)*256 +
       (c or 0)*65536 +

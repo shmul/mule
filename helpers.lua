@@ -534,13 +534,13 @@ end
 
 function get_slot(data_,idx_,offset_)
   -- idx_ is zero based
-  local fromb,sub = pp.from_binary,string.sub
+  local fromb,sub = pp.from_binary
   if offset_ then
     local i = 1+(idx_*18)+offset_*6
-    return fromb(sub(data_,i,i+5))
+    return fromb(data_,i)
   end
   local i = 1+(idx_*18)
-  return fromb(sub(data_,i,i+5)),fromb(sub(data_,i+6,i+11)),fromb(sub(data_,i+12,i+17))
+  return fromb(data_,i),fromb(data_,i+6),fromb(data_,i+12)
 end
 
 

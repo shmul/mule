@@ -704,4 +704,4 @@ function test_dump_restore()
 end
 
 --verbose_log(true)
-profiler.start("profiler.out")
+--profiler.start("profiler.out")

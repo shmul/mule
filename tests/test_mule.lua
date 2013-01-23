@@ -6,16 +6,17 @@ module( "test_mule", lunit.testcase, package.seeall )
 
 
 local function db(p)
-  return "./tests/temp/"..p..cabinet.suffix
+  return "./tests/temp/"..p.."_cdb" --cabinet.suffix
 end
 
 local function new_db(p)
-  os.remove(db(p))
+  os.execute("rm -rf "..db(p))
+  os.execute("mkdir -p "..db(p))
   return db(p)
 end
 
 function test_create()
-  main({ v=false,c="./tests/fixtures/mule.cfg", r=true,d=new_db("test_create")})
+  main({ v=false,c="./tests/fixtures/mule.cfg", r=true,f=true,d=new_db("test_create")})
 
   local str = strout("")
   main({ v=false,d=db("test_create"),rest = {".key *"}},str)
@@ -46,3 +47,5 @@ function test_create()
   assert(string.find(str.get_string(),string.format("%d,1,%d",2,adj1),1,true),adj1)
   assert(string.find(str.get_string(),string.format("%d,1,%d",1,adj2),1,true),adj2)
 end
+
+--verbose_log(true)

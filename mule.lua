@@ -1,12 +1,14 @@
 require "helpers"
 require "mulelib"
 require "tc_store"
+local c = require "column_db"
 require "httpd"
 
 pcall(require, "profiler")
 
 local function with_mule(db_path_,readonly_,callback_)
-  local db = cabinet_db(db_path_,readonly_)
+  local db = c.column_db(db_path_)
+  --local db = cabinet_db(db_path_,readonly_)
   local m = mule(db)
   logi("loading",db_path_,readonly_ and "read" or "write")
   m.load()
@@ -110,7 +112,8 @@ function main(opts,out_)
 
   if opts["r"] then
 	logi("creating",opts["d"],"using configuration",opts["r"])
-    local db = cabinet_db(opts["d"],false)
+    local db = c.column_db(opts["d"])
+--    local db = cabinet_db(opts["d"],false)
     db.close()
   end
 

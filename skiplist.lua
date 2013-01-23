@@ -39,14 +39,14 @@ local makeNode = function(key,size)
          }
 end
 
-local End ={}
+local End = nil
 local NIL = makeNode(End,0)
 
 local find_helper = function(self,key)
   local node, chain, stepsAtLevel = self.head, {}, {}
   for i=1, self.maxLevel do stepsAtLevel[i]=0 end
   for level = self.maxLevel, 1, -1 do
-    while node.next[level] ~= NIL and node.next[level].key <= key do
+    while node.next[level].key and node.next[level].key <= key do
       stepsAtLevel[level] = ( stepsAtLevel[level] or 0 ) + node.width[level]
       node = node.next[level]
     end
@@ -84,7 +84,7 @@ local insert = function(self,key)
   if self.size*2>pow(2,self.maxLevel) then
     local new_width = 0
     local node = self.head
-    while node~=NIL do
+    while node.next[self.maxLevel] do
       new_width = new_width + node.width[self.maxLevel]
       node = node.next[self.maxLevel]
     end
