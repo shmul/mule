@@ -24,22 +24,21 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
 
   local function reset()
     local file_size = num_sequences_*slots_per_sequence_*slot_size_
-    local cmd = string.format("dd if=/dev/zero of=%s bs=%d count=1 skip=%d &> /dev/null",
-                              file_,file_size,file_size)
     logi("creating file",file_)
-    os.execute(cmd)
+    file = io.open(file_,"r+b") or io.open(file_,"w+b")
+    file:seek("set",file_size-1)
+    file:write("%z")
+    file:close()
   end
 
-  if not file_exists(file_) then
-    reset()
+  local function open()
+    file = io.open(file_,"r+b") or io.open(file_,"w+b")
+    if not file then
+      loge("unable to open column store",file_)
+      return nil
+    end
+    logd("opened column store",file_)
   end
-
-  file = io.open(file_,"r+b") or io.open(file_,"w+b")
-  if not file then
-    loge("unable to open column store",file_)
-    return nil
-  end
-  logd("opened column store",file_)
 
   local function close()
     if file then
@@ -82,6 +81,12 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       return file:write(string.sub(slot_,1,slot_size_))
     end
   end
+
+  if not file_exists(file_) then
+    reset()
+  end
+  open()
+
 
 
   return {
