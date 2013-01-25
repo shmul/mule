@@ -88,7 +88,6 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
   open()
 
 
-
   return {
     close = close,
     flush = flush,
@@ -236,6 +235,10 @@ function column_db(base_dir_)
                           cdb_.write(sid_,idx_,offset_ and u or (u..v..w))
                         end
                        )
+  end
+
+  if not file_exists(meta_file) then
+    os.execute("mkdir -p "..base_dir_.." &> /dev/null")
   end
 
   read_meta_file()
