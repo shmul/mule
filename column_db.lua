@@ -63,7 +63,6 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       return nil
     end
     local cell_pos = slot_size_*(idx_*slots_per_sequence_+sid_)
-    logd("seek",file_,cell_pos)
     file:seek("set",cell_pos)
     return true
   end

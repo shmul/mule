@@ -7,6 +7,7 @@ require "httpd"
 pcall(require, "profiler")
 
 local function guess_db(db_path_,readonly_)
+  logd("guess_db",db_path_)
   if string.find(db_path_,"_cdb$") then
     return c.column_db(db_path_,readonly_)
   elseif string.find(db_path_,cabinet.suffix.."$") then
@@ -164,7 +165,8 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"yldcnmtx")
+  opts = getopt(arg,"ldcnmtx")
   local rv = main(opts,stdout("\n"))
+  logd("done")
   os.exit(rv and 0 or -1)
 end

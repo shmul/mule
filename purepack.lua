@@ -1,6 +1,8 @@
 module("purepack",package.seeall)
 local bit32 = pcall(require,"bit32")
 
+local PNS = 6 -- Packed Number Size
+
 if bit32 then
   function to_binary(int_)
     local sh = bit32.arshift
@@ -23,10 +25,10 @@ else
     local j = fl(i/65536)
     return string.char(int_%256,
                        fl(int_/256)%256,
-                       i%256,
-                       fl(i/256)%256,
-                       j%256,
-                       fl(j/256)%256
+                       i and i%256 or 0,
+                       i and fl(i/256)%256 or 0,
+                       j and j%256 or 0,
+                       j and fl(j/256)%256 or 0
                       )
   end
 
@@ -34,11 +36,11 @@ else
     s = s or 1
     local a,b,c,d,e,f = string.byte(str_,s,s+5)
     return (a or 0) +
-      (b or 0)*256 +
-      (c or 0)*65536 +
-      (d or 0)*16777216 +
-      (e or 0)*4294967296 +
-      (f or 0)*1099511627776
+      (b and b*256 or 0) +
+      (c and c*65536 or 0) +
+      (d and d*16777216 or 0) +
+      (e and e*4294967296 or 0) +
+      (f and f*1099511627776 or 0)
   end
 end
 
@@ -66,15 +68,16 @@ function pack(obj_,visited_,id_)
     end
   end
 
+  local t = type(obj_)
   if obj_==nil then -- nil and false are NOT the same thing
     insert(out,"l")
-  elseif type(obj_)=="string" then
+  elseif t=="string" then
     push("s",#obj_,obj_)
-  elseif type(obj_)=="number" then
+  elseif t=="number" then
     push("i",obj_)
   elseif obj_==true or obj_==false then
     insert(out,obj_ and "T" or "F")
-  elseif type(obj_)=="table" then
+  elseif t=="table" then
     push("t",id_)
     visited_[obj_] = id_
     id_ = id_ + 1
@@ -91,26 +94,21 @@ end
 
 local function unpack_helper(str_,i,visited_)
   local s = string.sub(str_,i,i)
-  visited_ = visited_ or {}
 
   i = i + 1
   if s=="l" then
     return nil,i
   end
 
-  local function as_number(u)
-    return tonumber(from_binary(string.sub(str_,u)))
-  end
-
   if s=="s" then
-    local len = as_number(i)
-    return string.sub(str_,i+6,i+5+len),i+len+6
+    local len = from_binary(str_,i)
+    return string.sub(str_,i+PNS,i+PNS+len-1),i+len+PNS
   end
   if s=="i" then
-    return as_number(i),i+6
+    return from_binary(str_,i),i+PNS
   end
   if s=="r" then
-    return visited_[as_number(i)],i+6
+    return visited_[from_binary(str_,i)],i+PNS
   end
   if s=="T" or s=="F" then
     return s=="T",i
@@ -118,11 +116,12 @@ local function unpack_helper(str_,i,visited_)
   if s=="e" then
     return END_OF_TABLE_MARK,i
   end
+  local e = #str_
   if s=="t" then
     local t = {}
     local k,v
-    visited_[as_number(i)] = t
-    i = i + 6
+    visited_[from_binary(str_,i)] = t
+    i = i + PNS
     repeat
       k,i = unpack_helper(str_,i,visited_)
       if k==END_OF_TABLE_MARK then
@@ -130,11 +129,11 @@ local function unpack_helper(str_,i,visited_)
       end
       v,i = unpack_helper(str_,i,visited_)
       t[k] = v
-    until i>=#str_
+    until i>=e
     return t,i
   end
 end
 
 function unpack(str_)
-  return unpack_helper(str_,1)
+  return unpack_helper(str_,1,{})
 end
