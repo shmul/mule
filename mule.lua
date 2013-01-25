@@ -6,9 +6,21 @@ require "httpd"
 
 pcall(require, "profiler")
 
+local function guess_db(db_path_,readonly_)
+  if string.find(db_path_,"_cdb$") then
+    return c.column_db(db_path_,readonly_)
+  elseif string.find(db_path_,cabinet.suffix.."$") then
+    return cabinet_db(db_path_,readonly_)
+  end
+  loge("can't guess db",db_path_)
+  return nil
+end
+
 local function with_mule(db_path_,readonly_,callback_)
-  local db = c.column_db(db_path_)
-  --local db = cabinet_db(db_path_,readonly_)
+  local db = guess_db(db_path_,readonly_)
+  if not db then
+    return
+  end
   local m = mule(db)
   logi("loading",db_path_,readonly_ and "read" or "write")
   m.load()
@@ -48,11 +60,6 @@ function main(opts,out_)
   if opts["h"] then
 	out_.write(usage())
 	return true
-  end
-
-  if not cabinet then
-    print("unable to load tokyocabinet or kyotocabinet. Aborting")
-    os.exit(-1)
   end
 
 
@@ -111,10 +118,12 @@ function main(opts,out_)
 
 
   if opts["r"] then
-	logi("creating",opts["d"],"using configuration",opts["r"])
-    local db = c.column_db(opts["d"])
---    local db = cabinet_db(opts["d"],false)
-    db.close()
+	logi("creating",opts["d"],"using configuration",opts["c"])
+    local db = guess_db(opts["d"],false)
+    if not db then
+      return
+    end
+    db:close()
   end
 
 
