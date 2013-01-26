@@ -1,7 +1,7 @@
 module("purepack",package.seeall)
 local bit32 = pcall(require,"bit32")
 
-local PNS = 6 -- Packed Number Size
+PNS = 6 -- Packed Number Size
 
 if bit32 then
   function to_binary(int_)
