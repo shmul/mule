@@ -24,11 +24,17 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
 
   local function reset()
     local file_size = num_sequences_*slots_per_sequence_*slot_size_
-    logi("creating file",file_)
+    logi("creating file",file_,file_size)
     file = io.open(file_,"r+b") or io.open(file_,"w+b")
     file:seek("set",file_size-1)
     file:write("%z")
     file:close()
+    --[[
+    local block_size = 16384
+    local cmd = string.format("tr '\\000' '\\060' < /dev/zero | dd of=%s bs=%d count=%d &> /dev/null",
+                              file_,block_size,math.ceil(file_size/block_size))
+    os.execute(cmd)
+    --]]
   end
 
   local function open()
@@ -62,7 +68,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       logw("no file")
       return nil
     end
-    local cell_pos = slot_size_*(idx_*slots_per_sequence_+sid_)
+    local cell_pos = (slot_size_+sid_)*slots_per_sequence_+idx_*slot_size_
     file:seek("set",cell_pos)
     return true
   end
@@ -102,21 +108,6 @@ function column_db(base_dir_)
   local meta_file = base_dir_.."/db.meta"
   local cell_store_cache = {}
 
-  local function read_meta_file()
-    with_file(meta_file,
-              function(f_)
-                index:unpack(f_:read("*a"))
-              end,"r+b")
-  end
-
-  local function save_meta_file()
-    with_file(meta_file,
-              function(f_)
-                f_:write(index:pack())
-                f_:flush()
-              end,"w+b")
-  end
-
   local function extract_from_name(name_)
     local node = index[name_]
 
@@ -132,6 +123,22 @@ function column_db(base_dir_)
     return node.metric,node.step,node.period,node.value
   end
 
+  local function read_meta_file()
+    with_file(meta_file,
+              function(f_)
+                index:unpack(f_:read("*a"))
+              end,"r+b")
+  end
+
+  local function save_meta_file()
+    with_file(meta_file,
+              function(f_)
+                f_:write(index:pack())
+                f_:flush()
+              end,"w+b")
+  end
+
+
   local function find_file(name_)
     local metric,step,period,id = extract_from_name(name_)
     -- we normalize the step,period variables to canonical time units
@@ -142,7 +149,7 @@ function column_db(base_dir_)
                                     id / SEQUENCES_PER_FILE)
     local cdb = cell_store_cache[file_name]
     if not cdb then
-      cdb = cell_store(file_name,SEQUENCES_PER_FILE,1+period/step,18) -- 3 items per slot, 6 bytes per one
+      cdb = cell_store(file_name,SEQUENCES_PER_FILE,1+period/step,p.PNS*3) -- 3 items per slot
       cell_store_cache[file_name] = cdb
     end
 
@@ -202,14 +209,14 @@ function column_db(base_dir_)
   end
 
   local function matching_keys(prefix_)
+    local find = string.find
+    local node = index:find(prefix_)
+    -- first node may not match the prefix as it the largest element <= prefix_
+    if node.key<prefix_ or node.key=="HEAD" then
+      node = index:next(node)
+    end
     return coroutine.wrap(
       function()
-        local find = string.find
-        local node = index:find(prefix_)
-        -- first node may not match the prefix as it the largest element <= prefix_
-        if node.key<prefix_ or node.key=="HEAD" then
-          node = index:next(node)
-        end
         while node and node.key and find(node.key,prefix_,1,true) do
           coroutine.yield(node.key)
           node = index:next(node)

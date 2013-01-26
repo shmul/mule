@@ -17,7 +17,6 @@ if bit32 then
                        an(sh(j,16),255)
                       )
   end
-
 else
   function to_binary(int_)
     local fl = math.floor
@@ -25,10 +24,10 @@ else
     local j = fl(i/65536)
     return string.char(int_%256,
                        fl(int_/256)%256,
-                       i and i%256 or 0,
-                       i and fl(i/256)%256 or 0,
-                       j and j%256 or 0,
-                       j and fl(j/256)%256 or 0
+                       (i~=0 and i%256) or 0,
+                       (i~=0 and fl(i/256)%256) or 0,
+                       (j~=0 and j%256) or 0,
+                       (j~=0 and fl(j/256)%256) or 0
                       )
   end
 
@@ -44,14 +43,11 @@ else
   end
 end
 
+
 local END_OF_TABLE_MARK = "end.of.table.mark"
 
-function pack(obj_,visited_,id_)
+function pack_helper(obj_,visited_,id_,out)
   local insert = table.insert
-  local out = {}
-  visited_ = visited_ or {}
-  id_ = id_ or 0
-
   local function push(type,len,val)
     insert(out,type)
     insert(out,to_binary(len))
@@ -61,34 +57,57 @@ function pack(obj_,visited_,id_)
   end
 
   local function push_value_or_ref(p)
-    if type(p)~="table" or not visited_[p] then
-      insert(out,pack(p,visited_,id_))
+    if not visited_[p] then
+      pack_helper(p,visited_,id_,out)
     else
       push("r",visited_[p])
     end
   end
 
-  local t = type(obj_)
-  if obj_==nil then -- nil and false are NOT the same thing
-    insert(out,"l")
-  elseif t=="string" then
-    push("s",#obj_,obj_)
-  elseif t=="number" then
-    push("i",obj_)
-  elseif obj_==true or obj_==false then
-    insert(out,obj_ and "T" or "F")
-  elseif t=="table" then
-    push("t",id_)
-    visited_[obj_] = id_
-    id_ = id_ + 1
+  local function literal(lit_)
+    local t = type(lit_)
+    if lit_==nil then -- nil and false are NOT the same thing
+      insert(out,"l")
+      return true
+    elseif t=="string" then
+      if not visited_[lit_] then
+        push("s",#lit_,lit_)
+        insert(out,to_binary(id_[1]))
+        visited_[lit_] = id_[1]
+        id_[1] = id_[1] + 1
+      else
+        push("r",visited_[lit_])
+      end
+      return true
+    elseif t=="number" then
+      push("i",lit_)
+      return true
+    elseif lit_==true or lit_==false then
+      insert(out,lit_ and "T" or "F")
+      return true
+    end
+    return false
+  end
+
+  if not literal(obj_) and type(obj_)=="table" then
+    push("t",id_[1])
+    visited_[obj_] = id_[1]
+    id_[1] = id_[1] + 1
     for k,v in pairs(obj_) do
       if type(v)~="function" then
-        push_value_or_ref(k)
-        push_value_or_ref(v)
+        literal(k)
+        if not literal(v) then
+          push_value_or_ref(v)
+        end
       end
     end
     insert(out,"e")
   end
+end
+
+function pack(obj_)
+  local out = {}
+  pack_helper(obj_,{},{0},out)
   return table.concat(out,"")
 end
 
@@ -102,7 +121,12 @@ local function unpack_helper(str_,i,visited_)
 
   if s=="s" then
     local len = from_binary(str_,i)
-    return string.sub(str_,i+PNS,i+PNS+len-1),i+len+PNS
+    local f = i+PNS
+    local e = f+len
+    local str = string.sub(str_,f,e-1)
+    local id = from_binary(str_,e)
+    visited_[id] = str
+    return str,e+PNS
   end
   if s=="i" then
     return from_binary(str_,i),i+PNS

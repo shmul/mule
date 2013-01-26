@@ -469,14 +469,12 @@ function mule(db_)
 
 
   local function key(resource_,options_)
-
-	local str = strout("")
+    local str = strout("")
     local format = string.format
     local find = string.find
     local col = collectionout(str,"[","]")
     col.head()
 	for m in split_helper(resource_ or "","/") do
-      print(m)
       m = (m=="*" and "") or m
 	  for k in _db.matching_keys(m) do
         if not find(k,"metadata=",1,true) then

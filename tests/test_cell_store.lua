@@ -36,11 +36,11 @@ function test_many_writes()
   local cs = c.cell_store(f,100,10,4)
   assert_not_nil(cs)
   for i=1,10 do
-    cs.write(1,i,"hello cruel world")
-    cs.write(0,i,"world")
+    cs.write(i,1,"hello cruel world")
+    cs.write(i,0,"world")
   end
   for i=1,10 do
-    assert_equal("hell",cs.read(1,i),i)
-    assert_equal("worl",cs.read(0,i),i)
+    assert_equal("worl",cs.read(i,0),i)
+    assert_equal("hell",cs.read(i,1),i)
   end
 end
