@@ -11,8 +11,28 @@ end
 
 require "mulelib"
 
+local function read_chunks(socket_)
+  local chunks = {}
+  while true do
+    local data = socket_:receive("*l")
+    if not data then
+      return table.concat(chunks,"")
+    end
+    local size = tonumber(string.format("0x%s",data))
+    if size>0 then
+      data = socket_:receive(size)
+      table.insert(chunks,data)
+    end
+    if data then socket_:receive(2) end
+    if size==0 then
+      return table.concat(chunks,"")
+    end
+  end
+end
+
 local function read_request(socket_)
   local req = {}
+
   while true do
 	local data = socket_:receive("*l")
 	if not data or #data==0 then
@@ -23,17 +43,25 @@ local function read_request(socket_)
 		if content and #content<content_len then
 		  logw("insufficient content received",#content,content_len)
 		end
+      elseif req["Transfer-Encoding"]=="chunked" then
+        logd("chunked encoding")
+        content = read_chunks(socket_)
 	  end
-	  return req,content
+      return req,content
 	end
+
 	if not req.verb then
 	  req.verb,req.url,req.protocol = string.match(data,"(%S+) (%S+) (%S+)$")
 	else
 	  local header_name,header_value = string.match(data,"([^:]+): (.-)$")
 	  if header_name and header_value then
 		req[header_name] = header_value
+        if header_name=="Expect" and header_value=="100-continue" and
+          (req.verb=="POST" or req.verb=="PUT") and req.protocol~="HTTP/1.0" then
+          socket_:send("HTTP/1.1 100 Continue\r\n\r\n")
+        end
 	  else
-		return req
+        return req
 	  end
 	end
   end
@@ -105,7 +133,6 @@ local handlers = { key = generic_get_handler,
 
 
 local function send_response(send_,req_,content_,with_mule_,stop_cond_)
-
 
   if not req_ then
 	return send_(standard_response("400 Bad Request"))
