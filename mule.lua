@@ -8,6 +8,8 @@ pcall(require, "profiler")
 
 local function guess_db(db_path_,readonly_)
   logd("guess_db",db_path_)
+  -- strip a trailing / if it exists
+  db_path_ = string.match(db_path_,"^(.+)/?$")
   if string.find(db_path_,"_cdb$") then
     return c.column_db(db_path_,readonly_)
   elseif string.find(db_path_,cabinet.suffix.."$") then
