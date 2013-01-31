@@ -87,8 +87,8 @@ function sequence(db_,name_)
 
   local function indices(sorted_)
     -- the sorted list is of indices to the main one
-	local array = {}
-	for i=1,(_period/_step) do
+    local array = {}
+    for i=1,(_period/_step) do
       array[i] = i-1
     end
     if sorted_ then
@@ -98,7 +98,7 @@ function sequence(db_,name_)
                  end)
     end
 
-	return array
+    return array
   end
 
   local function serialize(opts_,metric_cb_,slot_cb_)
@@ -301,19 +301,19 @@ function mule(db_)
 
   local function add_factory(metric_,retentions_)
     metric_ = string.match(metric_,"^(.-)%.*$")
-	for _,rp in ipairs(retentions_) do
-	  local step,period = parse_time_pair(rp)
-	  if step and period then
-		if step>period then
-		  loge("step greater than period",rp,step,period)
-		  error("step greater than period")
-		  return nil
-		end
-		_factories[metric_] = _factories[metric_] or {}
-		table.insert(_factories[metric_],{step,period})
-	  end
-	end
-	return true
+    for _,rp in ipairs(retentions_) do
+      local step,period = parse_time_pair(rp)
+      if step and period then
+        if step>period then
+          loge("step greater than period",rp,step,period)
+          error("step greater than period")
+          return nil
+        end
+        _factories[metric_] = _factories[metric_] or {}
+        table.insert(_factories[metric_],{step,period})
+      end
+    end
+    return true
   end
 
 
@@ -337,7 +337,7 @@ function mule(db_)
 
 
   local function gc(resource_,options_)
-	local garbage = {}
+    local garbage = {}
     local str = strout("","\n")
     local format = string.format
     local col = collectionout(str,"[","]")
@@ -360,7 +360,7 @@ function mule(db_)
       end
     end
 
- 	return wrap_json(str)
+    return wrap_json(str)
   end
 
   local function reset(resource_,options_)
@@ -368,13 +368,13 @@ function mule(db_)
                   function(seq)
                     _db.out(seq.name())
                   end)
-	return true
+    return true
   end
 
 
 
   local function dump(resource_,options_)
-	local str = stdout("")
+    local str = stdout("")
     local format = string.format
 
     each_metric(_db,resource_,nil,
@@ -393,20 +393,20 @@ function mule(db_)
 
 
   local function graph(resource_,options_)
-	local str = strout("")
+    local str = strout("")
     options_ = options_ or {}
-	local timestamps = options_.timestamp and split(options_.timestamp,',') or nil
+    local timestamps = options_.timestamp and split(options_.timestamp,',') or nil
     local format = string.format
     local col = collectionout(str,"{","}")
-	local opts = { deep=not timestamps,
-				   timestamps=timestamps,
-				   sorted=false,
-				   skip_empty=true,
-				   period_only=true}
+    local opts = { deep=not timestamps,
+                   timestamps=timestamps,
+                   sorted=false,
+                   skip_empty=true,
+                   period_only=true}
     local depth = is_true(options_.deep) and one_level_childs or immediate_metrics
 
     col.head()
-	for m in split_helper(resource_,"/") do
+    for m in split_helper(resource_,"/") do
       for seq in depth(db_,m) do
         local col1 = collectionout(str,": [","]\n")
         seq.serialize(opts,
@@ -422,7 +422,7 @@ function mule(db_)
     end
 
     col.tail()
-	return wrap_json(str)
+    return wrap_json(str)
   end
 
 
@@ -436,13 +436,13 @@ function mule(db_)
 
 
   local function slot(resource_,options_)
-	local str = strout("")
+    local str = strout("")
     local format = string.format
     local opts = { timestamps={options_ and options_.timestamp} }
     local col = collectionout(str,"{","}")
 
     col.head()
-	for m in split_helper(resource_,"/") do
+    for m in split_helper(resource_,"/") do
       each_sequence(_db,m,nil,
                     function(seq)
                       local col1 = collectionout(str,"[","]\n")
@@ -460,30 +460,30 @@ function mule(db_)
     end
     col.tail()
 
-	return wrap_json(str)
+    return wrap_json(str)
   end
 
-  local function latest(resource_,options_)
+  local function latest(resource_)
     return slot(resource_,{timestamp="latest"})
   end
 
 
-  local function key(resource_,options_)
+  local function key(resource_)
     local str = strout("")
     local format = string.format
     local find = string.find
     local col = collectionout(str,"[","]")
     col.head()
-	for m in split_helper(resource_ or "","/") do
+    for m in split_helper(resource_ or "","/") do
       m = (m=="*" and "") or m
-	  for k in _db.matching_keys(m) do
+      for k in _db.matching_keys(m) do
         if not find(k,"metadata=",1,true) then
           col.elem(format("\"%s\"",k))
         end
-	  end
-	end
+      end
+    end
     col.tail()
-	return wrap_json(str)
+    return wrap_json(str)
   end
 
   local function alert_set(resource_,options_)
@@ -534,7 +534,7 @@ function mule(db_)
     end
     col.tail()
 
- 	return wrap_json(str)
+    return wrap_json(str)
   end
 
   local function command(items_)
@@ -584,20 +584,20 @@ function mule(db_)
     if dispatch[func] then
       return dispatch[func]()
     end
-	loge("unknown command",func)
+    loge("unknown command",func)
   end
 
   local function configure(configuration_lines_)
-	for l in lines_without_comments(configuration_lines_) do
-	  local items,type = parse_input_line(l)
-	  if type then
-		logw("unexpexted type",type)
-	  else
+    for l in lines_without_comments(configuration_lines_) do
+      local items,type = parse_input_line(l)
+      if type then
+        logw("unexpexted type",type)
+      else
         local metric = items[1]
-		table.remove(items,1)
-		add_factory(metric,items)
-	  end
-	end
+        table.remove(items,1)
+        add_factory(metric,items)
+      end
+    end
     logi("configure",table_size(_factories))
   end
 
@@ -615,13 +615,13 @@ function mule(db_)
     local ver = _db.get("metadata=version")
     local factories = _db.get("metadata=factories")
     local alerts = _db.get("metadata=alerts")
-	local version = ver and pp.unpack(ver) or CURRENT_VERSION
-	if not version==CURRENT_VERSION then
-	  error("unknown version")
-	  return nil
-	end
-	_factories = factories and pp.unpack(factories) or {}
-	_alerts = alerts and pp.unpack(alerts) or {}
+    local version = ver and pp.unpack(ver) or CURRENT_VERSION
+    if not version==CURRENT_VERSION then
+      error("unknown version")
+      return nil
+    end
+    _factories = factories and pp.unpack(factories) or {}
+    _alerts = alerts and pp.unpack(alerts) or {}
   end
 
 
@@ -665,9 +665,9 @@ function mule(db_)
   local function update_line(metric_,sum_,timestamp_,updated_sequences_)
     for n in get_sequences(metric_) do
       local seq = updated_sequences_[n] or sparse_sequence(n)
-	  seq.update(timestamp_,sum_,1)
+      seq.update(timestamp_,sum_,1)
       updated_sequences_[n] = seq
-	end
+    end
   end
 
 
@@ -712,20 +712,20 @@ function mule(db_)
   end
 
   local function process_line(metric_line_,update_sequences_)
-	local items,type = parse_input_line(metric_line_)
-	if #items==0 then return nil end
+    local items,type = parse_input_line(metric_line_)
+    if #items==0 then return nil end
 
-	if type=="command" then
-	  return command(items)
-	end
-	-- there are 2 line formats:
-	-- 1) of the format metric sum timestamp
-	-- 2) of the format (without the brackets) name (sum hits timestamp)+
+    if type=="command" then
+      return command(items)
+    end
+    -- there are 2 line formats:
+    -- 1) of the format metric sum timestamp
+    -- 2) of the format (without the brackets) name (sum hits timestamp)+
 
-	-- 1) standard update
-	if not string.find(items[1],";",1,true) then
-	  return update_line(items[1],tonumber(items[2]),tonumber(items[3]),update_sequences_)
-	end
+    -- 1) standard update
+    if not string.find(items[1],";",1,true) then
+      return update_line(items[1],tonumber(items[2]),tonumber(items[3]),update_sequences_)
+    end
 
     -- 2) an entire sequence
     local name = items[1]
@@ -739,9 +739,9 @@ function mule(db_)
 
   local function process(data_)
     local updated_sequences = {}
-	-- strings are handled as file pointers if they exist or as a line
-	-- tables as arrays of lines
-	-- functions as iterators of lines
+    -- strings are handled as file pointers if they exist or as a line
+    -- tables as arrays of lines
+    -- functions as iterators of lines
     local function helper()
       if type(data_)=="string" then
         local file_exists = with_file(data_,function(f)
@@ -801,19 +801,19 @@ function mule(db_)
   end
 
   return {
-	configure = configure,
-	matching_sequences = matching_sequences,
-	get_factories = function() return _factories end,
-	reset = reset,
-	dump = dump,
-	graph = graph,
-	key = key,
-	piechart = piechart,
-	gc = gc,
-	latest = latest,
-	slot = slot,
+    configure = configure,
+    matching_sequences = matching_sequences,
+    get_factories = function() return _factories end,
+    reset = reset,
+    dump = dump,
+    graph = graph,
+    key = key,
+    piechart = piechart,
+    gc = gc,
+    latest = latest,
+    slot = slot,
     modify_factories = modify_factories,
-	process = process,
+    process = process,
     save = save,
     load = load,
     alert_set = alert_set,
