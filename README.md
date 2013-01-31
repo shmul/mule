@@ -27,6 +27,12 @@ Tokyo Cabinet is distirbtued under the "GNU Lesser General Public License".
 ## Kyoto Cabinet
 Kyoto Cabinet is distirbtued under the "GNU General Public License".
 
+## Lunit
+Lunit is licensed under the terms of the MIT license. [Lunit home page](http://www.nessie.de/mroth/lunit/)
+
+## Skiplist
+The skiplist implementation is licensed under the terms of the MIT license and was taken from [here](https://love2d.org/wiki/Skip_list) .
+
 # Definitions
 
 * retention pair: `<step,period>`, e.g. `1h:30d`
