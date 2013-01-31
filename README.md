@@ -113,13 +113,15 @@ Mule exposes a REST/JSON interface . Results are return using either plain JSON 
 
 #### graph
 
-    http://muleserver/graph/<metric-or-name>?<timestamps>
+To retrieve graph data, use a GET request
 
-Returns the graph, where metric-or-name is a metric or a name (i.e. including the retention data). If the metric is used then all the graphs for the metric will be returned, i.e. the graphs for all the names for which the metric is a prefix.
+    http://muleserver/graph/<metric-or-name>?<timestamps>|<deep>
 
-timestamps are optional, but if present, the graph data will be restricted to the given timestamps. Timestamps can be a comma separated list of:
-* seconds
-* simple arithmetic expressions using the predefined variables 'now' (or 'n') and 'latest' (or 'l'), like 'l-10s', 'now-20d'
+* metric-or-name is a metric or a name (i.e. including the retention data). If the metric is used then all the graphs for the metric will be returned, i.e. the graphs for all the names for which the metric is a prefix.
+* Timestamps are optional, but if present, the graph data will be restricted to the given timestamps. Timestamps can be a comma separated list of:
+  * seconds
+  * simple arithmetic expressions using the predefined variables 'now' (or 'n') and 'latest' (or 'l'), like 'l-10s', 'now-20d'
+* deep - if set to true (which can be `true,yes,1`) then graphs data for the metric childs will also be returned. Defaults to *false*.
 
 An output example. Each tuple is <value,hits,timestamp>
 
