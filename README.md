@@ -100,9 +100,9 @@ runs the garabge-collection command for any metric with the prefix `beer.stout` 
 ### Commands
 * `key <metric>` - retrieve all the metrics for which the given parameter is a prefix. Metric can be an exact sequence name
 * `graph <metric> [<timestamp>]` - retrieve all the sequences for which the given parameter is a prefix. Metric can be an exact sequence name. `<timestamp>` can be used to limit the output to a range. In fact `<timestamp>` can be an array (comma separated) of timestamps. Additionally, `l` (latest) and `n` (now) can be used as well as simple arithmatic operations. For example `<timestamp>` can be `l-10..l,n,n-100..l+50` .
-* `piechart <metric>` - TODO
-* `latest <metric>` - TODO
-* `slot <metric>` - TODO
+* `piechart <metric-or-name>` - retrieves the graphs of the metric's immediate children.
+* `latest <metric-or-name>` - retrieves the latest updated slot.
+* `slot <metric-or-name> <timestamp>` - retrieves the slots specified by the timestamp(s).
 * `gc <metric> <timestamp> [<force>]` - erase all metrics that weren't updated since timestamp. Must pass `true` for `<force>` in order to actually modify the DB.
 * `reset <metric>` - clear all slots in the metric
 
@@ -111,49 +111,97 @@ runs the garabge-collection command for any metric with the prefix `beer.stout` 
 
 Mule exposes a REST/JSON interface . Results are return using either plain JSON or as JSONP style, when the generic query string option `p=<callback>` is provided
 
-#### graph
+#### Configuration
+To update mule's configuration POST a configuration file to
 
-To retrieve graph data, use a GET request
+    http://muleserver/config
+
+
+#### Graphs
+
+##### Retrieve graph data
+Use a GET request
 
     http://muleserver/graph/<metric-or-name>?<timestamps>|<deep>
 
 * metric-or-name is a metric or a name (i.e. including the retention data). If the metric is used then all the graphs for the metric will be returned, i.e. the graphs for all the names for which the metric is a prefix.
-* Timestamps are optional, but if present, the graph data will be restricted to the given timestamps. Timestamps can be a comma separated list of:
-  * seconds
-  * simple arithmetic expressions using the predefined variables 'now' (or 'n') and 'latest' (or 'l'), like 'l-10s', 'now-20d'
-* deep - if set to true (which can be `true,yes,1`) then graphs data for the metric childs will also be returned. Defaults to *false*.
+* query string parameters are
+  * `timestamps` - the graph data will be restricted to the given timestamps. Timestamps can be a comma separated list of seconds or simple arithmetic expressions using the predefined variables `now` (or `n`) and `latest` (or `l`), like `l-10s`, `now-20d` .
+  * `deep` - if set to true (which can be `true,yes,1`) then the graphs data for the metric childs (one level deep) will also be returned. This may be compbined with timestamps. Defaults to `false`. As this option is popular, a syntactic sugar for it exists in the form of a url
+
+    http://muleserver/piechart/<metric-or-name>?<timestamps>
+
 
 An output example. Each tuple is <value,hits,timestamp>
 
 ```json
 mule_graph({"version": 3,
 "data": {"wine.pinotage.south_africa;1d:3y": [[4,3,1293753600]]
-,"wine.pinotage;1d:3y": [,[7,5,1293753600]]
-,"wine.pinotage;1h:30d": [,[2,1,1293832800],[5,4,1293836400]]
-,"wine.pinotage;5m:2d": [,[2,1,1293836100],[2,1,1293836400],[3,1,1293837000]]
+,"wine.pinotage;1d:3y": [[7,5,1293753600]]
+,"wine.pinotage;1h:30d": [[2,1,1293832800],[5,4,1293836400]]
+,"wine.pinotage;5m:2d": [[2,1,1293836100],[2,1,1293836400],[3,1,1293837000]]
 }
 })
 ```
 
-#### key
+Multiple metrics (or names) can be use by separating them with `/`, i.e.
 
-    http://muleserver/graph/<metric>
+    http://muleserver/graph/<metric_1>/<metric_2>/.../<metric_n>
+
+
+##### Update graph
+Use a POST request
+
+    http://muleserver/graph
+
+or (for compatibility with older versions)
+
+    http://muleserver/update
+
+The contents of the file are lines in the format described in the *input* section
+    <metric> <value> <timestamp>
+
+#### Metrics hierarchy
+The metrics and names create a hierarchy which can be retrieved by sending a GET request to
+
+    http://muleserver/key/<metric>
 
 Returns all the names for which metric is a prefix. Example output is
 
 ```json
 mule_keys({"version": 3,
-"data": ["wine.pinotage.south_africa;1d:3y","wine.pinotage.south_africa;1h:30d","wine.pinotage.south_africa;5m:2d","wine.pinotage.brazil;1d:3y","wine.pinotage.brazil;1h:30d","wine.pinotage.brazil;5m:2d","wine.pinotage.canada;1d:3y","wine.pinotage.canada;1h:30d","wine.pinotage.canada;5m:2d","wine.pinotage.us;1d:3y","wine.pinotage.us;1h:30d","wine.pinotage.us;5m:2d","wine.pinotage;1d:3y","wine.pinotage;1h:30d","wine.pinotage;5m:2d"]
+"data": ["wine.pinotage.south_africa;1d:3y","wine.pinotage.south_africa;1h:30d",
+        "wine.pinotage.south_africa;5m:2d","wine.pinotage.brazil;1d:3y",
+        "wine.pinotage.brazil;1h:30d","wine.pinotage.brazil;5m:2d",
+        "wine.pinotage.canada;1d:3y","wine.pinotage.canada;1h:30d",
+        "wine.pinotage.canada;5m:2d","wine.pinotage.us;1d:3y",
+        "wine.pinotage.us;1h:30d","wine.pinotage.us;5m:2d",
+        "wine.pinotage;1d:3y","wine.pinotage;1h:30d","wine.pinotage;5m:2d"]
 })
 ```
+
+Multiple metrics can be use by separating them with `/`, i.e.
+
+    http://muleserver/key/<metric_1>/<metric_2>/.../<metric_n>
 
 #### stop
 
     http://muleserver/stop?password=<pwd>
 
-Simply stops the running http deamon. This is not meant to be secured by any mean.
+Simply stops the running http deamon. This is not meant to be secure by any mean and serves as a simple protection from accidental termination.
 
-TODO - more commands
+#### Access to specific slots
+Data of specific slots can be retrieved by sending a GET request to
+
+    http://muleserver/slot/<metric-or-name>?<timestamps>
+
+The timestamps (as described in the `graph` section) are not optional. Multiple values can be passed (as a list).
+
+Retrieving only the latest updated slot is supported via
+
+    http://muleserver/latest/<metric-or-name>
+
+Both of these requests may use multiple metrics separated by `/`.
 
 ## Install
 
