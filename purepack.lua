@@ -1,30 +1,36 @@
 module("purepack",package.seeall)
-local bit32 = pcall(require,"bit32")
+local bit32_found,bit32 = pcall(require,"bit32")
+local lpack,_ = pcall(require,"pack")
 
 PNS = 4 -- Packed Number Size
 
-if bit32 then
+if bit32_found then
   function to_binary(int_)
     local sh = bit32.arshift
     local an = bit32.band
     local i = sh(int_,16)
-    local j = sh(int_,32)
     return string.char(an(int_,255),
                        an(sh(int_,8),255),
                        an(i,255),
-                       an(sh(i,16),255),
-                       an(j,255),
-                       an(sh(j,16),255)
+                       an(sh(i,16),255)
                       )
+  end
+elseif lpack then
+  function to_binary(int_)
+    return string.pack(">I",int_)
+  end
+  function from_binary(str_,s)
+    local _,value = string.unpack(str_,">I",s or 1)
+    return value
   end
 else
   function to_binary(int_)
     local fl = math.floor
     local i = fl(int_/65536)
     return string.char(int_%256,
-                       (int_/256)%256,
+                       fl(int_/256)%256,
                        (i~=0 and i%256) or 0,
-                       (i~=0 and (i/256)%256) or 0
+                       (i~=0 and fl(i/256)%256) or 0
                       )
   end
 

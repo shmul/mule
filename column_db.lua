@@ -9,7 +9,7 @@ Sequences are stored column by column, i.e. all the Nth slots of each sequences 
 sequentially. Every sequence is assigned a global id which places it in a "bucket" file with M many other sequences.
 
 definitions:
-  - cell - a single numeric value, 6 bytes long
+  - cell - a single numeric value, 4, 6 or 8 bytes long (depending on purepack)
   - slot - trio of cells, timestamp, value, sum
   - offset - the cell index within the slot
   - id - a global running counter of the name
@@ -25,13 +25,15 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
   local function reset()
     local file_size = num_sequences_*slots_per_sequence_*slot_size_
     logi("creating file",file_,file_size)
+
     file = io.open(file_,"r+b") or io.open(file_,"w+b")
     file:seek("set",file_size-1)
     file:write("%z")
     file:close()
-    --[[
+
+--[[
     local block_size = 16384
-    local cmd = string.format("tr '\\000' '\\060' < /dev/zero | dd of=%s bs=%d count=%d &> /dev/null",
+    local cmd = string.format("dd if=/dev/zero of=%s bs=%d count=%d &> /dev/null",
                               file_,block_size,math.ceil(file_size/block_size))
     os.execute(cmd)
     --]]
@@ -150,7 +152,6 @@ function column_db(base_dir_)
       cdb = cell_store(file_name,SEQUENCES_PER_FILE,1+period/step,p.PNS*3) -- 3 items per slot
       cell_store_cache[file_name] = cdb
     end
-
     return cdb,id % SEQUENCES_PER_FILE
   end
 

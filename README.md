@@ -13,7 +13,7 @@ Mule is a RRD tool designed with simplicity of use in mind. Its main use case is
 Mule is distirbtued under the MIT license reproduced below. Mule uses several 3rd party modules whose licenses are described below
 
 ## MIT License
-Copyright (c) 2012> Trusteer Ltd.
+Copyright (c) 2012 Trusteer Ltd.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -32,6 +32,12 @@ Lunit is licensed under the terms of the MIT license. [Lunit home page](http://w
 
 ## Skiplist
 The skiplist implementation is licensed under the terms of the MIT license and was taken from [here](https://love2d.org/wiki/Skip_list) .
+
+## Copas
+Copas of the Kepler project is used and is disributed under [this license](http://keplerproject.github.com/copas/license.html). Copyright (c) 2005-2010 Kepler Project.
+
+## lpack
+[lpack](http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lpack) is used.
 
 # Definitions
 
@@ -209,7 +215,7 @@ Both of these requests may use multiple metrics separated by `/`.
 
 * install either lua 5.1 or 5.2, preferably using your standard package manager. Alternatively installation [from source](http://www.lua.org/download.html) is also very simple.
 * luarocks should also be installed using the package manager or (from source)[http://luarocks.org/en/Download].
-* install additional rocks - copas
+* install additional rocks - copas, lpack
 
 ### Kyotocabinet (or tokyocabinet)
 
