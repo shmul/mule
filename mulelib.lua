@@ -137,13 +137,14 @@ function sequence(db_,name_)
     end
 
     if opts_.timestamps then
+      local now,latest_ts = os.time(),latest_timestamp()
       for _,t in ipairs(opts_.timestamps) do
         if t=="*" then
           for _,s in ipairs(ind) do
             serialize_slot(s,nil,slot_cb_)
           end
         else
-          local ts = to_timestamp(t,os.time(),latest_timestamp())
+          local ts = to_timestamp(t,now,latest_ts)
           if ts then
             if type(ts)=="number" then
               one_slot(ts)
@@ -347,7 +348,7 @@ function mule(db_)
 
     each_sequence(_db,resource_,nil,
                   function(seq)
-                    if seq.get_timestamp(slot.latest())<timestamp then
+                    if seq.latest_timestamp()<timestamp then
                       col.elem(format("\"%s\"",seq.name()))
                       garbage[#garbage+1] = seq.name()
                     end

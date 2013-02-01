@@ -68,13 +68,11 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       logw("no file")
       return nil
     end
-    local cell_pos = (slot_size_+sid_)*slots_per_sequence_+idx_*slot_size_
-    file:seek("set",cell_pos)
-    return true
+    local cell_pos = slot_size_*(sid_+slots_per_sequence_*idx_)
+    return file:seek("set",cell_pos)
   end
 
   local function read_cell(sid_,idx_)
-    flush()
     if seek(sid_,idx_) then
       return file:read(slot_size_)
     end
@@ -228,8 +226,7 @@ function column_db(base_dir_)
     return with_cell_store(name_,
                         function(cdb_,sid_)
                           local slot = cdb_.read(sid_,idx_)
-                          local a,b,c = get_slot(slot,0,offset_)
-                          return a,b,c
+                          return get_slot(slot,0,offset_)
                         end
                        )
   end
@@ -237,8 +234,12 @@ function column_db(base_dir_)
   local function internal_set_slot(name_,idx_,offset_,a,b,c)
     return with_cell_store(name_,
                         function(cdb_,sid_)
-                          local _,u,v,w,_ = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
-                          cdb_.write(sid_,idx_,offset_ and u or (u..v..w))
+                          local t,u,v,w,x = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
+                          if offset_ then
+                            cdb_.write(sid_,idx_,t..u..v)
+                          else
+                            cdb_.write(sid_,idx_,u..v..w)
+                          end
                         end
                        )
   end
@@ -282,7 +283,7 @@ function column_db(base_dir_)
       end,
       save = function()
         return with_cell_store(name_,
-                            function(cdb,row)
+                            function(cdb,_)
                               cdb:flush()
                             end)
       end,
