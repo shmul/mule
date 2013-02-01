@@ -31,7 +31,10 @@ get "/mule/keys" do
              "wine.pinotage.us;5m:2d",
              "wine.pinotage;1d:3y",
              "wine.pinotage;1h:30d",
-             "wine.pinotage;5m:2d"
+             "wine.pinotage;5m:2d",
+             "beer.stout.oatmeal",
+             "beer.stout.russian_imperial",
+             "beer.ale"
             ]
   }
   "callback(#{data.to_json})"

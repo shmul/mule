@@ -4,15 +4,9 @@ graphContainer = Ext.create "Ext.panel.Panel",
   region: "center"
   html: 'Hello! Welcome to Ext JS.'
 
-treePanel = Ext.create "Ext.tree.Panel",
-  region: "west"
-  title: "Available Keys"
-  width: "20%"
-  split: true
-  displayField: "name"
-  store: treeStore
 
-# Model for the keys tree store
+# *** Tree data and components:
+
 Ext.define "KeyModel",
   extend: "Ext.data.Model"
   fields: ["name"]
@@ -21,6 +15,16 @@ treeStore = Ext.create "Ext.data.TreeStore",
   model: "KeyModel"
   root:
     name: "Root Key"
+
+treePanel = Ext.create "Ext.tree.Panel",
+  region: "west"
+  title: "Available Keys"
+  width: "20%"
+  split: true
+  displayField: "name"
+  store: treeStore
+
+
 
 # Initial method to fill keys
 fillKeys = ->
