@@ -1,8 +1,13 @@
+graphContainer = Ext.create "Ext.container.Container",
+  style:
+    background: "red"
+
 # Main graph panel component
-graphContainer = Ext.create "Ext.panel.Panel",
+mainContainer = Ext.create "Ext.panel.Panel",
   title: "Muleview"
   region: "center"
-  html: 'Hello! Welcome to Ext JS.'
+  layout: "fit"
+  items: [ graphContainer ]
 
 
 # *** Tree data and components:
@@ -62,6 +67,23 @@ fillTree = (parent, keys) ->
     fillTree(node, subkeys)
 
 
+# graph
+testGraph = ->
+  data = [ { x: 0, y: 40 }, { x: 1, y: 49 }, { x: 2, y: 17 }, { x: 3, y: 42 } ]
+  graph = new Rickshaw.Graph
+    element: graphContainer.el.dom
+    width: "100%",
+    height: "100%",
+    series: [
+      {
+        color: 'steelblue'
+        data: data
+      }
+    ]
+  graph.render()
+
+
+
 # Ext Application structure
 Ext.application
   name: "Muleview"
@@ -70,7 +92,8 @@ Ext.application
       layout: "border"
       items: [
         treePanel
-        graphContainer
+        mainContainer
       ]
     }
     fillKeys()
+    testGraph()
