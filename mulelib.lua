@@ -347,7 +347,7 @@ function mule(db_)
 
     each_sequence(_db,resource_,nil,
                   function(seq)
-                    if seq.get_timestamp(slot.latest())<timestamp then
+                    if seq.latest_timestamp()<timestamp then
                       col.elem(format("\"%s\"",seq.name()))
                       garbage[#garbage+1] = seq.name()
                     end
