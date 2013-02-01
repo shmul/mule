@@ -98,15 +98,19 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
     flush = flush,
     read = read_cell,
     write = write_cell,
+    size = function() return slots_per_sequence_ end
          }
 end
 
 
 SEQUENCES_PER_FILE = 2000
+SAVE_PERIOD = 60
+
 function column_db(base_dir_)
   local index = sl:new()
   local meta_file = base_dir_.."/db.meta"
   local cell_store_cache = {}
+  local last_save = nil
 
   local function extract_from_name(name_)
     local node = index[name_]
@@ -118,9 +122,22 @@ function column_db(base_dir_)
       node.step = step
       node.period = period
       node.value = index.size-1
+      node.latest = 0
     end
 
     return node.metric,node.step,node.period,node.value
+  end
+
+  local function latest(name_,idx_)
+    local node = index[name_]
+    if not node then
+      loge("no such node",name_)
+      return
+    end
+    if idx_ then
+      node.latest = idx_
+    end
+    return node.latest
   end
 
   local function read_meta_file()
@@ -139,22 +156,6 @@ function column_db(base_dir_)
   end
 
 
-  local function find_file(name_)
-    local metric,step,period,id = extract_from_name(name_)
-    -- we normalize the step,period variables to canonical time units
-    -- we add 1 to the period/step to accomodate the latest value at the last slot
-    local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
-                                    secs_to_time_unit(step),
-                                    secs_to_time_unit(period),
-                                    id / SEQUENCES_PER_FILE)
-    local cdb = cell_store_cache[file_name]
-    if not cdb then
-      cdb = cell_store(file_name,SEQUENCES_PER_FILE,1+period/step,p.PNS*3) -- 3 items per slot
-      cell_store_cache[file_name] = cdb
-    end
-    return cdb,id % SEQUENCES_PER_FILE
-  end
-
   local function save_all(close_)
     logi("save_all",close_)
     for k,cdb in pairs(cell_store_cache) do
@@ -169,11 +170,32 @@ function column_db(base_dir_)
     save_meta_file()
   end
 
+  local function find_file(name_)
+    local metric,step,period,id = extract_from_name(name_)
+    -- we normalize the step,period variables to canonical time units
+    -- we add 1 to the period/step to accomodate the latest value at the last slot
+    local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
+                                    secs_to_time_unit(step),
+                                    secs_to_time_unit(period),
+                                    id / SEQUENCES_PER_FILE)
+    local cdb = cell_store_cache[file_name]
+
+    -- save all the files every SAVE_PERIOD
+    if not last_save or os.time()>last_save+SAVE_PERIOD then
+      last_save = os.time()
+      save_all()
+    end
+
+    if not cdb then
+      cdb = cell_store(file_name,SEQUENCES_PER_FILE,period/step,p.PNS*3) -- 3 items per slot
+      cell_store_cache[file_name] = cdb
+    end
+    return cdb,id % SEQUENCES_PER_FILE
+  end
+
+
   local function with_cell_store(name_,func_)
     local cdb,sid = find_file(name_)
-    -- TODO it is preferable to use pcall and to close/flush (or something) when
-    -- the func returns. However, it can doesn't play well with multiple return values
-    -- from func_
     return func_(cdb,sid)
   end
 
@@ -226,6 +248,12 @@ function column_db(base_dir_)
   local function internal_get_slot(name_,idx_,offset_)
     return with_cell_store(name_,
                         function(cdb_,sid_)
+                          -- trying to access one past the cdb size is interpreted as
+                          -- getting the latest index
+                          if cdb_.size()==idx_ then
+                            return latest(name_)
+                          end
+
                           local slot = cdb_.read(sid_,idx_)
                           return get_slot(slot,0,offset_)
                         end
@@ -235,6 +263,12 @@ function column_db(base_dir_)
   local function internal_set_slot(name_,idx_,offset_,a,b,c)
     return with_cell_store(name_,
                         function(cdb_,sid_)
+                          -- trying to access one past the cdb size is interpreted as
+                          -- setting the latest index
+                          if cdb_.size()==idx_ then
+                            return latest(name_,a)
+                          end
+
                           local t,u,v,w,x = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
                           if offset_ then
                             cdb_.write(sid_,idx_,t..u..v)
@@ -282,11 +316,7 @@ function column_db(base_dir_)
       set_slot = function(idx_,offset_,a,b,c)
         return self.set_slot(name_,idx_,offset_,a,b,c)
       end,
-      save = function()
-        return with_cell_store(name_,
-                            function(cdb,_)
-                              cdb:flush()
-                            end)
+      save = function() -- nop
       end,
       reset = function() print("reset",name_) end,
            }
