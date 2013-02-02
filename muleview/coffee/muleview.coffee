@@ -29,11 +29,19 @@ treePanel = Ext.create "Ext.tree.Panel",
   displayField: "name"
   listeners:
     selectionchange: (me, selected) ->
-      console.log('muleview.coffee\\ 32: selected[0].get("fullname"):', selected[0].get("fullname"));
+      updateGraph(selected[0].get("fullname")) if selected?[0]
   # rootVisible: false
   store: treeStore
 
+askMule = (command, fn) ->
+  Ext.Ajax.request
+    url: "mule/" + command
+    success: (response) ->
+      fn(JSON.parse(response.responseText).data)
 
+updateGraph = (fullname) ->
+  askMule "graph/" + fullname + ".", (response) ->
+    graphContainer.html = response
 
 # Initial method to fill keys
 fillKeys = ->
@@ -51,15 +59,7 @@ fillKeys = ->
 # Calls given callback with the hash as an argument
 # Currently uses mockmule.
 getMuleKeys = (fn) ->
-  url = "http://localhost:3000/key?jsonp=muleviewCallback"
-  window.muleviewCallback = (response) ->
-      fn(response.data)
-      delete window.muleviewCallback
-  scriptTag = document.createElement("script")
-  scriptTag.src=url
-  scriptTag.type="text/javascript"
-  document.body.appendChild(scriptTag)
-
+  askMule("key" ,fn)
 # Receives a hierarchy of keys in the form of nested hashes,
 # fills the treeview accordingly
 fillTree = (parent, keys) ->
