@@ -239,7 +239,9 @@ function column_db(base_dir_)
     return coroutine.wrap(
       function()
         while node and node.key and find(node.key,prefix_,1,true) do
-          coroutine.yield(node.key)
+          if not find(node.key,"metadata=",1,true) then
+            coroutine.yield(node.key)
+          end
           node = index:next(node)
         end
       end)
