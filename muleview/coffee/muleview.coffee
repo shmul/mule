@@ -14,7 +14,7 @@ mainContainer = Ext.create "Ext.panel.Panel",
 
 Ext.define "KeyModel",
   extend: "Ext.data.Model"
-  fields: ["name"]
+  fields: ["name", "fullname"]
 
 treeStore = Ext.create "Ext.data.TreeStore",
   model: "KeyModel"
@@ -27,6 +27,9 @@ treePanel = Ext.create "Ext.tree.Panel",
   width: "20%"
   split: true
   displayField: "name"
+  listeners:
+    selectionchange: (me, selected) ->
+      console.log('muleview.coffee\\ 32: selected[0].get("fullname"):', selected[0].get("fullname"));
   # rootVisible: false
   store: treeStore
 
@@ -48,10 +51,10 @@ fillKeys = ->
 # Calls given callback with the hash as an argument
 # Currently uses mockmule.
 getMuleKeys = (fn) ->
-  url = "http://localhost:3000/key?jsonp=callback"
-  window.callback = (response) ->
-      keys = response.data
-      fn(keys)
+  url = "http://localhost:3000/key?jsonp=muleviewCallback"
+  window.muleviewCallback = (response) ->
+      fn(response.data)
+      delete window.muleviewCallback
   scriptTag = document.createElement("script")
   scriptTag.src=url
   scriptTag.type="text/javascript"
@@ -61,8 +64,10 @@ getMuleKeys = (fn) ->
 # fills the treeview accordingly
 fillTree = (parent, keys) ->
   for name, subkeys of keys
+    fullname = ((parent?.get("fullname") && (parent.get("fullname") + ".")) || "") + name
     node = Ext.create "KeyModel",
       name: name
+      fullname: fullname
     parent.appendChild(node)
     fillTree(node, subkeys)
 
