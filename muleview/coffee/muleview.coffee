@@ -27,6 +27,7 @@ treePanel = Ext.create "Ext.tree.Panel",
   width: "20%"
   split: true
   displayField: "name"
+  # rootVisible: false
   store: treeStore
 
 
@@ -47,15 +48,14 @@ fillKeys = ->
 # Calls given callback with the hash as an argument
 # Currently uses mockmule.
 getMuleKeys = (fn) ->
-  Ext.Ajax.request
-    url: "mule/keys"
-    success: (response) ->
-      obj = null
-      callback = (param) ->
-        obj = param
-      eval(response.responseText)
-      keys = obj.data
+  url = "http://localhost:3000/key?jsonp=callback"
+  window.callback = (response) ->
+      keys = response.data
       fn(keys)
+  scriptTag = document.createElement("script")
+  scriptTag.src=url
+  scriptTag.type="text/javascript"
+  document.body.appendChild(scriptTag)
 
 # Receives a hierarchy of keys in the form of nested hashes,
 # fills the treeview accordingly
@@ -70,6 +70,7 @@ fillTree = (parent, keys) ->
 # graph
 testGraph = ->
   data = [ { x: 0, y: 40 }, { x: 1, y: 49 }, { x: 2, y: 17 }, { x: 3, y: 42 } ]
+  return
   graph = new Rickshaw.Graph
     element: graphContainer.el.dom
     width: "100%",

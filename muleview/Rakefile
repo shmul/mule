@@ -1,0 +1,59 @@
+SEED = 4
+MAX = 6
+MAX_HITS = 10
+KEYS_FILE = "keys.data"
+TIMESTAMP_FILE = "input"
+CURL = "curl localhost:3000/graph -X POST -T #{TIMESTAMP_FILE}"
+@names = File.read("names_list.txt").split(/\s/)
+@root = false
+@rand = Random.new(SEED)
+
+
+def timestamp(keypath = [], node)
+  new_keypath = keypath + [node[:name]]
+  name = new_keypath.join(".")
+  count = @rand.rand(1..MAX_HITS)
+  timestamp = Time.now.to_i
+  ans = ["#{name} #{count} #{timestamp}"]
+  node[:children].each do |child|
+    ans << timestamp(new_keypath, child)
+  end
+  ans.flatten
+end
+
+def make_node(max_depth)
+  ans = {
+    name: @names[@rand.rand(0..@names.length-1)].gsub(/ /,"_"),
+    children: []
+  }
+  if max_depth > 0
+    @rand.rand(0..MAX).times do
+      ans[:children] << make_node(max_depth - 1)
+    end
+  end
+  ans
+end
+
+
+task :create_keys do
+  @root = make_node(@rand.rand(1..MAX))
+  File.open(KEYS_FILE, "w") do |f|
+    f.write(Marshal.dump(@root))
+  end
+  puts @root
+end
+
+task :timestamp_keys => :read_root do
+  puts @root
+  File.open(TIMESTAMP_FILE, "w") do |f|
+    timestamp(["root"], @root).each do |line|
+      puts line
+      f.write(line + "\n")
+    end
+  end
+  puts %x[#{CURL}]
+end
+
+task :read_root do
+  @root ||= Marshal.load(File.binread(KEYS_FILE))
+end
