@@ -12,30 +12,14 @@ get "/" do
 
 end
 
-get "/mule/keys" do
+get %r[/mule/(.*)] do |cmd|
   content_type :js
-  data = {
-    "version" => 3,
-    "data" => [
-             "wine.pinotage.south_africa;1d:3y",
-             "wine.pinotage.south_africa;1h:30d",
-             "wine.pinotage.south_africa;5m:2d",
-             "wine.pinotage.brazil;1d:3y",
-             "wine.pinotage.brazil;1h:30d",
-             "wine.pinotage.brazil;5m:2d",
-             "wine.pinotage.canada;1d:3y",
-             "wine.pinotage.canada;1h:30d",
-             "wine.pinotage.canada;5m:2d",
-             "wine.pinotage.us;1d:3y",
-             "wine.pinotage.us;1h:30d",
-             "wine.pinotage.us;5m:2d",
-             "wine.pinotage;1d:3y",
-             "wine.pinotage;1h:30d",
-             "wine.pinotage;5m:2d",
-             "beer.stout.oatmeal",
-             "beer.stout.russian_imperial",
-             "beer.ale"
-            ]
-  }
-  "callback(#{data.to_json})"
+  puts "command: '#{cmd.to_s}'"
+  full = "#{cmd}?#{request.query_string}"
+  puts "full: '#{full}"
+  curl = "curl http://localhost:3000/#{full}"
+  puts('server.rb\\ 21: curl:', curl)
+  ans = %x[#{curl}]
+  puts "ans: '#{ans}'"
+  ans
 end
