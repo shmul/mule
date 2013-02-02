@@ -92,21 +92,6 @@ function main(opts,out_)
     return with_mule(opts["d"],true,function(m) return callback_(m) end)
   end
 
-  if opts["t"] then
-    logi("http daemon",opts["t"])
-    local stopped = false
-    local httpd_can_be_stopped = opts["x"]
-    http_loop(opts["t"],writable_mule,
-              function(token_)
-                -- this is confusing: when the function is called with param we match
-                -- it against the stop shared secret
-                -- when it is called without a param we simply return the flag
-                -- BUT we check that the stop functionality is supported at all
-                stopped = stopped or httpd_can_be_stopped and token_==httpd_can_be_stopped
-                return stopped
-              end)
-  end
-
   local db_exists = file_exists(opts["d"])
 
   if opts["r"] and db_exists and not opts["f"] then
@@ -138,6 +123,21 @@ function main(opts,out_)
                                 m.configure(f:lines())
                               end)
                   end)
+  end
+
+  if opts["t"] then
+    logi("http daemon",opts["t"])
+    local stopped = false
+    local httpd_can_be_stopped = opts["x"]
+    http_loop(opts["t"],writable_mule,
+              function(token_)
+                -- this is confusing: when the function is called with param we match
+                -- it against the stop shared secret
+                -- when it is called without a param we simply return the flag
+                -- BUT we check that the stop functionality is supported at all
+                stopped = stopped or httpd_can_be_stopped and token_==httpd_can_be_stopped
+                return stopped
+              end)
   end
 
   if opts["n"] then
