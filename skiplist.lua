@@ -34,7 +34,6 @@ local makeNode = function(key,size)
   return {
     key=key,
     next={},
-    width={},
     size=size
          }
 end
@@ -43,16 +42,14 @@ local End = nil
 local NIL = makeNode(End,0)
 
 local find_helper = function(self,key)
-  local node, chain, stepsAtLevel = self.head, {}, {}
-  for i=1, self.maxLevel do stepsAtLevel[i]=0 end
+  local node, chain = self.head, {}
   for level = self.maxLevel, 1, -1 do
     while node.next[level].key and node.next[level].key <= key do
-      stepsAtLevel[level] = ( stepsAtLevel[level] or 0 ) + node.width[level]
       node = node.next[level]
     end
     chain[level]=node
   end
-  return node, chain, stepsAtLevel
+  return node, chain
 end
 
 local find = function(self,key)
@@ -61,35 +58,26 @@ local find = function(self,key)
 end
 
 local insert = function(self,key)
-  local node, chain, stepsAtLevel = find_helper(self,key)
+  local node, chain = find_helper(self,key)
 
   local nodeLevel = min( self.maxLevel, - floor(log(random()) / log(2) ) )
   local newNode = makeNode( key,  nodeLevel)
-  local steps, prevNode = 0
+  local  prevNode = 0
   for level= 1, nodeLevel do
     prevNode = chain[level]
     newNode.next[level] = prevNode.next[level]
     prevNode.next[level] = newNode
-    newNode.width[level] = prevNode.width[level] - steps
-    prevNode.width[level] = steps + 1
-    steps = steps + stepsAtLevel[level]
-  end
-  for level = nodeLevel + 1, self.maxLevel do
-    chain[level].width[level] = chain[level].width[level] +1
   end
   self.size = self.size + 1
 
   -- automatically adjust the maxLevel to handle larger number of elements
 
   if self.size*2>pow(2,self.maxLevel) then
-    local new_width = 0
     local node = self.head
     while node.next[self.maxLevel] do
-      new_width = new_width + node.width[self.maxLevel]
       node = node.next[self.maxLevel]
     end
     self.maxLevel = self.maxLevel + 1
-    self.head.width[self.maxLevel] = new_width
     self.head.next[self.maxLevel] = NIL
   end
 
@@ -114,11 +102,7 @@ local delete = function(self,key)
   local nodeLevel = chain[1].next[1].size
   for level = 1, nodeLevel do
     local prevnode = chain[level]
-    prevnode.width[level] = prevnode.width[level] + prevnode.next[level].width[level] - 1
     prevnode.next[level] = prevnode.next[level].next[level]
-  end
-  for level = nodeLevel+1, self.maxLevel do
-    chain[level].width[level] = chain[level].width[level] - 1
   end
   self.size = self.size - 1
   return true --success
@@ -135,10 +119,6 @@ local pop=function (self)
   local node, head = self.head.next[1], self.head
   for level = 1, node.size do
     head.next[level]=node.next[level]
-    head.width[level]=node.width[level]
-  end
-  for level = node.size + 1, self.maxLevel do
-    head.width[level] = head.width[level] -1
   end
   self.size = self.size - 1
   return node.key
@@ -155,20 +135,8 @@ end
 
 local islMT = {
   __index = function(self,i)
-    if type(i)=="string" then
-      local node = find(self,i)
-      return (node and node.key==i and node) or nil
-    end
-    if i > self.size then return end
-    local node = self.head
-
-    for level=self.maxLevel, 1, -1 do
-      while node.width[level] <= i do
-        i = i - node.width[level]
-        node = node.next[level]
-      end
-    end
-    return node.key
+    local node = find(self,i)
+    return (node and node.key==i and node) or nil
   end,
   __tostring=tostring
 }
@@ -196,6 +164,9 @@ end
 
 local unpack = function (self,packed_)
   local a =  p.unpack(packed_)
+  if not a then
+    return
+  end
   self.head = a[1]
   self.maxLevel = #self.head.next
   self.size = a[2]
@@ -206,7 +177,6 @@ local function new ()
   local head = makeNode("HEAD",maxLevel)
   for i=1,maxLevel do
     head.next[i] = NIL
-    head.width[i] = 1
   end
 
   return setmetatable( {
