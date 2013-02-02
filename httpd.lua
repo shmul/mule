@@ -97,6 +97,9 @@ local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   elseif req_.verb=="POST" then
     logd("calling",handler_)
     return mule_.process(lines_without_comments(string_lines(content_)))
+  else
+    logw("Only GET/POST can be used")
+    return 405
   end
 end
 
@@ -105,6 +108,7 @@ local function config_handler(mule_,handler_,req_,resource_,qs_params_,content_)
     logd("calling",handler_)
     return mule_.configure(lines_without_comments(string_lines(content_)))
   end
+  return 405
 end
 
 local function crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
@@ -163,12 +167,15 @@ local function send_response(send_,req_,content_,with_mule_,stop_cond_)
     end)
 
   if handler_name=="stop" then
-    logw("stopping, using: ",qs_params.token)
+    logw("stopping, using: ",qs.token)
     stop_cond_(token)
   end
 
-  if not rv or #rv==0 then
+  if not rv or (type(rv)=="string" and #rv==0) then
     return send_(standard_response("204 No Content"))
+  end
+  if rv==405 then
+    return send_(standard_response("405 Method Not Allowed"))
   end
 
   if qs.jsonp then
