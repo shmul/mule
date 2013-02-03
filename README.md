@@ -170,9 +170,12 @@ The contents of the file are lines in the format described in the *input* sectio
 #### Metrics hierarchy
 The metrics and names create a hierarchy which can be retrieved by sending a GET request to
 
-    http://muleserver/key/<metric>
+    http://muleserver/key/<metric>?<deep>
 
-Returns all the names for which metric is a prefix. Example output is
+* `metric` - Returns all the names for which metric is a prefix.
+* `deep` - if set to true (which can be `true,yes,1`) then all the names which are prefixe by `metric` will be returned. Otherwise only the immediate childs are returned. Defaults to `false` .
+
+Example output (`deep=true`)
 
 ```json
 mule_keys({"version": 3,

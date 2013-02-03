@@ -469,16 +469,19 @@ function mule(db_)
   end
 
 
-  local function key(resource_)
+  local function key(resource_,options_)
     local str = strout("")
     local format = string.format
     local find = string.find
     local col = collectionout(str,"[","]")
+    local deep = is_true(options_.deep)
+
     col.head()
+
     for m in split_helper(resource_ or "","/") do
       m = (m=="*" and "") or m
-      for k in _db.matching_keys(m) do
-        if not find(k,"metadata=",1,true) then
+      for k in db_.matching_keys(m) do
+        if (deep or not find(k,".",#m,true)) then
           col.elem(format("\"%s\"",k))
         end
       end
