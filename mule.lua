@@ -117,12 +117,19 @@ function main(opts,out_)
 
   if opts["c"] then
     logi("configure",opts["c"])
-    writable_mule(function(m)
-                    with_file(opts["c"],
-                              function(f)
-                                m.configure(f:lines())
-                              end)
-                  end)
+    local rv = writable_mule(function(m)
+                               with_file(opts["c"],
+                                         function(f)
+                                           m.configure(f:lines())
+                                         end)
+                             end)
+    if not rv then
+      loge("configure failed.")
+      if not file_exists(opts["c"]) then
+        loge("file does not exists ",opts["c"])
+      end
+      return
+    end
   end
 
   if opts["t"] then
