@@ -81,6 +81,8 @@ function sequence(metric_)
 			 end,
 
 	get_metric = function() return _metric end,
+	get_period = function() return _period end,
+	get_step = function() return _step end,
 
 	find_slot = find_slot,
 
@@ -247,6 +249,41 @@ function metric_one_level_childs(sequences_,metric_)
 					   )
 end
 
+-- sparse sequences are expected to have very few (usually one) non empty slots, so we use
+-- a plain (non sorted) array
+
+function sparse_sequence(name_)
+  local _metric,_step,_period,_name
+  local _slots = {}
+
+  _name = name_
+
+  _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
+  _step = parse_time_unit(_step)
+  _period = parse_time_unit(_period)
+
+  local function find_slot(timestamp_)
+    for i,s in ipairs(_slots) do
+      if s._timestamp==timestamp_ then return s end
+    end
+    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
+    return _slots[#_slots]
+  end
+
+  local function update(timestamp_,sum_,hits_)
+    local _,adjusted_timestamp = calculate_slot(timestamp_,_step,_period)
+    -- here, unlike the regular sequence, we keep all the timestamps. The real sequence
+    -- will discard stale ones
+    local slot = find_slot(adjusted_timestamp)
+    slot._sum = slot._sum+sum_
+    slot._hits = slot._hits+hits_
+  end
+
+  return {
+    update = update,
+    slots = function() return _slots end
+         }
+end
 
 function mule(sequences_)
   local _factories = {}
@@ -480,7 +517,7 @@ function mule(sequences_)
 
   end
 
-  local function update_line(metric_,value_,timestamp_)
+  local function update_line(metric_,value_,timestamp_,updated_sequences_)
 	local matches = matching_sequences(metric_)
 	concat_arrays(matches,factory(metric_))
 	matches = matches or {}
@@ -488,9 +525,14 @@ function mule(sequences_)
 	  loge("couldn't find a match for",metric_line_)
 	  return "0"
 	end
-
+    local format = string.format
 	for _,s in ipairs(matches) do
-	  s.update(timestamp_,value_,1)
+      local n = format("%s;%s:%s",s.get_metric(),
+                       secs_to_time_unit(s.get_step()),
+                       secs_to_time_unit(s.get_period()))
+      local seq = updated_sequences_[n] or sparse_sequence(n)
+      seq.update(timestamp_,value_,1)
+      updated_sequences_[n] = seq
 	end
 	return tostring(#matches)
   end
@@ -507,7 +549,7 @@ function mule(sequences_)
 	return j-1
   end
 
-  local function process_line(metric_line_)
+  local function process_line(metric_line_,update_sequences_)
 	local items,type = parse_input_line(metric_line_)
 	if #items==0 then return nil end
 
@@ -520,7 +562,7 @@ function mule(sequences_)
 
 	-- 1) standard update
 	if not string.find(items[1],";",1,true) then
-	  return update_line(items[1],tonumber(items[2]),tonumber(items[3]))
+	  return update_line(items[1],tonumber(items[2]),tonumber(items[3]),update_sequences_)
 	else
 	  -- 2) an entire line
 	  local metric = items[1]
@@ -565,34 +607,48 @@ function mule(sequences_)
 
 
   local function process(data_)
-	-- strings are handled as file pointers if they exist or as a line
-	-- tables as arrays of lines
-	-- functions as iterators of lines
-	if type(data_)=="string" then
-	  local file_exists = with_file(data_,function(f)
-											for l in f:lines() do
-											  process_line(l)
-											end
-										  end)
-	  if file_exists then
-		return true
-	  end
-	  return process_line(data_)
-	elseif type(data_)=="table" then
-	  local rv
-	  for _,d in ipairs(data_) do
-		rv = process_line(d)
-	  end
-	  return rv
-	elseif type(data_)=="function" then
-	  local rv
-	  for d in data_ do
-		rv = process_line(d)
-	  end
-	  return rv
-	end
+    local updated_sequences = {}
+    local function helper()
+      -- strings are handled as file pointers if they exist or as a line
+      -- tables as arrays of lines
+      -- functions as iterators of lines
+      if type(data_)=="string" then
+        local file_exists = with_file(data_,function(f)
+                                        for l in f:lines() do
+                                          process_line(l,updated_sequences)
+                                        end
+                                            end)
+        if file_exists then
+          return true
+        end
+        return process_line(data_,updated_sequences)
+      elseif type(data_)=="table" then
+        local rv
+        for _,d in ipairs(data_) do
+          rv = process_line(d)
+        end
+        return rv
+      elseif type(data_)=="function" then
+        local rv
+        for d in data_ do
+          rv = process_line(d,updated_sequences)
+        end
+        return rv
+      end
+    end
 
+    local rv = helper()
+    -- we now update the real sequences
+    for n,s in pairs(updated_sequences) do
+      local metric,step,period = string.match(n,"^(.+);(%w+):(%w+)$")
+      local seq = _sequences.add(metric,parse_time_unit(step),parse_time_unit(period))
+      for _,sl in ipairs(s.slots()) do
+        seq.update(sl._timestamp,sl._sum,sl._hits)
+      end
+    end
+    return rv
   end
+
 
 
   return {

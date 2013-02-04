@@ -20,7 +20,7 @@ function in_memory_store(key_)
   end
 
   return {
-	create = function(key_,step_,period_) 
+	create = function(key_,step_,period_)
       if not step_ or step_==0 then return nil end
       init(step_,period_)
       reset()
@@ -74,6 +74,11 @@ function in_memory_sequences(store_factory_)
 
   return {
 	add = function(metric_,step_,period_)
+      for _,s in ipairs(_seqs[metric_] or {}) do
+        if s.get_metric()==metric_ and s.get_step()==step_ and s.get_period()==period_ then
+          return s
+        end
+      end
       local seq = sequence(metric_)
       local store = store_factory_()
       store.create(metric_,step_,period_)
@@ -115,4 +120,3 @@ function in_memory_sequences(store_factory_)
          }
 
 end
-

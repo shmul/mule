@@ -54,7 +54,7 @@ function test_string_lines()
   for i in string_lines(str) do
 	table.insert(lines,i)
   end
-  
+
   assert_equal(lines[1],"hello")
   assert_equal(lines[2],"cruel")
   assert_equal(lines[3],"world")
@@ -109,7 +109,7 @@ function helper_time_sequence(store_)
   assert_equal(3,seq.get_slot(2)._sum)
   assert_equal(1,seq.get_slot(2)._hits)
   assert_equal(3,seq.get_slot(seq.latest())._sum)
-  seq.update(7260,89,1) 
+  seq.update(7260,89,1)
   assert_equal(89,seq.get_slot(2)._sum)
   assert_equal(1,seq.get_slot(2)._hits)
   assert_equal(89,seq.get_slot(seq.latest())._sum)
@@ -118,7 +118,7 @@ function helper_time_sequence(store_)
   local tbl = {}
   seq.serialize(tableout(tbl),{deep=true})
   assert_equal("seq",tbl[1])
-  assert_equal(60,tbl[2]) -- 
+  assert_equal(60,tbl[2]) --
   assert_equal(3600,tbl[3]) -- period
 
   -- first slot
@@ -153,7 +153,7 @@ function helper_time_sequence(store_)
   tbl = {}
   seq.serialize(tableout(tbl),{sorted=true,deep=true})
   assert_equal("seq",tbl[1])
-  assert_equal(60,tbl[2]) 
+  assert_equal(60,tbl[2])
   assert_equal(3600,tbl[3]) -- period
 
   -- last slot
@@ -224,7 +224,7 @@ function test_remove_comment()
   assert_equal("hello cruel",remove_comment("	hello cruel #world"))
   assert_equal("hello cruel",remove_comment("  hello cruel #world"))
 end
-  
+
 function test_parse_input_line()
   local items = parse_input_line("event.phishing 60S:12H 1H:30d")
   assert_equal(3,#items)
@@ -329,7 +329,7 @@ function test_process_in_memory()
   assert_equal(nil,factories["event.phishing.google.com"])
 
   m.process("event.phishing.phishing-host 20 74857843")
-  
+
   assert(empty_metrics(seqs.get("event.pharming")))
 
   assert(empty_metrics(seqs.get("event.phishing.google.com")))
@@ -337,6 +337,7 @@ function test_process_in_memory()
 
   m.process("event.phishing.google.com 98 74857954")
   assert(seqs.get("event.phishing.google.com"))
+
   assert(non_empty_metrics(seqs.get("event.phishing.google.com")))
 
   m.process("event.pharming.pigs.pharm.com 98 74857954")
@@ -351,7 +352,7 @@ end
 
 function test_top_level_factories()
 
-  function helper(m) 
+  function helper(m)
 	m.configure(table_itr({"event. 60s:12h 1h:30d","event 3m:1h"}))
 	local seqs = m.get_sequences()
 	assert(not seqs.get("event.phishing"))
@@ -363,7 +364,7 @@ function test_top_level_factories()
 	assert_equal(nil,factories["event.phishing.google.com"])
 
 	m.process("event.phishing.phishing-host 20 74857843")
-	
+
 	assert(empty_metrics(seqs.get("event.pharming")))
 
 	assert(empty_metrics(seqs.get("event.phishing.google.com")))
@@ -392,8 +393,8 @@ function test_top_level_factories()
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
   tc_init(bdb)
   m = mule(tokyocabinet_sequences(
-			 function(metric_,step_,period_) 
-			   return tokyocabinet_store(bdb,metric_,step_,period_) 
+			 function(metric_,step_,period_)
+			   return tokyocabinet_store(bdb,metric_,step_,period_)
 			 end,tc_get,tc_fwmkeys))
   helper(m)
 end
@@ -411,7 +412,6 @@ function test_reset()
 	assert_equal(0,#m.matching_sequences("event.phishing.google.com"))
 
 	m.process("event.phishing.phishing-host 20 74857843")
-	
 	assert(non_empty_metrics(m.get_sequences().get("event")))
 	assert(empty_metrics(m.get_sequences().get("event.pharming")))
 	assert(2,#m.matching_sequences("event.phishing"))
@@ -446,15 +446,15 @@ function test_reset()
 	assert(empty_metrics(m.get_sequences().get("event.phishing.google")))
 	assert(empty_metrics(m.get_sequences().get("event.phishing.google.com")))
   end
-  
+
   local m = mule(in_memory_sequences(in_memory_store))
   helper(m)
   local bdb = tokyocabinet_db("./tests/temp/reset.bdb")
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
   tc_init(bdb)
   m = mule(tokyocabinet_sequences(
-					  function(metric_,step_,period_) 
-						return tokyocabinet_store(bdb,metric_,step_,period_) 
+					  function(metric_,step_,period_)
+						return tokyocabinet_store(bdb,metric_,step_,period_)
 					  end,tc_get,tc_fwmkeys))
   helper(m)
 end
@@ -480,10 +480,10 @@ function test_process_tokyo()
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
   tc_init(bdb)
   local m = mule(tokyocabinet_sequences(
-					  function(metric_,step_,period_) 
-						return tokyocabinet_store(bdb,metric_,step_,period_) 
+					  function(metric_,step_,period_)
+						return tokyocabinet_store(bdb,metric_,step_,period_)
 					  end,tc_get,tc_fwmkeys))
-  
+
   m.configure(table_itr({"event.phishing 60s:12h 1h:30d","event.pharming 3m:1h","event.akl 10m:1y"}))
   local seqs = m.get_sequences()
   assert(not seqs.get("event.phishing"))
@@ -496,7 +496,7 @@ function test_process_tokyo()
   assert_equal(nil,factories["event.phishing.google.com"])
 
   m.process("event.phishing.phishing-host 20 74857843")
-  
+
   assert(empty_metrics(seqs.get("event.pharming")))
 
   assert(empty_metrics(seqs.get("event.phishing.google.com")))
@@ -524,10 +524,10 @@ function test_latest()
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
   tc_init(bdb)
   local m = mule(tokyocabinet_sequences(
-					  function(metric_,step_,period_) 
-						return tokyocabinet_store(bdb,metric_,step_,period_) 
+					  function(metric_,step_,period_)
+						return tokyocabinet_store(bdb,metric_,step_,period_)
 					  end,tc_get,tc_fwmkeys))
-  
+
   m.configure(table_itr({"event.phishing 60s:12h 1h:30d","event.pharming 3m:1h","event.akl 10m:1y"}))
 
   m.process("event.phishing.google 3 3")
@@ -582,10 +582,10 @@ function test_update_only_relevant()
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
   tc_init(bdb)
   local m = mule(tokyocabinet_sequences(
-					  function(metric_,step_,period_) 
-						return tokyocabinet_store(bdb,metric_,step_,period_) 
+					  function(metric_,step_,period_)
+						return tokyocabinet_store(bdb,metric_,step_,period_)
 					  end,tc_get,tc_fwmkeys))
-  
+
   m.configure(table_itr({"event.phishing 60s:12h 1h:30d","event.pharming 3m:1h","event.akl 10m:1y"}))
 
   m.process("event.phishing.yahoo 7 4")
@@ -608,7 +608,6 @@ function test_update_only_relevant()
   assert(string.find(m.latest("event.phishing.google;1m:12h"),"6,1,0,"))
   assert(string.find(m.latest("event.phishing.apple;1m:12h"),"32,1,60,"))
 
-  --print(m.graph("*"))
 end
 
 
@@ -617,10 +616,10 @@ function test_metric_one_level_childs()
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
   tc_init(bdb)
   local m = mule(tokyocabinet_sequences(
-					  function(metric_,step_,period_) 
-						return tokyocabinet_store(bdb,metric_,step_,period_) 
+					  function(metric_,step_,period_)
+						return tokyocabinet_store(bdb,metric_,step_,period_)
 					  end,tc_get,tc_fwmkeys))
-  
+
   m.configure(table_itr({"event.phishing 60s:12h 1h:30d","event.pharming 3m:1h","event.akl 10m:1y"}))
 
   m.process("event.phishing.yahoo 7 4")
@@ -638,7 +637,7 @@ function test_metric_one_level_childs()
 	{"",0},
 	{"foo",0},
   }
-  
+
   for j,t in ipairs(tests) do
 	local childs = {}
 
@@ -649,4 +648,3 @@ function test_metric_one_level_childs()
   end
 
 end
-
