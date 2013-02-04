@@ -72,14 +72,16 @@ function sequence(db_,name_)
     -- or if are way ahead of the previous time the slot was updated
     -- over-write its value
     local timestamp,hits,sum = at(idx)
-    if replace_ or (adjusted_timestamp==timestamp and hits>0) then
+    if replace_ then
+      set_slot(idx,adjusted_timestamp,hits_ or 1,sum_)
+    elseif adjusted_timestamp==timestamp and hits>0 then
       -- no need to worry about the latest here, as we have the same (adjusted) timestamp
       set_slot(idx,adjusted_timestamp,hits+(hits_ or 1),sum+sum_)
     else
       set_slot(idx,adjusted_timestamp,hits_ or 1,sum_)
-      if adjusted_timestamp>latest_timestamp() then
-        latest(idx)
-      end
+    end
+    if adjusted_timestamp>latest_timestamp() then
+      latest(idx)
     end
 
     _seq_storage.save(_name)
@@ -212,13 +214,18 @@ function sparse_sequence(name_)
     return _slots[#_slots]
   end
 
-  local function update(timestamp_,sum_,hits_)
+  local function update(timestamp_,sum_,hits_,replace_)
     local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
     -- here, unlike the regular sequence, we keep all the timestamps. The real sequence
     -- will discard stale ones
     local slot = find_slot(adjusted_timestamp)
-    slot._sum = slot._sum+sum_
-    slot._hits = slot._hits+hits_
+    if replace_ then
+      slot._sum = sum_
+      slot._hits = nil -- we'll use this as an indication or replace
+    else
+      slot._sum = slot._sum+sum_
+      slot._hits = slot._hits+hits_
+    end
   end
 
   return {
@@ -667,9 +674,12 @@ function mule(db_)
   end
 
   local function update_line(metric_,sum_,timestamp_,updated_sequences_)
+    local replace,sum = string.match(sum_,"(=?)(%d+)")
+    replace = replace=="="
+    timestamp_ = tonumber(timestamp_)
     for n in get_sequences(metric_) do
       local seq = updated_sequences_[n] or sparse_sequence(n)
-      seq.update(timestamp_,sum_,1)
+      seq.update(timestamp_,sum,1,replace)
       updated_sequences_[n] = seq
     end
   end
@@ -679,9 +689,10 @@ function mule(db_)
     -- slots is a flat array of arrays
     local j = 1
     while j<#slots_ do
-      local sum,hits,timestamp = tonumber(slots_[j]),tonumber(slots_[j+1]),tonumber(slots_[j+2])
+      local sum,hits,timestamp = slots_[j],tonumber(slots_[j+1]),tonumber(slots_[j+2])
       j = j + 3
-      seq_.update(timestamp,sum,hits)
+      local replace,s = string.match(sum,"(=?)(%d+)")
+      seq_.update(timestamp,s,hits,replace)
     end
     return j-1
   end
@@ -728,7 +739,7 @@ function mule(db_)
 
     -- 1) standard update
     if not string.find(items[1],";",1,true) then
-      return update_line(items[1],tonumber(items[2]),tonumber(items[3]),update_sequences_)
+      return update_line(items[1],items[2],items[3],update_sequences_)
     end
 
     -- 2) an entire sequence
@@ -788,7 +799,7 @@ function mule(db_)
       local seq = sequence(_db,n)
       local s = updated_sequences[n]
       for _,sl in ipairs(s.slots()) do
-        seq.update(sl._timestamp,sl._sum,sl._hits)
+        seq.update(sl._timestamp,sl._sum,sl._hits or 1,sl._hits==nil)
       end
       check_alert(seq,now)
     end

@@ -635,18 +635,24 @@ function test_update_only_relevant()
 
     m.process("beer.ale.burton 32 91")
 
-    assert(string.find(m.latest("beer.ale.pale;1m:12h"),"7,1,0"))
-    assert(string.find(m.latest("beer.ale.brown;1m:12h"),"[6,1,0]"))
-    assert(string.find(m.latest("beer.ale.burton;1m:12h"),"[32,1,60]"))
-    assert(string.find(m.latest("beer.ale;1m:12h"),"[32,1,60]"))
-    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp=93}),"[32,1,60]"))
+    assert(string.find(m.latest("beer.ale.pale;1m:12h"),"7,1,0",1,true))
+    assert(string.find(m.latest("beer.ale.brown;1m:12h"),"[6,1,0]",1,true))
+    assert(string.find(m.latest("beer.ale.burton;1m:12h"),"[32,1,60]",1,true))
+    assert(string.find(m.latest("beer.ale;1m:12h"),"[32,1,60]",1,true))
+    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp=93}),"[32,1,60]",1,true))
 
     m.process("beer.ale 132 121")
-    assert(string.find(m.slot("beer.ale;1m:12h",{timestamp="121"}),"[132,1,120]"))
-    assert(string.find(m.latest("beer.ale;1m:12h"),"[132,1,120]"))
-    assert(string.find(m.latest("beer.ale.pale;1m:12h"),"[7,1,0]"))
-    assert(string.find(m.latest("beer.ale.brown;1m:12h"),"[6,1,0]"))
-    assert(string.find(m.latest("beer.ale.burton;1m:12h"),"[32,1,60]"))
+    assert(string.find(m.slot("beer.ale;1m:12h",{timestamp="121"}),"[132,1,120]",1,true))
+    assert(string.find(m.latest("beer.ale;1m:12h"),"[132,1,120]",1,true))
+    assert(string.find(m.latest("beer.ale.pale;1m:12h"),"[7,1,0]",1,true))
+    assert(string.find(m.latest("beer.ale.brown;1m:12h"),"[6,1,0]",1,true))
+    assert(string.find(m.latest("beer.ale.burton;1m:12h"),"[32,1,60]",1,true))
+
+    m.process("beer.ale =94 121")
+    assert(string.find(m.slot("beer.ale;1m:12h",{timestamp="121"}),"[94,1,120]",1,true))
+
+    m.process("beer.ale.burton =164 854")
+    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp="latest"}),"[164,1,840]",1,true))
   end
 
   for_each_db("./tests/temp/update_only_relevant",helper)
