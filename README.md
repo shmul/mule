@@ -196,12 +196,6 @@ Multiple metrics can be use by separating them with `/`, i.e.
 
     http://muleserver/key/<metric_1>/<metric_2>/.../<metric_n>
 
-#### stop
-
-    http://muleserver/stop?password=<pwd>
-
-Simply stops the running http deamon. This is not meant to be secure by any mean and serves as a simple protection from accidental termination.
-
 #### Access to specific slots
 Data of specific slots can be retrieved by sending a GET request to
 
@@ -214,6 +208,20 @@ Retrieving only the latest updated slot is supported via
     http://muleserver/latest/<metric-or-name>
 
 Both of these requests may use multiple metrics separated by `/`.
+
+#### stop
+
+    http://muleserver/stop?password=<pwd>
+
+Simply stops the running http deamon. This is not meant to be secure by any mean and serves as a simple protection from accidental termination.
+
+#### backup
+
+    http://muleserver/backup
+
+Creates a backup of the db next to it. Returns the path.
+
+
 
 ## Install
 

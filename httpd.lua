@@ -121,6 +121,12 @@ local function crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   end
 end
 
+local function backup_handler(mule_,handler_,req_,resource_,qs_params_,content_,
+                              backup_callback_)
+  local path = backup_callback_()
+  return path and string.format("{'path':'%s'}",path) or "{}"
+end
+
 local function nop_handler()
 end
 
@@ -133,10 +139,11 @@ local handlers = { key = generic_get_handler,
                    config = config_handler,
                    stop = nop_handler,
                    alert = crud_handler,
+                   backup = backup_handler
 }
 
 
-local function send_response(send_,req_,content_,with_mule_,stop_cond_)
+local function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond_)
 
   if not req_ then
 	return send_(standard_response("400 Bad Request"))
@@ -163,7 +170,7 @@ local function send_response(send_,req_,content_,with_mule_,stop_cond_)
       end
 
       return handler(mule_,handler_name,req_,table.concat(decoded_segments,"/"),
-                     qs,content_)
+                     qs,content_,backup_callback_)
     end)
 
   if handler_name=="stop" then
@@ -185,7 +192,7 @@ local function send_response(send_,req_,content_,with_mule_,stop_cond_)
 end
 
 
-function http_loop(address_port_,with_mule_,stop_cond_)
+function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_)
   local address,port = string.match(address_port_,"(%S-):(%d+)")
   copas.addserver(socket.bind(address,port),
 				  function(socket_)
@@ -205,7 +212,7 @@ function http_loop(address_port_,with_mule_,stop_cond_)
                     end
 
 
-					send_response(send,req,content,with_mule_,stop_cond_)
+					send_response(send,req,content,with_mule_,backup_callback_,stop_cond_)
 				  end)
   while not stop_cond_() do
 	copas.step()

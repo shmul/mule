@@ -6,10 +6,14 @@ require "httpd"
 
 pcall(require, "profiler")
 
+local function strip_slash(path_)
+  return string.match(path_,"^(.-)/?$")
+end
+
 local function guess_db(db_path_,readonly_)
   logd("guess_db",db_path_)
   -- strip a trailing / if it exists
-  db_path_ = string.match(db_path_,"^(.+)/?$")
+  db_path_ = strip_slash(db_path_)
   if string.find(db_path_,"_cdb$") then
     return c.column_db(db_path_,readonly_)
   elseif string.find(db_path_,cabinet.suffix.."$") then
@@ -42,6 +46,18 @@ local function with_mule(db_path_,readonly_,callback_)
   db.close()
   m = nil
   return rv
+end
+
+local function backup(db_path_)
+  function helper()
+    local db_path = strip_slash(db_path_)
+    local bak = string.format("%s.bak.%s",db_path,os.date("%y%m%d-%H%M%S"))
+    os.execute(string.format("cp -r %s %s",db_path_,bak))
+    logi("backed up to",bak)
+    return bak
+  end
+
+  return helper
 end
 
 local function fatal(msg_,out_)
@@ -137,6 +153,7 @@ function main(opts,out_)
     local stopped = false
     local httpd_can_be_stopped = opts["x"]
     http_loop(opts["t"],writable_mule,
+              backup(opts["d"]),
               function(token_)
                 -- this is confusing: when the function is called with param we match
                 -- it against the stop shared secret
