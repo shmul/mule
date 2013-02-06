@@ -15,7 +15,7 @@ local function read_request(socket_)
   local req = {}
   while true do
 	local data = socket_:receive("*l")
-	if not data or #data==0 then 
+	if not data or #data==0 then
 	  local content_len = tonumber(req["Content-Length"])
 	  local content
 	  if content_len and content_len>0 then
@@ -53,9 +53,19 @@ local function standard_response(status_,content_)
   return build_response(string.format("HTTP/1.1 %s",status_),{{"Connection","close"}},content_)
 end
 
-local handlers = { keys="process", graph="process", piechart="process", latest="process", slot="process", update="process", config="config", stop="stop" }
+local handlers = {
+  keys="process",
+  graph="process",
+  piechart="process",
+  latest="process",
+  slot="process",
+  update="process",
+  config="config",
+  backup="backup",
+  stop="stop"
+}
 
-local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
+local function send_response(socket_,req_,content_,with_mule_,backup_callback_,stop_cond_)
   if not req_ then
 	socket_:send(standard_response("400 Bad Request"))
 	return
@@ -87,6 +97,8 @@ local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
 							  return mule_.process(params)
 							elseif handler=="config" then
 							  return mule_.configure(params)
+							elseif handler=="backup" then
+							  return backup_callback_(params)
 							end
 						  end)
 	if rv and #rv>0 then
@@ -109,11 +121,11 @@ local function send_response(socket_,req_,content_,with_mule_,stop_cond_)
 	logw("stopping, using: ",token)
 	stop_cond_(token)
   end
-  logi("send_response",s,err)  
+  logi("send_response",s,err)
 end
 
 
-function http_loop(host_port_,with_mule_,stop_cond_)
+function http_loop(host_port_,with_mule_,backup_callback_,stop_cond_)
   local host,port = string.match(host_port_,"(%S-):(%d+)")
   copas.addserver(socket.bind(host,port),
 				  function(socket_)
@@ -122,11 +134,10 @@ function http_loop(host_port_,with_mule_,stop_cond_)
 					--socket_:setoption ("tcp-nodelay", true)
 					local wrapped_socket = copas.wrap(socket_)
 					local req,content = read_request(wrapped_socket)
-					send_response(wrapped_socket,req,content,with_mule_,stop_cond_)
+					send_response(wrapped_socket,req,content,with_mule_,
+                                  backup_callback_,stop_cond_)
 				  end)
   while not stop_cond_() do
 	copas.step()
   end
 end
-
-
