@@ -6,6 +6,7 @@ local s,url = pcall(require,"socket.url")
 local status_codes = {
   [200] = "200 OK",
   [201] = "201 Created",
+  [204] = "204 No Content",
   [400] = "400 Bad Request",
   [405] = "405 Method Not Allowed"
 }
