@@ -497,18 +497,69 @@ function mule(db_)
     return wrap_json(str)
   end
 
+  local function alert_check_stale(name_,timestamp_)
+    local alert = _alerts[name_]
+    if not alert then
+      return nil
+    end
+
+    if alert._stale and alert._latest+alert._stale<timestamp_ then
+      alert._state = "stale"
+      return true
+    end
+    return false
+  end
+
+  local function check_alert(sequence_,timestamp_)
+    local alert = _alerts[sequence_.name()]
+    if not alert then
+      return nil
+    end
+
+    alert._latest = sequence_.slot(sequence_.latest())._timestamp
+    if alert_check_stale(sequence_.name(),timestamp_) then
+      return alert
+    end
+
+    local average_sum = 0
+    local step = sequence_.step()
+    local start = timestamp_-alert._period
+    for ts = start,timestamp_,step do
+      local slot = sequence_.slot(sequence_.slot_index(ts))
+      if ts>slot._timestamp and slot._hits>0 then
+        if ts==start then
+          -- we need to take only the proportionate part of the first slot
+          average_sum = average_sum + (slot._sum*(ts-slot._timestamp)/step)
+        else
+          average_sum = average_sum + slot._sum
+        end
+      end
+    end
+    alert._sum = average_sum
+    alert._state = (average_sum<alert._critical_low and "CRITICAL LOW") or
+      (average_sum<alert._warning_low and "WARNING LOW") or
+      (average_sum>alert._warning_high and "WARNING HIGH") or
+      (average_sum>alert._critical_high and "CRITICAL HIGH") or "NORMAL"
+    return alert
+  end
+
   local function alert_set(resource_,options_)
 
     _alerts[resource_] = {
-      _critical_low = to_number(options_.critical_low),
+      _critical_low = tonumber(options_.critical_low),
       _warning_low = tonumber(options_.warning_low),
       _warning_high = tonumber(options_.warning_high),
       _critical_high = tonumber(options_.critical_high),
+      _period = parse_time_unit(options_.period),
       _stale = parse_time_unit(options_.stale),
       _sum = 0,
       _latest = 0,
       _state = ""
     }
+    if not _alerts[resource_]._period then
+      logw("alert_set no period defined",t2s(options_))
+      return nil
+    end
     logi("set alert",t2s(_alerts[resource_]))
     return ""
   end
@@ -537,7 +588,7 @@ function mule(db_)
       as[resource_] = _alerts[resource_]
     end
 
-    for n,a in ipairs(as) do
+    for n,a in pairs(as) do
       alert_check_stale(n,now)
       col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%d,\"%s\"]",
                      n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
@@ -572,7 +623,8 @@ function mule(db_)
                            warning_low = items_[4],
                            warning_high = items_[5],
                            critical_high = items_[6],
-                           stale = items_[7],
+                           period = items_[7],
+                           stale = items_[8],
                                    })
       end,
       latest = function()
@@ -635,43 +687,6 @@ function mule(db_)
     _alerts = alerts and pp.unpack(alerts) or {}
   end
 
-
-  local function alert_check_stale(name_,timestamp_)
-    local alert = _alerts[name_]
-    if not alert then
-      return nil
-    end
-    if alert._latest+alert._stale<timestamp_ then
-      alert._state = "stale"
-      return true
-    end
-    return false
-  end
-
-  local function check_alert(sequence_,timestamp_)
-    local alert = _alerts[sequence_.name()]
-    if not alert then
-      return nil
-    end
-
-    alert._latest = sequence_.get_timestamp(sequence_.latest())
-    if alert_check_stale(sequence_.name()) then
-      return alert
-    end
-
-    local average_sum = 0
-    for ts = timestamp_-alert._period,timestamp_,sequence_.step() do
-      local slot = sequence_.slot(sequence_.slot_index(ts))
-      average_sum = average_sum + (slot._sum*(ts-slot._timestamp)/sequence_.step())
-    end
-
-    alert._sum = average_sum
-    alert._state = (average_sum<alert._critical_low and "CRITICAL low") or
-      (average_sum<alert._warning_low and "WARNING low") or
-      (average_sum>alert._warning_high and "WARNING high") or
-      (average_sum>alert._critical_high and "CRITICAL high") or "normal"
-    return alert
-  end
 
   local function update_line(metric_,sum_,timestamp_,updated_sequences_)
     local replace,sum = string.match(sum_,"(=?)(%d+)")

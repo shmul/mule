@@ -3,6 +3,12 @@ require "helpers"
 local lr = pcall(require,"luarocks.require")
 local cp = pcall(require,"copas")
 local s,url = pcall(require,"socket.url")
+local status_codes = {
+  [200] = "200 OK",
+  [201] = "201 Created",
+  [400] = "400 Bad Request",
+  [405] = "405 Method Not Allowed"
+}
 
 if not lr and cp then
   loge("unable to find luarocks or copas")
@@ -78,7 +84,7 @@ local function build_response(status_,headers_,body_)
 end
 
 local function standard_response(status_,content_)
-  return build_response(string.format("HTTP/1.1 %s",status_),{{"Connection","close"}},content_)
+  return build_response(string.format("HTTP/1.1 %s",status_codes[status_]),{{"Connection","close"}},content_)
 end
 
 local function generic_get_handler(mule_,handler_,req_,resource_,qs_params_,content_)
@@ -113,18 +119,13 @@ end
 
 local function crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="PUT" then
-    return mule_.alert_set(resource_,qs_params(content_))
+    return mule_.alert_set(resource_,qs_params(content_))=="" and 201 or 400
   elseif req_.verb=="DELETE" then
     return mule_.alert_remove(resource_)
   elseif req_.verb=="GET" then
-    return mule_.alerts(resource_)
+    return mule_.alert(resource_)
   end
-end
-
-local function backup_handler(mule_,handler_,req_,resource_,qs_params_,content_,
-                              backup_callback_)
-  local path = backup_callback_()
-  return path and string.format("{'path':'%s'}",path) or "{}"
+  return 405
 end
 
 local function nop_handler()
@@ -139,14 +140,14 @@ local handlers = { key = generic_get_handler,
                    config = config_handler,
                    stop = nop_handler,
                    alert = crud_handler,
-                   backup = backup_handler
+                   backup = nop_handler
 }
 
 
-local function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond_)
+function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond_)
 
   if not req_ then
-	return send_(standard_response("400 Bad Request"))
+	return send_(standard_response(400))
   end
 
   local url_no_qs = string.match(req_.url,"^([^%?]+)")
@@ -170,25 +171,27 @@ local function send_response(send_,req_,content_,with_mule_,backup_callback_,sto
       end
 
       return handler(mule_,handler_name,req_,table.concat(decoded_segments,"/"),
-                     qs,content_,backup_callback_)
+                     qs,content_)
     end)
 
   if handler_name=="stop" then
     logw("stopping, using: ",qs.token)
     stop_cond_(token)
+  elseif handler_name=="backup" then
+    local path = backup_callback_()
+    rv = path and string.format("{'path':'%s'}",path) or "{}"
   end
 
   if not rv or (type(rv)=="string" and #rv==0) then
-    return send_(standard_response("204 No Content"))
-  end
-  if rv==405 then
-    return send_(standard_response("405 Method Not Allowed"))
+    return send_(standard_response(204))
+  elseif type(rv)=="number" then
+    return send_(standard_response(rv))
   end
 
   if qs.jsonp then
     rv = string.format("%s(%s)",qs.jsonp,rv)
   end
-  return send_(standard_response("200 OK",rv),rv)
+  return send_(standard_response(200,rv),rv)
 end
 
 
@@ -207,10 +210,9 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_)
                       if body_ and #body_>0 then
                         s,err = socket_:send(body_)
                       end
-                      logi("send_response",s,err)
+                      logi("send",s,err)
                       return s,err
                     end
-
 
 					send_response(send,req,content,with_mule_,backup_callback_,stop_cond_)
 				  end)
