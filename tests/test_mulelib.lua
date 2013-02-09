@@ -31,7 +31,7 @@ end
 
 local function insert_all_args(tbl_)
   return function(...)
-    for _,v in ipairs(arg) do
+    for _,v in ipairs({...}) do
       table.insert(tbl_,v)
     end
          end

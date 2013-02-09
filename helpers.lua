@@ -269,13 +269,13 @@ function t2s(tbl)
   end
   if type(tbl)~='table' then return tostring(tbl) end
   local rep = {}
-  table.foreach(tbl,function (key,val)
-                  if type(val)=='table' then
-                    table.insert(rep,string.format('"%s":{%s}',key,t2s(val)))
-                  else
-                    table.insert(rep,string.format('"%s":"%s"',key,t2s(val)))
-                  end
-                    end)
+  for key,val in pairs(tbl) do
+    if type(val)=='table' then
+      table.insert(rep,string.format('"%s":{%s}',key,t2s(val)))
+    else
+      table.insert(rep,string.format('"%s":"%s"',key,t2s(val)))
+    end
+  end
 
   return table.concat(rep,',')
 end
@@ -558,4 +558,8 @@ end
 
 function printf(format_,...)
   print(string.format(format_,...))
+end
+
+function hex(s)
+ return string.gsub(s,"(.)",function (x) return string.format("%02X",string.byte(x)) end)
 end

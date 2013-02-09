@@ -6,15 +6,25 @@ PNS = 4 -- Packed Number Size
 
 if bit32_found then
   function to_binary(int_)
-    local sh = bit32.arshift
+    local sh = bit32.rshift
     local an = bit32.band
     local i = sh(int_,16)
-    return string.char(an(int_,255),
-                       an(sh(int_,8),255),
+    return string.char(an(sh(i,8),255),
                        an(i,255),
-                       an(sh(i,16),255)
-                      )
+                       an(sh(int_,8),255),
+                       an(int_,255))
   end
+
+  function from_binary(str_,s)
+    s = s or 1
+    local a,b,c,d = string.byte(str_,s,s+3)
+    local sh = bit32.lshift
+    return (d or 0) +
+      (c and sh(c,8) or 0) +
+      (b and sh(b,16) or 0) +
+      (a and sh(a,24) or 0)
+  end
+
 elseif lpack then
   function to_binary(int_)
     return string.pack(">I",int_)
@@ -23,24 +33,24 @@ elseif lpack then
     local _,value = string.unpack(str_,">I",s or 1)
     return value
   end
+
 else
   function to_binary(int_)
     local fl = math.floor
     local i = fl(int_/65536)
-    return string.char(int_%256,
-                       fl(int_/256)%256,
+    return string.char((i~=0 and fl(i/256)%256) or 0,
                        (i~=0 and i%256) or 0,
-                       (i~=0 and fl(i/256)%256) or 0
-                      )
+                       fl(int_/256)%256,
+                       int_%256)
   end
 
   function from_binary(str_,s)
     s = s or 1
     local a,b,c,d = string.byte(str_,s,s+3)
-    return (a or 0) +
-      (b and b*256 or 0) +
-      (c and c*65536 or 0) +
-      (d and d*16777216 or 0)
+    return (d or 0) +
+      (c and c*256 or 0) +
+      (b and b*65536 or 0) +
+      (a and a*16777216 or 0)
   end
 end
 
