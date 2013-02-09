@@ -563,3 +563,8 @@ end
 function hex(s)
  return string.gsub(s,"(.)",function (x) return string.format("%02X",string.byte(x)) end)
 end
+
+-- the whole purpose of this is to enable tests to override it.
+function time_now()
+  return os.time()
+end

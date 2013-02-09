@@ -175,8 +175,8 @@ function column_db(base_dir_)
     local cdb = cell_store_cache[name_]
 
     -- save all the files every SAVE_PERIOD
-    if not last_save or os.time()>last_save+SAVE_PERIOD then
-      last_save = os.time()
+    if not last_save or time_now()>last_save+SAVE_PERIOD then
+      last_save = time_now()
       save_all()
     end
 

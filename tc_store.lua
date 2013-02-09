@@ -1,11 +1,11 @@
 require "sequence_store"
 local ks,kyoto = pcall(require,"kyotocabinet")
 local ts,tokyo = pcall(require,"tokyocabinet") -- tokyocabinet require returns true/false
+cabinet = (ts and tokyocabinet) or (ks and kyoto)
 
-if not (ts and ks) then
+if not cabinet then
   return
 end
-cabinet = (ts and tokyocabinet) or (ks and kyoto) or {}
 
 cabinet.suffix = (ks and cabinet==kyoto and ".kct") or (ts and cabinet==tokyocabinet and ".bdb") or "none"
 cabinet.using = (ks and "kyotocabinet") or (ts and "tokyocabinet") or "none"

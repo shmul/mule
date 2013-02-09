@@ -139,7 +139,7 @@ function sequence(db_,name_)
     end
 
     if opts_.timestamps then
-      local now,latest_ts = os.time(),latest_timestamp()
+      local now,latest_ts = time_now(),latest_timestamp()
       for _,t in ipairs(opts_.timestamps) do
         if t=="*" then
           for _,s in ipairs(ind) do
@@ -579,7 +579,7 @@ function mule(db_)
     local str = strout("","\n")
     local format = string.format
     local col = collectionout(str,"{","}")
-    local now = os.time()
+    local now = time_now()
     col.head()
     local as = _alerts
 
@@ -808,7 +808,7 @@ function mule(db_)
 
     local rv = helper()
     -- we now update the real sequences
-    local now = os.time()
+    local now = time_now()
     local sorted_updated_names = _db.sort_updated_names(keys(updated_sequences))
     for _,n in ipairs(sorted_updated_names) do
       local seq = sequence(_db,n)

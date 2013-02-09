@@ -22,8 +22,11 @@ end
 
 local function for_each_db(name_,func_,no_mule_)
   local dbs = {in_memory_db(),
-               cabinet_db_factory(name_),
                column_db_factory(name_)}
+  if cabinet then
+    table.insert(dbs,cabinet_db_factory(name_))
+  end
+
   for _,db in ipairs(dbs) do
     func_(no_mule_ and db or mule(db))
   end
