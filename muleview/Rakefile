@@ -60,11 +60,11 @@ end
 
 task :beer do
   while true do
-    line = "beer.stout #{rand(1..10)} #{Time.now.to_i}"
+    line = "beer.stout #{rand(1..10)} #{Time.now.to_i * 1000}"
     File.open("input", "w") do |f|
       f.write(line)
     end
-    puts %x[curl http://localhost:3000/update -X POST -T input]
-    sleep 1
+    puts line, %x[curl http://localhost:3000/update -X POST -T input -v]
+    sleep 3
   end
 end
