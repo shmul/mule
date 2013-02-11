@@ -1,4 +1,4 @@
-SEED = 1
+SEED = 2
 MAX = 6
 MAX_HITS = 10
 KEYS_FILE = "keys.data"
@@ -13,7 +13,7 @@ def timestamp(keypath = [], node)
   new_keypath = keypath + [node[:name]]
   name = new_keypath.join(".")
   count = @rand.rand(1..MAX_HITS)
-  timestamp = Time.now.to_i
+  timestamp = Time.now.to_i * 1000
   ans = ["#{name} #{count} #{timestamp}"]
   node[:children].each do |child|
     ans << timestamp(new_keypath, child)
@@ -56,4 +56,15 @@ end
 
 task :read_root do
   @root ||= Marshal.load(File.binread(KEYS_FILE))
+end
+
+task :beer do
+  while true do
+    line = "beer.stout #{rand(1..10)} #{Time.now.to_i}"
+    File.open("input", "w") do |f|
+      f.write(line)
+    end
+    puts %x[curl http://localhost:3000/update -X POST -T input]
+    sleep 1
+  end
 end

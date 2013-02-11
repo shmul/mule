@@ -1,6 +1,9 @@
+data = []
+
 graphContainer = Ext.create "Ext.container.Container",
-  style:
-    background: "red"
+  listeners:
+    resize: ->
+      # renderGraph()
 
 # Main graph panel component
 mainContainer = Ext.create "Ext.panel.Panel",
@@ -40,8 +43,18 @@ askMule = (command, fn) ->
       fn(JSON.parse(response.responseText).data)
 
 updateGraph = (fullname) ->
-  askMule "graph/" + fullname + ".", (response) ->
-    graphContainer.html = response
+  askMule "graph/" + fullname, (response) ->
+    counter = 0
+    for own key, keyData of response
+      hash = {}
+      for [count, batch, timestamp] in keyData
+        if not hash[timestamp]
+          data.push
+            x: timestamp
+            y: count
+          hash[timestamp] = true
+    renderGraph()
+
 
 # Initial method to fill keys
 fillKeys = ->
@@ -72,20 +85,22 @@ fillTree = (parent, keys) ->
     fillTree(node, subkeys)
 
 
-# graph
-testGraph = ->
-  data = [ { x: 0, y: 40 }, { x: 1, y: 49 }, { x: 2, y: 17 }, { x: 3, y: 42 } ]
-  return
+renderGraph = ->
+  return unless graphContainer?.rendered
+  console.log("muleview.coffee\\ 89: data:", data);
   graph = new Rickshaw.Graph
     element: graphContainer.el.dom
-    width: "100%",
-    height: "100%",
+    width: graphContainer.getWidth()
+    height: graphContainer.getHeight()
     series: [
       {
         color: 'steelblue'
         data: data
       }
     ]
+  # legend = new Rickshaw,Graph.Legend
+  #   graph: graph
+  #   element: graphContainer.el.dom
   graph.render()
 
 
@@ -102,4 +117,3 @@ Ext.application
       ]
     }
     fillKeys()
-    testGraph()
