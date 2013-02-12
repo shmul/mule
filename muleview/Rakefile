@@ -60,7 +60,7 @@ end
 
 task :beer do
   while true do
-    line = "beer.stout #{rand(1..10)} #{Time.now.to_i * 1000}"
+    line = "beer.stout #{rand(1..10)} #{Time.now.to_i}"
     File.open("input", "w") do |f|
       f.write(line)
     end

@@ -45,14 +45,16 @@ askMule = (command, fn) ->
 updateGraph = (fullname) ->
   askMule "graph/" + fullname, (response) ->
     counter = 0
+    data = []
     for own key, keyData of response
       hash = {}
       for [count, batch, timestamp] in keyData
         if not hash[timestamp]
           data.push
-            x: timestamp
+            x: timestamp * 1000
             y: count
           hash[timestamp] = true
+    console.log("muleview.coffee\\ 56: data:", data);
     renderGraph()
 
 
@@ -98,9 +100,9 @@ renderGraph = ->
         data: data
       }
     ]
-  # legend = new Rickshaw,Graph.Legend
-  #   graph: graph
-  #   element: graphContainer.el.dom
+  legend = new Rickshaw.Graph.Legend
+    graph: graph
+    element: graphContainer.el.dom
   graph.render()
 
 
