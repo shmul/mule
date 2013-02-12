@@ -32,7 +32,6 @@ local function with_mule(db_path_,readonly_,callback_)
   logi("loading",db_path_,readonly_ and "read" or "write")
   m.load()
   local success,rv = pcall(callback_,m)
-
   if not success then
     loge("error",rv)
     db.close()
@@ -136,7 +135,7 @@ function main(opts,out_)
     local rv = writable_mule(function(m)
                                with_file(opts["c"],
                                          function(f)
-                                           m.configure(f:lines())
+                                           return m.configure(f:lines())
                                          end)
                              end)
     if not rv then

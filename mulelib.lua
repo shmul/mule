@@ -662,6 +662,7 @@ function mule(db_)
       end
     end
     logi("configure",table_size(_factories))
+    return table_size(_factories)
   end
 
 
