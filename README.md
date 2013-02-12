@@ -10,7 +10,7 @@ Mule is a RRD tool designed with simplicity of use in mind. Its main use case is
 
 # License
 
-Mule is distirbtued under the MIT license reproduced below. Mule uses several 3rd party modules whose licenses are described below
+Mule is distributed under the MIT license reproduced below. Mule uses several 3rd party modules whose licenses are described below
 
 ## MIT License
 Copyright (c) 2012 Trusteer Ltd.
@@ -22,10 +22,10 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Tokyo Cabinet
-Tokyo Cabinet is distirbtued under the "GNU Lesser General Public License".
+Tokyo Cabinet is distributed under the "GNU Lesser General Public License".
 
 ## Kyoto Cabinet
-Kyoto Cabinet is distirbtued under the "GNU General Public License".
+Kyoto Cabinet is distributed under the "GNU General Public License".
 
 ## Lunit
 Lunit is licensed under the terms of the MIT license. [Lunit home page](http://www.nessie.de/mroth/lunit/)
@@ -95,7 +95,7 @@ or
 e.g.
 
     beer.stout.irish 20 74857843
-impling 20 orders of `beer.stout.irish` in the given timestamp. The value (i.e. 20) is usually added to the number already calculated for this timestamp, but if an equal sign `=` precends teh value then it replaces the number rather than adding to it.
+impling 20 orders of `beer.stout.irish` in the given timestamp. The value (i.e. 20) is usually added to the number already calculated for this timestamp, but if an equal sign `=` precends the value then it replaces the number rather than adding to it.
 e.g.
 
     beer.stout.irish =32 74858041
@@ -155,7 +155,7 @@ mule_graph({"version": 3,
 
 Multiple metrics (or names) can be use by separating them with `/`, i.e.
 
-    http://muleserver/graph/<metric_1>/<metric_2>/.../<metric_n>
+    http://muleserver/key/<metric>
 
 
 ##### Update graph
@@ -243,7 +243,7 @@ cd kyotocabinet-1.2.76/
 configure
 make
 sudo make install
-</pre<
+</pre>
 
 #### Kyotocabinet-lua
 
