@@ -43,8 +43,8 @@ end
 
 def generate_series
   ans = []
-  10.times do |i|
-    ans << [rand(0..10), 0, (Time.now + 10*i).to_i]
+  100.times do |i|
+    ans << [rand(0..1000), 0, (Time.now + 10*i).to_i]
   end
   ans
 end

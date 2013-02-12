@@ -51,7 +51,7 @@ updateGraph = (fullname) ->
       for [count, batch, timestamp] in keyData
         if not hash[timestamp]
           data.push
-            x: timestamp * 1000
+            x: timestamp
             y: count
           hash[timestamp] = true
     console.log("muleview.coffee\\ 56: data:", data);
@@ -89,9 +89,13 @@ fillTree = (parent, keys) ->
 
 renderGraph = ->
   return unless graphContainer?.rendered
+  graphEl = Ext.create "Ext.container.Container",
+    layout: "fit"
+  graphContainer.removeAll()
+  graphContainer.add(graphEl)
   console.log("muleview.coffee\\ 89: data:", data);
   graph = new Rickshaw.Graph
-    element: graphContainer.el.dom
+    element: graphEl.el.dom
     width: graphContainer.getWidth()
     height: graphContainer.getHeight()
     series: [
@@ -102,7 +106,8 @@ renderGraph = ->
     ]
   legend = new Rickshaw.Graph.Legend
     graph: graph
-    element: graphContainer.el.dom
+    element: graphEl.el.dom
+  axes = new Rickshaw.Graph.Axis.Time( { graph: graph } );
   graph.render()
 
 
