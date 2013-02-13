@@ -1,31 +1,67 @@
-SEED = 2
-MAX = 6
-MAX_HITS = 10
+SEED = 2 # Random seed
+MAX = 6 # Misc rands: Max number of child-nodes per node, max graph depth
+MAX_HITS = 10 # Max number per key per timestamp
 KEYS_FILE = "keys.data"
 TIMESTAMP_FILE = "input"
+CONF_FILE = "conf"
 CURL = "curl localhost:3000/graph -X POST -T #{TIMESTAMP_FILE}"
-@names = File.read("names_list.txt").split(/\s/)
-@root = false
-@rand = Random.new(SEED)
+RETENTION = "5s:10m"
 
+@names = File.read("names_list.txt").split(/\s/) # Names list file
+@root = false # Will contain root key
+@rand = Random.new(ENV["SEED"].to_i || SEED)
 
-def timestamp(keypath = [], node)
-  new_keypath = keypath + [node[:name]]
-  name = new_keypath.join(".")
-  count = @rand.rand(1..MAX_HITS)
-  timestamp = Time.now.to_i * 1000
-  ans = ["#{name} #{count} #{timestamp}"]
-  node[:children].each do |child|
-    ans << timestamp(new_keypath, child)
+# Create timestamp records, one per key in the graph
+def feed_mule()
+  records = []
+  iterate_keys do |name|
+    # Decide count and timestamp:
+    count = @rand.rand(1..MAX_HITS)
+    timestamp = Time.now.to_i
+
+    # Add current record:
+    records << "#{name} #{count} #{timestamp}"
   end
-  ans.flatten
+
+  # Collect results:
+  ans = records.join("\n")
+
+  # Show and write the result:
+  puts ans
+  File.write(TIMESTAMP_FILE, ans)
+
+  # Feed mule with the result:
+  puts %x[#{CURL}]
 end
 
+# Iterate each name in the graph
+def iterate_keys(&block)
+  iterate_key([], @root, &block)
+end
+
+def iterate_key(parents, node, &block)
+  # Calc key string:
+  new_keypath = parents + [node[:name]]
+  name = new_keypath.join(".")
+
+  # Run block on current node:
+  block.call(name)
+
+  # Iterate children:
+  node[:children].each do |child|
+    iterate_key(new_keypath, child, &block)
+  end
+end
+
+# Create a node with a name and some child-nodes
 def make_node(max_depth)
-  ans = {
+  # Create main node:
+  records = {
     name: @names[@rand.rand(0..@names.length-1)].gsub(/ /,"_"),
     children: []
   }
+
+  # Create children:
   if max_depth > 0
     @rand.rand(0..MAX).times do
       ans[:children] << make_node(max_depth - 1)
@@ -34,28 +70,59 @@ def make_node(max_depth)
   ans
 end
 
+def read_root
+  @root ||= Marshal.load(File.binread(KEYS_FILE))
+end
 
+desc "Create a graph hash of names"
 task :create_keys do
+  # Create graph:
   @root = make_node(@rand.rand(1..MAX))
+
+  # Write serialized graph hash:
   File.open(KEYS_FILE, "w") do |f|
     f.write(Marshal.dump(@root))
   end
+
+  # Display it
   puts @root
 end
 
-task :timestamp_keys => :read_root do
-  puts @root
-  File.open(TIMESTAMP_FILE, "w") do |f|
-    timestamp(["root"], @root).each do |line|
-      puts line
-      f.write(line + "\n")
-    end
+desc "Create mule configuration file"
+task :create_conf => :read_root do
+  records = []
+
+  # Create lines:
+  iterate_keys do |key|
+    records << "#{key} #{RETENTION}"
   end
-  puts %x[#{CURL}]
+
+  # Collect results:
+  ans = records.join("\n")
+
+  # Show result:
+  puts ans
+
+  # Write results:
+  File.write(CONF_FILE, ans)
 end
 
+desc "Feed mule with one timestamp per key"
+task :timestamp_keys => :read_root do
+  feed_mule()
+end
+
+desc "Feed the mule in a loop"
+task :timestamp_loop => :read_root do
+  while true do
+    feed_mule
+    sleep 3
+  end
+end
+
+# Load graph to memory:
 task :read_root do
-  @root ||= Marshal.load(File.binread(KEYS_FILE))
+  read_root()
 end
 
 task :beer do
