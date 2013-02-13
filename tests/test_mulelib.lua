@@ -240,14 +240,12 @@ function test_factories()
   assert(factories["event.phishing"])
   assert_equal(0,#m.matching_sequences("event.phishing"))
   assert_equal(0,#m.matching_sequences("event.phishing.google.com"))
-  m.factory("event.phishing.google.com")
-  assert_equal(3,#m.matching_sequences("event.phishing"))
-  assert_equal(6,#m.matching_sequences("event.phishing.google"))
-  assert_equal(9,#m.matching_sequences("event.phishing.google.com"))
+  assert_equal(3,#m.factory("event.phishing"))
+  assert_equal(6,#m.factory("event.phishing.google"))
+  assert_equal(9,#m.factory("event.phishing.google.com"))
   -- the "event.phishing" part matches
-  assert_equal(3,#m.matching_sequences("event.phishing.yahoo.com"))
-  m.factory("event.phishing.facebook.com")
-  assert_equal(3,#m.matching_sequences("event.phishing"))
+  assert_equal(9,#m.factory("event.phishing.yahoo.com"))
+  assert_equal(3,#m.factory("event.phishing"))
 
 end
 

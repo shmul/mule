@@ -329,7 +329,7 @@ function mule(sequences_)
 	local function matching_sequences_not_inited(metric_,prefix_)
 	  return coroutine.wrap(function()
 							  for m in metric_hierarchy(metric_) do
-								if not _sequences.get(m) and is_prefix(m,prefix_) then
+								if is_prefix(m,prefix_) then
 								  coroutine.yield(m)
 								end
 							  end
@@ -338,11 +338,12 @@ function mule(sequences_)
 	end
 
 	local matches = {}
+    local format = string.format
 	for pattern,rps in pairs(_factories) do
 	  for m in matching_sequences_not_inited(metric_,pattern) do
 		for _,rp in ipairs(rps) do
 		  if rp[1]~=0 and rp[2]~=0 then
-			matches[#matches+1] = _sequences.add(m,rp[1],rp[2])
+			matches[#matches+1] = format("%s;%s:%s",m,rp[1],rp[2])
 		  end
 		end
 	  end
@@ -518,18 +519,14 @@ function mule(sequences_)
   end
 
   local function update_line(metric_,value_,timestamp_,updated_sequences_)
-	local matches = matching_sequences(metric_)
-	concat_arrays(matches,factory(metric_))
-	matches = matches or {}
+	local matches = factory(metric_)
+
 	if not matches then
 	  loge("couldn't find a match for",metric_line_)
 	  return "0"
 	end
     local format = string.format
-	for _,s in ipairs(matches) do
-      local n = format("%s;%s:%s",s.get_metric(),
-                       secs_to_time_unit(s.get_step()),
-                       secs_to_time_unit(s.get_period()))
+	for _,n in ipairs(matches) do
       local seq = updated_sequences_[n] or sparse_sequence(n)
       seq.update(timestamp_,value_,1)
       updated_sequences_[n] = seq
@@ -639,13 +636,17 @@ function mule(sequences_)
 
     local rv = helper()
     -- we now update the real sequences
+    logi("process, handling updated_sequences start")
+    local count = 0
     for n,s in pairs(updated_sequences) do
       local metric,step,period = string.match(n,"^(.+);(%w+):(%w+)$")
       local seq = _sequences.add(metric,parse_time_unit(step),parse_time_unit(period))
       for _,sl in ipairs(s.slots()) do
         seq.update(sl._timestamp,sl._sum,sl._hits)
       end
+      count = count + 1
     end
+    logi("process, handling updated_sequences end",count)
     return rv
   end
 
