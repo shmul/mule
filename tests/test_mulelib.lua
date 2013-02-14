@@ -240,6 +240,8 @@ function test_factories()
   assert(factories["event.phishing"])
   assert_equal(0,#m.matching_sequences("event.phishing"))
   assert_equal(0,#m.matching_sequences("event.phishing.google.com"))
+
+  assert_equal(0,#m.factory("event"))
   assert_equal(3,#m.factory("event.phishing"))
   assert_equal(6,#m.factory("event.phishing.google"))
   assert_equal(9,#m.factory("event.phishing.google.com"))
@@ -361,7 +363,7 @@ function test_top_level_factories()
 	assert_equal(nil,factories["event.phishing"])
 	assert_equal(nil,factories["event.phishing.google.com"])
 
-	m.process("event.phishing.phishing-host 20 74857843")
+    m.process({"event.phishing.phishing-host 20 74857843","event.phishing.phishing-host.jom 20 74857843","event.phishing.phishing-host.foo 30 74857843"})
 
 	assert(empty_metrics(seqs.get("event.pharming")))
 
@@ -370,6 +372,7 @@ function test_top_level_factories()
 	assert(non_empty_metrics(seqs.get("event.phishing")))
 	assert(non_empty_metrics(seqs.get("event.phishing.phishing-host")))
 	assert(string.find(m.latest("event"),"20,1,74857800"))
+	assert(string.find(m.latest("event.phishing"),"20,1,74857800"))
 
 	m.process("event.phishing.google.com 98 74857954")
 	assert(seqs.get("event.phishing.google.com"))
