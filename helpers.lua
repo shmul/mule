@@ -80,14 +80,14 @@ function logf(...)
 end
 
 
-local function nop() 
+local function nop()
 end
 
 function tableout(tbl_)
   local function write(o_)
 	table.insert(tbl_,o_)
   end
-  
+
 
 
   return {
@@ -109,7 +109,7 @@ function tablein(tbl_)
 	current = current + 1
 	return tbl_[current]
   end
-  
+
   return {
 	read_string = read,
 	read_timestamp = read,
@@ -123,7 +123,7 @@ function ioout_generic(writer_,delim_,eol_)
 	writer_(tostring(o_))
 	writer_(delim_)
   end
-  
+
   local function endof()
 	writer_(eol_)
   end
@@ -152,7 +152,7 @@ function stdout(delim_,eol_)
 end
 
 function ioin_generic(lines_itr_,delim_)
-  local read = coroutine.wrap(function()								
+  local read = coroutine.wrap(function()
 								for l in lines_itr_() do
 								  for p in split_helper(l,delim_) do
 									-- as our arrays write the delimiter after every
@@ -163,8 +163,8 @@ function ioin_generic(lines_itr_,delim_)
 								  end
 								end
 							  end)
-  
-  
+
+
   return {
 	read_string = read,
 	read_timestamp = function() return tonumber(read()) end,
@@ -204,13 +204,13 @@ function jsonout(as_hash_)
   local function push(item_)
 	insert(str,item_)
   end
-  
+
   local function write_object(o_)
 	if not record_started then
 	  push("[")
 	  record_started = true
 	end
-	
+
 	push(o_)
 	push(",")
   end
@@ -221,10 +221,10 @@ function jsonout(as_hash_)
 					   if as_hash_ then push("]") end
 					   push(",\n")
 					 else
-					   if as_hash_ then 
-						 push("{\n") 
+					   if as_hash_ then
+						 push("{\n")
 					   else
-						 push("[") 
+						 push("[")
 					   end
 					 end
 					 push(string.format("\"%s\"",tostring(o_)))
@@ -233,8 +233,8 @@ function jsonout(as_hash_)
 	write_number = write_object,
 	start_of_header = nop,
 	end_of_header = function()
-					  if as_hash_ then 
-						push(":[") 
+					  if as_hash_ then
+						push(":[")
 					  end
 					  first_header = false
 					end,
@@ -246,7 +246,7 @@ function jsonout(as_hash_)
 	close = function()
 			  if #str>0 then
 				push("]")
-				if as_hash_ then 
+				if as_hash_ then
 				  push("\n}")
 				end
 			  end
@@ -302,7 +302,7 @@ end
 function split(str_,delim_)
   local items = {}
   for p in split_helper(str_,delim_) do
-	if #p>0 then 
+	if #p>0 then
 	  items[#items+1] = p
 	end
   end
@@ -315,15 +315,15 @@ end
 
 
 function remove_comment(line_)
-  local hash = string.find(line_,"#",1,true) 
-  
+  local hash = string.find(line_,"#",1,true)
+
   return trim(hash and string.sub(line_,1,hash-1) or line_)
 end
 
 function lines_without_comments(lines_iterator)
   return coroutine.wrap(function()
 						  for line in lines_iterator do
-							line = remove_comment(line)						
+							line = remove_comment(line)
 							if #line>0 then coroutine.yield(line) end
 						  end
 						end)
@@ -343,11 +343,11 @@ function t2s(tbl)
   end
   if type(tbl)~='table' then return tostring(tbl) end
   local rep = {}
-  table.foreach(tbl,function (key,val) 
+  table.foreach(tbl,function (key,val)
 					  if type(val)=='table' then
-						table.insert(rep,string.format('"%s":{%s}',key,t2s(val))) 
+						table.insert(rep,string.format('"%s":{%s}',key,t2s(val)))
 					  else
-						table.insert(rep,string.format('"%s":"%s"',key,t2s(val))) 
+						table.insert(rep,string.format('"%s":"%s"',key,t2s(val)))
 					  end
 					end)
 
@@ -460,7 +460,7 @@ function copy_table(from_,to_)
 end
 
 local TIME_UNITS = {s=1, m=60, h=3600, d=3600*24, w=3600*24*7, y=3600*24*365}
-local TIME_UNITS_SORTED = (function() 
+local TIME_UNITS_SORTED = (function()
 							 local array = {}
 							 for u,f in pairs(TIME_UNITS) do
 							   table.insert(array,{f,u})
@@ -472,14 +472,18 @@ local TIME_UNITS_SORTED = (function()
 						   end)()
 
 
-
+local parse_time_unit_cache = {}
 function parse_time_unit(str_)
   local secs = nil
+  if parse_time_unit_cache[str_] then
+    return parse_time_unit_cache[str_]
+  end
   if str_ then
 	str_.gsub(str_,"^(%d+)([smhdwy])$",function(num,unit)
 									   secs = num*TIME_UNITS[unit]
 									 end)
 	secs = secs or tonumber(str_) or 0
+    parse_time_unit_cache[str_] = secs
   end
   return secs
 end
@@ -528,7 +532,7 @@ function calculate_slot(timestamp_,step_,period_)
   local slot = math.floor((timestamp_ % period_) / step_)
   -- adjust the slot it to 1-based arrays
   -- adjust the timestamp so it'll be at the beginning of the step
-  return slot+1,math.floor(timestamp_/step_)*step_  
+  return slot+1,math.floor(timestamp_/step_)*step_
 end
 
 local function to_timestamp_helper(expr_,now_,latest_)
