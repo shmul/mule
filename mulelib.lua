@@ -198,10 +198,8 @@ end
 -- a plain (non sorted) array
 
 function sparse_sequence(name_)
-  local _metric,_step,_period,_name
+  local _metric,_step,_period
   local _slots = {}
-
-  _name = name_
 
   _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
   _step = parse_time_unit(_step)
@@ -775,11 +773,12 @@ function mule(db_)
     -- functions as iterators of lines
     local function helper()
       if type(data_)=="string" then
-        local file_exists = with_file(data_,function(f)
+        local file_exists = with_file(data_,
+                                      function(f)
                                         for l in f:lines() do
                                           process_line(l,updated_sequences)
                                         end
-                                            end)
+                                      end)
         if file_exists then
           return true
         end
@@ -810,6 +809,7 @@ function mule(db_)
     local rv = helper()
     -- we now update the real sequences
     local now = time_now()
+    logi("process, handling updated_sequences start")
     local sorted_updated_names = _db.sort_updated_names(keys(updated_sequences))
     for _,n in ipairs(sorted_updated_names) do
       local seq = sequence(_db,n)
@@ -819,6 +819,7 @@ function mule(db_)
       end
       alert_check(seq,now)
     end
+    logi("process, handling updated_sequences end",#sorted_updated_names)
     return rv
   end
 
