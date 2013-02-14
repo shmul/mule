@@ -415,7 +415,9 @@ function test_top_level_factories()
 	assert_equal(nil,factories["beer.ale"])
 	assert_equal(nil,factories["beer.ale.brown.newcastle"])
 
-	m.process("beer.ale.mild 20 74857843")
+
+    m.process({"beer.ale.mild 20 74857843","beer.ale.mild.bitter 20 74857843","beer.ale.mild.sweet 30 74857843"})
+
 	assert(empty_metrics(m.matching_sequences("beer.stout")))
 
 	assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
