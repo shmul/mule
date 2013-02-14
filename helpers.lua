@@ -398,16 +398,18 @@ local TIME_UNITS_SORTED = (function()
                            end)()
 
 
+local parse_time_unit_cache = {}
 
 function parse_time_unit(str_)
   local secs = nil
-  if str_ then
-    string.gsub(str_,"^(%d+)([smhdwy])$",function(num,unit)
-                secs = num*TIME_UNITS[unit]
-                                       end)
-    secs = secs or tonumber(str_) or 0
+  if not parse_time_unit_cache[str_] then
+    string.gsub(str_,"^(%d+)([smhdwy])$",
+                function(num,unit)
+                  secs = num*TIME_UNITS[unit]
+                end)
+    parse_time_unit_cache[str_] = secs or tonumber(str_) or 0
   end
-  return secs
+  return parse_time_unit_cache[str_]
 end
 
 local secs_to_time_unit_cache = {}
