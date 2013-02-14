@@ -44,9 +44,9 @@ stop() {
 
   for i in 1 2 3; do
       echo -n $"stopping $prog (attempt: $i)"
-      curl http://localhost:$mule_port/stop?token=$stop_token
+      curl --connect-timeout 10 -m 20 http://127.0.0.1:$mule_port/stop?token=$stop_token
       sleep 4
-      curl http://localhost:$mule_port
+      curl http://127.0.0.1:$mule_port
       if [ $?==7 ]; then
           echo -e "\nsuccessfully stopped"
           return 0
