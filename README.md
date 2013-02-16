@@ -30,9 +30,6 @@ Kyoto Cabinet is distributed under the "GNU General Public License".
 ## Lunit
 Lunit is licensed under the terms of the MIT license. [Lunit home page](http://www.nessie.de/mroth/lunit/)
 
-## Skiplist
-The skiplist implementation is licensed under the terms of the MIT license and was taken from [here](https://love2d.org/wiki/Skip_list) .
-
 ## Copas
 Copas of the Kepler project is used and is disributed under [this license](http://keplerproject.github.com/copas/license.html). Copyright (c) 2005-2010 Kepler Project.
 
