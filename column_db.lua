@@ -27,9 +27,13 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
     logi("creating file",file_,file_size)
 
     file = io.open(file_,"r+b") or io.open(file_,"w+b")
+    if not file then
+      return nil
+    end
     file:seek("set",file_size-1)
     file:write("%z")
     file:close()
+    file = nil
 
 --[[
     local block_size = 16384
@@ -52,6 +56,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
     if file then
       logd("closed column store",file_)
       file:close()
+      file = nil
     end
   end
 
@@ -111,7 +116,7 @@ function column_db(base_dir_)
   local meta_file = base_dir_.."/db.meta"
   local cell_store_cache = {}
   local last_save = nil
-
+  logi("column_db")
   local function extract_from_name(name_)
     local node = index:find(name_)
 
@@ -180,15 +185,16 @@ function column_db(base_dir_)
       save_all()
     end
 
+    -- we normalize the step,period variables to canonical time units
+    -- we add 1 to the period/step to accomodate the latest value at the last slot
+    local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
+                                    secs_to_time_unit(step),
+                                    secs_to_time_unit(period),
+                                    id / SEQUENCES_PER_FILE)
+    cdb = cell_store_cache[file_name]
     if not cdb then
-      -- we normalize the step,period variables to canonical time units
-      -- we add 1 to the period/step to accomodate the latest value at the last slot
-      local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
-                                      secs_to_time_unit(step),
-                                      secs_to_time_unit(period),
-                                      id / SEQUENCES_PER_FILE)
       cdb = cell_store(file_name,SEQUENCES_PER_FILE,period/step,p.PNS*3) -- 3 items per slot
-      cell_store_cache[name_] = cdb
+      cell_store_cache[file_name] = cdb
     end
     return cdb,id % SEQUENCES_PER_FILE
   end

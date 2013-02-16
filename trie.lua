@@ -41,7 +41,7 @@ local function find(self,string_,partial_,prefix_)
   end
   local a,b = split(string_)
   if self._children[a] then
-    return self._children[a] and self._children[a]:find(b,partial_)
+    return self._children[a]:find(b,partial_)
   end
   if prefix_ then
     for k,v in pairs(self._children) do
