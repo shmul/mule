@@ -108,7 +108,6 @@ function main(opts,out_)
   end
 
   local db_exists = file_exists(opts["d"])
-
   if opts["r"] and db_exists and not opts["f"] then
     fatal("database exists and may be overwriten. use -f to force re-creation. exiting",out_)
     return false
@@ -133,7 +132,7 @@ function main(opts,out_)
   if opts["c"] then
     logi("configure",opts["c"])
     local rv = writable_mule(function(m)
-                               with_file(opts["c"],
+                               return with_file(opts["c"],
                                          function(f)
                                            return m.configure(f:lines())
                                          end)

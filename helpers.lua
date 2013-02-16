@@ -322,13 +322,13 @@ end
 function with_file(file_,func_,mode_)
   local f = io.open(file_,mode_ or "r")
   if not f then return false end
-  func_(f)
+  local rv = func_(f)
   f:close()
-  return true
+  return rv
 end
 
 function file_exists(file_)
-  return with_file(file_,function() end)
+  return with_file(file_,function() return true end)
 end
 
 -- based on http://lua-users.org/wiki/AlternativeGetOpt

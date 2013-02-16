@@ -28,7 +28,7 @@ function test_create()
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest = {".key beer.ale.pale"}},str)
-  assert_equal('{"version": 3,\n"data": ["beer.ale.pale;1d:3y","beer.ale.pale;1h:30d","beer.ale.pale;5m:2d"]\n}',str.get_string())
+  assert_equal('{"version": 3,\n"data": ["beer.ale.pale;1h:30d","beer.ale.pale;1d:3y","beer.ale.pale;5m:2d"]\n}',str.get_string())
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest={"./tests/fixtures/input2.mule"}})

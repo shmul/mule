@@ -2,7 +2,7 @@ module("column_db",package.seeall)
 require "helpers"
 
 local _,p = pcall(require,"purepack")
-local _,sl = pcall(require,"skiplist")
+local _,tr = pcall(require,"trie")
 
 --[[
 Sequences are stored column by column, i.e. all the Nth slots of each sequences are stored
@@ -107,13 +107,13 @@ SEQUENCES_PER_FILE = 2000
 SAVE_PERIOD = 60
 
 function column_db(base_dir_)
-  local index = sl:new()
+  local index = tr:new()
   local meta_file = base_dir_.."/db.meta"
   local cell_store_cache = {}
   local last_save = nil
 
   local function extract_from_name(name_)
-    local node = index[name_]
+    local node = index:find(name_)
 
     if not node then
       local metric,step,period = split_name(name_)
@@ -121,7 +121,7 @@ function column_db(base_dir_)
       node.metric = metric
       node.step = step
       node.period = period
-      node.value = index.size-1
+      node.value = index:size()-1
       node.latest = 0
     end
 
@@ -129,7 +129,7 @@ function column_db(base_dir_)
   end
 
   local function latest(name_,idx_)
-    local node = index[name_]
+    local node = index:find(name_)
     if not node then
       loge("no such node",name_)
       return
@@ -143,7 +143,7 @@ function column_db(base_dir_)
   local function read_meta_file()
     with_file(meta_file,
               function(f_)
-                index:unpack(f_:read("*a"))
+                index = tr.unpack(f_:read("*a"))
               end,"r+b")
   end
 
@@ -200,7 +200,7 @@ function column_db(base_dir_)
   end
 
   local function put(key_,value_)
-    local node = index[key_]
+    local node = index:find(key_)
     local is_metadata = string.find(key_,"metadata=",1,true)
 
     -- value is updated only for metadata nodes
@@ -209,8 +209,8 @@ function column_db(base_dir_)
       -- to all non metadata keys we assign a global id. This id is used for storing
       -- the actual sequences
       if not is_metadata then
-        index.head.id = (index.head.id or -1) + 1
-        node.value = index.head.id
+        index.id = (index.id or -1) + 1
+        node.value = index.id
       end
     end
     if is_metadata then
@@ -219,7 +219,7 @@ function column_db(base_dir_)
   end
 
   local function get(key_)
-    local node = index[key_]
+    local node = index:find(key_)
     if node and string.find(key_,"metadata=",1,true) then
       return node.value
     end
@@ -230,19 +230,17 @@ function column_db(base_dir_)
   end
 
   local function matching_keys(prefix_)
+    local gsub = string.gsub
     local find = string.find
-    local node = index:find(prefix_)
-    -- first node may not match the prefix as it the largest element <= prefix_
-    if node.key<prefix_ or node.key=="HEAD" then
-      node = index:next(node)
+    local function put_semicolumn(rp)
+      return ";"..rp
     end
     return coroutine.wrap(
       function()
-        while node and node.key and find(node.key,prefix_,1,true) do
-          if not find(node.key,"metadata=",1,true) then
-            coroutine.yield(node.key)
+        for k,n in index:traverse(prefix_,true) do
+          if find(k,"metadata=",1,true)~=1 then
+            coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
           end
-          node = index:next(node)
         end
       end)
   end

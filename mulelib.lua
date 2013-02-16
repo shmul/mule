@@ -715,7 +715,7 @@ function mule(db_)
     -- the factories_modifications_ is a list of triples,
     -- <pattern, original retention, new retention>
     for _,f in ipairs(factories_modifications_) do
-      local factory = _factories[f[1]];
+      local factory = _factories[f[1]]
       if factory then
         local orig_step,orig_period = parse_time_pair(f[2])
         local new_step,new_period = parse_time_pair(f[3])
@@ -778,6 +778,7 @@ function mule(db_)
                                         for l in f:lines() do
                                           process_line(l,updated_sequences)
                                         end
+                                        return true
                                       end)
         if file_exists then
           return true
