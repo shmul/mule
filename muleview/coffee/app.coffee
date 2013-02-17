@@ -4,9 +4,11 @@ Ext.application
   name: "Muleview"
   requires: [
     "Ext.container.Viewport",
+    "Ext.tree.Panel",
     "Muleview.Settings",
     "Muleview.Mule"
   ]
+
   controllers: [
     "KeysTree"
   ]
@@ -17,7 +19,7 @@ Ext.application
       layout: "border"
       items: [
         {
-          xtype: "treeview"
+          xtype: "treepanel"
           id: "keysTree"
           region: "west"
           collapsible: true
@@ -25,7 +27,7 @@ Ext.application
           width: "20%"
           split: true
           displayField: "name"
-        }),
+        },
         {
           id: "mainPanel"
           xtype: "panel"
@@ -36,7 +38,3 @@ Ext.application
         }
       ]
     }
-  # setInterval(Ext.bind(this.pullData, this), this.settings.updateInterval)
-
-  pullData: ->
-    console.log("app.coffee\\ 40: <HERE>");

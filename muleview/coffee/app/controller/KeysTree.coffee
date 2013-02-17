@@ -16,10 +16,14 @@ Ext.define "Muleview.controller.KeysTree",
         selectionchange: @onSelectionChange
 
   onSelectionChange: (me, selected)->
-    document.title = selected[0]?.get("fullname")
-    #TODO: reload data
+    return unless selected[0]
+    key = selected[0].get("fullname")
+    document.title = key
+    Muleview.currentKey = key
+    # Muleview.pullData()
 
   onLaunch: ->
+    console.log('KeysTree.coffee\\ 26: @getTree:', @getTree);
     @store = @getTree().getStore()
 
 
