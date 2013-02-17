@@ -1,28 +1,31 @@
+Ext.Loader.setPath("Muleview", "app")
+
 Ext.application
+  name: "Muleview"
   requires: [
     "Ext.container.Viewport",
+    "Muleview.Settings",
+    "Muleview.Mule"
+  ]
+  controllers: [
+    "KeysTree"
   ]
 
-  name: "Muleview"
-  controllers: [
-    "Main"
-  ]
+
   launch: ->
     Ext.create "Ext.container.Viewport", {
       layout: "border"
       items: [
         {
+          xtype: "treeview"
           id: "keysTree"
           region: "west"
-          collapsible: true #TODO CHECK
+          collapsible: true
           title: "Available Keys"
           width: "20%"
           split: true
           displayField: "name"
-          listeners:
-            selectionchange: -> #pullData
-          # store: treeStore
-        },
+        }),
         {
           id: "mainPanel"
           xtype: "panel"
@@ -33,3 +36,7 @@ Ext.application
         }
       ]
     }
+  # setInterval(Ext.bind(this.pullData, this), this.settings.updateInterval)
+
+  pullData: ->
+    console.log("app.coffee\\ 40: <HERE>");
