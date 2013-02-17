@@ -1,20 +1,35 @@
-SEED = 7 # Random seed
-MAX = 6 # Misc rands: Max number of child-nodes per node, max graph depth
+SEED = (ENV["SEED"] || 0).to_i # Random seed
+MAX = (ENV["MAX"].to_i || 6) # Misc rands: Max number of child-nodes per node, max graph depth
 MAX_HITS = 10 # Max number per key per timestamp
 KEYS_FILE = "keys.data"
 TIMESTAMP_FILE = "input"
 CONF_FILE = "conf"
 CURL = "curl localhost:3000/graph -X POST -T #{TIMESTAMP_FILE}"
-RETENTION = "5s:1m"
+RETENTION = "5s:1m 1m:1h 1h:12h"
 
 @names = File.read("names_list.txt").split(/\s/) # Names list file
 @root = false # Will contain root key
 @rand = Random.new(ENV["SEED"].to_i || SEED)
 
+
+# Iterate each leaf key
+def each_leaf (&block)
+  names = {}
+  iterate_keys do |key|
+    parent = key[0...key.rindex(".")] rescue nil
+    if parent
+      names[parent] ||= 0
+      names[parent] += 1
+    end
+    names[key] ||= 0
+  end
+  names.select{|name, children| children ==0}.keys.each &block
+end
+
 # Create timestamp records, one per key in the graph
 def feed_mule()
   records = []
-  iterate_keys do |name|
+  each_leaf do |name|
     # Decide count and timestamp:
     count = @rand.rand(1..MAX_HITS)
     timestamp = Time.now.to_i

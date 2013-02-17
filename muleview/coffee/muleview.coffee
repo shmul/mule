@@ -1,3 +1,4 @@
+labelFormat = "d/m/y H:i:s"
 
 pullData = () ->
   console.log("muleview.coffee\\ 3: <HERE>")
@@ -10,7 +11,7 @@ pullData = () ->
     for own key, keyData of response
       for [count, batch, timestamp] in keyData
         data.push {
-          timestamp: new Date(timestamp * 1000)
+          timestamp: timestamp
           count: count
         }
       console.log("muleview.coffee\\ 15: <HERE>");
@@ -19,9 +20,15 @@ pullData = () ->
     console.log("muleview.coffee\\ 18: data:", data);
     Ext.Array.sort data, (a, b) ->
       a.timestamp - b.timestamp
+    for record in data
+      console.log record.timestamp
     console.log("muleview.coffee\\ 19: data:", data);
     chartStore.add(data)
     chartContainer.items.add(createChart())
+    setTimeout ->
+      chartContainer.doLayout()
+    , 1
+
 
 # Initial method to fill keys
 fillKeys = ->
@@ -72,8 +79,8 @@ Ext.define "MuleRecord"
   fields: [
     {
       name: "timestamp"
-      type: "Date"
-      # type: "int"
+      # type: "Date"
+      type: "int"
     },
     {
       name: "count"
@@ -110,17 +117,25 @@ createChart = ->
     store: chartStore
     series: [
       {
-        type: 'line',
-        xField: 'timestamp',
+        type: 'line'
+        xField: 'timestamp'
         yField: 'count'
+        highlight: true
       }
     ]
     axes: [
       {
         title: "When?"
-        type: "Time"
+        type: "Numeric"
         position: "bottom"
         fields: ["timestamp"]
+        label:
+          renderer: (timestamp) ->
+            Ext.Date.format(new Date(timestamp * 1000), labelFormat)
+          rotate:
+            degrees: 315
+
+        grid: true
       },
 
       {
@@ -129,8 +144,13 @@ createChart = ->
         position: 'left'
         fields: ['count']
         minimum: 0
+        grid: true
       }
     ]
+    legend:
+      position: "right"
+    animate: true
+
 
 
 chartContainer = Ext.create "Ext.panel.Panel",
