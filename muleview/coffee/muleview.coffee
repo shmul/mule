@@ -1,21 +1,27 @@
-data = []
 
-updateGraph = (fullname) ->
+pullData = () ->
+  console.log("muleview.coffee\\ 3: <HERE>")
   fullname = treePanel.getSelectionModel().getSelection()[0]?.get('fullname')
   document.title = fullname
-  console.log("muleview.coffee\\ 46: fullname:", fullname);
   askMule "graph/" + fullname, (response) ->
-    counter = 0
+    console.log("muleview.coffee\\ 7: response:", response);
     data = []
+    chartStore.removeAll()
     for own key, keyData of response
-      hash = {}
       for [count, batch, timestamp] in keyData
-        if not hash[timestamp]
-          data.push
-            x: timestamp
-            y: count
-          hash[timestamp] = true
-    renderGraph()
+        data.push {
+          timestamp: new Date(timestamp * 1000)
+          count: count
+        }
+      console.log("muleview.coffee\\ 15: <HERE>");
+      break
+
+    console.log("muleview.coffee\\ 18: data:", data);
+    Ext.Array.sort data, (a, b) ->
+      a.timestamp - b.timestamp
+    console.log("muleview.coffee\\ 19: data:", data);
+    chartStore.add(data)
+    chartContainer.items.add(createChart())
 
 # Initial method to fill keys
 fillKeys = ->
@@ -54,80 +60,94 @@ fillTree = (parent, keys) ->
     parent.appendChild(node)
     fillTree(node, subkeys)
 
-
-renderGraph = ->
-  return unless graphContainer?.rendered
-
-  # Sort data:
-  Ext.Array.sort data, (obj1, obj2) ->
-    obj1.x - obj2.x
-
-  # Create this graph's container
-  graphEl = Ext.create "Ext.container.Container",
-    layout: "fit"
-
-  # Add it to the main container:
-  graphContainer.removeAll()
-  graphContainer.add(graphEl)
-
-  console.log("muleview.coffee\\ 89: data:", data);
-
-  # Create the graph:
-  graph = new Rickshaw.Graph
-    element: graphEl.el.dom
-    width: graphContainer.getWidth()
-    height: graphContainer.getHeight() - 100
-    series: [
-      {
-        color: 'steelblue'
-        data: data
-      }
-    ]
-  legend = new Rickshaw.Graph.Legend
-    graph: graph
-    element: graphEl.el.dom
-  axis = new Rickshaw.Graph.Axis.Time
-    graph: graph
-
-  graph.render()
-
-
 ################################################################
-# UI components:
+# Components:
 
-graphContainer = Ext.create "Ext.container.Container",
-  listeners:
-    resize: ->
-      # renderGraph()
+# DATA COMPONENTS:
+# -----------------
 
-# Main graph panel component
-mainContainer = Ext.create "Ext.panel.Panel",
-  title: "Muleview"
-  region: "center"
-  layout: "fit"
-  items: [ graphContainer ]
+# CHART:
+Ext.define "MuleRecord"
+  extend: "Ext.data.Model"
+  fields: [
+    {
+      name: "timestamp"
+      type: "Date"
+      # type: "int"
+    },
+    {
+      name: "count"
+      type: "int"
+    }
+  ]
 
+chartStore = Ext.create "Ext.data.Store",
+  model: MuleRecord
+  sorters: [
+    "timestamp"
+  ]
 
-# *** Tree data and components:
-
+# TREE:
 Ext.define "KeyModel",
   extend: "Ext.data.Model"
-  fields: ["name", "fullname"]
+  fields: [
+    "name",
+    "fullname"
+  ]
 
 treeStore = Ext.create "Ext.data.TreeStore",
   model: "KeyModel"
   root:
     name: "Root Key"
 
+# UI COMPONENTS:
+# --------------
+
+# Main graph panel component
+
+createChart = ->
+  Ext.create "Ext.chart.Chart",
+    store: chartStore
+    series: [
+      {
+        type: 'line',
+        xField: 'timestamp',
+        yField: 'count'
+      }
+    ]
+    axes: [
+      {
+        title: "When?"
+        type: "Time"
+        position: "bottom"
+        fields: ["timestamp"]
+      },
+
+      {
+        title: 'Count'
+        type: 'Numeric'
+        position: 'left'
+        fields: ['count']
+        minimum: 0
+      }
+    ]
+
+
+chartContainer = Ext.create "Ext.panel.Panel",
+  title: "Muleview"
+  region: "center"
+  layout: "fit"
+  items: [ ]
+
 treePanel = Ext.create "Ext.tree.Panel",
   region: "west"
-  collapsable: true #TODO CHECK
+  collapsible: true #TODO CHECK
   title: "Available Keys"
   width: "20%"
   split: true
   displayField: "name"
   listeners:
-    selectionchange: updateGraph
+    selectionchange: pullData
   # rootVisible: false
   store: treeStore
 
@@ -139,7 +159,7 @@ Ext.application
       layout: "border"
       items: [
         treePanel
-        mainContainer
+        chartContainer
       ]
     }
     fillKeys()
