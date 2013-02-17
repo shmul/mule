@@ -8,7 +8,7 @@ set :public_folder do
 end
 
 get "/" do
-  call env.merge('PATH_INFO' => '/muleview.html')
+  call env.merge('PATH_INFO' => '/index.html')
 
 end
 
