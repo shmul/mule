@@ -38,3 +38,7 @@ Ext.application
         }
       ]
     }
+    Muleview.pullData = @pullData
+
+  pullData: ->
+    #TODO: add some logic

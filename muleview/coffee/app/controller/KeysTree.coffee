@@ -20,10 +20,9 @@ Ext.define "Muleview.controller.KeysTree",
     key = selected[0].get("fullname")
     document.title = key
     Muleview.currentKey = key
-    # Muleview.pullData()
+    Muleview.pullData()
 
   onLaunch: ->
-    console.log('KeysTree.coffee\\ 26: @getTree:', @getTree);
     @store = @getTree().getStore()
 
 
