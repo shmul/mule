@@ -1,5 +1,8 @@
 Ext.define "Muleview.view.MuleChart",
   extend:  "Ext.chart.Chart"
+  requires: [
+    "Muleview.store.ChartStore"
+  ]
   # store: chartStore
   series: [
     {
@@ -17,7 +20,7 @@ Ext.define "Muleview.view.MuleChart",
       fields: ["timestamp"]
       label:
         renderer: (timestamp) ->
-          Ext.Date.format(new Date(timestamp * 1000), labelFormat)
+          Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
         rotate:
           degrees: 315
       grid: true

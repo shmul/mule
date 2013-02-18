@@ -1,9 +1,9 @@
 Ext.define "Muleview.store.ChartStore",
-  extend:  "Ext.data.Store"
+  extend:  "Ext.data.ArrayStore"
   requires: [
     "Muleview.model.MuleRecord"
   ]
-  model: MuleRecord
+  model: "MuleRecord"
   sorters: [
     "timestamp"
   ]

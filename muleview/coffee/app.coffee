@@ -13,7 +13,6 @@ Ext.application
     "KeysTree"
   ]
 
-
   launch: ->
     Ext.create "Ext.container.Viewport", {
       layout: "border"
@@ -27,10 +26,11 @@ Ext.application
           width: "20%"
           split: true
           displayField: "name"
+          rootVisible: false
         },
         {
           id: "mainPanel"
-          xtype: "panel"
+          xtype: "tabpanel"
           title: "Muleview"
           region: "center"
           layout: "fit"
@@ -39,6 +39,20 @@ Ext.application
       ]
     }
     Muleview.pullData = @pullData
+    Muleview.createGraphs = @createGraphs
+    # setInterval(@pullData, Muleview.Settings.updateInterval)
 
-  pullData: ->
-    #TODO: add some logic
+  createGraphs: ->
+    tabPanel = Ext.getCmp("mainPanel")
+    tabPanel.removeAll();
+    Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
+      for ret, retData of data[Muleview.currentKey]
+        tabPanel.add Ext.create "Ext.panel.Panel",
+          title: ret
+          layout: "fit"
+          items: [
+            Ext.create "Muleview.view.MuleChart",
+            store: Ext.create "Muleview.store.ChartStore",
+              model: "MuleRecord"
+              data: retData
+          ]
