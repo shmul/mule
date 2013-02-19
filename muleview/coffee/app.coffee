@@ -52,7 +52,6 @@ Ext.application
           layout: "fit"
           items: [
             Ext.create "Muleview.view.MuleChart",
-            store: Ext.create "Muleview.store.ChartStore",
-              model: "MuleRecord"
-              data: retData
+              store: Ext.create "Muleview.store.ChartStore"
+                data: data
           ]

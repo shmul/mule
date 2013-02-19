@@ -19,3 +19,12 @@ Ext.define "Muleview.Mule",
           current = arr.shift()
           node = (node[current] ||= {})
       callback(ans)
+
+  getKeyData: (key, callback) ->
+    @askMule "graph/#{key}", (response) =>
+      ans = {}
+      for name, data of response
+        [key, retention] = name.split(";")
+        ans[key] ||= {}
+        ans[key][retention] = data
+      callback(ans)
