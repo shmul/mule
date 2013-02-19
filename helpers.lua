@@ -551,3 +551,14 @@ function to_timestamp(expr_,now_,latest_)
   to = to_timestamp_helper(to,now_,latest_)
   return {from,to}
 end
+
+function table_keys(table_)
+  local ks = {}
+  local insert = table.insert
+
+  for k,_ in pairs(table_) do
+    insert(ks,k)
+  end
+
+  return ks
+end

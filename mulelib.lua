@@ -2,23 +2,18 @@ require "helpers"
 
 local CURRENT_VERSION = 2
 
-
-
-
-local function update_slot_helper(slot_,timestamp_,value_,hits_,reset_)
-  if not reset_ and slot_._hits>0 then
+local function update_slot_helper(slot_,timestamp_,value_,hits_)
+  if slot_ and timestamp_==slot_._timestamp then
 	slot_._hits = slot_._hits+hits_
 	slot_._sum = slot_._sum+value_
 	return slot_
   end
   return {
 	_timestamp = timestamp_,
-	_hits = 1,
+	_hits = hits_,
 	_sum = value_
   }
 end
-
-
 
 function serialize_slot(out_stream_,s,skip_empty_)
   local sum = s and s._sum or 0
@@ -65,13 +60,12 @@ function sequence(metric_)
 	-- if this value is way back (but still fits in this slot) OR
 	-- if it is way ahead the the previous time the slot was updated
 	-- we have nothing to return
-	if (slot and adjusted_timestamp<slot._timestamp) or math.abs(adjusted_timestamp-slot._timestamp)>_step then
+	if (slot and adjusted_timestamp<slot._timestamp) or adjusted_timestamp-slot._timestamp>_step then
 	  return nil
 	end
 
 	return slot
   end
-
 
   return {
 	init = function(step_,period_,sequence_store_)
@@ -111,16 +105,13 @@ function sequence(metric_)
 			   -- we need to check whether we should update the current slot
 			   -- or if are way ahead of the previous time the slot was updated
 			   -- over-write its value
-			   local reset = not slot or math.abs(adjusted_timestamp-slot._timestamp)>_step
 			   _store.set_slot(idx,update_slot_helper(slot,adjusted_timestamp,
-													  value_,hits_,reset))
+													  value_,hits_))
 			 end,
-
 
     reset = function()
 			  _store.reset()
 			end,
-
 
 	serialize = function(out_stream_,opts_)
 				  opts_ = opts_ or {}
@@ -200,11 +191,7 @@ function sequence(metric_)
 				  end,
   }
 
-
 end
-
-
-
 
 
 function parse_input_line(line_)
@@ -334,13 +321,13 @@ function mule(sequences_)
         for m in metric_hierarchy(metric_) do
           if is_prefix(m,pattern) then
             for _,rp in ipairs(rps) do
-              matches[#matches+1] = format("%s;%s:%s",m,rp[1],rp[2])
+              matches[format("%s;%s:%s",m,rp[1],rp[2])] = true
             end
           end
         end
 	  end
 	end
-	return matches
+	return table_keys(matches)
   end
 
   local function gc(metric_,timestamp_,dry_run_)
@@ -474,8 +461,6 @@ function mule(sequences_)
 	return wrap_json(str,"mule_keys")
   end
 
-
-
   local function command(items_)
 	local dispatch_table = {
 	  reset = reset,
@@ -529,7 +514,6 @@ function mule(sequences_)
 	return tostring(#matches)
   end
 
-
   local function update_sequence(seq_,slots_)
 	local j = 1
 	while j<#slots_ do
@@ -556,7 +540,6 @@ function mule(sequences_)
 	if not string.find(items[1],";",1,true) then
 	  return update_line(items[1],tonumber(items[2]),tonumber(items[3]),update_sequences_)
 	end
-
     -- 2) an entire line
     local metric = items[1]
     local seq = _sequences.get(metric)
@@ -581,7 +564,6 @@ function mule(sequences_)
 	_sequences.serialize(out_)
   end
 
-
   local function deserialize(in_stream_)
 	local version = in_stream_.read_number()
 	if not version==CURRENT_VERSION then
@@ -596,7 +578,6 @@ function mule(sequences_)
 	_sequences.deserialize(in_stream_)
 
   end
-
 
   local function process(data_)
     local updated_sequences = {}
@@ -644,8 +625,6 @@ function mule(sequences_)
     logi("process, handling updated_sequences end",count)
     return rv
   end
-
-
 
   return {
 	configure = configure,

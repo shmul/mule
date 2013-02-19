@@ -95,7 +95,7 @@ function helper_time_sequence(store_)
   assert_equal(6,seq.find_slot(359))
   assert_equal(7,seq.find_slot(360))
 
-  seq.update(0,10)
+  seq.update(0,10,1)
   assert_equal(10,seq.get_slot(1)._sum)
   assert_equal(10,seq.get_slot(seq.latest())._sum)
   seq.update(1,17,1)
@@ -374,6 +374,13 @@ function test_top_level_factories()
 	assert(string.find(m.latest("event"),"20,1,74857800"))
 	assert(string.find(m.latest("event.phishing"),"20,1,74857800"))
 
+    m.process("event.phishing.phishing-host 9 74857860")
+	assert(string.find(m.latest("event.phishing"),"9,1,74857860"))
+
+    m.process("event.phishing.phishing-host 11 74861443")
+    m.process("event.phishing.phishing-host 7 74861444")
+	assert(string.find(m.latest("event.phishing"),"18,2,74858400"))
+
 	m.process("event.phishing.google.com 98 74857954")
 	assert(seqs.get("event.phishing.google.com"))
 	assert(non_empty_metrics(seqs.get("event.phishing.google.com")))
@@ -649,3 +656,27 @@ function test_metric_one_level_childs()
   end
 
 end
+
+function test_chrome_crash()
+  local bdb = tokyocabinet_db("./tests/temp/chrome_crash.bdb")
+  local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_pack,tc_unpack = generate_fuctions()
+  tc_init(bdb)
+  local m = mule(tokyocabinet_sequences(
+					  function(metric_,step_,period_)
+						return tokyocabinet_store(bdb,metric_,step_,period_)
+					  end,tc_get,tc_fwmkeys))
+
+  m.configure(table_itr({"agentevents. 5m:48h 1h:30d 1d:3y"}))
+
+  m.process("./tests/fixtures/chrome_crash.dump")
+  assert(string.find(m.slot("agentevents.events_types.chrome_crash;1h:30d","1360800000"),"274,244",1,true))
+  assert(string.find(m.slot("agentevents.events_types;5m:2d","1361127300"),"1526,756",1,true))
+  m.process("./tests/fixtures/crash.mule")
+  assert(string.find(m.slot("agentevents.events_types.chrome_crash;5m:2d","1361300362"),"19,11",1,true))
+
+  assert(string.find(m.slot("agentevents.events_types.chrome_crash.rbs1;5m:2d","1361300428"),"11,5",1,true))
+  assert(string.find(m.slot("agentevents.events_types;5m:2d","1361300362"),"46,27",1,true))
+
+end
+
+--verbose_log(true)
