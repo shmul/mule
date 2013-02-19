@@ -38,21 +38,30 @@ Ext.application
         }
       ]
     }
-    Muleview.pullData = @pullData
     Muleview.createGraphs = @createGraphs
+    Muleview.createMuleRecord = @createMuleRecord
     # setInterval(@pullData, Muleview.Settings.updateInterval)
 
   createGraphs: ->
     tabPanel = Ext.getCmp("mainPanel")
     tabPanel.removeAll();
     Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
-      for ret, retData of data[Muleview.currentKey]
-        store = Ext.create "Muleview.store.ChartStore"
+      # Data is in the form "key => retention => data", so we need to reverse it to retention-based first:
+      retentions = {}
+      for key, rets of data
+        for retention, retentionData of rets
+          retentions[retention] ||= {}
+          retentions[retention][key] = retentionData
+      # Now, create a graph for each retention:
+      for ret, retData of retentions
+
+        # Create the tab containing the chart:
         tabPanel.add Ext.create "Ext.panel.Panel",
           title: ret
           layout: "fit"
           items: [
             Ext.create "Muleview.view.MuleChart",
-              store: store
+              data: retData
+              topKey: Muleview.currentKey
           ]
-        store.add retData
+      tabPanel.setActiveTab(0)
