@@ -47,11 +47,12 @@ Ext.application
     tabPanel.removeAll();
     Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
       for ret, retData of data[Muleview.currentKey]
+        store = Ext.create "Muleview.store.ChartStore"
         tabPanel.add Ext.create "Ext.panel.Panel",
           title: ret
           layout: "fit"
           items: [
             Ext.create "Muleview.view.MuleChart",
-              store: Ext.create "Muleview.store.ChartStore"
-                data: data
+              store: store
           ]
+        store.add retData

@@ -23,8 +23,14 @@ Ext.define "Muleview.Mule",
   getKeyData: (key, callback) ->
     @askMule "graph/#{key}", (response) =>
       ans = {}
-      for name, data of response
+      for own name, data of response
         [key, retention] = name.split(";")
         ans[key] ||= {}
-        ans[key][retention] = data
+        ans[key][retention] ||= []
+        ans[key][retention].push @createMuleRecord(item...) for item in data
       callback(ans)
+
+  createMuleRecord: (count, batchCount, timestamp) ->
+    Ext.create "Muleview.model.MuleRecord",
+      timestamp: timestamp
+      count: count
