@@ -4,6 +4,8 @@ Ext.define "Muleview.view.MuleChart",
     "Muleview.store.ChartStore"
   ]
 
+  showAreas: true
+
   legend:
     position: "right"
   animate: true
@@ -28,17 +30,20 @@ Ext.define "Muleview.view.MuleChart",
       ans.push record
     ans
 
+  timeLabel:
+    renderer: (timestamp) ->
+      Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
+    rotate:
+      degrees: 315
+
   initComponent: ->
     # @data should be a hash of key => keydata,
     # keydata should be: [[count, batch, timestamp], [count, batch, timestamp]...]
-    console.log("MuleChart.coffee\\ 34: @data:", @data);
 
     keys = (key for key, _ of @data)
-    console.log("MuleChart.coffee\\ 14: keys:", keys);
 
     fields = (name: key, type: "integer" for key in keys)
     fields.push(name: "timestamp", type: "integer")
-    console.log("MuleChart.coffee\\ 46: fields:", fields);
 
 
     @store = Ext.create "Ext.data.ArrayStore"
@@ -46,20 +51,14 @@ Ext.define "Muleview.view.MuleChart",
 
     @axes = [
       {
-        title: "When?"
         type: "Numeric"
         position: "bottom"
         fields: ["timestamp"]
-        label:
-          renderer: (timestamp) ->
-            Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
-          rotate:
-            degrees: 315
+        label: @timeLabel
         grid: true
       },
 
       {
-        title: 'Count'
         type: 'Numeric'
         position: 'left'
         fields: keys
@@ -71,24 +70,23 @@ Ext.define "Muleview.view.MuleChart",
     areaKeys = Ext.Array.remove(Ext.Array.clone(keys), @topKey)
 
 
-    @series = [
-      {
+    @series = []
+    if @showAreas
+      @series.push {
         type: "area"
         axis: "left"
         xField: "timestamp"
         yField: areaKeys
         highlight: true
-      },
-      {
+      }
+    @series.push {
         type: "line"
         axis: "left"
         xField: "timestamp"
         yField: [@topKey]
         highlight: true
       }
-    ]
 
     @callParent()
     data = @convertData(@data)
-    console.log("MuleChart.coffee\\ 78: data:", data);
     @store.add data

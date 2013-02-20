@@ -31,10 +31,24 @@ Ext.application
         {
           id: "mainPanel"
           xtype: "tabpanel"
-          title: "Muleview"
+          title: "Main View"
           region: "center"
           layout: "fit"
           items: [ ]
+        },
+        {
+          id: "rightPanel"
+          width: "20%"
+          split: true
+          xtype: "panel"
+          region: "east"
+          collapsible: true
+          title: "Other Views"
+          layout:
+            type: "vbox"
+            align: "stretch"
+          defaults:
+            flex: 1
         }
       ]
     }
@@ -44,7 +58,11 @@ Ext.application
 
   createGraphs: ->
     tabPanel = Ext.getCmp("mainPanel")
+    rightPanel = Ext.getCmp("rightPanel")
+
     tabPanel.removeAll();
+    rightPanel.removeAll()
+
     Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
       # Data is in the form "key => retention => data", so we need to reverse it to retention-based first:
       retentions = {}
@@ -52,16 +70,34 @@ Ext.application
         for retention, retentionData of rets
           retentions[retention] ||= {}
           retentions[retention][key] = retentionData
+
+      first_created = false
       # Now, create a graph for each retention:
       for ret, retData of retentions
+        do (ret, retData) ->
+          mainGraphPanel = Ext.create "Ext.panel.Panel",
+            title: ret
+            layout: "fit"
+            items: [
+              Ext.create "Muleview.view.MuleChart",
+                showAreas: true
+                data: retData
+                topKey: Muleview.currentKey
+            ]
+          lightGraph = Ext.create "Muleview.view.MuleLightChart",
+            data: retData
+            title: Muleview.currentKey
+            topKey: Muleview.currentKey
+            listeners:
+              mouseenter: ->
+                tabPanel.setActiveTab(mainGraphPanel)
 
-        # Create the tab containing the chart:
-        tabPanel.add Ext.create "Ext.panel.Panel",
-          title: ret
-          layout: "fit"
-          items: [
-            Ext.create "Muleview.view.MuleChart",
-              data: retData
-              topKey: Muleview.currentKey
-          ]
+          tabPanel.add mainGraphPanel
+          rightPanel.add Ext.create "Ext.form.FieldSet",
+            layout: "fit"
+            title: ret
+            border: false
+            frame: false
+            items: [lightGraph]
+
       tabPanel.setActiveTab(0)
