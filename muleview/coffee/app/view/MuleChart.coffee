@@ -7,7 +7,7 @@ Ext.define "Muleview.view.MuleChart",
   showAreas: true
 
   legend:
-    position: "right"
+    position: "bottom"
   animate: true
 
   # Converts the input data hash

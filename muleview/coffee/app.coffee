@@ -57,6 +57,26 @@ Ext.application
     # setInterval(@pullData, Muleview.Settings.updateInterval)
 
   createGraphs: ->
+
+    parseLightGraphTitle = (ret) ->
+      console.log("MuleLightChart.coffee\\ 11: ret:", ret);
+      split = ret.split(":")
+      console.log("MuleLightChart.coffee\\ 13: split:", split);
+      last = split[1]
+      console.log("MuleLightChart.coffee\\ 12: last:", last);
+      [_, count, letter] = match = last.match /(\d+)([mhsdy])/
+      console.log("MuleLightChart.coffee\\ 14: match:", match);
+      console.log("MuleLightChart.coffee\\ 15: count:", count);
+      console.log("MuleLightChart.coffee\\ 16: letter:", letter);
+      console.log("MuleLightChart.coffee\\ 17: @unitLetters:", @unitLetters);
+      units = {
+        "h": "hours"
+        "m": "minutes"
+        "d": "days"
+      }[letter]
+      console.log("MuleLightChart.coffee\\ 19: units:", units);
+      "Last #{count} #{units}"
+
     tabPanel = Ext.getCmp("mainPanel")
     rightPanel = Ext.getCmp("rightPanel")
 
@@ -95,7 +115,7 @@ Ext.application
           tabPanel.add mainGraphPanel
           rightPanel.add Ext.create "Ext.form.FieldSet",
             layout: "fit"
-            title: ret
+            title: parseLightGraphTitle(ret)
             border: false
             frame: false
             items: [lightGraph]
