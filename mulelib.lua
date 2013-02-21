@@ -64,14 +64,15 @@ function sequence(db_,name_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
     -- if this value is way back (but still fits in this slot)
     -- we discard it
+    local timestamp,hits,sum = at(idx)
 
-    if adjusted_timestamp<get_timestamp(idx) then
+    if adjusted_timestamp<timestamp then
       return
     end
     -- we need to check whether we should update the current slot
     -- or if are way ahead of the previous time the slot was updated
     -- over-write its value
-    local timestamp,hits,sum = at(idx)
+
     if replace_ then
       set_slot(idx,adjusted_timestamp,hits_ or 1,sum_)
     elseif adjusted_timestamp==timestamp and hits>0 then

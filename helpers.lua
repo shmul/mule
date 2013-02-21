@@ -500,7 +500,7 @@ function metric_hierarchy(metric_)
     end)
 end
 
-TRUTH = { ["true"]=true, yes=true, on=true }
+TRUTH = { ["true"]=true, yes=true, on=true, [1]=true }
 function is_true(str_)
   return str_ and TRUTH[str_]
 end

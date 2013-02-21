@@ -113,6 +113,7 @@ SAVE_PERIOD = 60
 
 function column_db(base_dir_)
   local index = tr:new()
+  local dirty = false
   local meta_file = base_dir_.."/db.meta"
   local cell_store_cache = {}
   local last_save = nil
@@ -123,6 +124,7 @@ function column_db(base_dir_)
     if not node then
       local metric,step,period = split_name(name_)
       node = index:insert(name_)
+      dirty = true
       node.metric = metric
       node.step = step
       node.period = period
@@ -153,11 +155,15 @@ function column_db(base_dir_)
   end
 
   local function save_meta_file()
-    with_file(meta_file,
-              function(f_)
-                f_:write(index:pack())
-                f_:flush()
-              end,"w+b")
+    logi("save_meta_file",dirty)
+    if dirty then
+      with_file(meta_file,
+                function(f_)
+                  f_:write(index:pack())
+                  f_:flush()
+                end,"w+b")
+      dirty = false
+    end
   end
 
 
@@ -208,7 +214,7 @@ function column_db(base_dir_)
   local function put(key_,value_)
     local node = index:find(key_)
     local is_metadata = string.find(key_,"metadata=",1,true)
-
+    dirty = true
     -- value is updated only for metadata nodes
     if not node then
       node = index:insert(key_)
@@ -232,6 +238,7 @@ function column_db(base_dir_)
   end
 
   local function out(key_)
+    dirty = true
     return index:delete(key_)
   end
 
@@ -290,6 +297,7 @@ function column_db(base_dir_)
   end
 
   read_meta_file()
+  logi("column_db size",index:size())
   local self = {
     save = save_meta_file,
     put = put,
