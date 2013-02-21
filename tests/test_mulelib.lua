@@ -713,5 +713,24 @@ function test_dump_restore()
   for_each_db("./tests/temp/dump_restore",helper)
 end
 
+
+function test_pale()
+  local function helper(db)
+    local m = mule(db)
+    m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
+
+    m.process("./tests/fixtures/pale.dump")
+    assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamp="1360800000"}),"274,244",1,true))
+    assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361127300"}),"1526,756",1,true))
+    m.process("./tests/fixtures/pale.mule")
+    assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamp="1361300362"}),"18,10",1,true))
+
+    assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
+    assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361300362"}),"45,26",1,true))
+  end
+
+  for_each_db("./tests/temp/pale",helper,true)
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")

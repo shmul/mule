@@ -88,6 +88,22 @@ function sequence(db_,name_)
     _seq_storage.save(_name)
   end
 
+  local function update_batch(slots_)
+    -- slots is a flat array of arrays
+    local j = 1
+    local match = string.match
+    while j<#slots_ do
+      local sum,hits,timestamp = slots_[j],tonumber(slots_[j+1]),tonumber(slots_[j+2])
+      j = j + 3
+      local replace,s = match(sum,"(=?)(%d+)")
+      update(timestamp,s,hits,replace)
+    end
+
+    _seq_storage.save(_name)
+    return j-1
+  end
+
+
   local function indices(sorted_)
     -- the sorted list is of indices to the main one
     local array = {}
@@ -188,6 +204,7 @@ function sequence(db_,name_)
     slot = slot,
     slot_index = function(timestamp_) return calculate_idx(timestamp_,_step,_period) end,
     update = update,
+    update_batch = update_batch,
     latest = latest,
     latest_timestamp = latest_timestamp,
     reset = reset,
@@ -700,18 +717,6 @@ function mule(db_)
   end
 
 
-  local function update_sequence(seq_,slots_)
-    -- slots is a flat array of arrays
-    local j = 1
-    while j<#slots_ do
-      local sum,hits,timestamp = slots_[j],tonumber(slots_[j+1]),tonumber(slots_[j+2])
-      j = j + 3
-      local replace,s = string.match(sum,"(=?)(%d+)")
-      seq_.update(timestamp,s,hits,replace)
-    end
-    return j-1
-  end
-
   local function modify_factories(factories_modifications_)
     -- the factories_modifications_ is a list of triples,
     -- <pattern, original retention, new retention>
@@ -729,8 +734,7 @@ function mule(db_)
             for seq in sequences_for_prefix(_db,f[1],f[2]) do
               logd("found original sequence:",seq.name())
               local new_name = name(seq.metric(),new_step,new_period)
-              local new_seq = sequence(db_,new_name)
-              update_sequence(new_seq,seq.slots())
+              sequence(db_,new_name).update_batch(seq.slots())
               _db.out(seq.name())
             end
           end
@@ -762,8 +766,7 @@ function mule(db_)
     table.remove(items,1)
     -- here we DON'T use the sparse sequence as they aren't needed when reading an
     -- entire sequence
-    local seq = sequence(_db,name)
-    return update_sequence(seq,items)
+    return sequence(_db,name).update_batch(items)
   end
 
 
