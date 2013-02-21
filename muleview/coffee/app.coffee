@@ -7,6 +7,7 @@ Ext.application
     "Ext.tree.Panel",
     "Muleview.Settings",
     "Muleview.Mule"
+    "Muleview.Graphs"
   ]
 
   controllers: [
@@ -52,47 +53,4 @@ Ext.application
         }
       ]
     }
-    Muleview.createGraphs = @createGraphs
-    Muleview.createMuleRecord = @createMuleRecord
     # setInterval(@pullData, Muleview.Settings.updateInterval)
-
-  createGraphs: ->
-    tabPanel = Ext.getCmp("mainPanel")
-    rightPanel = Ext.getCmp("rightPanel")
-
-    tabPanel.removeAll();
-    rightPanel.removeAll()
-
-    Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
-      # Data is in the form "key => retention => data", so we need to reverse it to retention-based first:
-      retentions = {}
-      for key, rets of data
-        for retention, retentionData of rets
-          retentions[retention] ||= {}
-          retentions[retention][key] = retentionData
-
-      # Now, create a graph for each retention:
-      for ret, retData of retentions
-        do (ret, retData) ->
-          mainGraphPanel = Ext.create "Ext.panel.Panel",
-            title: ret
-            layout: "fit"
-            items: [
-              Ext.create "Muleview.view.MuleChart",
-                showAreas: true
-                data: retData
-                topKey: Muleview.currentKey
-            ]
-
-          lightGraph = Ext.create "Muleview.view.MuleLightChart",
-            topKey: Muleview.currentKey
-            data: retData
-            retention: ret
-            listeners:
-              mouseenter: ->
-                tabPanel.setActiveTab(mainGraphPanel)
-
-          tabPanel.add mainGraphPanel
-          rightPanel.add lightGraph
-
-      tabPanel.setActiveTab(0)

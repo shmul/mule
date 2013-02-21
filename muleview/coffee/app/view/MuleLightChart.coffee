@@ -7,6 +7,7 @@ Ext.define "Muleview.view.MuleLightChart",
   initComponent: ->
     @chart = Ext.create "Muleview.view.MuleChart",
       data: @data
+      keys: @keys
       topKey: @topKey
       legend: false
       showAreas: false

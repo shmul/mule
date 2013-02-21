@@ -40,7 +40,7 @@ Ext.define "Muleview.view.MuleChart",
     # @data should be a hash of key => keydata,
     # keydata should be: [[count, batch, timestamp], [count, batch, timestamp]...]
 
-    keys = (key for key, _ of @data)
+    keys = @keys
 
     fields = (name: key, type: "integer" for key in keys)
     fields.push(name: "timestamp", type: "integer")
@@ -48,6 +48,8 @@ Ext.define "Muleview.view.MuleChart",
 
     @store = Ext.create "Ext.data.ArrayStore"
       fields: fields
+
+    @add = Ext.Function.alias(@store, "add")
 
     @axes = [
       {

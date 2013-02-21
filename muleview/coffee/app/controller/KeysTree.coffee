@@ -20,7 +20,7 @@ Ext.define "Muleview.controller.KeysTree",
     key = selected[0].get("fullname")
     document.title = key
     Muleview.currentKey = key
-    Muleview.createGraphs()
+    Muleview.Graphs.createGraphs()
 
   onLaunch: ->
     @store = @getTree().getStore()
