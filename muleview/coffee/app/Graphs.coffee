@@ -12,13 +12,24 @@ Ext.define "Muleview.Graphs",
     Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
       # Convert data:
       retentions = @convertData(data)
-      console.log("Graphs.coffee\\ 13: data:", data);
+
+      # Count data:
+      recordsCount = 0
+      for ret, retData of retentions
+        recordsCount += retData.length
+
+      processedRecords = 0
+      pbar = Ext.MessageBox.progress("Progress")
+      inc = ->
+        processedRecords += 1
+        pbar.updateProgress(processedRecords / recordsCount)
+        pbar.close() if processedRecords >= recordsCount
 
       # Create two graphs, main and light, for each retention:
       for ret, retData of retentions
-        @createRetentionGraphs(ret, retData)
+        Ext.defer @createRetentionGraphs, 1, @, [ret, retData, inc]
 
-  createRetentionGraphs: (ret, data) ->
+  createRetentionGraphs: (ret, data, inc) ->
     console.log("Graphs.coffee\\ 22: ret, data:", ret, data);
 
     # Extract retention keys from data:
@@ -57,12 +68,18 @@ Ext.define "Muleview.Graphs",
         mouseenter: =>
           @tabPanel.setActiveTab(mainGraphPanel)
 
-    @tabPanel.add mainGraphPanel
-    @rightPanel.add lightGraph
 
     for record in data
-      console.log("Graphs.coffee\\ 55: record:", record);
-      store.add(record)
+      do (record) ->
+        Ext.defer ->
+          store.add(record)
+          inc()
+        , 1
+
+    Ext.defer =>
+      @tabPanel.add mainGraphPanel
+      @rightPanel.add lightGraph
+    , 1
 
   # We need to convert the data
   # Form "retention => key => data"
