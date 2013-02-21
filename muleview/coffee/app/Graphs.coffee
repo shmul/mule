@@ -2,51 +2,76 @@ Ext.define "Muleview.Graphs",
   singleton: true
 
   createGraphs: ->
-    tabPanel = Ext.getCmp("mainPanel")
-    rightPanel = Ext.getCmp("rightPanel")
+    @tabPanel = Ext.getCmp("mainPanel")
+    @rightPanel = Ext.getCmp("rightPanel")
 
-    tabPanel.removeAll();
-    rightPanel.removeAll()
+    @tabPanel.removeAll();
+    @rightPanel.removeAll()
 
+    # Obtain data:
     Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
-      # Data is in the form "key => retention => data", so we need to reverse it to retention-based first:
-      retentions = {}
-      progressCount = 0
-      keys = []
-      for key, rets of data
-        keys.push(key)
-        for retention, retentionData of rets
-          retentions[retention] ||= {}
-          retentions[retention][key] = retentionData
-          progressCount += retentionData.length
+      # Convert data:
+      retentions = @convertData(data)
+      console.log("Graphs.coffee\\ 13: data:", data);
 
-      # Now, create a graph for each retention:
+      # Create two graphs, main and light, for each retention:
       for ret, retData of retentions
-        do (ret, retData) ->
-          mainGraphPanel = Ext.create "Ext.panel.Panel",
-            title: ret
-            layout: "fit"
-            items: [
-              Ext.create "Muleview.view.MuleChart",
-                showAreas: true
-                data: retData
-                keys: keys
-                topKey: Muleview.currentKey
-            ]
+        @createRetentionGraphs(ret, retData)
 
-          lightGraph = Ext.create "Muleview.view.MuleLightChart",
-            keys: keys
-            topKey: Muleview.currentKey
-            data: retData
-            retention: ret
-            listeners:
-              mouseenter: ->
-                tabPanel.setActiveTab(mainGraphPanel)
+  createRetentionGraphs: (ret, data) ->
+    console.log("Graphs.coffee\\ 22: ret, data:", ret, data);
 
-          tabPanel.add mainGraphPanel
-          rightPanel.add lightGraph
+    # Extract retention keys from data:
+    keys = {}
+    for record in data
+      for key, value of record
+        keys[key] = true
 
-      tabPanel.setActiveTab(0)
+    keys = Ext.Object.getKeys(keys)
+    console.log("Graphs.coffee\\ 24: keys:", keys);
+    return unless keys.length > 0
+
+    fields = (name: key, type: "integer" for key in keys)
+    Ext.Array.remove(keys, "timestamp")
+
+    store = Ext.create "Ext.data.ArrayStore"
+      fields: fields
+
+    mainGraphPanel = Ext.create "Ext.panel.Panel",
+      title: ret
+      layout: "fit"
+      items: [
+        Ext.create "Muleview.view.MuleChart",
+          showAreas: true
+          keys: keys
+          store: store
+          topKey: Muleview.currentKey
+      ]
+
+    lightGraph = Ext.create "Muleview.view.MuleLightChart",
+      keys: keys
+      topKey: Muleview.currentKey
+      retention: ret
+      store: store
+      listeners:
+        mouseenter: =>
+          @tabPanel.setActiveTab(mainGraphPanel)
+
+    @tabPanel.add mainGraphPanel
+    @rightPanel.add lightGraph
+
+    for record in data
+      console.log("Graphs.coffee\\ 55: record:", record);
+      store.add(record)
+
+  # We need to convert the data
+  # Form "retention => key => data"
+  # To: retention => [ {timestamp: XXX, key1: XXX, key2: XXX ...}, ...]
+  convertData: (data) ->
+    ans = {}
+    for retention, retentionData of data
+      ans[retention] = @convertRetentionData(retentionData)
+    ans
 
   # Converts the input data hash
   # form: key => [[cout, batch, timestamp], ...]

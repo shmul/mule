@@ -1,34 +1,11 @@
 Ext.define "Muleview.view.MuleChart",
   extend:  "Ext.chart.Chart"
-  requires: [
-    "Muleview.store.ChartStore"
-  ]
 
   showAreas: true
 
   legend:
     position: "bottom"
   animate: true
-
-  # Converts the input data hash
-  # form: key => [[cout, batch, timestamp], ...]
-  # to: [{timestamp: $timestamp, $key1: $key1count, $key2: $key2count ...}, ...]
-  convertData: (data) ->
-    timestamps = {}
-    for own key, keyData of data
-      for [count, _, timestamp] in keyData
-        timestamps[timestamp] ||= {}
-        timestamps[timestamp][key] = count
-    ans = []
-    for timestamp, counts of timestamps
-      record = {
-        timestamp: timestamp
-      }
-
-      for key, keyCount of counts
-        record[key] = keyCount
-      ans.push record
-    ans
 
   timeLabel:
     renderer: (timestamp) ->
@@ -41,15 +18,6 @@ Ext.define "Muleview.view.MuleChart",
     # keydata should be: [[count, batch, timestamp], [count, batch, timestamp]...]
 
     keys = @keys
-
-    fields = (name: key, type: "integer" for key in keys)
-    fields.push(name: "timestamp", type: "integer")
-
-
-    @store = Ext.create "Ext.data.ArrayStore"
-      fields: fields
-
-    @add = Ext.Function.alias(@store, "add")
 
     @axes = [
       {
@@ -89,6 +57,5 @@ Ext.define "Muleview.view.MuleChart",
         highlight: true
       }
 
+
     @callParent()
-    data = @convertData(@data)
-    @store.add data

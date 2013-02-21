@@ -21,12 +21,12 @@ Ext.define "Muleview.Mule",
       callback(ans)
 
   # Returns all mule's "graph" data for a given key,
-  # In the form of "key => retention => data array" double-hash
+  # In the form of "retention => key => data array" double-hash
   getKeyData: (key, callback) ->
     @askMule "graph/#{key}", (response) =>
       ans = {}
       for own name, data of response
         [key, retention] = name.split(";")
-        ans[key] ||= {}
-        ans[key][retention] = data
+        ans[retention] ||= {}
+        ans[retention][key] = data
       callback(ans)

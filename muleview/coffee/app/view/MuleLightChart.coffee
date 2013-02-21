@@ -8,6 +8,7 @@ Ext.define "Muleview.view.MuleLightChart",
     @chart = Ext.create "Muleview.view.MuleChart",
       data: @data
       keys: @keys
+      store: @store
       topKey: @topKey
       legend: false
       showAreas: false
@@ -15,6 +16,7 @@ Ext.define "Muleview.view.MuleLightChart",
         renderer: ->
           ""
     adjustEnd: false
+    @relayEvents(@chart, ["mouseenter"])
     @items = [@chart]
     @title = @parseTitle(@retention)
     @callParent()
