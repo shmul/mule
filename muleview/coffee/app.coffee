@@ -57,26 +57,6 @@ Ext.application
     # setInterval(@pullData, Muleview.Settings.updateInterval)
 
   createGraphs: ->
-
-    parseLightGraphTitle = (ret) ->
-      console.log("MuleLightChart.coffee\\ 11: ret:", ret);
-      split = ret.split(":")
-      console.log("MuleLightChart.coffee\\ 13: split:", split);
-      last = split[1]
-      console.log("MuleLightChart.coffee\\ 12: last:", last);
-      [_, count, letter] = match = last.match /(\d+)([mhsdy])/
-      console.log("MuleLightChart.coffee\\ 14: match:", match);
-      console.log("MuleLightChart.coffee\\ 15: count:", count);
-      console.log("MuleLightChart.coffee\\ 16: letter:", letter);
-      console.log("MuleLightChart.coffee\\ 17: @unitLetters:", @unitLetters);
-      units = {
-        "h": "hours"
-        "m": "minutes"
-        "d": "days"
-      }[letter]
-      console.log("MuleLightChart.coffee\\ 19: units:", units);
-      "Last #{count} #{units}"
-
     tabPanel = Ext.getCmp("mainPanel")
     rightPanel = Ext.getCmp("rightPanel")
 
@@ -91,7 +71,6 @@ Ext.application
           retentions[retention] ||= {}
           retentions[retention][key] = retentionData
 
-      first_created = false
       # Now, create a graph for each retention:
       for ret, retData of retentions
         do (ret, retData) ->
@@ -104,20 +83,16 @@ Ext.application
                 data: retData
                 topKey: Muleview.currentKey
             ]
+
           lightGraph = Ext.create "Muleview.view.MuleLightChart",
-            data: retData
-            title: Muleview.currentKey
             topKey: Muleview.currentKey
+            data: retData
+            retention: ret
             listeners:
               mouseenter: ->
                 tabPanel.setActiveTab(mainGraphPanel)
 
           tabPanel.add mainGraphPanel
-          rightPanel.add Ext.create "Ext.form.FieldSet",
-            layout: "fit"
-            title: parseLightGraphTitle(ret)
-            border: false
-            frame: false
-            items: [lightGraph]
+          rightPanel.add lightGraph
 
       tabPanel.setActiveTab(0)
