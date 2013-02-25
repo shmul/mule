@@ -500,7 +500,7 @@ function metric_hierarchy(metric_)
     end)
 end
 
-TRUTH = { ["true"]=true, yes=true, on=true, [1]=true }
+TRUTH = { [true]=true,["true"]=true, yes=true, on=true, [1]=true }
 function is_true(str_)
   return str_ and TRUTH[str_]
 end
@@ -569,4 +569,33 @@ end
 -- the whole purpose of this is to enable tests to override it.
 function time_now()
   return os.time()
+end
+
+
+-- based on http://en.wikibooks.org/wiki/Algorithm_implementation/Sorting/Insertion_sort#JavaScript
+
+
+function insertion_sort(array_)
+  for i,v in ipairs(array_) do
+    local j = i-1
+    while j>0 and array_[j]>v do
+      array_[j+1] = array_[j]
+      j = j - 1
+    end
+    array_[j+1] = v
+  end
+  return array_
+end
+
+function bounded_by_level(string_,prefix_,level_)
+  local count = 0
+  local s = #prefix_-1
+  local find = string.find
+  repeat
+    s = find(string_,".",s+1,true)
+    if s then
+      count = count + 1
+    end
+  until not s or count>level_
+  return count<=level_
 end

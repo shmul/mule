@@ -723,13 +723,44 @@ function test_pale()
     assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamp="1360800000"}),"274,244",1,true))
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361127300"}),"1526,756",1,true))
     m.process("./tests/fixtures/pale.mule")
-    assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamp="1361300362"}),"18,10",1,true))
+    assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamp="1361300362"}),"19,11",1,true))
 
     assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
-    assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361300362"}),"45,26",1,true))
+    assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361300362"}),"46,27",1,true))
   end
 
   for_each_db("./tests/temp/pale",helper,true)
+end
+
+function test_key()
+  local function helper(db)
+    local m = mule(db)
+    m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
+
+    m.process("./tests/fixtures/pale.mule")
+    assert(m.key("beer",{})==m.key("beer",{level=1}))
+
+    -- there are 61 unique keys in pale.mule all are beer.pale sub keys
+    -- (cut -d' ' -f 1 tests/fixtures/pale.mule  | sort | uniq | wc -l)
+    local all_keys = string.match(m.key("beer",{deep=true}),"%[(.+)%]")
+    assert_equal((61+2)*3,#split(all_keys,","))
+    all_keys = string.match(m.key("beer",{level=4}),"%[(.+)%]")
+    assert_equal((61+2)*3,#split(all_keys,","))
+
+    all_keys = string.match(m.key("beer",{level=2}),"%[(.+)%]")
+    assert_equal((2+2)*3,#split(all_keys,","))
+
+  end
+
+  helper(in_memory_db())
+end
+
+function test_bounded_by_level()
+  assert(bounded_by_level("hello.cruel.world","hello",2))
+  assert_false(bounded_by_level("hello.cruel.world","hello",1))
+  assert(bounded_by_level("hello.cruel.world","hello.cruel",1))
+  assert(bounded_by_level("hello.cruel.world","hello.cruel.world",1))
+  assert(bounded_by_level("hello.cruel.world","hello.cruel",12))
 end
 
 --verbose_log(true)

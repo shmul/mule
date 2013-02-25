@@ -498,14 +498,14 @@ function mule(db_)
     local format = string.format
     local find = string.find
     local col = collectionout(str,"[","]")
+    local level = tonumber(options_.level) or 1
     local deep = is_true(options_.deep)
-
     col.head()
 
-    for m in split_helper(resource_ or "","/") do
-      m = (m=="*" and "") or m
-      for k in db_.matching_keys(m) do
-        if (deep or not find(k,".",#m,true)) then
+    for prefix in split_helper(resource_ or "","/") do
+      prefix = (prefix=="*" and "") or prefix
+      for k in db_.matching_keys(prefix) do
+        if deep or bounded_by_level(k,prefix,level) then
           col.elem(format("\"%s\"",k))
         end
       end

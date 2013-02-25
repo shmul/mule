@@ -174,6 +174,7 @@ The metrics and names create a hierarchy which can be retrieved by sending a GET
 
 * `metric` - Returns all the names for which metric is a prefix.
 * `deep` - if set to true (which can be `true,yes,1`) then all the names which are prefixe by `metric` will be returned. Otherwise only the immediate childs are returned. Defaults to `false` .
+* `level` - an optional number of sub key levels to retrieve. Each dot counts for one level. Default level is 1
 
 Example output (`deep=true`)
 
