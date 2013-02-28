@@ -1,9 +1,13 @@
 * Featires:
 ** TODO Redesign display
 Make small graphs clickable
-** TODO Maximize/restore button
+** DONE Maximize/restore button
 ** TODO Support for timestamp labels
+** TODO Refresh interval
 ** TODO Something cool with tooltips
+** TODO Improve progress bar
+ - [ ] Show progress before sending request
+ - [ ] Overlay only on main panel
 ** TODO Theme
 *** TODO Favicon
 ** TODO Shorter key names in legend

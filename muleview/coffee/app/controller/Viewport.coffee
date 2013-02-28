@@ -12,6 +12,9 @@ Ext.define "Muleview.controller.Viewport",
     ,
       ref: "mainPanelRestore"
       selector: "#mainPanelRestore"
+    ,
+      ref: "mainPanel"
+      selector: "#mainPanel"
   ]
 
   onLaunch: ->
@@ -26,6 +29,7 @@ Ext.define "Muleview.controller.Viewport",
       "#rightPanel":
         collapse: @updateMainPanelTools
         expand: @updateMainPanelTools
+    @getMainPanel().getEl().addListener("dblclick", @togglePanels, @)
 
   isMainPanelExpanded: ->
     @getLeftPanel().getCollapsed() and @getRightPanel().getCollapsed()

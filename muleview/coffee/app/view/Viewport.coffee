@@ -4,6 +4,7 @@ Ext.define "Muleview.view.Viewport",
   items: [
       id: "leftPanel"
       xtype: "panel"
+      layout: "fit"
       region: "west"
       width: "20%"
       split: true
