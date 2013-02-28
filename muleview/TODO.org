@@ -1,0 +1,17 @@
+* Alerts:
+** TODO Display lines on graphs
+** TODO Enable configuration
+* Featires:
+** TODO Redesign display
+Make small graphs clickable
+** TODO Maximize/restore button
+** TODO Support for timestamp labels
+** TODO Something cool with tooltips
+** TODO Theme
+** TODO Shorter key names in legend
+** TODO Long legends support?
+* Optimizations:
+** TODO Generate big graph only on demand
+** TODO Dynamic tree
+* Misc:
+** TODO Check data correctness
