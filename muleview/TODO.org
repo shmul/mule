@@ -1,6 +1,3 @@
-* Alerts:
-** TODO Display lines on graphs
-** TODO Enable configuration
 * Featires:
 ** TODO Redesign display
 Make small graphs clickable
@@ -8,8 +5,12 @@ Make small graphs clickable
 ** TODO Support for timestamp labels
 ** TODO Something cool with tooltips
 ** TODO Theme
+*** TODO Favicon
 ** TODO Shorter key names in legend
 ** TODO Long legends support?
+** Alerts:
+*** TODO Display lines on graphs
+*** TODO Enable configuration
 * Optimizations:
 ** TODO Generate big graph only on demand
 ** TODO Dynamic tree

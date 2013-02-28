@@ -10,11 +10,6 @@ Ext.define "Muleview.controller.KeysTree",
     }
   ]
 
-  init: ->
-    @control
-      "#keysTree":
-        selectionchange: @onSelectionChange
-
   onSelectionChange: (me, selected)->
     return unless selected[0]
     key = selected[0].get("fullname")
@@ -24,6 +19,9 @@ Ext.define "Muleview.controller.KeysTree",
 
   onLaunch: ->
     @store = @getTree().getStore()
+    @control
+        "#keysTree":
+          selectionchange: @onSelectionChange
 
 
     @fillAllKeys()
