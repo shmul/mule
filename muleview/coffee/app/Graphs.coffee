@@ -30,7 +30,6 @@ Ext.define "Muleview.Graphs",
         Ext.defer @createRetentionGraphs, 1, @, [ret, retData, inc]
 
   createRetentionGraphs: (ret, data, inc) ->
-    console.log("Graphs.coffee\\ 22: ret, data:", ret, data);
 
     # Extract retention keys from data:
     keys = {}
@@ -39,7 +38,6 @@ Ext.define "Muleview.Graphs",
         keys[key] = true
 
     keys = Ext.Object.getKeys(keys)
-    console.log("Graphs.coffee\\ 24: keys:", keys);
     return unless keys.length > 0
 
     fields = (name: key, type: "integer" for key in keys)

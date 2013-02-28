@@ -2,18 +2,20 @@ Ext.define "Muleview.view.Viewport",
   extend: "Ext.container.Viewport"
   layout: "border"
   items: [
-    {
-      xtype: "treepanel"
-      id: "keysTree"
+      id: "leftPanel"
+      xtype: "panel"
       region: "west"
-      collapsible: true
-      title: "Available Keys"
       width: "20%"
       split: true
-      displayField: "name"
-      rootVisible: false
-    },
-    {
+      collapsible: true
+      items: [
+        xtype: "treepanel"
+        id: "keysTree"
+        title: "Available Keys"
+        displayField: "name"
+        rootVisible: false
+      ]
+    ,
       id: "mainPanel"
       xtype: "tabpanel"
       title: "Main View"
@@ -21,12 +23,13 @@ Ext.define "Muleview.view.Viewport",
       layout: "fit"
       tools: [
           type: "maximize"
-          handler: ->
-            console.log("app.coffee\\ 41: <HERE>");
+          id: "mainPanelMaximize"
+        ,
+          type: "restore"
+          id: "mainPanelRestore"
+          hidden: true
       ]
-      items: [ ]
-    },
-    {
+    ,
       id: "rightPanel"
       width: "20%"
       split: true
@@ -39,5 +42,4 @@ Ext.define "Muleview.view.Viewport",
         align: "stretch"
       defaults:
         flex: 1
-    }
   ]

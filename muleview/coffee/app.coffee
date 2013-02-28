@@ -13,5 +13,6 @@ Ext.application
   autoCreateViewport: true
 
   controllers: [
+    "Viewport"
     "KeysTree"
   ]
