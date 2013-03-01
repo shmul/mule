@@ -19,16 +19,23 @@ Ext.define "Muleview.controller.Viewport",
 
   onLaunch: ->
     @control
+      "#mainPanel":
+        tabchange: @updateLightGraphs
+
       "#mainPanelMaximize":
         click: @togglePanels
+
       "#mainPanelRestore":
         click: @togglePanels
+
       "#leftPanel":
         collapse: @updateMainPanelTools
         expand: @updateMainPanelTools
+
       "#rightPanel":
         collapse: @updateMainPanelTools
         expand: @updateMainPanelTools
+
     @getMainPanel().getEl().addListener("dblclick", @togglePanels, @)
 
   isMainPanelExpanded: ->
@@ -47,11 +54,10 @@ Ext.define "Muleview.controller.Viewport",
     @updateMainPanelTools()
 
   updateMainPanelTools: ->
-    console.log("Viewport.coffee\\ 46: <HERE>");
     expanded = @isMainPanelExpanded()
-    if expanded
-      @getMainPanelMaximize().hide()
-      @getMainPanelRestore().show()
-    else
-      @getMainPanelMaximize().show()
-      @getMainPanelRestore().hide()
+    @getMainPanelMaximize().setVisible(!expanded)
+    @getMainPanelRestore().setVisible(expanded)
+
+  updateLightGraphs: (me, selectedTab)->
+    @getRightPanel().items.each (lightGraph) ->
+      lightGraph.setVisible(selectedTab.retention != lightGraph.retention)

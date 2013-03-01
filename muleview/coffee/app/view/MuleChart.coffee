@@ -18,8 +18,7 @@ Ext.define "Muleview.view.MuleChart",
   findTopKey: (keys) ->
     topKey = keys[0]
     for key in keys
-      topKey = key if key.length < topKey
-    console.log('MuleChart.coffee\\ 22: topKey:', topKey);
+      topKey = key if key.length < topKey.length
     topKey
 
   initComponent: ->

@@ -16,20 +16,21 @@ Ext.define "Muleview.Graphs",
     Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
       for own retention, retentionData of data
         @retentions[retention] = @createRetentionGraphs(retention, retentionData)
-        @mainPanel.add(@retentions[retention].graph)
+        firstTab ||= @retentions[retention].graph
 
+
+      @rightPanel.add(ret.lightGraph for _, ret of @retentions)
+      @mainPanel.add(ret.graph for _, ret of @retentions )
+      @mainPanel.setActiveTab(firstTab)
       @mainPanel.setLoading(false)
       @rightPanel.setLoading(false)
-
-
-
 
   createRetentionGraphs: (retName, retRawData) ->
     keys = Ext.Object.getKeys(retRawData)
     store = @createStore(retRawData, keys)
-    console.log('Graphs.coffee\\ 30: store:', store);
     mainGraphPanel = Ext.create "Ext.panel.Panel",
       title: retName
+      retention: retName
       layout: "fit"
       items: [
         Ext.create "Muleview.view.MuleChart",
@@ -39,7 +40,9 @@ Ext.define "Muleview.Graphs",
       ]
 
     lightGraph = Ext.create "Muleview.view.MuleLightChart",
+      retention: retName
       keys: keys
+      hidden: true
       retention: retName
       store: store
 
