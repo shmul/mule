@@ -14,6 +14,7 @@ Ext.define "Muleview.Graphs",
 
     # Obtain data:
     Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
+      firstTab = null
       for own retention, retentionData of data
         @retentions[retention] = @createRetentionGraphs(retention, retentionData)
         firstTab ||= @retentions[retention].graph
