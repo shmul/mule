@@ -13,11 +13,21 @@ Ext.define "Muleview.view.MuleChart",
     rotate:
       degrees: 315
 
+  # Find the topmost key in the given keys array
+  # The top key is the shortest of all (and should, btw, be the prefix of all, too)
+  findTopKey: (keys) ->
+    topKey = keys[0]
+    for key in keys
+      topKey = key if key.length < topKey
+    console.log('MuleChart.coffee\\ 22: topKey:', topKey);
+    topKey
+
   initComponent: ->
     # @data should be a hash of key => keydata,
     # keydata should be: [[count, batch, timestamp], [count, batch, timestamp]...]
 
     keys = @keys
+    @topKey = @findTopKey(keys)
 
     @axes = [
       {

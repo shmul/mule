@@ -2,108 +2,73 @@ Ext.define "Muleview.Graphs",
   singleton: true
 
   createGraphs: ->
-    @tabPanel = Ext.getCmp("mainPanel")
+    @mainPanel = Ext.getCmp("mainPanel")
     @rightPanel = Ext.getCmp("rightPanel")
 
-    @tabPanel.removeAll();
+    # Reset and initiate display progress start:
+    @retentions = {}
+    @mainPanel.removeAll();
+    @mainPanel.setLoading(true)
     @rightPanel.removeAll()
+    @rightPanel.setLoading(true)
 
     # Obtain data:
     Muleview.Mule.getKeyData Muleview.currentKey, (data) =>
-      # Convert data:
-      retentions = @convertData(data)
+      for own retention, retentionData of data
+        @retentions[retention] = @createRetentionGraphs(retention, retentionData)
+        @mainPanel.add(@retentions[retention].graph)
 
-      # Count data:
-      recordsCount = 0
-      for ret, retData of retentions
-        recordsCount += retData.length
+      @mainPanel.setLoading(false)
+      @rightPanel.setLoading(false)
 
-      processedRecords = 0
-      pbar = Ext.MessageBox.progress("Progress")
-      inc = ->
-        processedRecords += 1
-        pbar.updateProgress(processedRecords / recordsCount)
-        pbar.close() if processedRecords >= recordsCount
 
-      # Create two graphs, main and light, for each retention:
-      for ret, retData of retentions
-        Ext.defer @createRetentionGraphs, 1, @, [ret, retData, inc]
 
-  createRetentionGraphs: (ret, data, inc) ->
 
-    # Extract retention keys from data:
-    keys = {}
-    for record in data
-      for key, value of record
-        keys[key] = true
-
-    keys = Ext.Object.getKeys(keys)
-    return unless keys.length > 0
-
-    fields = (name: key, type: "integer" for key in keys)
-    Ext.Array.remove(keys, "timestamp")
-
-    store = Ext.create "Ext.data.ArrayStore"
-      fields: fields
-
+  createRetentionGraphs: (retName, retRawData) ->
+    keys = Ext.Object.getKeys(retRawData)
+    store = @createStore(retRawData, keys)
+    console.log('Graphs.coffee\\ 30: store:', store);
     mainGraphPanel = Ext.create "Ext.panel.Panel",
-      title: ret
+      title: retName
       layout: "fit"
       items: [
         Ext.create "Muleview.view.MuleChart",
           showAreas: true
           keys: keys
           store: store
-          topKey: Muleview.currentKey
       ]
 
     lightGraph = Ext.create "Muleview.view.MuleLightChart",
       keys: keys
-      topKey: Muleview.currentKey
-      retention: ret
+      retention: retName
       store: store
-      listeners:
-        mouseenter: =>
-          @tabPanel.setActiveTab(mainGraphPanel)
 
+    return {
+      graph: mainGraphPanel
+      lightGraph: lightGraph
+    }
 
-    for record in data
-      do (record) ->
-        Ext.defer ->
-          store.add(record)
-          inc()
-        , 1
+  # Creates a flat store from a hash of {
+  #   key1 => [[cout, batch, timestamp], ...],
+  #   key2 => [[cout, batch, timestamp], ...]
+  # }
+  createStore: (retentionData, keys) ->
+    # Initialize store:
+    fields = (name: key, type: "integer" for key in keys)
+    fields.push(name: "timestamp", type: "integer")
 
-    Ext.defer =>
-      @tabPanel.add mainGraphPanel
-      @rightPanel.add lightGraph
-    , 1
+    store = Ext.create "Ext.data.ArrayStore"
+      fields: fields
 
-  # We need to convert the data
-  # Form "retention => key => data"
-  # To: retention => [ {timestamp: XXX, key1: XXX, key2: XXX ...}, ...]
-  convertData: (data) ->
-    ans = {}
-    for retention, retentionData of data
-      ans[retention] = @convertRetentionData(retentionData)
-    ans
-
-  # Converts the input data hash
-  # form: key => [[cout, batch, timestamp], ...]
-  # to: [{timestamp: $timestamp, $key1: $key1count, $key2: $key2count ...}, ...]
-  convertRetentionData: (data) ->
+    # Convert data to timestamps-based hash:
     timestamps = {}
-    for own key, keyData of data
+    for own key, keyData of retentionData
       for [count, _, timestamp] in keyData
-        timestamps[timestamp] ||= {}
+        timestamps[timestamp] ||= {
+          timestamp: timestamp
+        }
         timestamps[timestamp][key] = count
-    ans = []
-    for timestamp, counts of timestamps
-      record = {
-        timestamp: timestamp
-      }
 
-      for key, keyCount of counts
-        record[key] = keyCount
-      ans.push record
-    ans
+    # Add the data:
+    store.add(Ext.Object.getValues(timestamps))
+    store

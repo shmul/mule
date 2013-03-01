@@ -20,3 +20,5 @@ Make small graphs clickable
 ** TODO Dynamic tree
 * Misc:
 ** TODO Check data correctness
+** TODO Support for more than 2-3 retentions
+** TODO Experiment with union-graph
