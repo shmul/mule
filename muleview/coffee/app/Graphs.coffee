@@ -19,16 +19,26 @@ Ext.define "Muleview.Graphs",
         @retentions[retention] = @createRetentionGraphs(retention, retentionData)
         firstTab ||= @retentions[retention].graph
 
-
       @rightPanel.add(ret.lightGraph for _, ret of @retentions)
       @mainPanel.add(ret.graph for _, ret of @retentions )
       @mainPanel.setActiveTab(firstTab)
       @mainPanel.setLoading(false)
       @rightPanel.setLoading(false)
 
+  getAlerts: (graphName) ->
+    ans = null
+    raw = Muleview.alerts[graphName]
+    if raw
+      ans = []
+      for meta, i in Muleview.Settings.alerts
+        ans[i] = Ext.apply({value: raw[i]}, meta)
+    ans
+
   createRetentionGraphs: (retName, retRawData) ->
     keys = Ext.Object.getKeys(retRawData)
-    store = @createStore(retRawData, keys)
+    alerts = @getAlerts(Muleview.currentKey + ";" + retName) # TODO: get it in some other way
+
+    store = @createStore(retRawData, keys, alerts)
     mainGraphPanel = Ext.create "Ext.panel.Panel",
       title: retName
       retention: retName
@@ -37,6 +47,7 @@ Ext.define "Muleview.Graphs",
         Ext.create "Muleview.view.MuleChart",
           showAreas: true
           keys: keys
+          alerts: alerts
           store: store
       ]
 
@@ -56,10 +67,11 @@ Ext.define "Muleview.Graphs",
   #   key1 => [[cout, batch, timestamp], ...],
   #   key2 => [[cout, batch, timestamp], ...]
   # }
-  createStore: (retentionData, keys) ->
+  createStore: (retentionData, keys, alerts) ->
     # Initialize store:
     fields = (name: key, type: "integer" for key in keys)
     fields.push(name: "timestamp", type: "integer")
+    fields.push {name: alert.name, type: "integer"} for alert in alerts if alerts
 
     store = Ext.create "Ext.data.ArrayStore"
       fields: fields
@@ -68,9 +80,11 @@ Ext.define "Muleview.Graphs",
     timestamps = {}
     for own key, keyData of retentionData
       for [count, _, timestamp] in keyData
-        timestamps[timestamp] ||= {
-          timestamp: timestamp
-        }
+        unless timestamps[timestamp]
+          timestamps[timestamp] = {
+            timestamp: timestamp
+          }
+          timestamps[timestamp][alert.name] = alert.value for alert in alerts if alerts
         timestamps[timestamp][key] = count
 
     # Add the data:

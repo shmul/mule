@@ -4,17 +4,24 @@ Ext.define "Muleview.view.Viewport",
   items: [
       id: "leftPanel"
       xtype: "panel"
-      layout: "fit"
+      layout: "border"
       region: "west"
       width: "20%"
       split: true
       collapsible: true
       items: [
-        xtype: "treepanel"
-        id: "keysTree"
-        title: "Available Keys"
-        displayField: "name"
-        rootVisible: false
+          xtype: "treepanel"
+          region: "center"
+          id: "keysTree"
+          title: "Available Keys"
+          displayField: "name"
+          rootVisible: false
+        ,
+          xtype: "panel"
+          title: "Options"
+          split: "true"
+          region: "south"
+          height: "40%"
       ]
     ,
       id: "mainPanel"

@@ -51,21 +51,33 @@ Ext.define "Muleview.view.MuleChart",
 
 
     @series = []
+
+    # Areas:
     if @showAreas
-      @series.push {
+      @series.push
         type: "area"
         axis: "left"
         xField: "timestamp"
         yField: areaKeys
         highlight: @highlight
-      }
-    @series.push {
-        type: "line"
-        axis: "left"
-        xField: "timestamp"
-        yField: [@topKey]
-        highlight: @highlight
-      }
+
+    # Top key line:
+    @series.push
+      type: "line"
+      axis: "left"
+      xField: "timestamp"
+      yField: [@topKey]
+      highlight: @highlight
+
+    # Alerts:
+    if @alerts
+      for alert in @alerts
+        @series.push
+          type: "line"
+          axis: "left"
+          xField: "timestamp"
+          yField: [alert.name]
+          highlight: false
 
 
     @callParent()
