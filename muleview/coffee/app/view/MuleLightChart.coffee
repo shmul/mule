@@ -1,5 +1,5 @@
 Ext.define "Muleview.view.MuleLightChart",
-  extend: "Ext.form.FieldSet"
+  extend: "Ext.panel.Panel"
   border: false
   frame: false
   layout: "fit"
@@ -12,6 +12,7 @@ Ext.define "Muleview.view.MuleLightChart",
       topKey: @topKey
       legend: false
       showAreas: false
+      highlight: false
       timeLabel:
         renderer: ->
           ""
@@ -19,6 +20,13 @@ Ext.define "Muleview.view.MuleLightChart",
     @relayEvents(@chart, ["mouseenter"])
     @items = [@chart]
     @title = @parseTitle(@retention)
+
+    @tools = [
+      type: "prev"
+      handler: () =>
+        Ext.getCmp("mainPanel").setActiveTab(Muleview.Graphs.retentions[@retention].graph)
+    ]
+
     @callParent()
 
   parseTitle: (ret) ->

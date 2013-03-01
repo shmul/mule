@@ -2,6 +2,7 @@ Ext.define "Muleview.view.MuleChart",
   extend:  "Ext.chart.Chart"
 
   showAreas: true
+  highlight: true
 
   legend:
     position: "bottom"
@@ -56,14 +57,14 @@ Ext.define "Muleview.view.MuleChart",
         axis: "left"
         xField: "timestamp"
         yField: areaKeys
-        highlight: true
+        highlight: @highlight
       }
     @series.push {
         type: "line"
         axis: "left"
         xField: "timestamp"
         yField: [@topKey]
-        highlight: true
+        highlight: @highlight
       }
 
 
