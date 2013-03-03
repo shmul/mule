@@ -8,34 +8,6 @@ Mule is a RRD tool designed with simplicity of use in mind. Its main use case is
 * metrics are organized in hierarchies. Sequences of parent nodes are automatically updated when their childs are.
 * JSON interface which can be used for graph generation and threshold monitoring (by tools like nagios).
 
-# License
-
-Mule is distributed under the MIT license reproduced below. Mule uses several 3rd party modules whose licenses are described below
-
-## MIT License
-Copyright (c) 2012 Trusteer Ltd.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-## Tokyo Cabinet
-Tokyo Cabinet is distributed under the "GNU Lesser General Public License".
-
-## Kyoto Cabinet
-Kyoto Cabinet is distributed under the "GNU General Public License".
-
-## Lunit
-Lunit is licensed under the terms of the MIT license. [Lunit home page](http://www.nessie.de/mroth/lunit/)
-
-## Copas
-Copas of the Kepler project is used and is disributed under [this license](http://keplerproject.github.com/copas/license.html). Copyright (c) 2005-2010 Kepler Project.
-
-## lpack
-[lpack](http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lpack) is used.
-
 # Definitions
 
 * retention pair: `<step,period>`, e.g. `1h:30d`
@@ -305,3 +277,31 @@ TODO provide nginx proxying configuration
 Mule also has a command line interface which is useful for tests (and development), but less so for an interactive use. Run `lua mule.lua -h` for a (terse) usage description.
 
 TODO provide a list of the common commands
+
+# License
+
+Mule is distributed under the MIT license reproduced below. Mule uses several 3rd party modules whose licenses are described below
+
+## MIT License
+Copyright (c) 2012 Trusteer Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Tokyo Cabinet
+Tokyo Cabinet is distributed under the "GNU Lesser General Public License".
+
+## Kyoto Cabinet
+Kyoto Cabinet is distributed under the "GNU General Public License".
+
+## Lunit
+Lunit is licensed under the terms of the MIT license. [Lunit home page](http://www.nessie.de/mroth/lunit/)
+
+## Copas
+Copas of the Kepler project is used and is disributed under [this license](http://keplerproject.github.com/copas/license.html). Copyright (c) 2005-2010 Kepler Project.
+
+## lpack
+[lpack](http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lpack) is used.
