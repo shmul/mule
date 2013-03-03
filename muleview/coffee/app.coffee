@@ -3,9 +3,9 @@ Ext.Loader.setPath("Muleview", "app")
 Ext.application
   name: "Muleview"
   requires: [
+    "Muleview.Settings",
     "Ext.container.Viewport",
     "Ext.tree.Panel",
-    "Muleview.Settings",
     "Muleview.Mule"
     "Muleview.Graphs"
   ]

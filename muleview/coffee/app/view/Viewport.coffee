@@ -15,13 +15,20 @@ Ext.define "Muleview.view.Viewport",
           id: "keysTree"
           title: "Available Keys"
           displayField: "name"
+          useArrows: true
           rootVisible: false
         ,
           xtype: "panel"
-          title: "Options"
-          split: "true"
           region: "south"
           height: "40%"
+          collapsible: true
+          collapsed: true
+          title: "Options"
+          split: "true"
+          layout: "fit"
+          items: [
+            Ext.create("Muleview.view.AlertsEditor")
+          ]
       ]
     ,
       id: "mainPanel"

@@ -1,6 +1,9 @@
 Ext.define "Muleview.Mule",
   singleton: true
 
+  getAlertCommandUrl: (key, retention) ->
+    "mule/alert/#{key};#{retention}"
+
   # General method to query mule
   askMule: (command, fn) ->
     Ext.Ajax.request

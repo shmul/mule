@@ -5,6 +5,7 @@
 ** DONE Maximize/restore button
 ** TODO Support for timestamp labels
 ** TODO Refresh interval
+** TODO Refresh button
 ** TODO Something cool with tooltips
 ** DONE Improve progress bar
  - [X] Overlay only on main panel
@@ -21,7 +22,10 @@
 * Misc:
 ** TODO Check data correctness
 ** TODO Support for more than 2-3 retentions
-** TODO Experiment with union-graph
-** TODO Experiment with single graph component
+** Ideas:
+*** TODO Experiment with union-graph
+*** TODO Experiment with single graph component
 the single graph component is a panel containing a chart and can have two viewing mode - big and light
-** TODO Experiment with docked buttons instead of a tab bar
+*** TODO Experiment with docked buttons instead of a tab bar
+*** TODO Experiment with tree-grid
+Instead of having regular tree + tabs, use tree-grid, which will hold 3 (?) buttons for each node, button per graph/retention

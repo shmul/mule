@@ -24,6 +24,16 @@ get %r[/mule/(.*)] do |cmd|
   ans
 end
 
+put %r[/mule/(.*)] do |cmd|
+  query_string = request.params.to_a.map{|a,b| "#{a}=#{b}"}.join("&")
+  puts('server.rb\\ 29: query_string:', query_string)
+  curl = "curl -X PUT \"http://localhost:3000/#{cmd}\" -d=\"#{query_string}\""
+  puts('server.rb\\ 29: curl:', curl)
+  ans = %x[#{curl}]
+  puts('server.rb\\ 31: ans:', ans)
+  ans
+end
+
 # get %r[/mule/graph.*] do
 #   content_type :js
 #   %Q[{"version": 3,

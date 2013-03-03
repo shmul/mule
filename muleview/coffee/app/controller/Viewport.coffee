@@ -20,7 +20,7 @@ Ext.define "Muleview.controller.Viewport",
   onLaunch: ->
     @control
       "#mainPanel":
-        tabchange: @updateLightGraphs
+        tabchange: @onTabChange
 
       "#mainPanelMaximize":
         click: @togglePanels
@@ -58,6 +58,11 @@ Ext.define "Muleview.controller.Viewport",
     @getMainPanelMaximize().setVisible(!expanded)
     @getMainPanelRestore().setVisible(expanded)
 
-  updateLightGraphs: (me, selectedTab)->
+  onTabChange: (me, selectedTab)->
+    # Update current retention:
+    Muleview.currentRetention = selectedTab.retention
+    console.log('Viewport.coffee\\ 64: Muleview.currentRetention:', Muleview.currentRetention);
+
+    # Update right-panel's light charts:
     @getRightPanel().items.each (lightGraph) ->
       lightGraph.setVisible(selectedTab.retention != lightGraph.retention)
