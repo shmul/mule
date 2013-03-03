@@ -85,7 +85,9 @@ local function build_response(status_,headers_,body_)
 end
 
 local function standard_response(status_,content_)
-  return build_response(string.format("HTTP/1.1 %s",status_codes[status_]),{{"Connection","close"}},content_)
+  return build_response(string.format("HTTP/1.1 %s",status_codes[status_]),
+                        {{"Connection","close"},{"Access-Control-Allow-Origin","*"}},
+                        content_)
 end
 
 local function generic_get_handler(mule_,handler_,req_,resource_,qs_params_,content_)
