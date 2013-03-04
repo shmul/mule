@@ -66,7 +66,7 @@ end
 
 local function usage()
   return [[
-        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] files....
+        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] files....
 
       If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
       Files are processed in order
@@ -159,7 +159,9 @@ function main(opts,out_)
                 -- BUT we check that the stop functionality is supported at all
                 stopped = stopped or httpd_can_be_stopped and token_==httpd_can_be_stopped
                 return stopped
-              end)
+              end,
+              opts["R"]
+             )
   end
 
   if opts["n"] then
@@ -189,7 +191,7 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcnmtx")
+  opts = getopt(arg,"ldcnmtxR")
   local rv = main(opts,stdout("\n"))
   logd("done")
   os.exit(rv and 0 or -1)

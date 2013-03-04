@@ -41,36 +41,36 @@ local function read_request(socket_)
   local req = {}
 
   while true do
-	local data = socket_:receive("*l")
-	if not data or #data==0 then
-	  local content_len = tonumber(req["Content-Length"])
-	  local content
-	  if content_len and content_len>0 then
-		content = socket_:receive(content_len)
-		if content and #content<content_len then
-		  logw("insufficient content received",#content,content_len)
-		end
+    local data = socket_:receive("*l")
+    if not data or #data==0 then
+      local content_len = tonumber(req["Content-Length"])
+      local content
+      if content_len and content_len>0 then
+        content = socket_:receive(content_len)
+        if content and #content<content_len then
+          logw("insufficient content received",#content,content_len)
+        end
       elseif req["Transfer-Encoding"]=="chunked" then
         logd("chunked encoding")
         content = read_chunks(socket_)
-	  end
+      end
       return req,content
-	end
+    end
 
-	if not req.verb then
-	  req.verb,req.url,req.protocol = string.match(data,"(%S+) (%S+) (%S+)$")
-	else
-	  local header_name,header_value = string.match(data,"([^:]+): (.-)$")
-	  if header_name and header_value then
-		req[header_name] = header_value
+    if not req.verb then
+      req.verb,req.url,req.protocol = string.match(data,"(%S+) (%S+) (%S+)$")
+    else
+      local header_name,header_value = string.match(data,"([^:]+): (.-)$")
+      if header_name and header_value then
+        req[header_name] = header_value
         if header_name=="Expect" and header_value=="100-continue" and
           (req.verb=="POST" or req.verb=="PUT") and req.protocol~="HTTP/1.0" then
           socket_:send("HTTP/1.1 100 Continue\r\n\r\n")
         end
-	  else
+      else
         return req
-	  end
-	end
+      end
+    end
   end
 end
 
@@ -78,7 +78,7 @@ local function build_response(status_,headers_,body_)
   local response = {status_}
   concat_arrays(response,headers_,function(header_)
 									return string.format("%s: %s",header_[1],header_[2])
-								  end)
+                                  end)
   table.insert(response,string.format("Content-Length: %d",body_ and #body_ or 0))
   table.insert(response,"\r\n") -- for the trailing \r\n
   return table.concat(response,"\r\n")
@@ -147,10 +147,10 @@ local handlers = { key = generic_get_handler,
 }
 
 
-function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond_)
+function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond_,root_)
 
   if not req_ then
-	return send_(standard_response(400))
+    return send_(standard_response(400))
   end
 
   local url_no_qs = string.match(req_.url,"^([^%?]+)")
@@ -161,7 +161,17 @@ function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond
   local handler = handlers[handler_name]
 
   if not handler then
-	return send_("404 Not Found")
+    if root_ then
+      local file = string.format("%s/%s",root_,url_no_qs)
+      if file_exists(file) then
+        return with_file(file,
+                         function(f)
+                           local file_body = f:read("*a")
+                           return send_(standard_response(200,file_body),file_body)
+                         end)
+      end
+    end
+    return send_("404 Not Found")
   end
 
   local rv = with_mule_(
@@ -198,15 +208,15 @@ function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond
 end
 
 
-function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_)
+function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
   local address,port = string.match(address_port_,"(%S-):(%d+)")
   copas.addserver(socket.bind(address,port),
-				  function(socket_)
-					--socket_:setoption ("linger", {on=true,timeout=7})
-					socket_:settimeout(0)
-					--socket_:setoption ("tcp-nodelay", true)
-					local wrapped_socket = copas.wrap(socket_)
-					local req,content = read_request(wrapped_socket)
+                  function(socket_)
+                    --socket_:setoption ("linger", {on=true,timeout=7})
+                    socket_:settimeout(0)
+                    --socket_:setoption ("tcp-nodelay", true)
+                    local wrapped_socket = copas.wrap(socket_)
+                    local req,content = read_request(wrapped_socket)
 
                     local function send(headers_,body_)
                       local s,err = socket_:send(headers_)
@@ -216,10 +226,9 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_)
                       logi("send",s,err)
                       return s,err
                     end
-
-					send_response(send,req,content,with_mule_,backup_callback_,stop_cond_)
-				  end)
+                    send_response(send,req,content,with_mule_,backup_callback_,stop_cond_,root_)
+                  end)
   while not stop_cond_() do
-	copas.step()
+    copas.step()
   end
 end

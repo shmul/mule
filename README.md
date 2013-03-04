@@ -262,11 +262,15 @@ kcmttest : kcmttest.o
 
 ### HTTP daemon
 
-Mule ships with a simple HTTP daemon with a REST/JSONP interface. Since mule is assumed to be an internal application no attempt to make the daemon full feature was made. It is recommended to place an industry level HTTP server/proxy in front of it.
+Mule ships with a simple HTTP daemon and a support for:
+* a REST/JSONP interface
+* (naive) static files serving
+
+Since mule is assumed to be an internal application no attempt to make the daemon full feature was made. It is recommended to place an industry level HTTP server/proxy in front of it.
 
 To run mule as an HTTP daemon
 
-    lua mule.lua -d <db-path> -t <bind-address>:<port> [-x <stop-password>] [-l <log-path>]
+    lua mule.lua -d <db-path> -t <bind-address>:<port> [-x <stop-password>] [-l <log-path>] [-R <static-files-root-path>]
 
 for example
 
