@@ -25,12 +25,17 @@
    - [X] Save
    - [X] Read
    - [ ] Special controller / Validations
+*** TODO Enable removing alerts
+*** TODO Load alerts with graph
 * Optimizations:
-** TODO Generate big graph only on demand
+** TODO Generate big chart only on demand
 ** TODO Dynamic tree
 * Misc:
 ** TODO Check data correctness
 ** TODO Support for more than 2-3 retentions
+** TODO Refactor / naming, "Graph" object
+ - Graph object will contain references to 2 charts + alerts
+ - Distinguish "chart", "graph" and "retention"
 ** Ideas:
 *** TODO Experiment with union-graph
 *** TODO Experiment with single graph component

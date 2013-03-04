@@ -5,7 +5,7 @@ Ext.define "Muleview.view.MuleChart",
   highlight: true
 
   legend:
-    position: "bottom"
+    position: "right"
   animate: true
 
   timeLabel:
