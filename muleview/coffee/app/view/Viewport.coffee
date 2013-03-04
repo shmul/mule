@@ -18,16 +18,22 @@ Ext.define "Muleview.view.Viewport",
           useArrows: true
           rootVisible: false
         ,
-          xtype: "panel"
+          xtype: "tabpanel"
           region: "south"
           height: "40%"
+          split: "true"
           collapsible: true
           collapsed: true
           title: "Options"
-          split: "true"
-          layout: "fit"
           items: [
-            Ext.create("Muleview.view.AlertsEditor")
+              Ext.create("Muleview.view.AlertsEditor",
+                id: "alertsEditor"
+              )
+            ,
+              {
+                xtype: "panel"
+                title: "Event Labels"
+              }
           ]
       ]
     ,

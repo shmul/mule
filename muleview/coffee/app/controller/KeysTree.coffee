@@ -35,6 +35,8 @@ Ext.define "Muleview.controller.KeysTree",
       for own childName, grandchildren of keys
         @addKey(root, childName, grandchildren)
 
+      # Select first node:
+      @getTree().getSelectionModel().select(root.getChildAt(0))
   addKey: (parentNode, name, children) ->
     # Create the node key node:
     newNode = @getMuleKeyModel().create

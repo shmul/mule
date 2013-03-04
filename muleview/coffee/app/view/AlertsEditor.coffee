@@ -1,12 +1,12 @@
 Ext.define "Muleview.view.AlertsEditor",
   extend: "Ext.form.Panel"
-  title: "Alerts"
   requires: [
     "Muleview.Settings"
   ]
   bodyPadding: 10
   layout: "auto"
   overflowY: "auto"
+  title: "Alerts"
   defaults:
     width: 200
   items: [
@@ -18,6 +18,16 @@ Ext.define "Muleview.view.AlertsEditor",
       name: "stale"
       value: "1m"
   ]
+
+  formHashFromArray: (arr, base = {}) ->
+    base[alert.name] = alert.value for alert in arr
+    base
+
+  load: (alertsArr) ->
+    data = @formHashFromArray(Muleview.Settings.alerts)
+    data = @formHashFromArray(alertsArr, data) if alertsArr
+    @getForm().setValues(data)
+
   initComponent: ->
     for alert in Muleview.Settings.alerts
       @items.push
@@ -36,5 +46,7 @@ Ext.define "Muleview.view.AlertsEditor",
         @submit(
           url: url
           method: "PUT"
+          success: ->
+            Muleview.queryAlerts()
         )
     @callParent()

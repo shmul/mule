@@ -2,6 +2,8 @@ Ext.define "Muleview.Graphs",
   singleton: true
 
   createGraphs: ->
+    unless Muleview.currentKey
+      Ext.getCmp("alertsEditr").setDisabled(true)
     @mainPanel = Ext.getCmp("mainPanel")
     @rightPanel = Ext.getCmp("rightPanel")
 
@@ -61,6 +63,7 @@ Ext.define "Muleview.Graphs",
     return {
       graph: mainGraphPanel
       lightGraph: lightGraph
+      alerts: alerts
     }
 
   # Creates a flat store from a hash of {

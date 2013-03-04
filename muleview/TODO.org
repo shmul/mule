@@ -1,4 +1,4 @@
-* Featires:
+* Features:
 ** DONE Redesign display
  - [X] Only relevant small graphs
  - [X] Make small graphs clickable
@@ -15,7 +15,15 @@
 ** TODO Long legends support?
 ** Alerts:
 *** TODO Display lines on graphs
+ - [X] Show lines
+ - [ ] Design lines
 *** TODO Enable configuration
+ - [X] Save
+ - [X] Read
+ - [ ] Stale/Period:
+   - [ ] Save
+   - [ ] Read
+   - [ ] Special controller
 * Optimizations:
 ** TODO Generate big graph only on demand
 ** TODO Dynamic tree

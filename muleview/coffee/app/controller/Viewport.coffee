@@ -15,6 +15,9 @@ Ext.define "Muleview.controller.Viewport",
     ,
       ref: "mainPanel"
       selector: "#mainPanel"
+    ,
+      ref: "alertsEditor"
+      selector: "#alertsEditor"
   ]
 
   onLaunch: ->
@@ -61,8 +64,10 @@ Ext.define "Muleview.controller.Viewport",
   onTabChange: (me, selectedTab)->
     # Update current retention:
     Muleview.currentRetention = selectedTab.retention
-    console.log('Viewport.coffee\\ 64: Muleview.currentRetention:', Muleview.currentRetention);
 
     # Update right-panel's light charts:
     @getRightPanel().items.each (lightGraph) ->
       lightGraph.setVisible(selectedTab.retention != lightGraph.retention)
+
+    # Update alerts editor:
+    @getAlertsEditor().load(Muleview.Graphs.retentions[selectedTab.retention]?.alerts); # TODO: refactor

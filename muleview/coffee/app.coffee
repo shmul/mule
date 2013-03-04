@@ -13,11 +13,11 @@ Ext.application
   autoCreateViewport: true
 
   launch: ->
-    console.log("app.coffee\\ 16: <HERE>");
     # TODO: find some other solution
-    Muleview.Mule.askMule "alert", (alerts) ->
-      Muleview.alerts = alerts
-      console.log('app.coffee\\ 18: Muleview.alerts:', Muleview.alerts);
+    Muleview.queryAlerts = ->
+      Muleview.Mule.askMule "alert", (alerts) ->
+        Muleview.alerts = alerts
+    Muleview.queryAlerts()
 
   controllers: [
     "Viewport"
