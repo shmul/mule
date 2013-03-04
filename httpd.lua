@@ -161,7 +161,7 @@ function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond
   local handler = handlers[handler_name]
 
   if not handler then
-    if root_ then
+    if root_ and not string.find(url_no_qs,"^/[/%.]+") then
       local file = string.format("%s/%s",root_,url_no_qs)
       if file_exists(file) then
         return with_file(file,

@@ -160,7 +160,7 @@ function main(opts,out_)
                 stopped = stopped or httpd_can_be_stopped and token_==httpd_can_be_stopped
                 return stopped
               end,
-              opts["R"]
+              opts["R"] and strip_slash(opts["R"])
              )
   end
 
