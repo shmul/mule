@@ -13,7 +13,7 @@ Ext.define "Muleview.controller.KeysTree",
   onSelectionChange: (me, selected)->
     return unless selected[0]
     key = selected[0].get("fullname")
-    document.title = key
+    document.title = "Mule - #{key}"
     Muleview.currentKey = key
     Muleview.Graphs.createGraphs()
 

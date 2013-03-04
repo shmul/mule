@@ -9,11 +9,11 @@ Ext.define "Muleview.view.Viewport",
       width: "20%"
       split: true
       collapsible: true
+      title: "Available Keys"
       items: [
           xtype: "treepanel"
           region: "center"
           id: "keysTree"
-          title: "Available Keys"
           displayField: "name"
           useArrows: true
           rootVisible: false
