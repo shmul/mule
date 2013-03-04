@@ -7,17 +7,11 @@ Ext.define "Muleview.view.AlertsEditor",
   layout: "auto"
   overflowY: "auto"
   title: "Alerts"
+
   defaults:
     width: 200
-  items: [
-      xtype: "hidden"
-      name: "period"
-      value: "1m"
-    ,
-      xtype: "hidden"
-      name: "stale"
-      value: "1m"
-  ]
+
+  items: []
 
   formHashFromArray: (arr, base = {}) ->
     base[alert.name] = alert.value for alert in arr
@@ -28,14 +22,22 @@ Ext.define "Muleview.view.AlertsEditor",
     data = @formHashFromArray(alertsArr, data) if alertsArr
     @getForm().setValues(data)
 
+  createField: (alert) ->
+    ans =
+      allowBlank: false
+      name: alert.name
+      value: 0
+      fieldLabel: alert.label
+    if alert.time
+      ans.xtype = "textfield"
+      ans.regex = /[0-9]+[mhs]?/
+    else
+      ans.xtype = "numberfield"
+    ans
+
   initComponent: ->
     for alert in Muleview.Settings.alerts
-      @items.push
-        xtype: "numberfield"
-        name: alert.name
-        allowBlank: false
-        fieldLabel: alert.label
-        value: 0
+      @items.push @createField(alert)
     @items.push
       xtype: "button"
       text: "Update"
@@ -47,6 +49,8 @@ Ext.define "Muleview.view.AlertsEditor",
           url: url
           method: "PUT"
           success: ->
-            Muleview.queryAlerts()
+            Muleview.queryAlerts( ->
+              Muleview.Graphs.createGraphs()
+            )
         )
     @callParent()

@@ -14,9 +14,10 @@ Ext.application
 
   launch: ->
     # TODO: find some other solution
-    Muleview.queryAlerts = ->
+    Muleview.queryAlerts = (callback)->
       Muleview.Mule.askMule "alert", (alerts) ->
         Muleview.alerts = alerts
+        callback?()
     Muleview.queryAlerts()
 
   controllers: [

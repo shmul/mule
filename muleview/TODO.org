@@ -16,14 +16,15 @@
 ** Alerts:
 *** TODO Display lines on graphs
  - [X] Show lines
- - [ ] Design lines
+ - [X] Design lines
+ - [ ] Get rid of legend line markers
 *** TODO Enable configuration
  - [X] Save
  - [X] Read
- - [ ] Stale/Period:
-   - [ ] Save
-   - [ ] Read
-   - [ ] Special controller
+ - [-] Stale/Period:
+   - [X] Save
+   - [X] Read
+   - [ ] Special controller / Validations
 * Optimizations:
 ** TODO Generate big graph only on demand
 ** TODO Dynamic tree
