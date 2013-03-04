@@ -4,6 +4,7 @@
  - [X] Make small graphs clickable
 ** DONE Maximize/restore button
 ** TODO Support for timestamp labels
+** TODO Nicer title(s)
 ** TODO Refresh interval
 ** TODO Refresh button
 ** TODO Something cool with tooltips
