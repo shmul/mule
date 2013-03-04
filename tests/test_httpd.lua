@@ -88,7 +88,6 @@ function test_alerts()
   assert_nil(res.body)
 
   res = request("GET","alert")
-
   assert(string.find(res.body,'"data": {"beer.ale.brown;5m:12h": [4,8,16,18,600,360,32,"CRITICAL HIGH"]}',1,true))
 
   res = request("PUT","alert/beer.stout;1d:14d","critical_high=900&warning_high=800&warning_low=100&critical_low=34&stale=2d&period=1d")
@@ -101,4 +100,7 @@ function test_alerts()
   assert(string.find(res.body,'"beer.stout;1d:14d": [34,100,800,900,86400,172800,0,"stale"]}',1,true))
 
   assert(string.find(res.headers,'Access-Control-Allow-Origin: *',1,true))
+
+  res = request("GET","graph/beer?deep=true&alerts=true")
+  assert(string.find(res.body,'"alerts": {"beer.stout;1d:14d": [34,100,800,900,86400,172800,0,"stale"]}',1,true))
 end

@@ -269,8 +269,10 @@ function one_level_childs(db_,name_)
   return coroutine.wrap(
     function()
       local prefix,rp = string.match(name_,"(.-);(.+)")
-      if not prefix or not rp then return end
-      local step,period = parse_time_pair(rp)
+      if not prefix or not rp then
+        prefix = name_
+        rp = ""
+      end
       local find = string.find
       for name in db_.matching_keys(prefix) do
         if name~=name_ and find(name,rp,1,true) and not find(name,".",#prefix+2,true) then
@@ -416,6 +418,72 @@ function mule(db_)
   end
 
 
+  local function alert_check_stale(seq_,timestamp_)
+    local alert = _alerts[seq_.name()]
+    if not alert then
+      return nil
+    end
+
+    if alert._stale and seq_.latest_timestamp()+alert._stale<timestamp_ then
+      alert._state = "stale"
+      return true
+    end
+    return false
+  end
+
+  local function alert_check(sequence_,timestamp_)
+    local alert = _alerts[sequence_.name()]
+    if not alert then
+      return nil
+    end
+
+    if alert_check_stale(sequence_,timestamp_) then
+      return alert
+    end
+
+    local average_sum = 0
+    local step = sequence_.step()
+    local start = timestamp_-alert._period
+    for ts = start,timestamp_,step do
+      local slot = sequence_.slot(sequence_.slot_index(ts))
+      if ts>=slot._timestamp and slot._hits>0 then
+        if ts==start then
+          -- we need to take only the proportionate part of the first slot
+          average_sum = average_sum + (slot._sum*(sequence_.period()-ts+slot._timestamp)/step)
+        else
+          average_sum = average_sum + slot._sum
+        end
+      end
+    end
+
+    alert._sum = average_sum
+    alert._state = (average_sum<alert._critical_low and "CRITICAL LOW") or
+      (average_sum<alert._warning_low and "WARNING LOW") or
+      (average_sum>alert._critical_high and "CRITICAL HIGH") or
+      (average_sum>alert._warning_high and "WARNING HIGH") or
+      "NORMAL"
+    return alert
+  end
+
+  local function output_alerts(names_)
+    local str = strout("","\n")
+    local format = string.format
+    local col = collectionout(str,"{","}")
+    local now = time_now()
+    col.head()
+
+    for _,n in ipairs(names_) do
+      local seq = sequence(db_,n)
+      local a = alert_check(seq,now)
+      if a then
+        col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%d,%d,\"%s\"]",
+                        n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
+                        a._period,a._stale,a._sum,a._state))
+      end
+    end
+    col.tail()
+    return str
+  end
 
   local function graph(resource_,options_)
     local str = strout("")
@@ -429,10 +497,16 @@ function mule(db_)
                    skip_empty=true,
                    period_only=true}
     local depth = is_true(options_.deep) and one_level_childs or immediate_metrics
+    local alerts = is_true(options_.alerts)
+    local names = {}
 
     col.head()
+
     for m in split_helper(resource_,"/") do
       for seq in depth(db_,m) do
+        if alerts then
+          names[#names+1] = seq.name()
+        end
         local col1 = collectionout(str,": [","]\n")
         seq.serialize(opts,
                       function()
@@ -444,6 +518,9 @@ function mule(db_)
                       end)
         col1.tail()
       end
+    end
+    if alerts then
+      col.elem(format("\"alerts\": %s",output_alerts(names).get_string()))
     end
 
     col.tail()
@@ -514,53 +591,6 @@ function mule(db_)
     return wrap_json(str)
   end
 
-  local function alert_check_stale(seq_,timestamp_)
-    local alert = _alerts[seq_.name()]
-    if not alert then
-      return nil
-    end
-
-    if alert._stale and seq_.latest_timestamp()+alert._stale<timestamp_ then
-      alert._state = "stale"
-      return true
-    end
-    return false
-  end
-
-  local function alert_check(sequence_,timestamp_)
-    local alert = _alerts[sequence_.name()]
-    if not alert then
-      return nil
-    end
-
-    if alert_check_stale(sequence_,timestamp_) then
-      return alert
-    end
-
-    local average_sum = 0
-    local step = sequence_.step()
-    local start = timestamp_-alert._period
-    for ts = start,timestamp_,step do
-      local slot = sequence_.slot(sequence_.slot_index(ts))
-      if ts>=slot._timestamp and slot._hits>0 then
-        if ts==start then
-          -- we need to take only the proportionate part of the first slot
-          average_sum = average_sum + (slot._sum*(sequence_.period()-ts+slot._timestamp)/step)
-        else
-          average_sum = average_sum + slot._sum
-        end
-      end
-    end
-
-    alert._sum = average_sum
-    alert._state = (average_sum<alert._critical_low and "CRITICAL LOW") or
-      (average_sum<alert._warning_low and "WARNING LOW") or
-      (average_sum>alert._critical_high and "CRITICAL HIGH") or
-      (average_sum>alert._warning_high and "WARNING HIGH") or
-      "NORMAL"
-    return alert
-  end
-
   local function alert_set(resource_,options_)
     if not resource_ or #resource_==0 then
       return nil
@@ -596,23 +626,8 @@ function mule(db_)
   end
 
   local function alert(resource_)
-    local str = strout("","\n")
-    local format = string.format
-    local col = collectionout(str,"{","}")
-    local now = time_now()
-    col.head()
-    local as = #resource_>0 and { [resource_] = _alerts[resource_] } or _alerts
-
-    for n,a in pairs(as) do
-      local seq = sequence(db_,n)
-      alert_check(seq,now)
-      col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%d,%d,\"%s\"]",
-                     n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
-                     a._period,a._stale,a._sum,a._state))
-    end
-    col.tail()
-
-    return wrap_json(str)
+    local as = #resource_>0 and split(resource_,"/") or keys(_alerts)
+    return wrap_json(output_alerts(as))
   end
 
   local function command(items_)

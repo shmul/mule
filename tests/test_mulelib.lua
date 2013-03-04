@@ -681,7 +681,7 @@ function test_metric_one_level_childs()
       {"beer.ale.brown;1h:30d",1},
       {"beer.ale;1m:12h",3},
       {"beer;1m:12h",1},
-      {"",0},
+      {"",2},
       {"foo",0},
     }
 
