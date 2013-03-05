@@ -4,12 +4,12 @@ Ext.define "Muleview.view.AlertsEditor",
     "Muleview.Settings"
   ]
   bodyPadding: 10
-  layout: "auto"
+  layout:
+    type: "vbox"
+    align: "stretch"
+    pack: "start"
   overflowY: "auto"
   title: "Alerts"
-
-  defaults:
-    width: 200
 
   items: []
 
@@ -42,8 +42,6 @@ Ext.define "Muleview.view.AlertsEditor",
       xtype: "button"
       text: "Update"
       handler: =>
-        console.log('AlertsEditor.coffee\\ 26: Muleview.currentkey:', Muleview.currentkey);
-        console.log('AlertsEditor.coffee\\ 27: Muleview.currentRetention:', Muleview.currentRetention);
         url = Muleview.Mule.getAlertCommandUrl(Muleview.currentKey, Muleview.currentRetention)
         @submit(
           url: url

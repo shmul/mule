@@ -56,14 +56,15 @@ Ext.define "Muleview.view.MuleChart",
     if @alerts
       for alert in @alerts
         do (alert) =>
-          return if alert.time
-          alertSeries =
+          unless alert.time then @series.push
             type: "line"
+            title: "'#{alert.label}' alert"
             showMarkers: true
+            style:
+              stroke: alert.color
             markerConfig:
-              radius: 0
-              "stroke-width": 0
-              width: 0
+              type: "arrow"
+              radius: 0.1
               opacity: 0
             axis: "left"
             xField: "timestamp"
@@ -73,10 +74,7 @@ Ext.define "Muleview.view.MuleChart",
               trackMouse: true
               html: "#{alert.label} = #{alert.value}"
               title: "Alert"
-          if alert.color
-            alertSeries.style =
-              stroke: alert.color
-          @series.push alertSeries
+
 
 
     # Areas:

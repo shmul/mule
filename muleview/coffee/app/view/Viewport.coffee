@@ -25,6 +25,7 @@ Ext.define "Muleview.view.Viewport",
           collapsible: true
           collapsed: true
           title: "Options"
+          layout: "fit"
           items: [
               Ext.create("Muleview.view.AlertsEditor",
                 id: "alertsEditor"
@@ -32,7 +33,15 @@ Ext.define "Muleview.view.Viewport",
             ,
               {
                 xtype: "panel"
+                layout:
+                  type: "hbox"
+                  align: "middle"
+                  pack: "center"
                 title: "Event Labels"
+                items: [
+                  xtype: "container"
+                  html: "(Coming soon)"
+                ]
               }
           ]
       ]
