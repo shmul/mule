@@ -70,4 +70,4 @@ Ext.define "Muleview.controller.Viewport",
       lightGraph.setVisible(selectedTab.retention != lightGraph.retention)
 
     # Update alerts editor:
-    @getAlertsEditor().load(Muleview.Graphs.retentions[selectedTab.retention]?.alerts); # TODO: refactor
+    @getAlertsEditor().load(Muleview.currentKey, Muleview.currentRetention, Muleview.Graphs.retentions[selectedTab.retention]?.alerts); # TODO: refactor

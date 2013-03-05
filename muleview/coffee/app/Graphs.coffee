@@ -2,8 +2,6 @@ Ext.define "Muleview.Graphs",
   singleton: true
 
   createGraphs: ->
-    unless Muleview.currentKey
-      Ext.getCmp("alertsEditr").setDisabled(true)
     @mainPanel = Ext.getCmp("mainPanel")
     @rightPanel = Ext.getCmp("rightPanel")
 

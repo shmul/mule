@@ -11,14 +11,22 @@ Ext.define "Muleview.view.AlertsEditor",
   overflowY: "auto"
   title: "Alerts"
 
-  items: []
+  items: [
+      xtype: "displayfield"
+      fieldLabel: "Graph"
+      name: "graphName"
+    ,
+  ]
 
   formHashFromArray: (arr, base = {}) ->
     base[alert.name] = alert.value for alert in arr
     base
 
-  load: (alertsArr) ->
-    data = @formHashFromArray(Muleview.Settings.alerts)
+  load: (curKey, curRet, alertsArr) ->
+    data = {
+      graphName: "#{curKey};#{curRet}"
+    }
+    data = @formHashFromArray(Muleview.Settings.alerts, data )
     data = @formHashFromArray(alertsArr, data) if alertsArr
     @getForm().setValues(data)
 
