@@ -331,6 +331,13 @@ function file_exists(file_)
   return with_file(file_,function() return true end)
 end
 
+function file_size(file_)
+  return with_file(file_,
+                   function(f)
+                     return f:seek("end")
+                   end,"rb")
+end
+
 -- based on http://lua-users.org/wiki/AlternativeGetOpt
 -- with slight modification - non '-' prefixed args are accumulated under the "rest" key
 function getopt(arg,options)

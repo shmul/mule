@@ -724,6 +724,10 @@ function mule(db_)
     local replace,sum = string.match(sum_,"(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
+    if not metric_ or not sum_ or not timestamp_ then
+      logw("update_line - missing params")
+      return
+    end
     for n in get_sequences(metric_) do
       local seq = updated_sequences_[n] or sparse_sequence(n)
       seq.update(timestamp_,sum,1,replace)
@@ -781,6 +785,7 @@ function mule(db_)
     table.remove(items,1)
     -- here we DON'T use the sparse sequence as they aren't needed when reading an
     -- entire sequence
+    -- TODO might be a corrupted line with ';' accidently in the line.
     return sequence(_db,name).update_batch(items)
   end
 

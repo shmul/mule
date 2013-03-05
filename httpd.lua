@@ -1,13 +1,16 @@
 require "helpers"
 
+
 local lr = pcall(require,"luarocks.require")
 local cp = pcall(require,"copas")
+local _,ltn12 = pcall(require,"ltn12")
 local s,url = pcall(require,"socket.url")
 local status_codes = {
   [200] = "200 OK",
   [201] = "201 Created",
   [204] = "204 No Content",
   [400] = "400 Bad Request",
+  [404] = "404 Not Found",
   [405] = "405 Method Not Allowed"
 }
 
@@ -19,7 +22,7 @@ end
 require "mulelib"
 
 local function read_chunks(socket_)
-  local chunks = {}
+  local sink,chunks = ltn12.sink.table()
   while true do
     local data = socket_:receive("*l")
     if not data then
@@ -27,10 +30,9 @@ local function read_chunks(socket_)
     end
     local size = tonumber(string.format("0x%s",data))
     if size>0 then
-      data = socket_:receive(size)
-      table.insert(chunks,data)
+      ltn12.pump.all(socket.source("by-length",socket_,size),sink)
     end
-    if data then socket_:receive(2) end
+    socket_:receive(2)
     if size==0 then
       return table.concat(chunks,"")
     end
@@ -44,10 +46,11 @@ local function read_request(socket_)
     local data = socket_:receive("*l")
     if not data or #data==0 then
       local content_len = tonumber(req["Content-Length"])
-      local content
+      local sink,content = ltn12.sink.table()
       if content_len and content_len>0 then
-        content = socket_:receive(content_len)
-        if content and #content<content_len then
+        local s,err = ltn12.pump.all(socket.source("by-length",socket_,content_len),sink)
+        content = s and table.concat(content)
+        if not content or #content<content_len then
           logw("insufficient content received",#content,content_len)
         end
       elseif req["Transfer-Encoding"]=="chunked" then
@@ -79,15 +82,22 @@ local function build_response(status_,headers_,body_)
   concat_arrays(response,headers_,function(header_)
 									return string.format("%s: %s",header_[1],header_[2])
                                   end)
-  table.insert(response,string.format("Content-Length: %d",body_ and #body_ or 0))
+  if body_ then -- might be a string or size
+    local length = type(body_)=="string" and #body_ or body_
+    table.insert(response,string.format("Content-Length: %d",length))
+  end
   table.insert(response,"\r\n") -- for the trailing \r\n
   return table.concat(response,"\r\n")
 end
 
+local CORS = {{"Access-Control-Allow-Origin","*"}}
 local function standard_response(status_,content_)
+  local headers = {{"Connection","close"}}
+  if status_==200 then
+    concat_arrays(headers,CORS)
+  end
   return build_response(string.format("HTTP/1.1 %s",status_codes[status_]),
-                        {{"Connection","close"},{"Access-Control-Allow-Origin","*"}},
-                        content_)
+                        headers,content_)
 end
 
 local function generic_get_handler(mule_,handler_,req_,resource_,qs_params_,content_)
@@ -147,9 +157,10 @@ local handlers = { key = generic_get_handler,
 }
 
 
-function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond_,root_)
+function send_response(send_,send_file_,req_,content_,with_mule_,
+                       backup_callback_,stop_cond_)
 
-  if not req_ then
+  if not req_ or not req_.url or not req_.verb then
     return send_(standard_response(400))
   end
 
@@ -161,17 +172,7 @@ function send_response(send_,req_,content_,with_mule_,backup_callback_,stop_cond
   local handler = handlers[handler_name]
 
   if not handler then
-    if root_ and not string.find(url_no_qs,"^/[/%.]+") then
-      local file = string.format("%s/%s",root_,url_no_qs)
-      if file_exists(file) then
-        return with_file(file,
-                         function(f)
-                           local file_body = f:read("*a")
-                           return send_(standard_response(200,file_body),file_body)
-                         end)
-      end
-    end
-    return send_("404 Not Found")
+    return send_file_(url_no_qs)
   end
 
   local rv = with_mule_(
@@ -215,18 +216,35 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
                     --socket_:setoption ("linger", {on=true,timeout=7})
                     socket_:settimeout(0)
                     --socket_:setoption ("tcp-nodelay", true)
-                    local wrapped_socket = copas.wrap(socket_)
-                    local req,content = read_request(wrapped_socket)
+                    local req,content = read_request(copas.wrap(socket_))
+                    local sr = ltn12.source
 
                     local function send(headers_,body_)
-                      local s,err = socket_:send(headers_)
-                      if body_ and #body_>0 then
-                        s,err = socket_:send(body_)
-                      end
+                      local s,err = ltn12.pump.all(
+                        sr.cat(sr.string(headers_),
+                               sr.string(body_)),
+                        socket.sink("close-when-done",socket_))
                       logi("send",s,err)
                       return s,err
                     end
-                    send_response(send,req,content,with_mule_,backup_callback_,stop_cond_,root_)
+
+                    local function send_file(path_)
+                      if root_ and not string.find(path_,"^/[/%.]+") then
+                        local file = string.format("%s/%s",root_,path_)
+                        if file_exists(file) then
+                          return ltn12.pump.all(
+                            sr.cat(
+                              sr.string(standard_response(200,file_size(file))),
+                              sr.file(io.open(file,"rb"))),
+                              socket.sink("close-when-done",socket_))
+                        end
+                      end
+                      ltn12.pump.all(sr.string(standard_response(404)),
+                                     socket.sink("close-when-done",socket_))
+
+                    end
+
+                    send_response(send,send_file,req,content,with_mule_,backup_callback_,stop_cond_)
                   end)
   while not stop_cond_() do
     copas.step()
