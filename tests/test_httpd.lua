@@ -38,7 +38,7 @@ function test_alerts()
       url = url_,
       protocol = "HTTP/1.0",
     }
-    send_response(fake_send(res),req,body_,
+    send_response(fake_send(res),function() end,req,body_,
                   function(callback_) return callback_(m) end)
 
     return res

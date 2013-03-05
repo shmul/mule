@@ -82,9 +82,12 @@ function cabinet_db(db_name_,readonly_)
   local function matching_keys(prefix_)
     return coroutine.wrap(
       function()
+        local find = string.find
         local keys = tc_fwmkeys(prefix_)
         for _,k in ipairs(keys or {}) do
-          coroutine.yield(k)
+          if not find(k,"metadata=",1,true) then
+            coroutine.yield(k)
+          end
         end
       end)
   end

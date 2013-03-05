@@ -90,7 +90,7 @@ local function build_response(status_,headers_,body_)
   return table.concat(response,"\r\n")
 end
 
-local CORS = {{"Access-Control-Allow-Origin","*"}}
+local CORS = {{"Access-Control-Allow-Origin","*"},{"Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept"}}
 local function standard_response(status_,content_)
   local headers = {{"Connection","close"}}
   if status_==200 then
