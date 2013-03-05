@@ -86,7 +86,7 @@ end
 
 local function standard_response(status_,content_)
   return build_response(string.format("HTTP/1.1 %s",status_codes[status_]),
-                        {{"Connection","close"},{"Access-Control-Allow-Origin","*"}},
+                        {{"Connection","close"},{"Access-Control-Allow-Origin","*"},{"Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept"}},
                         content_)
 end
 
