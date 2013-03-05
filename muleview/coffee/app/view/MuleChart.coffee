@@ -21,6 +21,7 @@ Ext.define "Muleview.view.MuleChart",
     topKey
 
   initComponent: ->
+    me = @
     timeFormatter = (timestamp) ->
       Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
     @timeLabel.renderer = timeFormatter
@@ -73,13 +74,23 @@ Ext.define "Muleview.view.MuleChart",
         highlight: @highlight
         tips:
           trackMouse: true
-          width: 105
-          tpl: "{key} = {value}"
+          tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
           renderer: (storeItem, item) ->
             console.log('MuleChart.coffee\\ 79: item:', item);
             console.log('MuleChart.coffee\\ 80: storeItem:', storeItem);
-            @setTitle timeFormatter(storeItem.get('timestamp'))
-            @update {key: item.storeField, value: storeItem.get(item.storeField)}
+            key = item.storeField
+            value = storeItem.get(item.storeField)
+            total = storeItem.get(me.topKey)
+            percent = 100 * (value / total)
+            percentText = Ext.util.Format.number(percent, "0.00")
+            timestamp = timeFormatter(storeItem.get('timestamp'))
+            # @setTitle "#{key} #{timestamp}"
+            @update
+              key: key.substring(key.lastIndexOf(".") + 1)
+              timestamp: timestamp
+              total: Ext.util.Format.number(total, ",")
+              value: Ext.util.Format.number(value, ",")
+              percent: percentText
 
     # Alerts:
     if @alerts
