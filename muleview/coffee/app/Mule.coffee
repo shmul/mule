@@ -25,11 +25,16 @@ Ext.define "Muleview.Mule",
 
   # Returns all mule's "graph" data for a given key,
   # In the form of "retention => key => data array" double-hash
+  # Also returns the alerts in the form "key;retention" => array
   getKeyData: (key, callback) ->
-    @askMule "graph/#{key}", (response) =>
-      ans = {}
+    @askMule "graph/#{key}?alerts=true", (response) =>
+      keyData = {}
+      alerts = null
       for own name, data of response
-        [key, retention] = name.split(";")
-        ans[retention] ||= {}
-        ans[retention][key] = data
-      callback(ans)
+        if name == "alerts"
+          alerts = data
+        else
+          [key, retention] = name.split(";")
+          keyData[retention] ||= {}
+          keyData[retention][key] = data
+      callback(keyData, alerts)

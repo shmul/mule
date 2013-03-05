@@ -47,8 +47,6 @@ Ext.define "Muleview.view.AlertsEditor",
           url: url
           method: "PUT"
           success: ->
-            Muleview.queryAlerts( ->
-              Muleview.Graphs.createGraphs()
-            )
+            Muleview.Graphs.createGraphs()
         )
     @callParent()

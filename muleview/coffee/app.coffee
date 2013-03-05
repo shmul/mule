@@ -12,14 +12,6 @@ Ext.application
 
   autoCreateViewport: true
 
-  launch: ->
-    # TODO: find some other solution
-    Muleview.queryAlerts = (callback)->
-      Muleview.Mule.askMule "alert", (alerts) ->
-        Muleview.alerts = alerts
-        callback?()
-    Muleview.queryAlerts()
-
   controllers: [
     "Viewport"
     "KeysTree"
