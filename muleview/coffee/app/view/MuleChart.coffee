@@ -84,6 +84,7 @@ Ext.define "Muleview.view.MuleChart",
         axis: "left"
         xField: "timestamp"
         yField: areaKeys
+        title: @keyLegendName(key) for key in areaKeys
         highlight: @highlight
 
     # Top key line:
@@ -97,3 +98,6 @@ Ext.define "Muleview.view.MuleChart",
 
 
     @callParent()
+
+  keyLegendName: (key) ->
+    key.substring(key.lastIndexOf(".") + 1)

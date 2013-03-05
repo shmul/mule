@@ -66,7 +66,7 @@ Ext.define "Muleview.view.Viewport",
       xtype: "panel"
       region: "east"
       collapsible: true
-      title: "Other Views"
+      title: "Previews"
       layout:
         type: "vbox"
         align: "stretch"

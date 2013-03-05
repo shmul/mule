@@ -19,8 +19,6 @@ Ext.define "Muleview.view.MuleLightChart",
     adjustEnd: false
     @relayEvents(@chart, ["mouseenter"])
     @items = [@chart]
-    @title = @parseTitle(@retention)
-
     @tools = [
       type: "prev"
       handler: () =>
@@ -28,14 +26,3 @@ Ext.define "Muleview.view.MuleLightChart",
     ]
 
     @callParent()
-
-  parseTitle: (ret) ->
-    split = ret.split(":")
-    last = split[1]
-    [_all, count, letter] = match = last.match /(\d+)([mhsdy])/
-    units = {
-      "h": "hours"
-      "m": "minutes"
-      "d": "days"
-    }[letter]
-    "Last #{count} #{units}"

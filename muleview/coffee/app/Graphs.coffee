@@ -42,7 +42,7 @@ Ext.define "Muleview.Graphs",
 
     store = @createStore(retRawData, keys, alerts)
     mainGraphPanel = Ext.create "Ext.panel.Panel",
-      title: retName
+      title: @parseTitle(retName)
       retention: retName
       layout: "fit"
       items: [
@@ -55,6 +55,7 @@ Ext.define "Muleview.Graphs",
 
     lightGraph = Ext.create "Muleview.view.MuleLightChart",
       retention: retName
+      title: @parseTitle(retName)
       keys: keys
       hidden: true
       retention: retName
@@ -93,3 +94,14 @@ Ext.define "Muleview.Graphs",
     # Add the data:
     store.add(Ext.Object.getValues(timestamps))
     store
+
+  parseTitle: (ret) ->
+    split = ret.split(":")
+    last = split[1]
+    [_all, count, letter] = match = last.match /(\d+)([mhsdy])/
+    units = {
+      "h": "hours"
+      "m": "minutes"
+      "d": "days"
+    }[letter]
+    "Last #{count} #{units}"
