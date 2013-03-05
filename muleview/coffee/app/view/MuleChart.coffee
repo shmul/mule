@@ -55,6 +55,7 @@ Ext.define "Muleview.view.MuleChart",
     @series.push
       type: "line"
       axis: "left"
+      title: @keyLegendName @topKey
       xField: "timestamp"
       yField: [@topKey]
       highlight: @highlight

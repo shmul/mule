@@ -4,17 +4,22 @@ Ext.define "Muleview.controller.KeysTree",
     "MuleKey"
   ]
   refs: [
-    {
       ref: "tree"
       selector: "#keysTree"
-    }
+    ,
+      ref: "mainPanel"
+      selector: "#mainPanel"
   ]
 
   onSelectionChange: (me, selected)->
     return unless selected[0]
     key = selected[0].get("fullname")
-    document.title = "Mule - #{key}"
     Muleview.currentKey = key
+
+    # Update titles:
+    document.title = "Mule - #{key}"
+    @getMainPanel().setTitle key.replace /\./g, " / "
+
     Muleview.Graphs.createGraphs()
 
   onLaunch: ->
