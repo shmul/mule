@@ -7,7 +7,7 @@ Ext.define "Muleview.Mule",
   # General method to query mule
   askMule: (command, fn) ->
     Ext.Ajax.request
-      url: "mule/" + command
+      url: Muleview.Settings.muleUrlPrefix + command
       success: (response) ->
         fn(JSON.parse(response.responseText).data)
 
