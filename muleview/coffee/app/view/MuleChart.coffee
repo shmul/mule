@@ -9,8 +9,6 @@ Ext.define "Muleview.view.MuleChart",
   animate: true
 
   timeLabel:
-    renderer: (timestamp) ->
-      Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
     rotate:
       degrees: 315
 
@@ -23,6 +21,10 @@ Ext.define "Muleview.view.MuleChart",
     topKey
 
   initComponent: ->
+    timeFormatter = (timestamp) ->
+      Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
+    @timeLabel.renderer = timeFormatter
+
     # @data should be a hash of key => keydata,
     # keydata should be: [[count, batch, timestamp], [count, batch, timestamp]...]
 
@@ -69,6 +71,15 @@ Ext.define "Muleview.view.MuleChart",
         yField: areaKeys
         title: @keyLegendName(key) for key in areaKeys
         highlight: @highlight
+        tips:
+          trackMouse: true
+          width: 105
+          tpl: "{key} = {value}"
+          renderer: (storeItem, item) ->
+            console.log('MuleChart.coffee\\ 79: item:', item);
+            console.log('MuleChart.coffee\\ 80: storeItem:', storeItem);
+            @setTitle timeFormatter(storeItem.get('timestamp'))
+            @update {key: item.storeField, value: storeItem.get(item.storeField)}
 
     # Alerts:
     if @alerts
