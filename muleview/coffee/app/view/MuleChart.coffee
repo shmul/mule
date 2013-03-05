@@ -49,8 +49,25 @@ Ext.define "Muleview.view.MuleChart",
 
     areaKeys = Ext.Array.remove(Ext.Array.clone(keys), @topKey)
 
-
     @series = []
+
+    # Top key line:
+    @series.push
+      type: "line"
+      axis: "left"
+      xField: "timestamp"
+      yField: [@topKey]
+      highlight: @highlight
+
+    # Areas:
+    if @showAreas
+      @series.push
+        type: "area"
+        axis: "left"
+        xField: "timestamp"
+        yField: areaKeys
+        title: @keyLegendName(key) for key in areaKeys
+        highlight: @highlight
 
     # Alerts:
     if @alerts
@@ -74,29 +91,6 @@ Ext.define "Muleview.view.MuleChart",
               trackMouse: true
               html: "#{alert.label} = #{alert.value}"
               title: "Alert"
-
-
-
-    # Areas:
-    if @showAreas
-      @series.push
-        type: "area"
-        axis: "left"
-        xField: "timestamp"
-        yField: areaKeys
-        title: @keyLegendName(key) for key in areaKeys
-        highlight: @highlight
-
-    # Top key line:
-    @series.push
-      type: "line"
-      axis: "left"
-      xField: "timestamp"
-      yField: [@topKey]
-      highlight: @highlight
-
-
-
     @callParent()
 
   keyLegendName: (key) ->

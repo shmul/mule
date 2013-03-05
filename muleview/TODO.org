@@ -12,13 +12,13 @@
  - [X] Overlay only on main panel
 ** TODO Theme
 *** TODO Favicon
-** TODO Shorter key names in legend
+** DONE Shorter key names in legend
 ** TODO Long legends support?
 ** Alerts:
-*** TODO Display lines on graphs
+*** DONE Display lines on graphs
  - [X] Show lines
  - [X] Design lines
- - [ ] Get rid of legend line markers
+ - [X] Get rid of legend line markers
 *** TODO Enable configuration
  - [X] Save
  - [X] Read
@@ -27,7 +27,7 @@
    - [X] Read
    - [ ] Special controller / Validations
 *** TODO Enable removing alerts
-*** TODO Load alerts with graph
+*** DONE Load alerts with graph
 * Optimizations:
 ** TODO Generate big chart only on demand
 ** TODO Dynamic tree
