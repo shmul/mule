@@ -27,6 +27,9 @@
    - [X] Read
    - [ ] Special controller / Validations
 *** TODO Enable removing alerts
+*** TODO Do not show fields when not alerts
+aka "Add alerts" button
+*** TODO Nicer tips
 *** DONE Load alerts with graph
 * Optimizations:
 ** TODO Generate big chart only on demand
