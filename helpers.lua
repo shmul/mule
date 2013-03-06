@@ -606,3 +606,29 @@ function bounded_by_level(string_,prefix_,level_)
   until not s or count>level_
   return count<=level_
 end
+
+-- from http://stackoverflow.com/questions/132397/get-back-the-output-of-os-execute-in-lua
+function os.capture(cmd, raw)
+  local f = assert(io.popen(cmd, 'r'))
+  local s = assert(f:read('*a'))
+  f:close()
+  if raw then return s end
+  s = string.gsub(s, '^%s+', '')
+  s = string.gsub(s, '%s+$', '')
+  s = string.gsub(s, '[\n\r]+', ' ')
+  return s
+end
+
+function hex(s)
+  return string.gsub(s,"(.)",function (x) return string.format("%02X",string.byte(x)) end)
+end
+
+function adler32(str_)
+  local a = 1
+  local b = 0
+  for i=1,#str_ do
+    a = math.fmod(a + string.byte(str_,i,i),65521)
+    b = math.fmod(b + a,65521)
+  end
+  return b*65536 + a
+end

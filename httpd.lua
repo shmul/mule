@@ -9,6 +9,7 @@ local status_codes = {
   [200] = "200 OK",
   [201] = "201 Created",
   [204] = "204 No Content",
+  [304] = "304 Not Modified",
   [400] = "400 Bad Request",
   [404] = "404 Not Found",
   [405] = "405 Method Not Allowed"
@@ -91,10 +92,13 @@ local function build_response(status_,headers_,body_)
 end
 
 local CORS = {{"Access-Control-Allow-Origin","*"},{"Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept"}}
-local function standard_response(status_,content_)
+local function standard_response(status_,content_,extra_headers_)
   local headers = {{"Connection","close"}}
   if status_==200 then
     concat_arrays(headers,CORS)
+  end
+  if extra_headers_ then
+    concat_arrays(headers,extra_headers_)
   end
   return build_response(string.format("HTTP/1.1 %s",status_codes[status_]),
                         headers,content_)
@@ -172,7 +176,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   local handler = handlers[handler_name]
 
   if not handler then
-    return send_file_(url_no_qs)
+    return send_file_(url_no_qs,req_["If-None-Match"])
   end
 
   local rv = with_mule_(
@@ -211,40 +215,55 @@ end
 
 function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
   local address,port = string.match(address_port_,"(%S-):(%d+)")
+  local sr = ltn12.source
+
+  local function send(socket_)
+    return
+      function(headers_,body_)
+      local s,err = ltn12.pump.all(
+        sr.cat(sr.string(headers_),
+               sr.string(body_)),
+        socket.sink("close-when-done",socket_))
+      logi("send",s,err)
+      return s,err
+      end
+  end
+
+
+  local function send_file(socket_)
+    return
+      function(path_,if_none_match)
+      local file = root_ and not string.find(path_,"^/[/%.]+") and string.format("%s/%s",root_,path_)
+      if not file or not file_exists(file) then
+        return ltn12.pump.all(sr.string(standard_response(404)),
+                              socket.sink("close-when-done",socket_))
+      end
+
+      local etag = adler32(os.capture('stat -F'..file))
+      --      print(etag,os.capture('stat -f "%d %i %p %N"'..file))
+      if if_none_match and tonumber(if_none_match)==etag then
+        return ltn12.pump.all(
+          sr.string(standard_response(304)),
+          socket.sink("close-when-done",socket_))
+      end
+
+      return ltn12.pump.all(
+        sr.cat(
+          sr.string(standard_response(200,file_size(file),{{"ETag",etag}})),
+          sr.file(io.open(file,"rb"))),
+        socket.sink("close-when-done",socket_))
+      end
+  end
+
   copas.addserver(socket.bind(address,port),
                   function(socket_)
                     --socket_:setoption ("linger", {on=true,timeout=7})
                     socket_:settimeout(0)
                     --socket_:setoption ("tcp-nodelay", true)
                     local req,content = read_request(copas.wrap(socket_))
-                    local sr = ltn12.source
 
-                    local function send(headers_,body_)
-                      local s,err = ltn12.pump.all(
-                        sr.cat(sr.string(headers_),
-                               sr.string(body_)),
-                        socket.sink("close-when-done",socket_))
-                      logi("send",s,err)
-                      return s,err
-                    end
-
-                    local function send_file(path_)
-                      if root_ and not string.find(path_,"^/[/%.]+") then
-                        local file = string.format("%s/%s",root_,path_)
-                        if file_exists(file) then
-                          return ltn12.pump.all(
-                            sr.cat(
-                              sr.string(standard_response(200,file_size(file))),
-                              sr.file(io.open(file,"rb"))),
-                              socket.sink("close-when-done",socket_))
-                        end
-                      end
-                      ltn12.pump.all(sr.string(standard_response(404)),
-                                     socket.sink("close-when-done",socket_))
-
-                    end
-
-                    send_response(send,send_file,req,content,with_mule_,backup_callback_,stop_cond_)
+                    send_response(send(socket_),send_file(socket_),
+                                  req,content,with_mule_,backup_callback_,stop_cond_)
                   end)
   while not stop_cond_() do
     copas.step()
