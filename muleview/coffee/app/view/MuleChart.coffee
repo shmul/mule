@@ -76,8 +76,6 @@ Ext.define "Muleview.view.MuleChart",
           trackMouse: true
           tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
           renderer: (storeItem, item) ->
-            console.log('MuleChart.coffee\\ 79: item:', item);
-            console.log('MuleChart.coffee\\ 80: storeItem:', storeItem);
             key = item.storeField
             value = storeItem.get(item.storeField)
             total = storeItem.get(me.topKey)

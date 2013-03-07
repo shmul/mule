@@ -52,6 +52,22 @@ Ext.define "Muleview.Graphs",
     keys = Ext.Object.getKeys(retRawData)
     alerts = @getAlerts(retName, alertsHash)
     store = @createStore(retRawData, keys, alerts)
+    maxTimestamp = store.max("timestamp")
+    minTimestamp = store.min("timestamp")
+    slider = Ext.create "Ext.slider.Multi",
+      flex: 1
+      values: [minTimestamp, maxTimestamp]
+      minValue: minTimestamp
+      maxValue: maxTimestamp
+      increment: (maxTimestamp - minTimestamp) / 100
+      tipText: (thumb) ->
+        new Date(thumb.value * 1000)
+      listeners:
+        change: (me, newValue) ->
+          [min, max] = me.getValues()
+          store.filterBy (record)->
+            min <= record.get("timestamp") <= max
+
     mainGraphPanel = Ext.create "Ext.panel.Panel",
       title: @parseTitle(retName)
       retention: retName
@@ -63,6 +79,19 @@ Ext.define "Muleview.Graphs",
           alerts: alerts
           store: store
       ]
+      bbar:
+        layout:
+          type: "hbox"
+
+        items: [
+            slider
+          ,
+            xtype: "button"
+            text: "Reset"
+            handler: ->
+              slider.reset()
+        ]
+
 
     lightGraph = Ext.create "Muleview.view.MuleLightChart",
       retention: retName
