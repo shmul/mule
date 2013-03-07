@@ -24,6 +24,9 @@ Ext.define "Muleview.controller.Viewport",
     @control
       "#mainPanel":
         tabchange: @onTabChange
+      "#mainPanelRefresh":
+        click: ->
+          Muleview.Graphs.createGraphs()
 
       "#mainPanelMaximize":
         click: @togglePanels

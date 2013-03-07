@@ -52,10 +52,16 @@ Ext.define "Muleview.view.Viewport",
       region: "center"
       layout: "fit"
       tools: [
+          type: "refresh"
+          tooltip: "Reload Graphs"
+          id: "mainPanelRefresh"
+        ,
           type: "maximize"
+          tooltip: "Maximize Graph"
           id: "mainPanelMaximize"
         ,
           type: "restore"
+          tooltip: "Restore"
           id: "mainPanelRestore"
           hidden: true
       ]
@@ -72,4 +78,25 @@ Ext.define "Muleview.view.Viewport",
         align: "stretch"
       defaults:
         flex: 1
+    ,
+      xtype: "panel"
+      layout: "fit"
+      collapsible: true
+      collapsed: false
+      collapseMode: "mini"
+      region: "south"
+      header: false
+      height: 23
+      items: [
+        Ext.create "Ext.ux.statusbar.StatusBar",
+          xtype: "statusbar"
+          items: [
+              xtype: "tool"
+              type: "minimize"
+              tooltip: "Collapse status bar"
+              handler: (event, toolEl, owner) ->
+                owner.up().collapse()
+          ]
+      ]
+
   ]

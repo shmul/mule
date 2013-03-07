@@ -17,7 +17,6 @@ Ext.define "Muleview.view.MuleLightChart",
         renderer: ->
           ""
     adjustEnd: false
-    @relayEvents(@chart, ["mouseenter"])
     @items = [@chart]
     @tools = [
       type: "prev"

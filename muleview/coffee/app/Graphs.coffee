@@ -4,6 +4,7 @@ Ext.define "Muleview.Graphs",
   createGraphs: ->
     @mainPanel = Ext.getCmp("mainPanel")
     @rightPanel = Ext.getCmp("rightPanel")
+    previousSelectedRetention = Muleview.currentRetention
 
     # Reset and initiate display progress start:
     @retentions = {}
@@ -21,7 +22,7 @@ Ext.define "Muleview.Graphs",
 
       @rightPanel.add(ret.lightGraph for _, ret of @retentions)
       @mainPanel.add(ret.graph for _, ret of @retentions )
-      @mainPanel.setActiveTab(firstTab)
+      @mainPanel.setActiveTab(@retentions[previousSelectedRetention]?.graph or firstTab)
       @mainPanel.setLoading(false)
       @rightPanel.setLoading(false)
 

@@ -7,6 +7,7 @@ Ext.define "Muleview.view.MuleChart",
   legend:
     position: "right"
   animate: true
+  theme: "Category2"
 
   timeLabel:
     rotate:
@@ -20,11 +21,27 @@ Ext.define "Muleview.view.MuleChart",
       topKey = key if key.length < topKey.length
     topKey
 
+  tipsRenderer: (storeItem, item) ->
+    me = item.series.chart
+    key = item.storeField or me.topKey
+    value = storeItem.get(key)
+    total = storeItem.get(me.topKey)
+    percent = 100 * (value / total)
+    percentText = Ext.util.Format.number(percent, "0.00")
+    timestamp = me.timeFormatter(storeItem.get('timestamp'))
+    @update
+      key: key.substring(key.lastIndexOf(".") + 1)
+      timestamp: timestamp
+      total: Ext.util.Format.number(total, ",")
+      value: Ext.util.Format.number(value, ",")
+      percent: percentText
+
+  timeFormatter: (timestamp) ->
+    Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
+
   initComponent: ->
     me = @
-    timeFormatter = (timestamp) ->
-      Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
-    @timeLabel.renderer = timeFormatter
+    @timeLabel.renderer = @timeFormatter
 
     # @data should be a hash of key => keydata,
     # keydata should be: [[count, batch, timestamp], [count, batch, timestamp]...]
@@ -61,7 +78,10 @@ Ext.define "Muleview.view.MuleChart",
       title: @keyLegendName @topKey
       xField: "timestamp"
       yField: [@topKey]
-      highlight: @highlight
+      highlight: true
+      tips:
+        tpl: "{key} {value} ({timestamp})"
+        renderer: @tipsRenderer
 
     # Areas:
     if @showAreas
@@ -75,20 +95,7 @@ Ext.define "Muleview.view.MuleChart",
         tips:
           trackMouse: true
           tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
-          renderer: (storeItem, item) ->
-            key = item.storeField
-            value = storeItem.get(item.storeField)
-            total = storeItem.get(me.topKey)
-            percent = 100 * (value / total)
-            percentText = Ext.util.Format.number(percent, "0.00")
-            timestamp = timeFormatter(storeItem.get('timestamp'))
-            # @setTitle "#{key} #{timestamp}"
-            @update
-              key: key.substring(key.lastIndexOf(".") + 1)
-              timestamp: timestamp
-              total: Ext.util.Format.number(total, ",")
-              value: Ext.util.Format.number(value, ",")
-              percent: percentText
+          renderer: @tipsRenderer
 
     # Alerts:
     if @alerts
@@ -109,9 +116,8 @@ Ext.define "Muleview.view.MuleChart",
             yField: [alert.name]
             highlight: true
             tips:
-              trackMouse: true
-              html: "#{alert.label} = #{alert.value}"
-              title: "Alert"
+              trackMouse: false
+              html: "<i><b>#{alert.label}</b> alert (#{Ext.util.Format.number(alert.value, ",")})</i>"
     @callParent()
 
   keyLegendName: (key) ->
