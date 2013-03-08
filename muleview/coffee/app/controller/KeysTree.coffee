@@ -14,6 +14,7 @@ Ext.define "Muleview.controller.KeysTree",
   onSelectionChange: (me, selected)->
     return unless selected[0]
     key = selected[0].get("fullname")
+    Muleview.event "keySelected", key
     Muleview.currentKey = key
 
     # Update titles:

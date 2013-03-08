@@ -2,6 +2,7 @@ Ext.define "Muleview.Graphs",
   singleton: true
 
   createGraphs: ->
+    Muleview.event "createGraphStart"
     @mainPanel = Ext.getCmp("mainPanel")
     @rightPanel = Ext.getCmp("rightPanel")
     previousSelectedRetention = Muleview.currentRetention
@@ -25,6 +26,7 @@ Ext.define "Muleview.Graphs",
       @mainPanel.setActiveTab(@retentions[previousSelectedRetention]?.graph or firstTab)
       @mainPanel.setLoading(false)
       @rightPanel.setLoading(false)
+      Muleview.event "createGraphEnd"
 
   # Receives a retention name and the graph's alerts in Mule's raw format
   # Returns an array of the alerts with their metadata as predefined in Muleview.Settings.alerts

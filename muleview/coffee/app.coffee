@@ -9,6 +9,7 @@ Ext.application
     "Ext.tree.Panel"
     "Muleview.Mule"
     "Muleview.Graphs"
+    "Muleview.RefreshTimer"
   ]
 
   launch: ->
