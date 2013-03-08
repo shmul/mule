@@ -7,11 +7,9 @@ Ext.define "Muleview.controller.StatusBar",
   ]
 
   onLaunch: ->
-    Muleview.Events.on
-      commandSent: @commandSent
-      commandReceived: @commandReceived
-      chartItemMouseOver: @chartItemMouseOver
-      scope: @
+    conf = {scope: @}
+    conf[eventName] = Ext.bind(handler, @) for own eventName, handler of @handlers
+    Muleview.Events.on conf
 
   progress: (txt) ->
     @status
@@ -34,11 +32,15 @@ Ext.define "Muleview.controller.StatusBar",
 
     @getSb().setStatus conf
 
-  commandSent: (command) ->
-    @progress "Requested: #{command}"
+  timeFormat: (timestamp) ->
+    Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.statusTimeFormat)
 
-  commandReceived: (command)->
-    @success "Information received for: #{command}"
+  handlers:
+    commandSent: (command) ->
+      @progress "Requested: #{command}"
 
-  chartItemMouseOver: (args...) ->
-    @status "Item info: #{args}"
+    commandReceived: (command)->
+      @success "Information received for: #{command}"
+
+    chartItemMouseOver: (item) ->
+      @status @timeFormat(item.storeItem.get("timestamp"))

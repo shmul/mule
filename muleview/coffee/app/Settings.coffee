@@ -3,6 +3,7 @@ Ext.define "Muleview.Settings",
   updateInterval: 1000
   labelFormat: "d/m/y H:i:s"
   muleUrlPrefix: "http://localhost:3000/"
+  statusTimeFormat: "l, NS \\o\\f F Y, G:i:s"
   alerts: [
    # NOTE: the order determines how mule responses are parsed!
       name: "critical_low"
