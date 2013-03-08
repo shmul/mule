@@ -90,6 +90,9 @@ Ext.define "Muleview.view.Viewport",
       items: [
         Ext.create "Ext.ux.statusbar.StatusBar",
           xtype: "statusbar"
+          id: "statusBar"
+          autoClear: 3000
+          defaultText: "Ready"
           items: [
               xtype: "tool"
               type: "minimize"

@@ -15,4 +15,5 @@ Ext.application
   controllers: [
     "Viewport"
     "KeysTree"
+    "StatusBar"
   ]

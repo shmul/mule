@@ -15,22 +15,22 @@
 *** TODO Favicon
 ** DONE Shorter key names in legend
 ** TODO Long legends support?
-** TODO Alerts:
+** DONE Alerts:
 *** DONE Display lines on graphs
  - [X] Show lines
  - [X] Design lines
  - [X] Get rid of legend line markers
-*** TODO Enable configuration
+*** DONE Enable configuration
  - [X] Save
  - [X] Read
- - [-] Stale/Period:
+ - [X] Stale/Period:
    - [X] Save
    - [X] Read
-   - [ ] Special controller / Validations
-*** TODO Enable removing alerts
-*** TODO Do not show fields when not alerts
+   - [X] Special controller / Validations
+*** DONE Enable removing alerts
+*** DONE Do not show fields when not alerts
 aka "Add alerts" button
-*** TODO Nicer tips
+*** DONE Nicer tips
 *** DONE Load alerts with graph
 * Optimizations:
 ** TODO Generate big chart only on demand
