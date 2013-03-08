@@ -101,16 +101,21 @@ Ext.define "Muleview.view.AlertsEditor",
       btn.setVisible(Ext.Array.contains(btn.showInMode, mode))
 
   doUpdate: ->
-    url = Muleview.Mule.getAlertCommandUrl(Muleview.currentKey, Muleview.currentRetention)
+    Ext.MessageBox.confirm "Delete alerts",
+      "Are you sure you wish to delete all alerts for this graph?",
+      =>
+        @doMuleAction ("PUT")
+
+  doMuleAction: (method) ->
     @submit(
-      url: url
-      method: "PUT"
+      url: Muleview.Mule.getAlertCommandUrl(Muleview.currentKey, Muleview.currentRetention)
+      method: method
       success: ->
         Muleview.Graphs.createGraphs()
       )
 
   doDelete: ->
-    console.log("MuleChart.coffee\\ 148: <HERE>");
+    @doMuleAction("DELETE")
 
   doCreate: ->
     @getForm().clearInvalid()
