@@ -2,3 +2,7 @@
   width: 4px;
   background-image:url('extjs/resources/images/default/s.gif') !important
 }
+
+.statusbar-text {
+  color: #777;
+}

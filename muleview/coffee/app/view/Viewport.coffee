@@ -94,6 +94,12 @@ Ext.define "Muleview.view.Viewport",
           autoClear: 3000
           defaultText: "Ready"
           items: [
+              xtype: "label"
+              cls: "statusbar-text"
+              id: "lastRefreshLabel"
+            ,
+              "-"
+            ,
               xtype: "tool"
               type: "minimize"
               tooltip: "Collapse status bar"

@@ -1,6 +1,6 @@
 Ext.define "Muleview.Settings",
   singleton: true
-  updateInterval: 5000
+  updateInterval: 30000
   labelFormat: "d/m/y H:i:s"
   muleUrlPrefix: "http://localhost:3000/"
   statusTimeFormat: "l, NS \\o\\f F Y, G:i:s"

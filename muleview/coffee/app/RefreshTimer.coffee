@@ -1,4 +1,7 @@
 Ext.define "Muleview.RefreshTimer",
+  requires: [
+    "Muleview.Settings"
+  ]
   singleton: true
 
   constructor: ->
@@ -10,6 +13,7 @@ Ext.define "Muleview.RefreshTimer",
   reset: ->
     window.clearTimeout(@timeout) if @timeout
     @timeout = window.setTimeout(Ext.bind(@refresh, @), @intervalTime)
+    @lastRefresh = new Date()
 
   refresh: ->
     Muleview.Graphs.createGraphs()

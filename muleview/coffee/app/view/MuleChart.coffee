@@ -83,6 +83,7 @@ Ext.define "Muleview.view.MuleChart",
         itemmouseover: (item) ->
           Muleview.event "chartItemMouseOver", item
       tips:
+        trackMouse: false
         tpl: "{key} {value} ({timestamp})"
         renderer: @tipsRenderer
 
