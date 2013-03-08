@@ -1,6 +1,5 @@
 Ext.define "Muleview.view.ZoomSlider",
   extend: "Ext.slider.Multi",
-  flex: 1
   tipText: (thumb) ->
     new Date(thumb.value * 1000)
   listeners:

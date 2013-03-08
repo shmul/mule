@@ -3,9 +3,6 @@ Ext.define "Muleview.view.MuleChartPanel",
   layout: "fit"
 
   initComponent: ->
-    slider = Ext.create "Muleview.view.ZoomSlider",
-      store: @store
-
     @chart = Ext.create "Muleview.view.MuleChart",
       showAreas: true
       keys: @keys
@@ -17,7 +14,9 @@ Ext.define "Muleview.view.MuleChartPanel",
       layout:
         type: "hbox"
       items: [
-          slider
+          slider = Ext.create "Muleview.view.ZoomSlider",
+            flex: 1
+            store: @store
         ,
           xtype: "button"
           text: "Reset"

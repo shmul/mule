@@ -93,9 +93,11 @@ Ext.define "Muleview.view.MuleChart",
         title: @keyLegendName(key) for key in areaKeys
         highlight: @highlight
         tips:
-          trackMouse: true
+          trackMouse: false
+          anchor: "left"
           tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
           renderer: @tipsRenderer
+
 
     # Alerts:
     if @alerts
@@ -117,7 +119,9 @@ Ext.define "Muleview.view.MuleChart",
             highlight: true
             tips:
               trackMouse: false
-              html: "<i><b>#{alert.label}</b> alert (#{Ext.util.Format.number(alert.value, ",")})</i>"
+              anchor: "bottom"
+              title: "Alert"
+              html: "<i><b>#{alert.label}</b> (#{Ext.util.Format.number(alert.value, ",")})</i>"
     @callParent()
 
   keyLegendName: (key) ->

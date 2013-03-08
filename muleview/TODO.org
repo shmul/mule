@@ -5,16 +5,17 @@
 ** DONE Maximize/restore button
 ** TODO Support for timestamp labels
 ** DONE Nicer title(s)
-** TODO Refresh interval
-** TODO Refresh button
-** TODO Something cool with tooltips
+** TODO Status Bar:
+*** TODO Refresh interval
+*** TODO Refresh button
+** TODO Something cool with tooltips?
 ** DONE Improve progress bar
  - [X] Overlay only on main panel
 ** TODO Theme
 *** TODO Favicon
 ** DONE Shorter key names in legend
 ** TODO Long legends support?
-** Alerts:
+** TODO Alerts:
 *** DONE Display lines on graphs
  - [X] Show lines
  - [X] Design lines
@@ -34,16 +35,21 @@ aka "Add alerts" button
 * Optimizations:
 ** TODO Generate big chart only on demand
 ** TODO Dynamic tree
+** TODO Smooth refresh
+Refrehs instead of completely destroy and recreated all graphs - ask for updated data and when received, replace existing.
+both in refresh button and alerts editor
 * Misc:
 ** TODO Check data correctness
-** TODO Support for more than 2-3 retentions
+** TODO Support for more than 2-3 retentions?
 ** TODO Refactor / naming, "Graph" object
  - Graph object will contain references to 2 charts + alerts
  - Distinguish "chart", "graph" and "retention"
 ** Ideas:
 *** TODO Experiment with union-graph
+One graph to rule them all ( all retentions )
 *** TODO Experiment with single graph component
 the single graph component is a panel containing a chart and can have two viewing mode - big and light
+Think i'll pass this one
 *** TODO Experiment with docked buttons instead of a tab bar
 *** TODO Experiment with tree-grid
 Instead of having regular tree + tabs, use tree-grid, which will hold 3 (?) buttons for each node, button per graph/retention
