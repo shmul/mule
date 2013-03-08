@@ -101,10 +101,7 @@ Ext.define "Muleview.view.AlertsEditor",
       btn.setVisible(Ext.Array.contains(btn.showInMode, mode))
 
   doUpdate: ->
-    Ext.MessageBox.confirm "Delete alerts",
-      "Are you sure you wish to delete all alerts for this graph?",
-      =>
-        @doMuleAction ("PUT")
+    @doMuleAction ("PUT")
 
   doMuleAction: (method) ->
     @submit(
@@ -115,7 +112,10 @@ Ext.define "Muleview.view.AlertsEditor",
       )
 
   doDelete: ->
-    @doMuleAction("DELETE")
+    Ext.MessageBox.confirm "Delete alerts",
+      "Are you sure you wish to delete all alerts for this graph?",
+      (res) =>
+        @doMuleAction("DELETE") if res == "yes"
 
   doCreate: ->
     @getForm().clearInvalid()

@@ -2,12 +2,15 @@ Ext.define "Muleview.Mule",
   singleton: true
 
   getAlertCommandUrl: (key, retention) ->
-    "mule/alert/#{key};#{retention}"
+    @prefix() + "alert/#{key};#{retention}"
+
+  prefix: ->
+    Muleview.Settings.muleUrlPrefix
 
   # General method to query mule
   askMule: (command, fn) ->
     Ext.Ajax.request
-      url: Muleview.Settings.muleUrlPrefix + command
+      url: @prefix() + command
       success: (response) ->
         fn(JSON.parse(response.responseText).data)
 

@@ -2,7 +2,7 @@ Ext.define "Muleview.Settings",
   singleton: true
   updateInterval: 1000
   labelFormat: "d/m/y H:i:s"
-  muleUrlPrefix: "http://localhost:8082/mule/"
+  muleUrlPrefix: "http://localhost:3000/"
   alerts: [
    # NOTE: the order determines how mule responses are parsed!
       name: "critical_low"
