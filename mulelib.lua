@@ -350,12 +350,16 @@ function mule(db_)
         local metric_rps = {}
         for fm,rps in pairs(_factories) do
           if is_prefix(metric_,fm) then
-            concat_arrays(metric_rps,rps)
+            table.insert(metric_rps,{fm,rps})
           end
         end
         for m in metric_hierarchy(metric_) do
-          for _,rp in ipairs(metric_rps) do
-            coroutine.yield(name(m,rp[1],rp[2]))
+          for _,frp in ipairs(metric_rps) do
+            if is_prefix(m,frp[1]) then
+              for _,rp in ipairs(frp[2]) do
+                coroutine.yield(name(m,rp[1],rp[2]))
+              end
+            end
           end
         end
       end)
@@ -401,7 +405,7 @@ function mule(db_)
 
 
   local function dump(resource_,options_)
-    local str = stdout("")
+    local str = options_.to_str and strout("") or stdout("")
     local format = string.format
 
     each_metric(_db,resource_,nil,
@@ -415,6 +419,7 @@ function mule(db_)
                                 end)
                   str.write("\n")
                 end)
+    return str
   end
 
 
@@ -665,13 +670,13 @@ function mule(db_)
         return slot(items_[2],{timestamp=items_[3]})
       end,
       gc = function()
-        return gc(items_[2],{timestamp=items_[3],force=TRUTH(items_[4])})
+        return gc(items_[2],{timestamp=items_[3],force=is_true(items_[4])})
       end,
       reset = function()
         return reset(items_[2])
       end,
       dump = function()
-        return dump(items_[2])
+        return dump(items_[2],{to_str=is_true(items[3])})
       end,
     }
 
@@ -777,6 +782,9 @@ function mule(db_)
 
     -- 1) standard update
     if not string.find(items[1],";",1,true) then
+      if #items~=3 then
+        return false
+      end
       return update_line(items[1],items[2],items[3],update_sequences_)
     end
 

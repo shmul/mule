@@ -255,6 +255,15 @@ function lines_without_comments(lines_iterator)
                         end)
 end
 
+function n_lines(n,lines_iterator)
+  return coroutine.wrap(function()
+                          for line in lines_iterator do
+                            n = n - 1
+                            if n>=0 then coroutine.yield(line) end
+                          end
+                        end)
+end
+
 function concat_arrays(lhs_,rhs_,callback_)
   for _,v in ipairs(rhs_) do
     lhs_[#lhs_+1] = callback_ and callback_(v) or v

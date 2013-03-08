@@ -681,7 +681,8 @@ function test_metric_one_level_childs()
       {"beer.ale.brown;1h:30d",1},
       {"beer.ale;1m:12h",3},
       {"beer;1m:12h",1},
-      {"",2},
+      {"beer",2},
+      {"",0},
       {"foo",0},
     }
 
@@ -761,6 +762,19 @@ function test_bounded_by_level()
   assert(bounded_by_level("hello.cruel.world","hello.cruel",1))
   assert(bounded_by_level("hello.cruel.world","hello.cruel.world",1))
   assert(bounded_by_level("hello.cruel.world","hello.cruel",12))
+end
+
+
+function test_duplicate_timestamps()
+  local db = column_db_factory("duplicate_timestamps")
+  local m = mule(db)
+  m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
+  m.process(n_lines(109,io.lines("./tests/fixtures/d_input.mule")))
+  for l in string_lines(m.dump("Johnston.Morfin",{to_str=true}).get_string()) do
+    if #l>0 then
+      assert_equal(4,#split(l," "),l)
+    end
+  end
 end
 
 --verbose_log(true)

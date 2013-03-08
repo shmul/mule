@@ -21,7 +21,6 @@ definitions:
 function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
   local file = nil
   local dirty = false
-
   local function reset()
     local file_size = num_sequences_*slots_per_sequence_*slot_size_
     logi("creating file",file_,file_size)
@@ -75,7 +74,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       logw("no file")
       return nil
     end
-    local cell_pos = slot_size_*(sid_+slots_per_sequence_*idx_)
+    local cell_pos = slot_size_*(sid_*slots_per_sequence_+idx_)
     return file:seek("set",cell_pos)
   end
 
@@ -131,7 +130,6 @@ function column_db(base_dir_)
       node.value = index:size()-1
       node.latest = 0
     end
-
     return node.metric,node.step,node.period,node.value
   end
 
@@ -191,6 +189,9 @@ function column_db(base_dir_)
       save_all()
     end
 
+    if cdb then
+      return cdb,id % SEQUENCES_PER_FILE
+    end
     -- we normalize the step,period variables to canonical time units
     -- we add 1 to the period/step to accomodate the latest value at the last slot
     local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
@@ -199,8 +200,9 @@ function column_db(base_dir_)
                                     id / SEQUENCES_PER_FILE)
     cdb = cell_store_cache[file_name]
     if not cdb then
-      cdb = cell_store(file_name,SEQUENCES_PER_FILE,period/step,p.PNS*3) -- 3 items per slot
+      cdb = cell_store(file_name,SEQUENCES_PER_FILE,1+period/step,p.PNS*3) -- 3 items per slot
       cell_store_cache[file_name] = cdb
+      cell_store_cache[name_] = cdb
     end
     return cdb,id % SEQUENCES_PER_FILE
   end
@@ -218,12 +220,6 @@ function column_db(base_dir_)
     -- value is updated only for metadata nodes
     if not node then
       node = index:insert(key_)
-      -- to all non metadata keys we assign a global id. This id is used for storing
-      -- the actual sequences
-      if not is_metadata then
-        index.id = (index.id or -1) + 1
-        node.value = index.id
-      end
     end
     if is_metadata then
       node.value = value_
