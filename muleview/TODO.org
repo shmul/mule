@@ -5,14 +5,18 @@
 ** DONE Maximize/restore button
 ** TODO Support for timestamp labels
 ** DONE Nicer title(s)
-** TODO Status Bar:
-*** TODO Refresh interval
-*** TODO Refresh button
+** TODO Color alert fieldLabels
+** DONE Status Bar
+** DONE Refresh interval
+** TODO Toggle Legend
+** TODO Click to zoom graphs
+** DONE Refresh button
+** TODO Configurable refresh
 ** TODO Something cool with tooltips?
 ** DONE Improve progress bar
  - [X] Overlay only on main panel
 ** TODO Theme
-*** TODO Favicon
+*** DONE Favicon
 ** DONE Shorter key names in legend
 ** TODO Long legends support?
 ** DONE Alerts:
