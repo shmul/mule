@@ -1,11 +1,5 @@
 Ext.define "Muleview.Mule",
   singleton: true
-  mixins:
-    observable: "Ext.util.Observable"
-
-  constructor:  (config) ->
-    @mixins.observable.constructor.call(@, config);
-
   getAlertCommandUrl: (key, retention) ->
     @prefix() + "alert/#{key};#{retention}"
 
@@ -14,11 +8,11 @@ Ext.define "Muleview.Mule",
 
   # General method to query mule
   askMule: (command, fn) ->
-    @fireEvent "commandSent", command
+    Muleview.event "commandSent", command
     Ext.Ajax.request
       url: @prefix() + command
       success: (response) =>
-        @fireEvent "commandReceived", command
+        Muleview.event "commandReceived", command
         fn(JSON.parse(response.responseText).data)
 
   # Return a nested hash of all possible keys

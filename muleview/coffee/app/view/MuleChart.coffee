@@ -92,6 +92,11 @@ Ext.define "Muleview.view.MuleChart",
         yField: areaKeys
         title: @keyLegendName(key) for key in areaKeys
         highlight: @highlight
+        listeners:
+          itemmouseover: (item) ->
+            Muleview.event "chartItemMouseOver", item
+          itemclick: (item) ->
+            Muleview.event "chartItemMouseClick", item
         tips:
           trackMouse: false
           anchor: "left"

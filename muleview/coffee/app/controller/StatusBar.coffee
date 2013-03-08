@@ -1,14 +1,16 @@
 Ext.define "Muleview.controller.StatusBar",
   extend: "Ext.app.Controller"
+
   refs: [
     ref: "sb"
     selector: "#statusBar"
   ]
 
   onLaunch: ->
-    Muleview.Mule.on
+    Muleview.Events.on
       commandSent: @commandSent
       commandReceived: @commandReceived
+      chartItemMouseOver: @chartItemMouseOver
       scope: @
 
   progress: (txt) ->
@@ -37,3 +39,6 @@ Ext.define "Muleview.controller.StatusBar",
 
   commandReceived: (command)->
     @success "Information received for: #{command}"
+
+  chartItemMouseOver: (args...) ->
+    @status "Item info: #{args}"

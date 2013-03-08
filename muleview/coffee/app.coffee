@@ -3,12 +3,16 @@ Ext.Loader.setPath("Ext.ux", "../ux/");
 Ext.application
   name: "Muleview"
   requires: [
-    "Muleview.Settings",
-    "Ext.container.Viewport",
-    "Ext.tree.Panel",
+    "Muleview.Settings"
+    "Muleview.Events"
+    "Ext.container.Viewport"
+    "Ext.tree.Panel"
     "Muleview.Mule"
     "Muleview.Graphs"
   ]
+
+  launch: ->
+    Muleview.event = Ext.Function.alias Muleview.Events, "fireEvent"
 
   autoCreateViewport: true
 
