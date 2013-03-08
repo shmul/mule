@@ -20,7 +20,7 @@ Ext.define "Muleview.view.Viewport",
         ,
           xtype: "tabpanel"
           region: "south"
-          height: "40%"
+          height: 280
           split: "true"
           collapsible: true
           collapsed: true

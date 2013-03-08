@@ -2,6 +2,7 @@ Ext.define "Muleview.view.AlertsEditor",
   extend: "Ext.form.Panel"
   requires: [
     "Muleview.Settings"
+    "Muleview.view.MuleTimeField"
   ]
   bodyPadding: 10
   layout:
@@ -41,8 +42,7 @@ Ext.define "Muleview.view.AlertsEditor",
       value: 0
       fieldLabel: alert.label
     if alert.time
-      ans.xtype = "textfield"
-      ans.regex = /[0-9]+[mhs]?/
+      ans.xtype = "muletimefield"
     else
       ans.xtype = "numberfield"
     ans
@@ -78,7 +78,7 @@ Ext.define "Muleview.view.AlertsEditor",
         hidden: true
       items: [
             text: "Save"
-            handler: => @doUpdate()
+            handler: => @doSave()
             showInMode: ["edit", "creating"]
         ,
             text: "Delete"
@@ -100,8 +100,8 @@ Ext.define "Muleview.view.AlertsEditor",
     @buttonsContainer.items.each (btn) ->
       btn.setVisible(Ext.Array.contains(btn.showInMode, mode))
 
-  doUpdate: ->
-    @doMuleAction ("PUT")
+  doSave: ->
+    @doMuleAction ("PUT") if @getForm().isValid()
 
   doMuleAction: (method) ->
     @submit(
