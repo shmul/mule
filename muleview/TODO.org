@@ -2,6 +2,7 @@
 ** DONE Redesign display
  - [X] Only relevant small graphs
  - [X] Make small graphs clickable
+** TODO "This key has no graphs"
 ** DONE Maximize/restore button
 ** TODO Support for timestamp labels
 ** DONE Nicer title(s)

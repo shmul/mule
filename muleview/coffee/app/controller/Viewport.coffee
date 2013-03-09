@@ -1,5 +1,8 @@
 Ext.define "Muleview.controller.Viewport",
   extend: "Ext.app.Controller"
+  requires: [
+    "Muleview.Events"
+  ]
   refs: [
       ref: "leftPanel"
       selector: "#leftPanel"
@@ -43,6 +46,9 @@ Ext.define "Muleview.controller.Viewport",
         expand: @updateMainPanelTools
 
     @getMainPanel().getEl().addListener("dblclick", @togglePanels, @)
+    Muleview.Events.on
+      newKeySelected: @onKeyChange
+      scope: @
 
   isMainPanelExpanded: ->
     @getLeftPanel().getCollapsed() and @getRightPanel().getCollapsed()
@@ -63,6 +69,18 @@ Ext.define "Muleview.controller.Viewport",
     expanded = @isMainPanelExpanded()
     @getMainPanelMaximize().setVisible(!expanded)
     @getMainPanelRestore().setVisible(expanded)
+
+  onKeyChange: (key) ->
+    return if Muleview.currentKey == key
+    Muleview.currentKey = key
+
+    # Update titles:
+    document.title = "Mule - #{key}"
+    @getMainPanel().setTitle key.replace /\./g, " / "
+
+    # Generate Graph
+    Muleview.Graphs.createGraphs()
+
 
   onTabChange: (me, selectedTab)->
     # Update current retention:

@@ -1,5 +1,8 @@
 Ext.define "Muleview.controller.KeysTree",
   extend: "Ext.app.Controller",
+  requires: [
+    "Muleview.Events"
+  ]
   models: [
     "MuleKey"
   ]
@@ -14,22 +17,16 @@ Ext.define "Muleview.controller.KeysTree",
   onSelectionChange: (me, selected)->
     return unless selected[0]
     key = selected[0].get("fullname")
-    Muleview.event "keySelected", key
-    Muleview.currentKey = key
-
-    # Update titles:
-    document.title = "Mule - #{key}"
-    @getMainPanel().setTitle key.replace /\./g, " / "
-
-    Muleview.Graphs.createGraphs()
+    Muleview.event "newKeySelected", key
 
   onLaunch: ->
     @store = @getTree().getStore()
     @control
       "#keysTree":
         selectionchange: @onSelectionChange
-
-
+    Muleview.Events.on
+      newKeySelected: @updateSelection
+      scope: @
     @fillAllKeys()
 
   fillAllKeys: ->
@@ -54,3 +51,8 @@ Ext.define "Muleview.controller.KeysTree",
     # Iterate child nodes:
     for own childName, grandchildren of children
       @addKey(newNode, childName, grandchildren)
+
+  updateSelection: (newKey) ->
+    record = @store.getById(newKey)
+    @getTree().getSelectionModel().select(record, false, true)
+    record.parentNode.expand()

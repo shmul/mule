@@ -1,5 +1,6 @@
 Ext.define "Muleview.model.MuleKey",
   extend: "Ext.data.Model"
+  idProperty: "fullname"
   requires: [
     "Ext.data.NodeInterface"
   ]

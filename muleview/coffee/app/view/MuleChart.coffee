@@ -100,7 +100,7 @@ Ext.define "Muleview.view.MuleChart",
           itemmouseover: (item) ->
             Muleview.event "chartItemMouseOver", item
           itemclick: (item) ->
-            Muleview.event "chartItemMouseClick", item
+            Muleview.event "newKeySelected", item.storeField
         tips:
           trackMouse: false
           anchor: "left"
