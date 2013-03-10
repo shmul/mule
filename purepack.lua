@@ -57,68 +57,109 @@ end
 
 local END_OF_TABLE_MARK = "end.of.table.mark"
 
+-- for some reason using coroutines rather than standard functions seems slightly
+-- faster. Perhaps the profiler distorts the real picture ?
 function pack_helper(obj_,visited_,id_,out)
   local insert = table.insert
+  local yield = coroutine.yield
+
+  local push = coroutine.wrap(function(type,len,val)
+                                while true do
+                                  insert(out,type)
+                                  insert(out,to_binary(len))
+                                  if val then
+                                    insert(out,val)
+                                  end
+                                  type,len,val = yield(true)
+                                end
+                              end)
+--[[
   local function push(type,len,val)
     insert(out,type)
     insert(out,to_binary(len))
     if val then
       insert(out,val)
     end
+    return true
   end
+  --]]
 
-  local function push_value_or_ref(p)
-    if not visited_[p] then
-      pack_helper(p,visited_,id_,out)
-    else
-      push("r",visited_[p])
-    end
-  end
-
-  local function literal(lit_)
-    local t = type(lit_)
-    if lit_==nil then -- nil and false are NOT the same thing
-      insert(out,"l")
-      return true
-    elseif t=="string" then
-      if not visited_[lit_] then
-        push("s",#lit_,lit_)
-        insert(out,to_binary(id_[1]))
-        visited_[lit_] = id_[1]
-        id_[1] = id_[1] + 1
-      else
-        push("r",visited_[lit_])
-      end
-      return true
-    elseif t=="number" then
-      push("i",lit_)
-      return true
-    elseif lit_==true or lit_==false then
-      insert(out,lit_ and "T" or "F")
-      return true
-    end
-    return false
-  end
-
-  if not literal(obj_) and type(obj_)=="table" then
-    push("t",id_[1])
-    visited_[obj_] = id_[1]
-    id_[1] = id_[1] + 1
-    for k,v in pairs(obj_) do
-      if type(v)~="function" then
-        literal(k)
-        if not literal(v) then
-          push_value_or_ref(v)
+  local literal = coroutine.wrap(
+    function(lit_)
+      while true do
+        local t = type(lit_)
+        if lit_==nil then -- nil and false are NOT the same thing
+          insert(out,"l")
+          lit_ = yield(true)
+        elseif t=="string" then
+          if not visited_[lit_] then
+            push("s",#lit_,lit_)
+            insert(out,to_binary(id_))
+            visited_[lit_] = id_
+            id_ = id_ + 1
+          else
+            push("r",visited_[lit_])
+          end
+          lit_ = yield(true)
+        elseif t=="number" then
+          push("i",lit_)
+          lit_ = yield(true)
+        elseif lit_==true or lit_==false then
+          insert(out,lit_ and "T" or "F")
+          lit_ = yield(true)
+        else
+          lit_ = yield(false)
         end
       end
+    end)
+--[[
+    local function literal(lit_)
+      local t = type(lit_)
+      if lit_==nil then -- nil and false are NOT the same thing
+        insert(out,"l")
+        return true
+      elseif t=="string" then
+        if not visited_[lit_] then
+          push("s",#lit_,lit_)
+          insert(out,to_binary(id_))
+          visited_[lit_] = id_
+          id_ = id_ + 1
+        else
+          push("r",visited_[lit_])
+        end
+        return true
+      elseif t=="number" then
+        push("i",lit_)
+        return true
+      elseif lit_==true or lit_==false then
+        insert(out,lit_ and "T" or "F")
+        return true
+      end
+      return false
     end
-    insert(out,"e")
+  --]]
+
+  local function helper(o_)
+    if not literal(o_) and type(o_)=="table" then
+      push("t",id_)
+      visited_[o_] = id_
+      id_ = id_ + 1
+      for k,v in pairs(o_) do
+        if type(v)~="function" then
+          literal(k)
+          local _ = literal(v) or (visited_[v] and push("r",visited_[v])) or helper(v)
+        end
+      end
+      insert(out,"e")
+    end
   end
+
+  helper(obj_)
 end
 
 function pack(obj_)
   local out = {}
-  pack_helper(obj_,{},{0},out)
+  pack_helper(obj_,{},0,out)
   return table.concat(out,"")
 end
 
