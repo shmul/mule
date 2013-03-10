@@ -94,9 +94,6 @@ end
 local CORS = {{"Access-Control-Allow-Origin","*"},{"Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept"}}
 local function standard_response(status_,content_,extra_headers_)
   local headers = {{"Connection","close"}}
-  if status_==200 then
-    concat_arrays(headers,CORS)
-  end
   if extra_headers_ then
     concat_arrays(headers,extra_headers_)
   end
@@ -174,12 +171,16 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   local segments = split(url_no_qs,"/")
   local handler_name = segments[1]
   local handler = handlers[handler_name]
+  local rv
 
   if not handler then
     return send_file_(url_no_qs,req_["If-None-Match"])
   end
+  if req_.verb=="OPTIONS" then
+    return send_(standard_response(200,nil,CORS))
+  end
 
-  local rv = with_mule_(
+  rv = with_mule_(
     function(mule_)
       table.remove(segments,1)
       local decoded_segments = {}
