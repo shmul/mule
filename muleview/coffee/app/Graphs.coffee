@@ -64,7 +64,6 @@ Ext.define "Muleview.Graphs",
       store: store
 
     lightGraph = Ext.create "Muleview.view.MuleLightChart",
-      retention: retName
       title: @parseTitle(retName)
       keys: keys
       hidden: true

@@ -14,16 +14,11 @@ RETENTION = "5s:1m 1m:1h 1h:12h"
 
 # Iterate each leaf key
 def each_leaf (&block)
-  names = {}
-  iterate_keys do |key|
-    parent = key[0...key.rindex(".")] rescue nil
-    if parent
-      names[parent] ||= 0
-      names[parent] += 1
-    end
-    names[key] ||= 0
+  leaves = []
+  iterate_keys do |key, children|
+    leaves << key if children.empty?
   end
-  names.select{|name, children| children ==0}.keys.each &block
+  leaves.each &block
 end
 
 # Create timestamp records, one per key in the graph
@@ -57,13 +52,15 @@ end
 def iterate_key(parents, node, &block)
   # Calc key string:
   new_keypath = parents + [node[:name]]
-  name = new_keypath.join(".")
+  new_keypath.delete 0
+  name = new_keypath[1..-1].join(".")
 
   # Run block on current node:
-  block.call(name)
+  children = node[:children]
+  block.call(name, children)
 
   # Iterate children:
-  node[:children].each do |child|
+  children.each do |child|
     iterate_key(new_keypath, child, &block)
   end
 end
@@ -105,20 +102,8 @@ end
 
 desc "Create mule configuration file"
 task :create_conf => :read_root do
-  records = []
-
-  # Create lines:
-  each_leaf do |key|
-    records << "#{key} #{RETENTION}"
-  end
-
-  # Collect results:
-  ans = records.join("\n")
-
-  # Show result:
+  ans = @root[:children].map{|child| "#{child[:name]} #{RETENTION}"}.join("\n")
   puts ans
-
-  # Write results:
   File.write(CONF_FILE, ans)
 end
 
