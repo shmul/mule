@@ -2,6 +2,7 @@ require "mule"
 --require "tests.strict"
 
 require "lunit"
+pcall(require, "profiler")
 module( "test_mule", lunit.testcase, package.seeall )
 
 
@@ -49,3 +50,4 @@ function test_create()
 end
 
 --verbose_log(true)
+--profiler.start("profiler.out")
