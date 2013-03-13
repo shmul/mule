@@ -2,6 +2,8 @@
 ** DONE Redesign display
  - [X] Only relevant small graphs
  - [X] Make small graphs clickable
+** TODO Url navigation
+** TODO Color pallate
 ** TODO "This key has no graphs"
 ** DONE Maximize/restore button
 ** TODO Support for timestamp labels
@@ -38,8 +40,8 @@ aka "Add alerts" button
 *** DONE Nicer tips
 *** DONE Load alerts with graph
 * Optimizations:
-** TODO Generate big chart only on demand
 ** TODO Dynamic tree
+** TODO Generate big chart only on demand
 ** TODO Smooth refresh
 Refrehs instead of completely destroy and recreated all graphs - ask for updated data and when received, replace existing.
 both in refresh button and alerts editor
