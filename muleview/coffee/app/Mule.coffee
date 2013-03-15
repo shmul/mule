@@ -15,17 +15,14 @@ Ext.define "Muleview.Mule",
         Muleview.event "commandReceived", command
         fn(JSON.parse(response.responseText).data)
 
-  # Return a nested hash of all possible keys
-  getAllKeys: (callback)->
-    ans = {}
-    @askMule "key?deep=true", (keys) =>
-      for key in keys
-        arr = key.split(";")[0].split(".")
-        node = ans
-        until arr.length == 0
-          current = arr.shift()
-          node = (node[current] ||= {})
-      callback(ans)
+  # Returns child keys for the given parent
+  getSubKeys: (parent, depth, callback) ->
+    @askMule "key/#{parent}?level=#{depth}", (retentions)->
+      keys = {}
+      for ret in retentions
+        key = ret.substring(0, ret.indexOf(";"))
+        keys[key] = true
+      callback(keyName for own keyName of keys)
 
   # Returns all mule's "graph" data for a given key,
   # In the form of "retention => key => data array" double-hash

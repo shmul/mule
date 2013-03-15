@@ -21,36 +21,54 @@ Ext.define "Muleview.controller.KeysTree",
 
   onLaunch: ->
     @store = @getTree().getStore()
-    @control
-      "#keysTree":
-        selectionchange: @onSelectionChange
+
+    @getTree().on
+      selectionchange: @onSelectionChange
+      beforeitemexpand: @onItemExpand
+      scope: @
+
     Muleview.Events.on
       newKeySelected: @updateSelection
       scope: @
-    @fillAllKeys()
+    @fillFirstkeys()
 
-  fillAllKeys: ->
-    Muleview.Mule.getAllKeys (keys) =>
-      root = @getMuleKeyModel().create
-        name: "root"
-      @store.setRootNode(root)
+  onItemExpand: (node) ->
+    @fetchKeys node.get("fullname")
 
-      for own childName, grandchildren of keys
-        @addKey(root, childName, grandchildren)
+  fillFirstkeys: ->
+    # Add Root key:
+    root = @getMuleKeyModel().create
+      name: "root"
+      fullname: "_root"
+    @store.setRootNode(root)
 
-      # Select first node:
-      @getTree().getSelectionModel().select(root.getChildAt(0))
-  addKey: (parentNode, name, children) ->
-    # Create the node key node:
+    # Ask Mule for the first keys
+    @fetchKeys("")
+
+  fetchKeys: (parent) ->
+    Muleview.Mule.getSubKeys parent,1, (keys) =>
+      @addKey(key) for key in keys
+
+  addKey: (key) ->
+    # Don't add already existing keys:
+    return @store.getRootNode() unless key
+    existingNode = @store.getById(key)
+    return existingNode if existingNode
+
+    # Make sure the parent exists:
+    parentName = key.substring(0, key.lastIndexOf("."))
+    parent = @addKey(parentName)
+
+    # Create the new node:
     newNode = @getMuleKeyModel().create
-      name: name
+      name: key.substring(key.lastIndexOf(".") + 1)
+      fullname: key
 
-    # Add this node to the parent
-    parentNode.appendChild(newNode)
+    # Add the new node as a child to its parent:
+    parent.appendChild(newNode)
 
-    # Iterate child nodes:
-    for own childName, grandchildren of children
-      @addKey(newNode, childName, grandchildren)
+    # Return the new node:
+    return newNode
 
   updateSelection: (newKey) ->
     record = @store.getById(newKey)
