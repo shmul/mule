@@ -1,5 +1,6 @@
 Ext.define "Muleview.RefreshTimer",
   requires: [
+    "Muleview.Events"
     "Muleview.Settings"
   ]
   singleton: true
