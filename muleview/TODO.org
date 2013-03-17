@@ -2,15 +2,20 @@
 ** DONE Redesign display
  - [X] Only relevant small graphs
  - [X] Make small graphs clickable
+** TODO Fix Tooltip Errors somehow
+** TODO Fix history-landing keys Tree
+When entering Muleview with a graph url, the keys-tree doesn't update nicely.p
+It should immediately show the full path of the key, and then subsequently load the full tree up to the root
 ** TODO Fix Stausbar auto fade
 it gets into "ready" even though still waiting for mule events
 ** TODO Dymamic Tree improvements:
 *** TODO Show loading mask in node itself
-** TODO Url navigation
+** DONE Url navigation
 ** TODO Color pallete
 ** TODO "This key has no graphs"
+Not sure this is a reasonable situation, though
 ** DONE Maximize/restore button
-** TODO Support for timestamp labels
+** TODO Support for timestamp labels - Waiting for Mule API
 ** DONE Nicer title(s)
 ** TODO Color alert fieldLabels
 ** DONE Status Bar
