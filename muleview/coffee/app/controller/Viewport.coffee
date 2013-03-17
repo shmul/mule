@@ -47,7 +47,7 @@ Ext.define "Muleview.controller.Viewport",
 
     @getMainPanel().getEl().addListener("dblclick", @togglePanels, @)
     Muleview.Events.on
-      newKeySelected: @onKeyChange
+      graphRequest: @openGraph
       scope: @
 
   isMainPanelExpanded: ->
@@ -70,25 +70,37 @@ Ext.define "Muleview.controller.Viewport",
     @getMainPanelMaximize().setVisible(!expanded)
     @getMainPanelRestore().setVisible(expanded)
 
-  onKeyChange: (key) ->
-    return if Muleview.currentKey == key
-    Muleview.currentKey = key
+  openGraph: (newKey, newRetention) ->
+    # load graphs and set correct Muleview.currentKey
+    Muleview.Graphs.createGraphs newKey, =>
+      Muleview.currentRetention = newRetention if newRetention
 
-    # Update titles:
-    document.title = "Mule - #{key}"
-    @getMainPanel().setTitle key.replace /\./g, " / "
+      # Update titles:
+      document.title = "Mule - #{Muleview.currentKey}"
+      @getMainPanel().setTitle Muleview.currentKey.replace /\./g, " / "
 
-    # Generate Graph
-    Muleview.Graphs.createGraphs()
+      # Select correct tab:
+      newTab = @getMainPanel().items.findBy (tab) ->
+        tab.retention == Muleview.currentRetention
+      newTab ||= @getMainPanel().items.first()
+      @getMainPanel().setActiveTab(newTab)
+      Muleview.currentRetention = newTab.retention
 
+      # Update right-panel's light charts:
+      @getRightPanel().items.each (lightGraph) ->
+        lightGraph.setVisible(Muleview.currentRetention != lightGraph.retention)
+
+      # Update alerts editor:
+      @getAlertsEditor().load(
+        Muleview.currentKey,
+        Muleview.currentRetention,
+        Muleview.Graphs.retentions[Muleview.currentRetention]?.alerts); # TODO: refactor
+
+      # Update history:
+      Ext.History.add Muleview.currentKey + ";" + Muleview.currentRetention
+
+      # Update other components
+      Muleview.event "graphChanged", Muleview.currentKey, Muleview.currentRetention
 
   onTabChange: (me, selectedTab)->
-    # Update current retention:
-    Muleview.currentRetention = selectedTab.retention
-
-    # Update right-panel's light charts:
-    @getRightPanel().items.each (lightGraph) ->
-      lightGraph.setVisible(selectedTab.retention != lightGraph.retention)
-
-    # Update alerts editor:
-    @getAlertsEditor().load(Muleview.currentKey, Muleview.currentRetention, Muleview.Graphs.retentions[selectedTab.retention]?.alerts); # TODO: refactor
+    @openGraph null, selectedTab.retention

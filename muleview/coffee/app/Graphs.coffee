@@ -1,11 +1,12 @@
 Ext.define "Muleview.Graphs",
   singleton: true
 
-  createGraphs: ->
+  createGraphs: (newKey, callback)->
+    if newKey == Muleview.currentKey or not newKey
+      return callback()
     Muleview.event "createGraphStart"
     @mainPanel = Ext.getCmp("mainPanel")
     @rightPanel = Ext.getCmp("rightPanel")
-    previousSelectedRetention = Muleview.currentRetention
 
     # Reset and initiate display progress start:
     @retentions = {}
@@ -15,18 +16,17 @@ Ext.define "Muleview.Graphs",
     @rightPanel.setLoading(true)
 
     # Obtain data:
-    Muleview.Mule.getKeyData Muleview.currentKey, (data, alerts) =>
-      firstTab = null
+    Muleview.Mule.getKeyData newKey, (data, alerts) =>
       for own retention, retentionData of data
         @retentions[retention] = @createRetentionGraphs(retention, retentionData, alerts)
-        firstTab ||= @retentions[retention].graph
 
       @rightPanel.add(ret.lightGraph for _, ret of @retentions)
       @mainPanel.add(ret.graph for _, ret of @retentions )
-      @mainPanel.setActiveTab(@retentions[previousSelectedRetention]?.graph or firstTab)
       @mainPanel.setLoading(false)
       @rightPanel.setLoading(false)
       Muleview.event "createGraphEnd"
+      Muleview.currentKey = newKey
+      callback()
 
   # Receives a retention name and the graph's alerts in Mule's raw format
   # Returns an array of the alerts with their metadata as predefined in Muleview.Settings.alerts

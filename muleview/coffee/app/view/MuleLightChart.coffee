@@ -21,7 +21,7 @@ Ext.define "Muleview.view.MuleLightChart",
     @tools = [
       type: "prev"
       handler: () =>
-        Ext.getCmp("mainPanel").setActiveTab(Muleview.Graphs.retentions[@retention].graph)
+        Muleview.event "graphRequest", null, @retention
     ]
 
     @callParent()

@@ -10,10 +10,16 @@ Ext.application
     "Muleview.Mule"
     "Muleview.Graphs"
     "Muleview.RefreshTimer"
+    "Ext.util.History"
   ]
 
   launch: ->
     Muleview.event = Ext.Function.alias Muleview.Events, "fireEvent"
+    Ext.util.History.init ->
+      Ext.util.History.on
+        change: ->
+
+
 
   autoCreateViewport: true
 

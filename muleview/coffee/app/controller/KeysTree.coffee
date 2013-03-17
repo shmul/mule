@@ -17,7 +17,7 @@ Ext.define "Muleview.controller.KeysTree",
   onSelectionChange: (me, selected)->
     return unless selected[0]
     key = selected[0].get("fullname")
-    Muleview.event "newKeySelected", key
+    Muleview.event "graphRequest", key, null
 
   onLaunch: ->
     @store = @getTree().getStore()
@@ -28,7 +28,7 @@ Ext.define "Muleview.controller.KeysTree",
       scope: @
 
     Muleview.Events.on
-      newKeySelected: @updateSelection
+      graphChanged: @updateSelection
       keysReceived: @addKeys
       scope: @
     @fillFirstkeys()
