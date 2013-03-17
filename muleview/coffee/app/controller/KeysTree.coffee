@@ -29,6 +29,7 @@ Ext.define "Muleview.controller.KeysTree",
 
     Muleview.Events.on
       newKeySelected: @updateSelection
+      keysReceived: @addKeys
       scope: @
     @fillFirstkeys()
 
@@ -46,8 +47,10 @@ Ext.define "Muleview.controller.KeysTree",
     @fetchKeys("")
 
   fetchKeys: (parent) ->
-    Muleview.Mule.getSubKeys parent,1, (keys) =>
-      @addKey(key) for key in keys
+    Muleview.Mule.getSubKeys parent, 1, Ext.bind(@addKeys, @)
+
+  addKeys: (newKeys) ->
+    @addKey(key) for key in newKeys
 
   addKey: (key) ->
     # Don't add already existing keys:
