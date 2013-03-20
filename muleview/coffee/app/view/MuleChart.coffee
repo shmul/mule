@@ -1,5 +1,7 @@
 Ext.define "Muleview.view.MuleChart",
   extend:  "Ext.chart.Chart"
+  statics:
+    lastXY: [0,0] # Used to workaround an Extjs bug causing errors when showing tooltips of a chart created below the mouse cursor
 
   showAreas: true
   highlight: true
@@ -86,6 +88,7 @@ Ext.define "Muleview.view.MuleChart",
         trackMouse: false
         tpl: "{key} {value} ({timestamp})"
         renderer: @tipsRenderer
+        targetXY: @self.lastXY
 
     # Areas:
     if @showAreas
@@ -100,12 +103,13 @@ Ext.define "Muleview.view.MuleChart",
           itemmouseover: (item) ->
             Muleview.event "chartItemMouseOver", item
           itemclick: (item) ->
-            Muleview.event "newKeySelected", item.storeField
+            Muleview.event "graphRequest", item.storeField
         tips:
           trackMouse: false
           anchor: "left"
           tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
           renderer: @tipsRenderer
+          targetXY: @self.lastXY
 
 
     # Alerts:
@@ -131,7 +135,12 @@ Ext.define "Muleview.view.MuleChart",
               anchor: "bottom"
               title: "Alert"
               html: "<i><b>#{alert.label}</b> (#{Ext.util.Format.number(alert.value, ",")})</i>"
+              targetXY: @self.lastXY
     @callParent()
+    @on
+      mousemove: (e, opts) =>
+        @self.lastXY = e.getXY()
+      scope: @
 
   keyLegendName: (key) ->
     key.substring(key.lastIndexOf(".") + 1)
