@@ -76,4 +76,6 @@ Ext.define "Muleview.controller.KeysTree",
   updateSelection: (newKey) ->
     record = @store.getById(newKey)
     @getTree().getSelectionModel().select(record, false, true)
-    record.parentNode.expand()
+    while record
+      record.expand()
+      record=record.parentNode

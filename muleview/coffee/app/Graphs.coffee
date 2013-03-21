@@ -8,7 +8,7 @@ Ext.define "Muleview.Graphs",
     @mainPanel = Ext.getCmp("mainPanel")
     @rightPanel = Ext.getCmp("rightPanel")
 
-    # Reset and initiate display progress start:
+    # Reset and initiate:
     @retentions = {}
     @mainPanel.removeAll();
     @mainPanel.setLoading(true)

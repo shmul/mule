@@ -1,10 +1,10 @@
 * Features:
 ** DONE Fix Tooltip Errors somehow
-** TODO Url Navigation:
-*** TODO Fix history-landing keys Tree
+** DONE Url Navigation:
+*** DONE Fix history-landing keys Tree
 When entering Muleview with a graph url, the keys-tree doesn't update nicely.p
 It should immediately show the full path of the key, and then subsequently load the full tree up to the root
-** TODO Fix Stausbar auto fade
+** TODO Fix statusbar auto fade
 it gets into "ready" even though still waiting for mule events
 ** TODO Dymamic Tree improvements:
 *** TODO Show loading mask in node itself
@@ -13,6 +13,7 @@ it gets into "ready" even though still waiting for mule events
 Not sure this is a reasonable situation, though
 ** TODO Support for timestamp labels - Waiting for Mule API
 ** TODO Color alert fieldLabels
+** TODO Clicking alerts focuses them on the editor
 ** TODO Toggle Legend
 ** TODO Configurable refresh
 ** TODO Something cool with tooltips?
