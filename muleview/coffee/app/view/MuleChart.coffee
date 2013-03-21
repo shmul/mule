@@ -1,5 +1,9 @@
 Ext.define "Muleview.view.MuleChart",
   extend:  "Ext.chart.Chart"
+  requires: [
+    "Muleview.view.Theme"
+  ]
+
   statics:
     lastXY: [0,0] # Used to workaround an Extjs bug causing errors when showing tooltips of a chart created below the mouse cursor
 
@@ -9,7 +13,7 @@ Ext.define "Muleview.view.MuleChart",
   legend:
     position: "right"
   animate: true
-  theme: "Category2"
+  theme: "Muleview"
 
   timeLabel:
     rotate:
@@ -110,7 +114,6 @@ Ext.define "Muleview.view.MuleChart",
           tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
           renderer: @tipsRenderer
           targetXY: @self.lastXY
-
 
     # Alerts:
     if @alerts
