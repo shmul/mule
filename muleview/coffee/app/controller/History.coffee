@@ -5,7 +5,8 @@ Ext.define "Muleview.controller.History",
   ]
 
   gotoToken: (token) ->
-    Muleview.event "graphRequest", token.split(";")...
+    [key, retention] = (token ? "").split(";")
+    Muleview.event "graphRequest", key, retention if key
 
   init: ->
   onLaunch: ->

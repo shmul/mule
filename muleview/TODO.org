@@ -1,10 +1,9 @@
 * Features:
-** TODO Fix Tooltip Errors somehow
+** DONE Fix Tooltip Errors somehow
 ** TODO Url Navigation:
 *** TODO Fix history-landing keys Tree
 When entering Muleview with a graph url, the keys-tree doesn't update nicely.p
 It should immediately show the full path of the key, and then subsequently load the full tree up to the root
-*** TODO Try to implement onhashchange event myself?
 ** TODO Fix Stausbar auto fade
 it gets into "ready" even though still waiting for mule events
 ** TODO Dymamic Tree improvements:
@@ -52,7 +51,10 @@ aka "Add alerts" button
 *** DONE Load alerts with graph
 * Optimizations:
 ** DONE Dynamic tree
+** TODO Try to implement onhashchange event myself
+This is related to histoy controller
 ** TODO Generate big chart only on demand
+** TODO Upgrade to Extjs 4.2
 ** TODO Smooth refresh
 Refrehs instead of completely destroy and recreated all graphs - ask for updated data and when received, replace existing.
 both in refresh button and alerts editor
