@@ -279,6 +279,30 @@ for example
 
 TODO provide nginx proxying configuration
 
+#### Mule-View
+
+Mule ships with a simple [Ext JS](http://www.sencha.com/products/extjs/)-based client web-application written in [CoffeeScript](http://coffeescript.org/) called Muleview.
+The application can display graphs of all of Mule's current data.
+
+#### Install
+To compile Muleview:
+
+1. [install CoffeeScript](http://coffeescript.org/#installation) and make sure the `coffee` command is available
+1. `$ cd /muleview`
+1. `$ make`
+
+Muleview is entirely client-based; The only configuration needed is the URL prefix used to request data from Mule itself. This setting is set in `muleview/coffee/app/Settings.coffee` - "muleUrlPrefix", and defaults to the empty string, meaning Mule and Muleview runs under the same host/port. If you change this (or any other) setting, don't forget to recompile Muleview.
+
+#### Running Mule with Muleview:
+To run Mule with Muleview enabled, add Muleview as a the root static folder by using the argument: `-R muleview` along with `-t <host:port>` (see above).
+
+For example:
+`lua mule.lua -d my_data_cdb -t localhost:8080 -R muleview`
+
+And point your browser to localhost:8080/index.html
+
+
+
 ### CLI
 
 Mule also has a command line interface which is useful for tests (and development), but less so for an interactive use. Run `lua mule.lua -h` for a (terse) usage description.
