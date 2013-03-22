@@ -85,6 +85,9 @@ Ext.define "Muleview.Graphs",
 
     store = Ext.create "Ext.data.ArrayStore"
       fields: fields
+      sorters: [
+          property: "timestamp"
+      ]
 
     # Convert data to timestamps-based hash:
     timestamps = {}
