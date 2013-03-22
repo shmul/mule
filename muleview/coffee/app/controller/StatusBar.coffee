@@ -10,10 +10,9 @@ Ext.define "Muleview.controller.StatusBar",
   ]
 
   onLaunch: ->
-    conf = {scope: @}
-    conf[eventName] = Ext.bind(handler, @) for own eventName, handler of @handlers
-    Muleview.Events.on conf
-    setInterval Ext.bind(@updateLastRefresh, @), 1000
+    eventsConf = {scope: @}
+    eventsConf[eventName] = Ext.bind(handler, @) for own eventName, handler of @handlers
+    Muleview.Events.on eventsConf
 
   progress: (txt) ->
     @status
@@ -40,8 +39,8 @@ Ext.define "Muleview.controller.StatusBar",
     Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.statusTimeFormat)
 
   updateLastRefresh: ->
-    lastRefresh = Ext.Date.format(Muleview.RefreshTimer.lastRefresh, Muleview.Settings.statusTimeFormat)
-    @getLastRefreshLabel().setText("Last updated: #{lastRefresh}")
+    timeStr = Ext.Date.format(new Date(), Muleview.Settings.statusTimeFormat)
+    @getLastRefreshLabel().setText("Last updated: #{timeStr}")
 
   handlers:
     commandSent: (command) ->
@@ -52,3 +51,6 @@ Ext.define "Muleview.controller.StatusBar",
 
     chartItemMouseOver: (item) ->
       @status @timeFormat(item.storeItem.get("timestamp"))
+
+    graphsCreated: ->
+      @updateLastRefresh()

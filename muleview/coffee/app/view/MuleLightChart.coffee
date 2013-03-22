@@ -21,7 +21,7 @@ Ext.define "Muleview.view.MuleLightChart",
     @tools = [
       type: "prev"
       handler: () =>
-        Muleview.event "graphRequest", null, @retention
+        Muleview.event "graphRequest", Muleview.currentKey, @retention
     ]
 
     @callParent()

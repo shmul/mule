@@ -3,3 +3,5 @@ all:
 
 coffee:
 	coffee -o ./ -cw coffee/
+
+.PHONY: coffee

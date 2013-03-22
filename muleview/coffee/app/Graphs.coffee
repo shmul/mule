@@ -2,9 +2,6 @@ Ext.define "Muleview.Graphs",
   singleton: true
 
   createGraphs: (newKey, callback)->
-    if newKey == Muleview.currentKey or not newKey
-      return callback()
-    Muleview.event "createGraphStart"
     @mainPanel = Ext.getCmp("mainPanel")
     @rightPanel = Ext.getCmp("rightPanel")
 
@@ -24,9 +21,9 @@ Ext.define "Muleview.Graphs",
       @mainPanel.add(ret.graph for _, ret of @retentions )
       @mainPanel.setLoading(false)
       @rightPanel.setLoading(false)
-      Muleview.event "createGraphEnd"
+      Muleview.event "graphsCreated"
       Muleview.currentKey = newKey
-      callback()
+      callback?()
 
   # Receives a retention name and the graph's alerts in Mule's raw format
   # Returns an array of the alerts with their metadata as predefined in Muleview.Settings.alerts

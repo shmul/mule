@@ -28,8 +28,8 @@ Ext.define "Muleview.controller.Viewport",
       "#mainPanel":
         tabchange: @onTabChange
       "#mainPanelRefresh":
-        click: ->
-          Muleview.Graphs.createGraphs()
+        click: =>
+          @refreshGraph()
 
       "#mainPanelMaximize":
         click: @togglePanels
@@ -47,8 +47,10 @@ Ext.define "Muleview.controller.Viewport",
 
     @getMainPanel().getEl().addListener("dblclick", @togglePanels, @)
     Muleview.Events.on
-      graphRequest: @openGraph
-      scope: @
+      graphRequest: (key, retention) =>
+        @openGraph key, retention
+      refreshRequest: =>
+        @refreshGraph()
 
   isMainPanelExpanded: ->
     @getLeftPanel().getCollapsed() and @getRightPanel().getCollapsed()
@@ -70,37 +72,47 @@ Ext.define "Muleview.controller.Viewport",
     @getMainPanelMaximize().setVisible(!expanded)
     @getMainPanelRestore().setVisible(expanded)
 
-  openGraph: (newKey, newRetention) ->
-    # load graphs and set correct Muleview.currentKey
-    Muleview.Graphs.createGraphs newKey, =>
-      Muleview.currentRetention = newRetention if newRetention
+  refreshGraph: ->
+    @openGraph Muleview.currentKey, Muleview.currentRetention, true
 
-      # Update titles:
-      document.title = "Mule - #{Muleview.currentKey}"
-      @getMainPanel().setTitle Muleview.currentKey.replace /\./g, " / "
+  openGraph: (newKey, newRetention, refresh) ->
+    if newKey != Muleview.currentKey or refresh
+      # If a different key is requested, create the new graphs:
+      Muleview.Graphs.createGraphs newKey, =>
+        @updateDisplay(newKey, newRetention)
+    else if newRetention != Muleview.currentRetention
+      # If only a new retention is requested, update the view accordingly:
+      @updateDisplay(newKey, newRetention)
 
-      # Select correct tab:
-      newTab = @getMainPanel().items.findBy (tab) ->
-        tab.retention == Muleview.currentRetention
-      newTab ||= @getMainPanel().items.first()
-      @getMainPanel().setActiveTab(newTab)
-      Muleview.currentRetention = newTab.retention
+  updateDisplay: (newKey, newRetention) ->
+    Muleview.currentKey = newKey
+    Muleview.currentRetention = newRetention
 
-      # Update right-panel's light charts:
-      @getRightPanel().items.each (lightGraph) ->
-        lightGraph.setVisible(Muleview.currentRetention != lightGraph.retention)
+    # Update titles:
+    document.title = "Mule - #{Muleview.currentKey}"
+    @getMainPanel().setTitle Muleview.currentKey.replace /\./g, " / "
 
-      # Update alerts editor:
-      @getAlertsEditor().load(
-        Muleview.currentKey,
-        Muleview.currentRetention,
-        Muleview.Graphs.retentions[Muleview.currentRetention]?.alerts); # TODO: refactor
+    # Select the specified or the first tab:
+    Muleview.currentRetention ||= @getMainPanel().items.first().retention
+    newTab = @getMainPanel().items.findBy (tab) ->
+      tab.retention == Muleview.currentRetention
+    @getMainPanel().setActiveTab(newTab)
 
-      # Update history:
-      Ext.History.add Muleview.currentKey + ";" + Muleview.currentRetention
+    # Update right-panel's light charts:
+    @getRightPanel().items.each (lightGraph) ->
+      lightGraph.setVisible(Muleview.currentRetention != lightGraph.retention)
 
-      # Update other components
-      Muleview.event "graphChanged", Muleview.currentKey, Muleview.currentRetention
+    # Update alerts editor:
+    @getAlertsEditor().load(
+      Muleview.currentKey,
+      Muleview.currentRetention,
+      Muleview.Graphs.retentions[Muleview.currentRetention]?.alerts); # TODO: refactor
+
+    # Update history:
+    Ext.History.add Muleview.currentKey + ";" + Muleview.currentRetention # TODO: refactor
+
+    # Update other components (i.e. keysTree's selection)
+    Muleview.event "graphChanged", Muleview.currentKey, Muleview.currentRetention
 
   onTabChange: (me, selectedTab)->
-    @openGraph null, selectedTab.retention
+    @openGraph Muleview.currentKey, selectedTab.retention
