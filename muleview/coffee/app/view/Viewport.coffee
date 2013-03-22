@@ -15,8 +15,9 @@ Ext.define "Muleview.view.Viewport",
           region: "center"
           id: "keysTree"
           displayField: "name"
-          useArrows: true
+          # useArrows: true
           rootVisible: false
+          lines: true
         ,
           xtype: "tabpanel"
           region: "south"

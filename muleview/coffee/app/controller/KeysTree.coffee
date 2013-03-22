@@ -24,7 +24,7 @@ Ext.define "Muleview.controller.KeysTree",
 
     @getTree().on
       selectionchange: @onSelectionChange
-      beforeitemexpand: @onItemExpand
+      itemexpand: @onItemExpand
       scope: @
 
     Muleview.Events.on
@@ -34,7 +34,20 @@ Ext.define "Muleview.controller.KeysTree",
     @fillFirstkeys()
 
   onItemExpand: (node) ->
-    @fetchKeys node.get("fullname")
+    # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
+    node.set("loading", true)
+    @fetchKeys node.get("fullname"), (keys) =>
+      # We would like to mark subkeys which we know for sure that they are leaves
+      # NOTE: We assume Mule returned at least 2 levels of keys!
+      for key in keys
+        record = @store.getById(key)
+        # Since at least 2 levels of keys were received, if a node in the first level has no children then it is definitely a leaf:
+        if record.parentNode == node and not record.firstChild
+          record.set("leaf", true)
+          record.set("loaded", true)
+      # Mark the original node as done loading:
+      node.set("loading", false)
+
 
   fillFirstkeys: ->
     # Add Root key:
@@ -46,8 +59,10 @@ Ext.define "Muleview.controller.KeysTree",
     # Ask Mule for the first keys
     @fetchKeys("")
 
-  fetchKeys: (parent) ->
-    Muleview.Mule.getSubKeys parent, 1, Ext.bind(@addKeys, @)
+  fetchKeys: (parent, callback) ->
+    Muleview.Mule.getSubKeys parent, 2, (keys) =>
+      @addKeys keys
+      callback?(keys)
 
   addKeys: (newKeys) ->
     @addKey(key) for key in newKeys
