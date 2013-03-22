@@ -11,18 +11,22 @@ It should immediately show the full path of the key, and then subsequently load 
 ** DONE Color pallete
 ** DONE Dymamic Tree improvements:
 *** DONE Show loading mask in node itself
+** TODO Clicking alerts focuses them on the editor
+** TODO Toggle Legend
+** TODO Color alert fieldLabels
+** TODO Configurable refresh
+** TODO Mule/Hinny picture
+** TODO Something nicer with the status bar
+
 ** TODO "This key has no graphs"
 Not sure this is a reasonable situation, though
 ** TODO Support for timestamp labels - Waiting for Mule API
-** TODO Color alert fieldLabels
-** TODO Clicking alerts focuses them on the editor
-** TODO Toggle Legend
-** TODO Configurable refresh
 ** TODO Something cooler with tooltips?
 ** TODO Theme
 *** DONE Favicon
 *** DONE Areas color pallete
 *** TODO Different color for topKey and areas
+*** TODO Less ugly keysTree icons
 ** TODO Long legends support?
 ** DONE Redesign display
  - [X] Only relevant small graphs
@@ -73,12 +77,16 @@ both in refresh button and alerts editor
 in favor of this.application.whatever
 ** TODO Fix rare tootip "surface" error davar
 ** Ideas:
-*** TODO Experiment with union-graph
+*** Experiment with union-graph
 One graph to rule them all ( all retentions )
-*** TODO Experiment with single graph component
+*** Experiment with single graph component
 the single graph component is a panel containing a chart and can have two viewing mode - big and light
 Think i'll pass this one
-*** TODO Experiment with docked buttons instead of a tab bar
-*** TODO Experiment with tree-grid
+*** Experiment with docked buttons instead of a tab bar
+*** Experiment with tree-grid
 Instead of having regular tree + tabs, use tree-grid, which will hold 3 (?) buttons for each node, button per graph/retention
-*** TODO Color tree keys according to what they appear in the legend
+*** Color tree keys according to what they appear in the legend
+*** Slideshow
+Add an option to save and manage a list of graphs and when played, switch between them with an interval
+*** Split Screen
+Add an option to see 4 or 9 graphs at the same time
