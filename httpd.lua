@@ -261,9 +261,14 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
                     --socket_:setoption ("linger", {on=true,timeout=7})
                     socket_:settimeout(0)
                     --socket_:setoption ("tcp-nodelay", true)
-                    local req,content = read_request(copas.wrap(socket_))
+                    local skt = copas.wrap(socket_)
+                    -- copas wrapping doesn't provide close, but ltn12 needs it.
+                    -- we add it and do nothing, letting copas do its thing
+                    -- or if it doesn't work we can call 'return socket_:close'
+                    skt.close = function() end
+                    local req,content = read_request(skt)
 
-                    send_response(send(socket_),send_file(socket_),
+                    send_response(send(skt),send_file(skt),
                                   req,content,with_mule_,backup_callback_,stop_cond_)
                   end)
   while not stop_cond_() do
