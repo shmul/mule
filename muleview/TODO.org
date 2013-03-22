@@ -1,5 +1,7 @@
 * Issues
-** TODO Graphs look awful in Firefox
+** DONE Graphs look awful in Firefox
+** TODO Fix statusbar auto fade
+it gets into "ready" even though still waiting for mule events
 * Features:
 ** DONE Fix Tooltip Errors somehow
 ** DONE Url Navigation:
@@ -7,8 +9,6 @@
 When entering Muleview with a graph url, the keys-tree doesn't update nicely.p
 It should immediately show the full path of the key, and then subsequently load the full tree up to the root
 ** DONE Color pallete
-** TODO Fix statusbar auto fade
-it gets into "ready" even though still waiting for mule events
 ** TODO Dymamic Tree improvements:
 *** TODO Show loading mask in node itself
 ** TODO "This key has no graphs"
@@ -21,6 +21,7 @@ Not sure this is a reasonable situation, though
 ** TODO Something cooler with tooltips?
 ** TODO Theme
 *** DONE Favicon
+*** DONE Areas color pallete
 ** TODO Long legends support?
 ** DONE Redesign display
  - [X] Only relevant small graphs

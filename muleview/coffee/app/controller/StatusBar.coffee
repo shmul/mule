@@ -18,6 +18,7 @@ Ext.define "Muleview.controller.StatusBar",
     @status
       iconCls: "x-status-busy"
       text: txt
+      clear: false
 
   success: (txt) ->
     @status
