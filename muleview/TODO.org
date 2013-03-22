@@ -1,6 +1,6 @@
 * Issues
 ** DONE Graphs look awful in Firefox
-** TODO Fix statusbar auto fade
+** DONE Fix statusbar auto fade
 it gets into "ready" even though still waiting for mule events
 * Features:
 ** DONE Fix Tooltip Errors somehow
@@ -22,6 +22,7 @@ Not sure this is a reasonable situation, though
 ** TODO Theme
 *** DONE Favicon
 *** DONE Areas color pallete
+*** TODO Different color for topKey and areas
 ** TODO Long legends support?
 ** DONE Redesign display
  - [X] Only relevant small graphs
