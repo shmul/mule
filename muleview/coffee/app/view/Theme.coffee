@@ -1,4 +1,4 @@
-Ext.define "Muleview.view.Theme"
+Ext.define "Muleview.view.Theme",
   alternateClassName: ["Ext.chart.theme.Muleview"]
   extend: "Ext.chart.theme.Base"
   constructor: (config) ->

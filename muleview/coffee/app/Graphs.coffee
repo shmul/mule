@@ -83,7 +83,7 @@ Ext.define "Muleview.Graphs",
     fields.push(name: "timestamp", type: "integer")
     fields.push {name: alert.name, type: "integer"} for alert in alerts if alerts
 
-    store = Ext.create "Ext.data.ArrayStore"
+    store = Ext.create "Ext.data.ArrayStore",
       fields: fields
       sorters: [
           property: "timestamp"
