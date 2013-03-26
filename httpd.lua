@@ -93,7 +93,7 @@ end
 
 local CORS = {{"Access-Control-Allow-Origin","*"},{"Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept"}}
 local function standard_response(status_,content_,extra_headers_)
-  local headers = {{"Connection","close"}}
+  local headers = {{"Connection","keep-alive"}}
   if extra_headers_ then
     concat_arrays(headers,extra_headers_)
   end
@@ -240,8 +240,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
                               socket.sink("close-when-done",socket_))
       end
 
-      local etag = adler32(os.capture('stat -F'..file))
-      --      print(etag,os.capture('stat -f "%d %i %p %N"'..file))
+      local etag = adler32(os.capture('ls -l '..file))
       if if_none_match and tonumber(if_none_match)==etag then
         return ltn12.pump.all(
           sr.string(standard_response(304)),
