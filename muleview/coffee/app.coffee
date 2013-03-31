@@ -1,5 +1,5 @@
 Ext.Loader.setPath("Muleview", "app")
-Ext.Loader.setPath("Ext.ux", "../ux/");
+Ext.Loader.setPath("Ext.ux", "ux");
 Ext.application
   name: "Muleview"
   requires: [
