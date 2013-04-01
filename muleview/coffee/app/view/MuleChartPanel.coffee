@@ -6,6 +6,7 @@ Ext.define "Muleview.view.MuleChartPanel",
     @chart = Ext.create "Muleview.view.MuleChart",
       showAreas: true
       keys: @keys
+      topKey: @topKey
       alerts: @alerts
       store: @store
     @items = [@chart]

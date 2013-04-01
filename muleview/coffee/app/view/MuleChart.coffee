@@ -19,14 +19,6 @@ Ext.define "Muleview.view.MuleChart",
     rotate:
       degrees: 315
 
-  # Find the topmost key in the given keys array
-  # The top key is the shortest of all (and should, btw, be the prefix of all, too)
-  findTopKey: (keys) ->
-    topKey = keys[0]
-    for key in keys
-      topKey = key if key.length < topKey.length
-    topKey
-
   tipsRenderer: (storeItem, item) ->
     me = item.series.chart
     key = item.storeField or me.topKey
@@ -53,7 +45,6 @@ Ext.define "Muleview.view.MuleChart",
     # keydata should be: [[count, batch, timestamp], [count, batch, timestamp]...]
 
     keys = @keys
-    @topKey = @findTopKey(keys)
 
     @axes = [
       {

@@ -38,8 +38,8 @@ Ext.define "Muleview.Graphs",
         # label: "Warning Low"
         # value: 10
    #  (...)
-  getAlerts: (retention, alertsHash) ->
-    graphName = Muleview.currentKey + ";" + retention
+  getAlerts: (topKey, retention, alertsHash) ->
+    graphName = topKey + ";" + retention
     ans = null
     raw = alertsHash?[graphName]
     if raw
@@ -50,19 +50,22 @@ Ext.define "Muleview.Graphs",
 
   createRetentionGraphs: (retName, retRawData, alertsHash) ->
     keys = Ext.Object.getKeys(retRawData)
-    alerts = @getAlerts(retName, alertsHash)
+    topKey = @findTopKey(keys)
+    alerts = @getAlerts(topKey, retName, alertsHash)
     store = @createStore(retRawData, keys, alerts)
 
     mainGraphPanel = Ext.create "Muleview.view.MuleChartPanel",
       title: @parseTitle(retName)
       retention: retName
       keys: keys
+      topKey: topKey
       alerts: alerts
       store: store
 
     lightGraph = Ext.create "Muleview.view.MuleLightChart",
       title: @parseTitle(retName)
       keys: keys
+      topKey: topKey
       hidden: true
       retention: retName
       store: store
@@ -72,6 +75,16 @@ Ext.define "Muleview.Graphs",
       lightGraph: lightGraph
       alerts: alerts
     }
+
+  # Find the topmost key in the given keys array
+  # The top key is the shortest of all (and should, btw, be the prefix of all, too)
+  findTopKey: (keys) ->
+    topKey = keys[0]
+    for key in keys
+      topKey = key if key.length < topKey.length
+    topKey
+
+
 
   # Creates a flat store from a hash of {
   #   key1 => [[cout, batch, timestamp], ...],
