@@ -130,7 +130,7 @@ Ext.define('Ext.ux.grid.filter.DateFilter', {
                                     select: me.onPickerSelect,
                                     scope: me
                                 }
-                            }),
+                            })
                         ]
                     }),
                     listeners: {
@@ -155,7 +155,7 @@ Ext.define('Ext.ux.grid.filter.DateFilter', {
         if (checked) {
             values[itemId] = picker.getValue();
         } else {
-            delete values[itemId]
+            delete values[itemId];
         }
         me.setActive(me.isActivatable());
         me.fireEvent('update', me);
