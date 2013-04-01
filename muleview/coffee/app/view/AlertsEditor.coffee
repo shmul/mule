@@ -108,7 +108,7 @@ Ext.define "Muleview.view.AlertsEditor",
       url: Muleview.Mule.getAlertCommandUrl(Muleview.currentKey, Muleview.currentRetention)
       method: method
       success: ->
-        Muleview.Graphs.createGraphs()
+        Muleview.event "refreshRequest"
       )
 
   doDelete: ->
