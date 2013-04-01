@@ -42,6 +42,7 @@ this file in most cases.
                 }
             }
         </script>
+
     </target>
     <target name="-after-init-local"/>
     <target name="init-local"
@@ -74,54 +75,14 @@ this file in most cases.
     <target name="-init">
         <taskdef resource="com/sencha/ant/antlib.xml" classpath="${cmd.dir}/sencha.jar"/>
         <x-sencha-init prefix=""/>
-        
-        <!-- default the build environment to production if it is unset by this point -->
-        <property name="args.environment" value="production"/>
-        <property name="app.build.dir" location="${workspace.build.dir}/${app.name}"/>
-    
-        <!-- initialize the build.dir property from the workspace config after we've loaded it -->
-        <property name="build.dir" location="${app.build.dir}/${args.environment}"/>
-        
-        <property name="build.compression.production" value="-yui"/>
-        <property name="build.compression.testing" value=""/>
-        
-        <!--
-            These properties can be modified to change general build options
-            such as excluding files from the set.  The format expects newlines
-            for each argument, for example:
-            
-            build.operations.production=exclude\n \
-                                        -namespace\n \
-                                        Ext
-        -->
-        <property name="build.operations.production" value=""/>
-        <property name="build.operations.testing" value=""/>
-        
-        <property name="build.options.production" value="-debug=false"/>
-        <property name="build.options.testing" value=""/>
-        
-        <!--
-            This property can be modified to change the input and output page file 
-            used in the compile command. (eg: index.aspx, index.jsp ... )
-        -->
-        <property name="app.page.name" value="index.html"/>
-        
-        <!-- Specify the input page file -->
-        <property name="app.page.file" location="${app.dir}/${app.page.name}"/>
-        
-        <!-- Specify the output page file -->
-        <property name="build.page.file" location="${build.dir}/${app.page.name}"/>
-        
-        <!-- Specify the output js file -->
-        <property name="build.classes.name" value="all-classes.js"/>
-        <property name="build.classes.file" location="${build.dir}/${build.classes.name}"/>
-        
-        <!-- init environment -->
-        <property name="args.environment" value="production"/>
-        
+        <property file="${app.config.dir}/build.properties"/>
+
         <if>
             <equals arg1="${args.environment}" arg2="production"/>
             <then>
+                <property name="build.css.compress" value="${build.css.compress.production}"/>
+                <property name="build.css.preprocess" value="${build.css.preprocess.production}"/>
+                <property name="build.css.preprocessor.opts" value="${build.css.preprocessor.opts.production}"/>
                 <property name="build.compression" value="${build.compression.production}"/>
                 <property name="build.operations" value="${build.operations.production}"/>
                 <property name="build.options" value="${build.options.production}"/>
@@ -130,6 +91,9 @@ this file in most cases.
                 <if>
                     <equals arg1="${args.environment}" arg2="testing"/>
                     <then>
+                        <property name="build.css.compress" value="${build.css.compress.testing}"/>
+                        <property name="build.css.preprocess" value="${build.css.preprocess.testing}"/>
+                        <property name="build.css.preprocessor.opts" value="${build.css.preprocessor.opts.testing}"/>
                         <property name="build.compression" value="${build.compression.testing}"/>
                         <property name="build.operations" value="${build.operations.testing}"/>
                         <property name="build.options" value="${build.options.testing}"/>
@@ -140,39 +104,108 @@ this file in most cases.
                 </if>
             </else>
         </if>
-        
-        <!-- Specify the name for the individual resource dirs in the app -->
-        <property name="app.sass.name" value="sass"/>
-        <property name="app.css.name" value="css"/>
-        <property name="app.theme.name" value="theme"/>
-        <property name="app.img.name" value="images"/>
-        
-        <!-- Specify the resources path in the app -->
-        <property name="app.packages.dir" location="${app.dir}/packages"/>
-        
-        <!-- Specify the theme path in the app -->
-        <property name="app.theme.dir" location="${app.packages.dir}"/>
-        
-        <!-- Specify the sass path in the app -->
-        <property name="app.sass.dir" location="${app.theme.dir}/${theme.name}/${app.sass.name}"/>
-        
-        <!-- Specify the resources path in the build -->
-        <property name="build.resources.dir" location="${build.dir}/resources"/>
-        
-        <!-- Specify the files to exclude when copying resources to the build -->
-        <property name="build.resources.exclude" 
-                  value="${app.theme.name}/**/*"/>
-       
-        <!-- Specify the resources path in the app -->
-        <property name="build.images.dir" location="${build.resources.dir}/images"/>
-        
-        <!-- Specify the sass path in the build -->
-        <property name="build.css.dir" location="${build.resources.dir}/${app.sass.name}"/>
-        
-        <!-- The entry point for the theme command -->
-        <property name="theme.page.name" value="theme.html"/>
-        
-        <property name="enable.theme.slicer" value="true"/>
+
+        <property name="bootstrap.example.js" value="${app.example.dir}/bootstrap.js"/>
+        <property name="bootstrap.base.path" value="${app.example.dir}"/>
+        <x-normalize-path path="${build.dir}/resources" property="image.search.path"/>
+                        
+        <if>
+            <isset property="app.theme"/>
+            <then>
+                <property name="build.theme.commands">
+                    and
+                    union
+                        -not
+                        -tag=core
+                    and
+                    metadata
+                        +append
+                        --base-path=${bootstrap.base.path}
+                        +loader-paths
+                        -jsonp=Ext.Loader.addClassPathMappings
+                        -out=${bootstrap.example.js}
+                    and
+                    exclude
+                        -tag=framework
+                    and
+                    include
+                        -namespace=Ext.ux
+                    and
+                    metadata
+                        --base-path=${bootstrap.base.path}
+                        +alternates
+                        +append
+                        -out=${bootstrap.example.js}
+                    and
+                    metadata
+                        --base-path=${bootstrap.base.path}
+                        +alias
+                        +append
+                        -out=${bootstrap.example.js}
+                    and
+                    union
+                        -tag=packageOverrides
+                    and
+                    metadata
+                        --base-path=${bootstrap.base.path}
+                        +append
+                        +filenames
+                        -tpl=Ext.Loader.loadScript("{0}");
+                        -out=${bootstrap.example.js}
+
+                # sass
+
+                    and
+                    restore
+                        page
+                    and
+                    #only set variables for used classes eg. $include-class-name
+                    sass
+                        +class-name-vars
+                        -variable=$image-search-path:'${image.search.path}'
+                        -variable=$theme-name: '${app.theme}' !default
+                        -output=${app.out.scss}
+                    and
+                    include
+                        -all
+                    and
+                    sass
+                        +class-name-vars
+                        +etc
+                        +vars
+                        +rules
+                        -variable=$image-search-path:'${image.search.path}'
+                        -variable=$theme-name: '${app.theme}' !default
+                        -output=${app.example.scss}
+                    and
+                    # include etc and vars from all classes
+                    sass
+                        +etc
+                        +vars
+                        +append
+                        -output=${app.out.scss}
+                    and
+                    restore
+                        page
+                    and
+                    #only include rules from used classes
+                    sass
+                        +rules
+                        +append
+                        -output=${app.out.scss}
+                    and
+                    sass
+                        +ruby
+                        -output=${app.out.ruby}                
+                </property>
+            </then>
+            <else>
+                <property name="build.theme.commands" value=""/>
+                <property name="skip.sass" value="true"/>
+                <property name="skip.slice" value="true"/>
+            </else>
+        </if>
+
         
         <!-- Some operations require sencha.jar in the Ant classpath -->
         <x-extend-classpath>
@@ -180,7 +213,7 @@ this file in most cases.
         </x-extend-classpath>
         
         <x-verify-app-cmd-ver/>
-        
+       
     </target>
     <target name="-after-init"/>
     <target name="init"
@@ -198,150 +231,75 @@ this file in most cases.
             depends="init,-before-clean,-clean,-after-clean"
             description="Removes all build output produced by the 'build' target"/>
 
-    
-    <macrodef name="x-build-sass">
-        <attribute name="theme"/>
-        <sequential>
-            <local name="sass.name"/>
-            <local name="use.shell"/>
-
-            <!--
-            convert abspath to just the leaf path name
-            -->
-            <basename property="sass.name" file="@{theme}"/>
-            <local name="sass.base.name"/>
-            <property name="sass.base.name" value="${sass.name}"/>
-
-            <!--
-            compile to both the workspace (for theme build)
-            and build directory (for deployment)
-            -->
-            <condition property="use.shell" value="true">
-                <os family="unix"/>
-            </condition>
-
-            <x-compass-compile 
-                boring="true" 
-                force="true" 
-                trace="true" 
-                dir="@{theme}/sass"/>
-
-            <x-compress-css srcfile="${app.dir}/resources/${sass.base.name}/*.css"
-                            outdir="${app.dir}/resources/${sass.base.name}"/>
-        </sequential>
-    </macrodef>
-    
-    <macrodef name="x-build-theme">
-        <attribute name="theme" description="the path of the theme folder"/>
-        <attribute name="buildsass" default="false"/>
-        <attribute name="basetheme" default="default"/>
-        <sequential>
-            <local name="theme.name"/>
-
-            <local name="framework.theme.dir"/>
-            <local name="tmp.theme.dir"/>
-            <local name="tmp.img.dir"/>
-
-            <basename property="theme.name" file="@{theme}"/>
-            <local name="theme.base.name"/>
-            <property name="theme.base.name" value="${theme.name}"/>
-            
-            <property name="tmp.res.dir" value="${app.dir}/resources"/>
-            <property name="tmp.theme.dir" value="${tmp.res.dir}/${theme.base.name}"/>
-            <property name="tmp.img.dir" value="${tmp.theme.dir}/images"/>
-
-            <property name="app.res.dir" location="${app.dir}/packages"/>
-            <property name="app.img.dir" location="${app.res.dir}/images"/>
-
-            <property name="framework.res.dir" location="${framework.dir}/resources"/>
-            <property name="framework.img.dir" location="${framework.res.dir}/themes/images"/>
-            <property name="framework.theme.dir" location="${framework.img.dir}/@{basetheme}"/>
-
-
-            <echo>Copying base framework images from ${framework.theme.dir} to ${tmp.img.dir}</echo>
-            <copy todir="${tmp.img.dir}">
-                <fileset dir="${framework.theme.dir}" includes="**/*"/>
-            </copy>
-
-            <if>
-                <equals arg1="@{buildsass}" arg2="true"/>
-                <then>
-                    <echo>Building sass for theme ${theme.name}</echo>
-                    <x-build-sass theme="@{theme}"/>
-                </then>
-            </if>
-
-            <echo>Slicing images for theme ${theme.name} to ${tmp.img.dir}</echo>
-            <if>
-                <equals arg1="${enable.theme.slicer}" arg2="true"/>
-                <then>
-                    <x-sencha-command>
-                        theme
-                        build
-                        -data-file=${build.dir}/theme-capture.json
-                        -image-file=${build.dir}/theme-capture.png
-                        -page=@{theme}/${theme.page.name}
-                        -out=${tmp.img.dir}
-                    </x-sencha-command>
-                </then>
-                <else>
-                    <echo>
-                        Theme slicing for extjs 4.1.x applications is currently unsupported. 
-                        Skipping theme slice.
-                    </echo>
-                </else>
-            </if>
-
-            <if>
-                <available file="@{theme}/images"/>
-                <then>
-                    <echo>Copying user defined images from @{theme}/images to ${tmp.img.dir}</echo>
-                    <copy todir="${tmp.img.dir}">
-                        <fileset dir="@{theme}/images" includes="**/*"/>
-                    </copy>
-                </then>
-            </if>
-
-        </sequential>
-    </macrodef>
-    
-    <macrodef name="x-copy-resources">
-        <sequential>
-            <copy todir="${build.dir}/resources" includeEmptyDirs="false">
-                <fileset dir="${app.dir}/resources" 
-                         includes="**/*"/>
-            </copy>
-
-            <x-script-def name="x-get-rel-path" language="javascript">
-                importPackage(com.sencha.util);
-                var fwPath = project.getProperty("framework.dir"),
-                    appPath = project.getProperty("app.dir");
-
-                project.setProperty(
-                    'framework.rel.path', 
-                    PathUtil.getRelativePath(appPath, fwPath));
-            </x-script-def>
-            <x-get-rel-path/>
-            
-            <copy toDir="${build.dir}/${framework.rel.path}">
-                <fileset dir="${framework.dir}" 
-                         includes="src/ux/**/css/**/*"/>
-            </copy>
-        </sequential>
-    </macrodef>
-    
     <!--
     Build SASS
     -->
     <target name="-before-sass"/>
     <target name="-sass">
-        <!-- run sass compilation over the various themes -->
-        <for param="sass">
-            <dirset dir="${app.theme.dir}" includes="*"/>
-            <sequential>
-                <x-build-sass theme="@{sass}"/>
-            </sequential>
-        </for>
+        <x-compass-compile
+            dir="${build.dir}"
+            trace="true"
+            boring="true"
+            force="true"
+            sassdir="${compass.sass.dir}"
+            cssdir="${compass.css.dir}"
+            config="${compass.config.file}"/>
+
+        <if>
+            <equals arg1="true" arg2="${build.css.preprocess}"/>
+            <then>
+                <x-css-preprocess 
+                    file="${app.out.css}" 
+                    tofile="${app.out.css}" 
+                    options="${build.css.preprocessor.opts}"/>
+            </then>
+        </if>
+
+        <if>
+            <equals arg1="true" arg2="${build.css.compress}"/>
+            <then>
+                <echo>Compressing ${app.out.css} to ${app.out.css.compressed}</echo>
+                <x-compress-css srcfile="${app.out.css}"
+                                outfile="${app.out.css.compressed}"/>
+            </then>
+        </if>
+       
+        <!--
+        app.out.css.path is relative to the app output index.html file
+        -->
+        <x-get-relative-path
+            from="${app.dir}"
+            to="${app.out.css}"
+            property="app.out.css.path"
+            />
+
+        <x-get-relative-path
+            from="${app.example.dir}"
+            to="${app.example.css}"
+            property="app.example.css.path"
+            />
+        
+<!--update the application's bootstrap.css file to point to the build output-->
+<echo file="${app.dir}/bootstrap.css">
+/**
+ * This file is generated by Sencha Cmd and should NOT be edited.  It will
+ * redirect to the most recently built css file for the application to
+ * support development time inspection of css output.
+ */
+@import '${app.out.css.path}';
+</echo>
+
+<!--update the app's example to point to the build output-->
+<echo file="${app.example.dir}/example.css">
+/**
+ * This file is generated by Sencha Cmd and should NOT be edited.  It will
+ * redirect to the most recently built example css file for the application to
+ * support capture of theme background, frame, and corner images for non-CSS3 
+ * browsers.
+ */
+@import '${app.example.css.path}';
+</echo>
+                
     </target>
     <target name="-after-sass"/>
     <target name="sass" depends="init" unless="skip.sass"
@@ -352,40 +310,143 @@ this file in most cases.
     </target>
 
     <!--
-    Build Themes
+    Inherit Resources
     -->
-    <target name="-before-theme"/>
-    <target name="-theme">
-        <!-- slice the themes for the various images -->
-        <for param="theme">
-            <dirset dir="${app.theme.dir}" includes="*"/>
-            <sequential>
-                <x-build-theme theme="@{theme}"/>
-            </sequential>
-        </for>
-        <x-copy-resources/>
-    </target>
-    <target name="-after-theme"/>
-    <target name="theme" depends="init" unless="skip.theme"
-            description="Builds only the application's Theme(s)">
-        <antcall target="-before-theme"/>
-        <antcall target="-theme"/>
-        <antcall target="-after-theme"/>
-    </target>
+    <target name="-before-inherit-resources"/>
+    <target name="-after-inherit-resources"/>
+    <target name="inherit-resources" depends="init"
+            description="Performs the resource folder inheritance from base theme(s)">
+        <antcall target="-before-inherit-resources"/>
 
+        <if>
+            <isset property="theme.base.names"/>
+            <then>
+                <for list="${theme.base.names}" param="base">
+                    <sequential>
+                        <echo>Merging resources from base package @{base}</echo>
+                        <local name="base.path"/>
+                        <local name="base.resource.path"/>
+                        <property name="base.path" location="${workspace.packages.dir}/@{base}"/>
+                        <property name="base.resource.path" location="${base.path}/resources"/>
+                        
+                        <if>
+                            <available file="${base.resource.path}" type="dir" />
+                            <then>
+                                <copy todir="${build.dir}/resources/" overwrite="true">
+                                    <fileset 
+                                        dir="${base.resource.path}" 
+                                        includes="**/*"
+                                        excludes="@{base}-all*.css"/>
+                                </copy>
+                            </then>
+                        </if>
+                    </sequential>
+                </for>
+            </then>
+        </if>
+
+        <if>
+            <isset property="app.requires.names"/>
+            <then>
+                <for list="${app.requires.names}" param="base">
+                    <sequential>
+                        <echo>Copying resources from required package @{base}</echo>
+                        <local name="base.path"/>
+                        <local name="base.resource.path"/>
+                        <property name="base.path" location="${workspace.packages.dir}/@{base}"/>
+                        <property name="base.resource.path" location="${base.path}/resources"/>
+                        
+                        <if>
+                            <available file="${base.resource.path}" type="dir" />
+                            <then>
+                                <copy todir="${build.dir}/resources/@{base}" overwrite="true">
+                                    <fileset 
+                                        dir="${base.resource.path}" 
+                                        includes="**/*"
+                                        excludes="@{base}-all*.css"/>
+                                </copy>
+                            </then>
+                        </if>
+                    </sequential>
+                </for>
+            </then>
+        </if>
+
+        <antcall target="-after-inherit-resources"/>
+    </target>
+    
+    <!--
+    Slice
+    -->
+    <target name="-before-slice"/>
+    <target name="-after-slice"/>
+    <target name="slice" depends="init" unless="skip.slice"
+            description="Slices CSS3 theme to produce non-CSS3 images and sprites">
+        <antcall target="-before-slice"/>
+
+        <echo>Capture theme image to ${build.dir}/theme-capture.png</echo>
+        <x-sencha-command>
+            theme
+                capture
+                    -page=${app.example.dir}/theme.html
+                    -image=${build.dir}/theme-capture.png
+                    -manifest=${build.dir}/theme-capture.json
+        </x-sencha-command>
+
+        <echo>Slicing theme images to ${build.resources.dir}</echo>
+        <x-sencha-command>
+            fs
+                slice
+                    ${build.slice.options}
+                    -image=${build.dir}/theme-capture.png
+                    -manifest=${build.dir}/theme-capture.json
+                    -out=${build.resources.dir}
+        </x-sencha-command>
+
+        <antcall target="-after-slice"/>
+    </target>
+    
+    <!--
+    Copy Resources
+    -->
+    <target name="-before-copy-resources"/>
+    <target name="-after-copy-resources"/>
+    <target name="copy-resources" depends="init" unless="skip.slice"
+            description="Copy theme resources to folder">
+        <antcall target="-before-copy-resources"/>
+
+        <if>
+            <available file="${build.dir}/resources"/>
+            <then>
+                <copy todir="${build.dir}/resources" overwrite="true">
+                    <fileset 
+                        dir="${app.dir}/resources" 
+                        includes="**/*" 
+                        excludes="**/Readme.md"/>
+                </copy>
+            </then>
+        </if>
+        
+        <antcall target="-after-copy-resources"/>
+    </target>
+    
     <!--
     Refresh Individual Theme
     -->
     <target name="-before-refresh-theme"/>
     <target name="-refresh-theme">
-        <local name="theme.dir"/>
-        <property name="theme.dir" location="${app.theme.dir}/${args.themeName}"/>
-        <x-build-theme theme="${theme.dir}" buildsass="true"/>
-        <x-copy-resources/>
+        <echo>Executing 'sencha package build' for theme package ${args.themeName}</echo>
+        <x-sencha-command 
+            dir="${workspace.packages.dir}/${args.themeName}"
+            inheritAll="false">
+            <property name="cmd.dir" value="${cmd.dir}"/>
+            package
+            build
+        </x-sencha-command>
     </target>
     <target name="-after-refresh-theme"/>
     <target name="refresh-theme" depends="init" unless="skip.theme"
-            description="Builds only the application's Theme(s)">
+            description="Executes 'sencha package build' for the specified theme package name">
         <antcall target="-before-refresh-theme"/>
         <antcall target="-refresh-theme"/>
         <antcall target="-after-refresh-theme"/>
@@ -397,24 +458,44 @@ this file in most cases.
     <target name="-before-page"/>
     <target name="-page">
         
-        <!-- compile the page -->
-        <x-sencha-command>
+<echo file="${bootstrap.example.js}">
+/**
+ * This file is generated by Sencha Cmd and should NOT be edited.  It is 
+ * provided to support globbing requires, custom xtypes, and other 
+ * metadata-driven class system features 
+ */
+</echo>
+        <!--run compile command to generate concatenated output files for js and scss-->
+        <x-sencha-command dir="${app.dir}">
+            #base build command
+            
             compile
                 ${build.options}
                 page
-                    -name=page
+                    -name=full-page
                     -in=${app.page.file}
                     -out=${build.page.file}
                     -classes=${build.classes.name}
+                    -stylesheet=${app.out.css.rel}
                 and
                 restore
-                    page
+                    full-page     
                 and
                 ${build.operations}
+                and
+                save
+                    page
+            
+            #page command
+                
                 and
                 concat
                     ${build.compression}
                     -out=${build.classes.file}
+
+            # bootstrap
+             ${build.theme.commands}
+            
         </x-sencha-command>
     </target>
     <target name="-after-page"/>
@@ -425,11 +506,12 @@ this file in most cases.
         <antcall target="-after-page"/>
     </target>
 
+
     <!--
     Build
     -->
     <target name="-before-build"/>
-    <target name="-build" depends="sass,theme,page"/>
+    <target name="-build" depends="page,inherit-resources,copy-resources,sass,slice"/>
     <target name="-after-build"/>
     <target name="build"
             depends="init,-before-build,-build,-after-build"

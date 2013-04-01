@@ -3,6 +3,7 @@
 ** DONE Fix statusbar auto fade
 it gets into "ready" even though still waiting for mule events
 ** DONE Coffee 1.6 compatibility
+** TODO Refresh timer not reset by reloading graph
 * Features:
 ** DONE Fix Tooltip Errors somehow
 ** DONE Url Navigation:
@@ -65,7 +66,7 @@ aka "Add alerts" button
 ** TODO Try to implement onhashchange event myself
 This is related to histoy controller
 ** TODO Generate big chart only on demand
-** TODO Upgrade to Extjs 4.2
+** DONE Upgrade to Extjs 4.2
 ** TODO Smooth refresh
 Refrehs instead of completely destroy and recreated all graphs - ask for updated data and when received, replace existing.
 both in refresh button and alerts editor

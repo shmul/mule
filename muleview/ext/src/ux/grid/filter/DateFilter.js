@@ -1,29 +1,27 @@
 /**
- * @class Ext.ux.grid.filter.DateFilter
- * @extends Ext.ux.grid.filter.Filter
  * Filter by a configurable Ext.picker.DatePicker menu
- * <p><b><u>Example Usage:</u></b></p>
- * <pre><code>
-var filters = Ext.create('Ext.ux.grid.GridFilters', {
-    ...
-    filters: [{
-        // required configs
-        type: 'date',
-        dataIndex: 'dateAdded',
-
-        // optional configs
-        dateFormat: 'm/d/Y',  // default
-        beforeText: 'Before', // default
-        afterText: 'After',   // default
-        onText: 'On',         // default
-        pickerOpts: {
-            // any DatePicker configs
-        },
-
-        active: true // default is false
-    }]
-});
- * </code></pre>
+ *
+ * Example Usage:
+ *
+ *     var filters = Ext.create('Ext.ux.grid.GridFilters', {
+ *         ...
+ *         filters: [{
+ *             // required configs
+ *             type: 'date',
+ *             dataIndex: 'dateAdded',
+ *      
+ *             // optional configs
+ *             dateFormat: 'm/d/Y',  // default
+ *             beforeText: 'Before', // default
+ *             afterText: 'After',   // default
+ *             onText: 'On',         // default
+ *             pickerOpts: {
+ *                 // any DatePicker configs
+ *             },
+ *      
+ *             active: true // default is false
+ *         }]
+ *     });
  */
 Ext.define('Ext.ux.grid.filter.DateFilter', {
     extend: 'Ext.ux.grid.filter.Filter',
@@ -123,6 +121,7 @@ Ext.define('Ext.ux.grid.filter.DateFilter', {
                     itemId: 'range-' + item,
                     text: me[item + 'Text'],
                     menu: Ext.create('Ext.menu.Menu', {
+                        plain: true,
                         items: [
                             Ext.apply(pickerCfg, {
                                 itemId: item,
@@ -155,7 +154,7 @@ Ext.define('Ext.ux.grid.filter.DateFilter', {
         if (checked) {
             values[itemId] = picker.getValue();
         } else {
-            delete values[itemId];
+            delete values[itemId]
         }
         me.setActive(me.isActivatable());
         me.fireEvent('update', me);
@@ -238,7 +237,6 @@ Ext.define('Ext.ux.grid.filter.DateFilter', {
     },
 
     /**
-     * @private
      * Template method that is to return <tt>true</tt> if the filter
      * has enough configuration information to be activated.
      * @return {Boolean}

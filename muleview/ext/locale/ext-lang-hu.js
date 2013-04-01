@@ -1,4 +1,23 @@
-﻿
+/*
+This file is part of Ext JS 4.2
+
+Copyright (c) 2011-2013 Sencha Inc
+
+Contact:  http://www.sencha.com/contact
+
+GNU General Public License Usage
+This file may be used under the terms of the GNU General Public License version 3.0 as
+published by the Free Software Foundation and appearing in the file LICENSE included in the
+packaging of this file.
+
+Please review the following information to ensure the GNU General Public License version 3.0
+requirements will be met: http://www.gnu.org/copyleft/gpl.html.
+
+If you are unsure which license is appropriate for your use, please contact the sales department
+at http://www.sencha.com/contact.
+
+Build date: 2013-03-11 22:33:40 (aed16176e68b5e8aa1433452b12805c0ad913836)
+*/
 /**
  * List compiled by mystix on the extjs.com forums.
  * Thank you Mystix!
@@ -14,32 +33,6 @@ Ext.onReady(function() {
     if (Ext.Updater) {
         Ext.Updater.defaults.indicatorText = '<div class="loading-indicator">Betöltés...</div>';
     }
-
-    Ext.define("Ext.locale.hu.view.View", {
-        override: "Ext.view.View",
-        emptyText: ""
-    });
-
-    Ext.define("Ext.locale.hu.grid.Panel", {
-        override: "Ext.grid.Panel",
-        ddText: "{0} kiválasztott sor"
-    });
-
-    Ext.define("Ext.locale.hu.TabPanelItem", {
-        override: "Ext.TabPanelItem",
-        closeText: "Fül bezárása"
-    });
-
-    Ext.define("Ext.locale.hu.form.field.Base", {
-        override: "Ext.form.field.Base",
-        invalidText: "Hibás érték!"
-    });
-
-    // changing the msg text below will affect the LoadMask
-    Ext.define("Ext.locale.hu.view.AbstractView", {
-        override: "Ext.view.AbstractView",
-        msg: "Betöltés..."
-    });
 
     if (Ext.Date) {
         Ext.Date.monthNames = ["Január", "Február", "Március", "Április", "Május", "Június", "Július", "Augusztus", "Szeptember", "Október", "November", "December"];
@@ -93,78 +86,6 @@ Ext.onReady(function() {
         });
     }
 
-    Ext.define("Ext.locale.hu.picker.Date", {
-        override: "Ext.picker.Date",
-        todayText: "Mai nap",
-        minText: "A dátum korábbi a megengedettnél",
-        maxText: "A dátum későbbi a megengedettnél",
-        disabledDaysText: "",
-        disabledDatesText: "",
-        monthNames: Ext.Date.monthNames,
-        dayNames: Ext.Date.dayNames,
-        nextText: 'Köv. hónap (CTRL+Jobbra)',
-        prevText: 'Előző hónap (CTRL+Balra)',
-        monthYearText: 'Válassz hónapot (Évválasztás: CTRL+Fel/Le)',
-        todayTip: "{0} (Szóköz)",
-        format: "y-m-d",
-        startDay: 0
-    });
-
-    Ext.define("Ext.locale.hu.picker.Month", {
-        override: "Ext.picker.Month",
-        okText: "&#160;OK&#160;",
-        cancelText: "Mégsem"
-    });
-
-    Ext.define("Ext.locale.hu.toolbar.Paging", {
-        override: "Ext.PagingToolbar",
-        beforePageText: "Oldal",
-        afterPageText: "a {0}-ból/ből",
-        firstText: "Első oldal",
-        prevText: "Előző oldal",
-        nextText: "Következő oldal",
-        lastText: "Utolsó oldal",
-        refreshText: "Frissítés",
-        displayMsg: "{0} - {1} sorok láthatók a {2}-ból/ből",
-        emptyMsg: 'Nincs megjeleníthető adat'
-    });
-
-    Ext.define("Ext.locale.hu.form.field.Text", {
-        override: "Ext.form.field.Text",
-        minLengthText: "A mező tartalma legalább {0} hosszú kell legyen",
-        maxLengthText: "A mező tartalma legfeljebb {0} hosszú lehet",
-        blankText: "Kötelezően kitöltendő mező",
-        regexText: "",
-        emptyText: null
-    });
-
-    Ext.define("Ext.locale.hu.form.field.Number", {
-        override: "Ext.form.field.Number",
-        minText: "A mező tartalma nem lehet kissebb, mint {0}",
-        maxText: "A mező tartalma nem lehet nagyobb, mint {0}",
-        nanText: "{0} nem szám"
-    });
-
-    Ext.define("Ext.locale.hu.form.field.Date", {
-        override: "Ext.form.field.Date",
-        disabledDaysText: "Nem választható",
-        disabledDatesText: "Nem választható",
-        minText: "A dátum nem lehet korábbi, mint {0}",
-        maxText: "A dátum nem lehet későbbi, mint {0}",
-        invalidText: "{0} nem megfelelő dátum - a helyes formátum: {1}",
-        format: "Y m d",
-        altFormats: "Y-m-d|y-m-d|y/m/d|m/d|m-d|md|ymd|Ymd|d"
-    });
-
-    Ext.define("Ext.locale.hu.form.field.ComboBox", {
-        override: "Ext.form.field.ComboBox",
-        valueNotFoundText: undefined
-    }, function() {
-        Ext.apply(Ext.form.field.ComboBox.prototype.defaultListConfig, {
-            loadingText: "Betöltés..."
-        });
-    });
-
     if (exists('Ext.form.field.VTypes')) {
         Ext.apply(Ext.form.field.VTypes, {
             emailText: 'A mező email címet tartalmazhat, melynek formátuma "felhasználó@szolgáltató.hu"',
@@ -173,108 +94,211 @@ Ext.onReady(function() {
             alphanumText: 'A mező csak betűket, számokat és aláhúzást (_) tartalmazhat'
         });
     }
-
-    Ext.define("Ext.locale.hu.form.field.HtmlEditor", {
-        override: "Ext.form.field.HtmlEditor",
-        createLinkText: 'Add meg a webcímet:'
-    }, function() {
-        Ext.apply(Ext.form.field.HtmlEditor.prototype, {
-            buttonTips: {
-                bold: {
-                    title: 'Félkövér (Ctrl+B)',
-                    text: 'Félkövérré teszi a kijelölt szöveget.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                italic: {
-                    title: 'Dőlt (Ctrl+I)',
-                    text: 'Dőlté teszi a kijelölt szöveget.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                underline: {
-                    title: 'Aláhúzás (Ctrl+U)',
-                    text: 'Aláhúzza a kijelölt szöveget.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                increasefontsize: {
-                    title: 'Szöveg nagyítás',
-                    text: 'Növeli a szövegméretet.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                decreasefontsize: {
-                    title: 'Szöveg kicsinyítés',
-                    text: 'Csökkenti a szövegméretet.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                backcolor: {
-                    title: 'Háttérszín',
-                    text: 'A kijelölt szöveg háttérszínét módosítja.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                forecolor: {
-                    title: 'Szövegszín',
-                    text: 'A kijelölt szöveg színét módosítja.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                justifyleft: {
-                    title: 'Balra zárt',
-                    text: 'Balra zárja a szöveget.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                justifycenter: {
-                    title: 'Középre zárt',
-                    text: 'Középre zárja a szöveget.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                justifyright: {
-                    title: 'Jobbra zárt',
-                    text: 'Jobbra zárja a szöveget.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                insertunorderedlist: {
-                    title: 'Felsorolás',
-                    text: 'Felsorolást kezd.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                insertorderedlist: {
-                    title: 'Számozás',
-                    text: 'Számozott listát kezd.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                createlink: {
-                    title: 'Hiperlink',
-                    text: 'A kijelölt szöveget linkké teszi.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                },
-                sourceedit: {
-                    title: 'Forrás nézet',
-                    text: 'Forrás nézetbe kapcsol.',
-                    cls: Ext.baseCSSPrefix + 'html-editor-tip'
-                }
-            }
-        });
-    });
-
-    Ext.define("Ext.locale.hu.grid.header.Container", {
-        override: "Ext.grid.header.Container",
-        sortAscText: "Növekvő rendezés",
-        sortDescText: "Csökkenő rendezés",
-        lockText: "Oszlop zárolás",
-        unlockText: "Oszlop feloldás",
-        columnsText: "Oszlopok"
-    });
-
-    Ext.define("Ext.locale.hu.grid.GroupingFeature", {
-        override: "Ext.grid.GroupingFeature",
-        emptyGroupText: '(Nincs)',
-        groupByText: 'Oszlop szerint csoportosítás',
-        showGroupsText: 'Csoportos nézet'
-    });
-
-    Ext.define("Ext.locale.hu.grid.PropertyColumnModel", {
-        override: "Ext.grid.PropertyColumnModel",
-        nameText: "Név",
-        valueText: "Érték",
-        dateFormat: "Y m j"
-    });
-
 });
+
+Ext.define("Ext.locale.hu.view.View", {
+    override: "Ext.view.View",
+    emptyText: ""
+});
+
+Ext.define("Ext.locale.hu.grid.plugin.DragDrop", {
+    override: "Ext.grid.plugin.DragDrop",
+    dragText: "{0} kiválasztott sor"
+});
+
+Ext.define("Ext.locale.hu.TabPanelItem", {
+    override: "Ext.TabPanelItem",
+    closeText: "Fül bezárása"
+});
+
+Ext.define("Ext.locale.hu.form.field.Base", {
+    override: "Ext.form.field.Base",
+    invalidText: "Hibás érték!"
+});
+
+// changing the msg text below will affect the LoadMask
+Ext.define("Ext.locale.hu.view.AbstractView", {
+    override: "Ext.view.AbstractView",
+    msg: "Betöltés..."
+});
+
+Ext.define("Ext.locale.hu.picker.Date", {
+    override: "Ext.picker.Date",
+    todayText: "Mai nap",
+    minText: "A dátum korábbi a megengedettnél",
+    maxText: "A dátum későbbi a megengedettnél",
+    disabledDaysText: "",
+    disabledDatesText: "",
+    monthNames: Ext.Date.monthNames,
+    dayNames: Ext.Date.dayNames,
+    nextText: 'Köv. hónap (CTRL+Jobbra)',
+    prevText: 'Előző hónap (CTRL+Balra)',
+    monthYearText: 'Válassz hónapot (Évválasztás: CTRL+Fel/Le)',
+    todayTip: "{0} (Szóköz)",
+    format: "y-m-d",
+    startDay: 0
+});
+
+Ext.define("Ext.locale.hu.picker.Month", {
+    override: "Ext.picker.Month",
+    okText: "&#160;OK&#160;",
+    cancelText: "Mégsem"
+});
+
+Ext.define("Ext.locale.hu.toolbar.Paging", {
+    override: "Ext.PagingToolbar",
+    beforePageText: "Oldal",
+    afterPageText: "a {0}-ból/ből",
+    firstText: "Első oldal",
+    prevText: "Előző oldal",
+    nextText: "Következő oldal",
+    lastText: "Utolsó oldal",
+    refreshText: "Frissítés",
+    displayMsg: "{0} - {1} sorok láthatók a {2}-ból/ből",
+    emptyMsg: 'Nincs megjeleníthető adat'
+});
+
+Ext.define("Ext.locale.hu.form.field.Text", {
+    override: "Ext.form.field.Text",
+    minLengthText: "A mező tartalma legalább {0} hosszú kell legyen",
+    maxLengthText: "A mező tartalma legfeljebb {0} hosszú lehet",
+    blankText: "Kötelezően kitöltendő mező",
+    regexText: "",
+    emptyText: null
+});
+
+Ext.define("Ext.locale.hu.form.field.Number", {
+    override: "Ext.form.field.Number",
+    minText: "A mező tartalma nem lehet kissebb, mint {0}",
+    maxText: "A mező tartalma nem lehet nagyobb, mint {0}",
+    nanText: "{0} nem szám"
+});
+
+Ext.define("Ext.locale.hu.form.field.Date", {
+    override: "Ext.form.field.Date",
+    disabledDaysText: "Nem választható",
+    disabledDatesText: "Nem választható",
+    minText: "A dátum nem lehet korábbi, mint {0}",
+    maxText: "A dátum nem lehet későbbi, mint {0}",
+    invalidText: "{0} nem megfelelő dátum - a helyes formátum: {1}",
+    format: "Y m d",
+    altFormats: "Y-m-d|y-m-d|y/m/d|m/d|m-d|md|ymd|Ymd|d"
+});
+
+Ext.define("Ext.locale.hu.form.field.ComboBox", {
+    override: "Ext.form.field.ComboBox",
+    valueNotFoundText: undefined
+}, function() {
+    Ext.apply(Ext.form.field.ComboBox.prototype.defaultListConfig, {
+        loadingText: "Betöltés..."
+    });
+});
+
+Ext.define("Ext.locale.hu.form.field.HtmlEditor", {
+    override: "Ext.form.field.HtmlEditor",
+    createLinkText: 'Add meg a webcímet:'
+}, function() {
+    Ext.apply(Ext.form.field.HtmlEditor.prototype, {
+        buttonTips: {
+            bold: {
+                title: 'Félkövér (Ctrl+B)',
+                text: 'Félkövérré teszi a kijelölt szöveget.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            italic: {
+                title: 'Dőlt (Ctrl+I)',
+                text: 'Dőlté teszi a kijelölt szöveget.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            underline: {
+                title: 'Aláhúzás (Ctrl+U)',
+                text: 'Aláhúzza a kijelölt szöveget.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            increasefontsize: {
+                title: 'Szöveg nagyítás',
+                text: 'Növeli a szövegméretet.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            decreasefontsize: {
+                title: 'Szöveg kicsinyítés',
+                text: 'Csökkenti a szövegméretet.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            backcolor: {
+                title: 'Háttérszín',
+                text: 'A kijelölt szöveg háttérszínét módosítja.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            forecolor: {
+                title: 'Szövegszín',
+                text: 'A kijelölt szöveg színét módosítja.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            justifyleft: {
+                title: 'Balra zárt',
+                text: 'Balra zárja a szöveget.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            justifycenter: {
+                title: 'Középre zárt',
+                text: 'Középre zárja a szöveget.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            justifyright: {
+                title: 'Jobbra zárt',
+                text: 'Jobbra zárja a szöveget.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            insertunorderedlist: {
+                title: 'Felsorolás',
+                text: 'Felsorolást kezd.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            insertorderedlist: {
+                title: 'Számozás',
+                text: 'Számozott listát kezd.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            createlink: {
+                title: 'Hiperlink',
+                text: 'A kijelölt szöveget linkké teszi.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            },
+            sourceedit: {
+                title: 'Forrás nézet',
+                text: 'Forrás nézetbe kapcsol.',
+                cls: Ext.baseCSSPrefix + 'html-editor-tip'
+            }
+        }
+    });
+});
+
+Ext.define("Ext.locale.hu.grid.header.Container", {
+    override: "Ext.grid.header.Container",
+    sortAscText: "Növekvő rendezés",
+    sortDescText: "Csökkenő rendezés",
+    lockText: "Oszlop zárolás",
+    unlockText: "Oszlop feloldás",
+    columnsText: "Oszlopok"
+});
+
+Ext.define("Ext.locale.hu.grid.GroupingFeature", {
+    override: "Ext.grid.GroupingFeature",
+    emptyGroupText: '(Nincs)',
+    groupByText: 'Oszlop szerint csoportosítás',
+    showGroupsText: 'Csoportos nézet'
+});
+
+Ext.define("Ext.locale.hu.grid.PropertyColumnModel", {
+    override: "Ext.grid.PropertyColumnModel",
+    nameText: "Név",
+    valueText: "Érték",
+    dateFormat: "Y m j"
+});
+
+// This is needed until we can refactor all of the locales into individual files
+Ext.define("Ext.locale.hu.Component", {	
+    override: "Ext.Component"
+});
+
