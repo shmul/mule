@@ -15,10 +15,11 @@ Ext.define "Muleview.ParsedRetention",
       if letter == unitLetter
         name = unitName
         letterIndex = ind
-    name = name.substring(0, name.length - 1) if count = 1 # Remove the "s" for a singular form
+    name = name.substring(0, name.length - 1) if count == 1 # Remove the "s" for a singular form
+    count = parseInt(count)
     {
       name: name
-      count: parseInt(count)
+      count: count
       letter: letter
       letterValue: letterIndex
     }
