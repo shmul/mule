@@ -8,6 +8,7 @@ Ext.define "Muleview.view.Viewport",
     "Muleview.view.MuleChartPanel"
     "Muleview.view.MuleLightChart"
     "Ext.ux.statusbar.StatusBar"
+    "Ext.form.Label"
   ]
 
   items: [

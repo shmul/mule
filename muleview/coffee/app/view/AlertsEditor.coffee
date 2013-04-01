@@ -1,9 +1,11 @@
-Ext.define "Muleview.view.AlertsEditor",
+  Ext.define "Muleview.view.AlertsEditor",
   extend: "Ext.form.Panel"
   alias: "widget.muleviewAlertsEditor"
   requires: [
     "Muleview.Settings"
     "Muleview.view.MuleTimeField"
+    "Ext.form.field.Number"
+    "Ext.form.field.Display"
     "Ext.container.Container"
   ]
   bodyPadding: 10
