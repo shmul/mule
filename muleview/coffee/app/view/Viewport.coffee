@@ -1,6 +1,15 @@
 Ext.define "Muleview.view.Viewport",
   extend: "Ext.container.Viewport"
   layout: "border"
+  requires: [
+    "Muleview.view.AlertsEditor"
+    "Ext.layout.container.Border"
+    "Ext.tab.Panel"
+    "Muleview.view.MuleChartPanel"
+    "Muleview.view.MuleLightChart"
+    "Ext.ux.statusbar.StatusBar"
+  ]
+
   items: [
       id: "leftPanel"
       xtype: "panel"
@@ -28,9 +37,10 @@ Ext.define "Muleview.view.Viewport",
           title: "Options"
           layout: "fit"
           items: [
-              Ext.create("Muleview.view.AlertsEditor",
+              {
+                xtype: "muleviewAlertsEditor"
                 id: "alertsEditor"
-              )
+              }
             ,
               {
                 xtype: "panel"
@@ -89,7 +99,7 @@ Ext.define "Muleview.view.Viewport",
       header: false
       height: 23
       items: [
-        Ext.create "Ext.ux.statusbar.StatusBar",
+        {
           xtype: "statusbar"
           id: "statusBar"
           autoClear: 3000
@@ -107,6 +117,7 @@ Ext.define "Muleview.view.Viewport",
               handler: (event, toolEl, owner) ->
                 owner.up().collapse()
           ]
+        }
       ]
 
   ]

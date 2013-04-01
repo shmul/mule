@@ -2,6 +2,9 @@ Ext.define "Muleview.view.MuleChart",
   extend:  "Ext.chart.Chart"
   requires: [
     "Muleview.view.Theme"
+    "Ext.chart.series.Line"
+    "Ext.chart.series.Area"
+    "Ext.chart.axis.Numeric"
   ]
 
   statics:

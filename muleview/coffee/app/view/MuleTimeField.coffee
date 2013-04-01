@@ -1,4 +1,7 @@
 Ext.define "Muleview.view.MuleTimeField",
+  requires: [
+    "Ext.tip.ToolTip"
+  ]
   alias: "widget.muletimefield"
   extend: "Ext.form.field.Text"
   regex: /^[0-9]+[mhsdy]?$/

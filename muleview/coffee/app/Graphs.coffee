@@ -1,6 +1,9 @@
 Ext.define "Muleview.Graphs",
   requires: [
     "Muleview.ParsedRetention"
+    "Muleview.view.MuleChartPanel"
+    "Muleview.view.MuleLightChart"
+    "Ext.data.ArrayStore"
   ]
   singleton: true
 

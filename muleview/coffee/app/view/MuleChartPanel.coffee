@@ -2,6 +2,11 @@ Ext.define "Muleview.view.MuleChartPanel",
   extend: "Ext.panel.Panel"
   layout: "fit"
 
+  requires: [
+    "Muleview.view.ZoomSlider"
+    "Muleview.view.MuleChart"
+  ]
+
   initComponent: ->
     @chart = Ext.create "Muleview.view.MuleChart",
       showAreas: true
