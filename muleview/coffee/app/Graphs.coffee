@@ -1,4 +1,7 @@
 Ext.define "Muleview.Graphs",
+  requires: [
+    "Muleview.ParsedRetention"
+  ]
   singleton: true
 
   createGraphs: (newKey, callback)->
@@ -18,7 +21,14 @@ Ext.define "Muleview.Graphs",
         @retentions[retention] = @createRetentionGraphs(retention, retentionData, alerts)
 
       @rightPanel.add(ret.lightGraph for _, ret of @retentions)
-      @mainPanel.add(ret.graph for _, ret of @retentions )
+
+      # Sort the graphs according to their retentions:
+      sortedRetentions = Ext.Array.sort(
+        [retName, ret] for retName, ret of @retentions,
+        ([retName1, ret1], [retName2, ret2]) ->
+          new Muleview.ParsedRetention(retName1).value - new Muleview.ParsedRetention(retName2).value
+      )
+      @mainPanel.add(ret.graph for [_, ret] in sortedRetentions)
       @mainPanel.setLoading(false)
       @rightPanel.setLoading(false)
       Muleview.event "graphsCreated"
@@ -118,12 +128,4 @@ Ext.define "Muleview.Graphs",
     store
 
   parseTitle: (ret) ->
-    split = ret.split(":")
-    last = split[1]
-    [_all, count, letter] = match = last.match /(\d+)([mhsdy])/
-    units = {
-      "h": "hours"
-      "m": "minutes"
-      "d": "days"
-    }[letter]
-    "Last #{count} #{units}"
+    new Muleview.ParsedRetention(ret).title
