@@ -11,11 +11,12 @@ Ext.define "Muleview.view.MuleChart",
     lastXY: [0,0] # Used to workaround an Extjs bug causing errors when showing tooltips of a chart created below the mouse cursor
 
   showAreas: true
-  highlight: true
+  shadow: false
+
 
   legend:
     position: "right"
-  animate: true
+  animate: false
   theme: "Muleview"
 
   timeLabel:
@@ -41,11 +42,7 @@ Ext.define "Muleview.view.MuleChart",
     Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
 
   initComponent: ->
-    me = @
     @timeLabel.renderer = @timeFormatter
-
-    # @data should be a hash of key => keydata,
-    # keydata should be: [[count, batch, timestamp], [count, batch, timestamp]...]
 
     keys = @keys
 
@@ -55,12 +52,16 @@ Ext.define "Muleview.view.MuleChart",
         position: "bottom"
         fields: ["timestamp"]
         label: @timeLabel
-        grid: true
+        adjustEnd: false
+        majorTickSteps: 20
+        grid: false
+        dashSize: 4
       },
 
       {
         type: 'Numeric'
         position: 'left'
+        majorTickSteps: 20
         fields: keys
         minimum: 0
         grid: true
@@ -78,7 +79,7 @@ Ext.define "Muleview.view.MuleChart",
       title: @keyLegendName @topKey
       xField: "timestamp"
       yField: [@topKey]
-      highlight: true
+      highlight: false
       listeners:
         itemmouseover: (item) ->
           Muleview.event "chartItemMouseOver", item
@@ -96,7 +97,7 @@ Ext.define "Muleview.view.MuleChart",
         xField: "timestamp"
         yField: areaKeys
         title: @keyLegendName(key) for key in areaKeys
-        highlight: @highlight
+        highlight: true
         listeners:
           itemmouseover: (item) ->
             Muleview.event "chartItemMouseOver", item
@@ -131,7 +132,7 @@ Ext.define "Muleview.view.MuleChart",
             axis: "left"
             xField: "timestamp"
             yField: [alert.name]
-            highlight: true
+            highlight: false
             tips:
               trackMouse: false
               anchor: "bottom"
