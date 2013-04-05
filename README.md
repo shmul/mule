@@ -279,28 +279,31 @@ for example
 
 TODO provide nginx proxying configuration
 
-#### Mule-View
+### Muleview
 
-Mule ships with a simple [Ext JS](http://www.sencha.com/products/extjs/)-based client web-application written in [CoffeeScript](http://coffeescript.org/) called Muleview.
-The application can display graphs of all of Mule's current data.
+Mule ships with a simple [Ext JS](http://www.sencha.com/products/extjs/)-based client web-application written in [CoffeeScript](http://coffeescript.org/) called "Muleview".
+Muleview can display graphs of all of Mule's current data.
 
-#### Install
-To compile Muleview:
 
-1. [install CoffeeScript](http://coffeescript.org/#installation) and make sure the `coffee` command is available
-1. `$ cd /muleview`
-1. `$ make`
+#### Requirements
+Muleview requires [CoffeeScript](http://coffeescript.org/) For compilation and [Sencha Cmd](http://www.sencha.com/products/sencha-cmd/download) for creating a production-ready build (a single-file minified version of the entire framework+source (all_classes.js) and all the necessary static resources).
 
-Muleview is entirely client-based; The only configuration needed is the URL prefix used to request data from Mule itself. This setting is set in `muleview/coffee/app/Settings.coffee` - "muleUrlPrefix", and defaults to the empty string, meaning Mule and Muleview runs under the same host/port. If you change this (or any other) setting, don't forget to recompile Muleview.
+#### Setup
+In order to setup Muleview, the first thing need be done is a production-ready build of the source. This includes compilation of the CoffeeScript source into JavaScript, concatination and minification of this source + the relevant Extjs framework code into a single file, and generation of all the other static resources (images and css).
 
-#### Running Mule with Muleview:
-To run Mule with Muleview enabled, add Muleview as a the root static folder by using the argument: `-R muleview` along with `-t <host:port>` (see above).
+##### Build
+To build a produciton-ready folder:
+1. Install [CoffeeScript](http://coffeescript.org/#installation) and make sure the `coffee` command is available
+1. Install [Sencha Cmd](http://www.sencha.com/products/sencha-cmd/download) (This will require some additional 3rd parties such as Java and Compass)
+1. `cd` to muleview and run `sencha app bulid`
+1. The output should be generated under muleview/build/Muleview/production
 
-For example:
-`lua mule.lua -d my_data_cdb -t localhost:8080 -R muleview`
+##### Serve
+You can use Mule itself as a web-server for Muleview. To do so, run Mule with the static files root path paraeter (`-R muleview/build/Muleview/production`).
+A typical confiugration would be something like:
+`lua mule.lua -d db/my_great_db_cdb -T -R muleview/build/Muleview/production`
 
-And point your browser to localhost:8080/index.html
-
+If you run Mule and Muleview on different servers (and you should), you need to tell Muleview what's Mule's url. This is done in muleview/coffee/app/Settings.coffee . Needless to say, you should set this setting prior to compiling/buidling Muleview.
 
 
 ### CLI
