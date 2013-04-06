@@ -1,7 +1,7 @@
 all:
-	coffee -o ./ -c coffee
+	coffee -m -o ./ -c coffee
 
 coffee:
-	coffee -o ./ -cw coffee/
+	coffee -m -o ./ -cw coffee/
 
 .PHONY: coffee

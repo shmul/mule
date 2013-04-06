@@ -73,6 +73,8 @@ Ext.define "Muleview.controller.Viewport",
     @openGraph Muleview.currentKey, Muleview.currentRetention, true
 
   openGraph: (newKey, newRetention, refresh) ->
+    console.log('Viewport.coffee\\ 76: arguments:', arguments);
+    return;
     if newKey != Muleview.currentKey or refresh
       # If a different key is requested, create the new graphs:
       Muleview.Graphs.createGraphs newKey, =>

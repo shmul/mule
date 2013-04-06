@@ -2,4 +2,5 @@ packages/default/sass/.sass-cache/
 bootstrap.js
 build
 tmp
-/app
+/app/*.js
+*.map

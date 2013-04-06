@@ -58,38 +58,37 @@ Ext.define "Muleview.view.Viewport",
           ]
       ]
     ,
-      id: "mainPanel"
-      xtype: "tabpanel"
-      title: "Main View"
+      id: "mainContainer"
+      xtype: "container"
       region: "center"
       layout: "fit"
-      tools: [
-          type: "refresh"
-          tooltip: "Reload Graphs"
-          id: "mainPanelRefresh"
-        ,
-          type: "maximize"
-          tooltip: "Maximize Graph"
-          id: "mainPanelMaximize"
-        ,
-          type: "restore"
-          tooltip: "Restore"
-          id: "mainPanelRestore"
-          hidden: true
-      ]
-    ,
-      id: "rightPanel"
-      width: "20%"
-      split: true
-      xtype: "panel"
-      region: "east"
-      collapsible: true
-      title: "Previews"
-      layout:
-        type: "vbox"
-        align: "stretch"
-      defaults:
-        flex: 1
+#       tools: [
+#           type: "refresh"
+#           tooltip: "Reload Graphs"
+#           id: "mainPanelRefresh"
+#         ,
+#           type: "maximize"
+#           tooltip: "Maximize Graph"
+#           id: "mainPanelMaximize"
+#         ,
+#           type: "restore"
+#           tooltip: "Restore"
+#           id: "mainPanelRestore"
+#           hidden: true
+#       ]
+    # ,
+    #   id: "rightPanel"
+    #   width: "20%"
+    #   split: true
+    #   xtype: "panel"
+    #   region: "east"
+    #   collapsible: true
+    #   title: "Previews"
+    #   layout:
+    #     type: "vbox"
+    #     align: "stretch"
+    #   defaults:
+    #     flex: 1
     ,
       xtype: "panel"
       layout: "fit"
