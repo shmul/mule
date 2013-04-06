@@ -11,7 +11,7 @@
         Compiling Coffee-Script!!
       </echo>
       <exec executable="coffee" dir="${basedir}" failonerror="true" searchpath="true">
-        <arg line="-o ${basedir} -c ${basedir}/coffee"/>
+        <arg line=" -c ${basedir}/app"/>
       </exec>
 
     </target>

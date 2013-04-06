@@ -1,6 +1,7 @@
 Ext.define "Muleview.view.MuleChartPanel",
   extend: "Ext.panel.Panel"
   layout: "fit"
+  header: false
 
   requires: [
     "Muleview.view.ZoomSlider"

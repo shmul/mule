@@ -3,10 +3,9 @@ Ext.define "Muleview.view.Viewport",
   layout: "border"
   requires: [
     "Muleview.view.AlertsEditor"
+    "Muleview.view.ChartsView"
     "Ext.layout.container.Border"
     "Ext.tab.Panel"
-    "Muleview.view.MuleChartPanel"
-    "Muleview.view.MuleLightChart"
     "Ext.ux.statusbar.StatusBar"
     "Ext.form.Label"
   ]
@@ -58,37 +57,11 @@ Ext.define "Muleview.view.Viewport",
           ]
       ]
     ,
-      id: "mainContainer"
-      xtype: "container"
+      id: "chartsViewContainer"
+      xtype: "panel"
+      title: "Chart"
       region: "center"
       layout: "fit"
-#       tools: [
-#           type: "refresh"
-#           tooltip: "Reload Graphs"
-#           id: "mainPanelRefresh"
-#         ,
-#           type: "maximize"
-#           tooltip: "Maximize Graph"
-#           id: "mainPanelMaximize"
-#         ,
-#           type: "restore"
-#           tooltip: "Restore"
-#           id: "mainPanelRestore"
-#           hidden: true
-#       ]
-    # ,
-    #   id: "rightPanel"
-    #   width: "20%"
-    #   split: true
-    #   xtype: "panel"
-    #   region: "east"
-    #   collapsible: true
-    #   title: "Previews"
-    #   layout:
-    #     type: "vbox"
-    #     align: "stretch"
-    #   defaults:
-    #     flex: 1
     ,
       xtype: "panel"
       layout: "fit"

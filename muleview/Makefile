@@ -1,7 +1,7 @@
 all:
-	coffee -m -o ./ -c coffee
+	coffee -m -c app
 
 coffee:
-	coffee -m -o ./ -cw coffee/
+	coffee -mwc app
 
 .PHONY: coffee

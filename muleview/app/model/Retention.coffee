@@ -1,4 +1,18 @@
-Ext.define "Muleview.ParsedRetention",
+Ext.define "Muleview.model.Retention",
+  extend: "Ext.data.Model"
+  fields: [
+      name: "name"
+      type: "string"
+    ,
+      name: "sortValue"
+      type: "int"
+    ,
+      name: "title"
+      type: "string"
+  ]
+
+  idProperty: "name"
+
   statics:
     units: [
       ["s", "seconds"]
@@ -31,6 +45,11 @@ Ext.define "Muleview.ParsedRetention",
     @total = @parseOne(split[1])
     @title = @getTitle()
     @value = @getValue()
+    @callParent()
+    @set
+      name: ret
+      title: @title
+      sortValue: @value
     @
 
   # Returns a tab title for a graph,
