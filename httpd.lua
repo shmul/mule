@@ -174,6 +174,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   local rv
 
   if not handler then
+    if #segments == 0 then url_no_qs = "/index.html" end -- Support a default landing page
     return send_file_(url_no_qs,req_["If-None-Match"])
   end
   if req_.verb=="OPTIONS" then
