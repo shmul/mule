@@ -9,7 +9,8 @@ Ext.define "Muleview.controller.ChartsController",
     @chartsViewContainer = @getChartsViewContainer()
     Muleview.app.on
       scope: @
-      viewChange: @viewChange
+      viewChange: (key, retName)->
+        @viewChange(key, retName)
       refresh: @refresh
 
   viewChange: (key, retention, force) ->
@@ -36,3 +37,4 @@ Ext.define "Muleview.controller.ChartsController",
         defaultRetention: retention
       @chartsViewContainer.add(@chartsView)
       @chartsViewContainer.setLoading(false)
+      @chartsViewContainer.setTitle(key.replace(/\./, " / "))
