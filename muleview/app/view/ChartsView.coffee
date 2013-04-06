@@ -37,21 +37,21 @@ Ext.define "Muleview.view.ChartsView",
         header: false
         layout: "fit"
         tbar: [
-          @retCombo = Ext.create "Ext.form.field.ComboBox",
-            fieldLabel: "Show"
-            forceSelection: true
-            # editable: false
-            labelWidth: 40
-            displayField: "title"
-            valueField: "name"
-            store: @retentionsStore
-            width: "auto"
-            listeners:
-              scope: @
-              select: (me, retentions)->
-                retention = retentions[0]
-                return unless retention
-                Muleview.event "viewChange", @key, retention.get("name")
+            @retCombo = Ext.create "Ext.form.field.ComboBox",
+              fieldLabel: "Show"
+              forceSelection: true
+              # editable: false
+              labelWidth: 40
+              displayField: "title"
+              valueField: "name"
+              store: @retentionsStore
+              width: "auto"
+              listeners:
+                scope: @
+                select: (me, retentions)->
+                  retention = retentions[0]
+                  return unless retention
+                  Muleview.event "viewChange", @key, retention.get("name")
           ,
             xtype: "button"
             text: "Edit Alerts"

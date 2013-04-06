@@ -3,3 +3,4 @@ build
 tmp
 *.js
 *.map
+.sencha_backup
