@@ -2,7 +2,6 @@ Ext.define "Muleview.controller.History",
   extend: "Ext.app.Controller"
   requires: [
     "Ext.util.History"
-    "Muleview.Events"
   ]
 
   gotoToken: (token) ->

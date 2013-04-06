@@ -4,7 +4,6 @@ Ext.application
   name: "Muleview"
   requires: [
     "Muleview.Settings"
-    "Muleview.Events"
     "Ext.container.Viewport"
     "Ext.tree.Panel"
     "Muleview.Mule"
@@ -13,7 +12,8 @@ Ext.application
   ]
 
   launch: ->
-    Muleview.event = Ext.Function.alias Muleview.Events, "fireEvent"
+    Muleview.event = Ext.Function.alias Muleview.app, "fireEvent"
+
   autoCreateViewport: true
 
   controllers: [

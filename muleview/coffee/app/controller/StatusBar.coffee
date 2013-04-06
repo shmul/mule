@@ -12,7 +12,7 @@ Ext.define "Muleview.controller.StatusBar",
   onLaunch: ->
     eventsConf = {scope: @}
     eventsConf[eventName] = Ext.bind(handler, @) for own eventName, handler of @handlers
-    Muleview.Events.on eventsConf
+    Muleview.app.on eventsConf
 
   progress: (txt) ->
     @status

@@ -1,8 +1,5 @@
 Ext.define "Muleview.controller.KeysTree",
   extend: "Ext.app.Controller",
-  requires: [
-    "Muleview.Events"
-  ]
   models: [
     "MuleKey"
   ]
@@ -27,7 +24,7 @@ Ext.define "Muleview.controller.KeysTree",
       itemexpand: @onItemExpand
       scope: @
 
-    Muleview.Events.on
+    Muleview.app.on
       graphChanged: @updateSelection
       keysReceived: @addKeys
       scope: @

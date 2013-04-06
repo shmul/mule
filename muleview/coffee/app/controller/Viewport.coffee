@@ -1,8 +1,5 @@
 Ext.define "Muleview.controller.Viewport",
   extend: "Ext.app.Controller"
-  requires: [
-    "Muleview.Events"
-  ]
   refs: [
       ref: "leftPanel"
       selector: "#leftPanel"
@@ -46,7 +43,7 @@ Ext.define "Muleview.controller.Viewport",
         expand: @updateMainPanelTools
 
     @getMainPanel().getEl().addListener("dblclick", @togglePanels, @)
-    Muleview.Events.on
+    Muleview.app.on
       graphRequest: (key, retention) =>
         @openGraph key, retention
       refreshRequest: =>
