@@ -10,16 +10,20 @@ Ext.define "Muleview.controller.ChartsController",
     Muleview.app.on
       scope: @
       viewChange: @viewChange
+      refresh: @refresh
 
-  viewChange: (key, retention) ->
+  viewChange: (key, retention, force) ->
     olderKey = @key
     olderRetention = @retention
     @key = key
     @retention = retention
-    if @key != olderKey
+    if @key != olderKey or force
       @createKeyView(key, retention)
     else if @retention != olderRetention
       @chartsView.showRetention(retention)
+
+  refresh: ->
+    @viewChange(@key, @retention, true)
 
   createKeyView: (key, retention) ->
     @chartsViewContainer.removeAll()

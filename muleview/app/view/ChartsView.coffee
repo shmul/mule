@@ -69,6 +69,8 @@ Ext.define "Muleview.view.ChartsView",
             ,
               xtype: "button"
               text: "Refresh"
+              handler: ->
+                Muleview.event "refresh"
           ]
           items: [
             @chart = Ext.create "Muleview.view.MuleChart",
