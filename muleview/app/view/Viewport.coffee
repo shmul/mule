@@ -27,34 +27,6 @@ Ext.define "Muleview.view.Viewport",
           # useArrows: true
           rootVisible: false
           lines: true
-        ,
-          xtype: "tabpanel"
-          region: "south"
-          height: 280
-          split: "true"
-          collapsible: true
-          collapsed: true
-          title: "Options"
-          layout: "fit"
-          items: [
-              {
-                xtype: "muleviewAlertsEditor"
-                id: "alertsEditor"
-              }
-            ,
-              {
-                xtype: "panel"
-                layout:
-                  type: "hbox"
-                  align: "middle"
-                  pack: "center"
-                title: "Event Labels"
-                items: [
-                  xtype: "container"
-                  html: "(Coming soon)"
-                ]
-              }
-          ]
       ]
     ,
       id: "chartsViewContainer"

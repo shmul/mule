@@ -36,7 +36,7 @@ Ext.define "Muleview.view.ChartsView",
     @callParent()
     @retentionsStore.each (retention) =>
       @rightPanel.add(@lightCharts[retention.get("name")])
-    @showRetention @defaultRetention
+    Ext.defer @showRetention, 1, @, [@defaultRetention]
 
   items: ->
     [
@@ -101,6 +101,7 @@ Ext.define "Muleview.view.ChartsView",
     @retCombo.select retName
     lightChart.setVisible(lightChart.retention != retName) for own _, lightChart of @lightCharts
     @currentRetName = retName
+    Muleview.event "viewChange", @key, @currentRetName
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],

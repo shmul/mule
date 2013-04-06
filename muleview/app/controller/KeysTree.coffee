@@ -25,7 +25,7 @@ Ext.define "Muleview.controller.KeysTree",
       scope: @
 
     Muleview.app.on
-      graphChanged: @updateSelection
+      viewChange: @updateSelection
       keysReceived: @addKeys
       scope: @
     @fillFirstkeys()

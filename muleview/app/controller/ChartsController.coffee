@@ -14,14 +14,13 @@ Ext.define "Muleview.controller.ChartsController",
       refresh: @refresh
 
   viewChange: (key, retention, force) ->
-    olderKey = @key
-    olderRetention = @retention
-    @key = key
-    @retention = retention
-    if @key != olderKey or force
-      @createKeyView(key, retention)
-    else if @retention != olderRetention
+    if key != @key or force
+      @key = key
+      @createKeyView(key, retention || @retention)
+
+    else if @retention != retention
       @chartsView.showRetention(retention)
+      @retention = retention
 
   refresh: ->
     @viewChange(@key, @retention, true)

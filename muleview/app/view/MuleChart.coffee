@@ -102,7 +102,7 @@ Ext.define "Muleview.view.MuleChart",
           itemmouseover: (item) ->
             Muleview.event "chartItemMouseOver", item
           itemclick: (item) ->
-            Muleview.event "graphRequest", item.storeField, Muleview.currentRetention
+            Muleview.event "viewChange", item.storeField, null
         tips:
           trackMouse: false
           anchor: "left"
