@@ -4,6 +4,8 @@ Ext.define "Muleview.Settings",
   updateInterval: 1000 * 60 * 5 # Graph auto-refresh rate (millis)
   labelFormat: "d/m/y H:i:s" # Graph label format, see http://docs.sencha.com/ext-js/4-1/#!/api/Ext.Date for formatting options
   statusTimeFormat: "l, NS \\o\\f F Y, G:i:s" # Status-bar's time format, see above.
+  defaultSubkeys: 5 # How much subkeys to display, and the rest will be summed in "Other"
+  othersSubkeyName: "(Others)" # Key name used to store sum of hidden subkeys
 
   # The following settings should probably not be changed:
   alerts: [

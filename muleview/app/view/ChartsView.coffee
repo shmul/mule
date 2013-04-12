@@ -10,6 +10,7 @@ Ext.define "Muleview.view.ChartsView",
   ]
   header: false
   layout: "border"
+  othersKey: Muleview.Settings.othersSubkeyName
 
   initComponent: ->
     # Init retentions (these are just the names, for the combo box)
@@ -21,7 +22,9 @@ Ext.define "Muleview.view.ChartsView",
 
     @defaultRetention ||= @retentionsStore.getAt(0).get("name")
     @keys = Ext.Object.getKeys(@data[@defaultRetention])
-    @store = @createEmptyStore()
+    @subkeys = Ext.clone(@keys)
+    Ext.Array.remove(@subkeys, @key)
+    @keys.push(@othersKey)
 
     # Create all stores and light charts:
     @stores = {}
@@ -36,6 +39,7 @@ Ext.define "Muleview.view.ChartsView",
     @callParent()
     @retentionsStore.each (retention) =>
       @rightPanel.add(@lightCharts[retention.get("name")])
+
     Ext.defer @showRetention, 1, @, [@defaultRetention]
 
   items: ->
@@ -72,14 +76,6 @@ Ext.define "Muleview.view.ChartsView",
               handler: ->
                 Muleview.event "refresh"
           ]
-          items: [
-            @chart = Ext.create "Muleview.view.MuleChart",
-              showAreas: true
-              keys: @keys
-              topKey: @key
-              alerts: @alerts
-              store: @store
-          ]
       ,
         @rightPanel = Ext.create "Ext.panel.Panel",
           title: "Previews"
@@ -94,14 +90,54 @@ Ext.define "Muleview.view.ChartsView",
           items: @lightCharts
     ]
 
+  selectSubkeys: ->
+    ans = Ext.clone(@keys)
+
+
+
+    Ext.Array.include(ans, @othersKey)
+    ans
+
+  renderChart: ->
+    console.log('ChartsView.coffee\\ 97: @keys:', @keys);
+    console.log('ChartsView.coffee\\ 98: @subkeys:', @subkeys);
+    console.log('ChartsView.coffee\\ 99: @store:', @store);
+
+  preprocessData: (data) ->
+    data
+
   showRetention: (retName) ->
     return unless retName and retName != @currentRetName
-    @store.removeAll()
-    @store.loadData(@stores[retName].data.items)
+    @renderChart(retName)
+
     @retCombo.select retName
     lightChart.setVisible(lightChart.retention != retName) for own _, lightChart of @lightCharts
     @currentRetName = retName
     Muleview.event "viewChange", @key, @currentRetName
+
+
+  selectSubkeys: ->
+    @subkeys[0...Muleview.Settings.defaultSubkeys]
+
+  renderChart: (retName) ->
+    @chartContainer.removeAll()
+    selectedSubkeys = @customSelectedSubkeys || @selectSubkeys()
+    selectedSubkeys.unshift(@key)
+    store = @stores[retName]
+    unselectedSubkeys = Ext.Array.difference(@subkeys, selectedSubkeys)
+    if unselectedSubkeys.length > 0
+      selectedSubkeys.push(@othersKey)
+      store.each (record) =>
+        sum = 0
+        sum += record.get(otherSubkey) for otherSubkey in unselectedSubkeys
+        record.set(@othersKey, sum)
+
+    @chartContainer.add Ext.create "Muleview.view.MuleChart",
+      showAreas: true
+      keys: selectedSubkeys
+      topKey: @key
+      alerts: @alerts
+      store: store
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],
