@@ -7,6 +7,7 @@ Ext.define "Muleview.view.ChartsView",
     "Muleview.view.MuleChartPanel"
     "Muleview.view.MuleLightChart"
     "Ext.data.ArrayStore"
+    "Muleview.store.SubkeysStore"
   ]
   header: false
   layout: "border"
@@ -22,9 +23,10 @@ Ext.define "Muleview.view.ChartsView",
 
     @defaultRetention ||= @retentionsStore.getAt(0).get("name")
     @keys = Ext.Object.getKeys(@data[@defaultRetention])
+
     @subkeys = Ext.clone(@keys)
     Ext.Array.remove(@subkeys, @key)
-    @keys.push(@othersKey)
+    @keys.push(@othersKey) # Need to add othersKey as a key so that the records will have such an attribute
 
     # Create all stores and light charts:
     @stores = {}
@@ -33,6 +35,12 @@ Ext.define "Muleview.view.ChartsView",
       name = retention.get("name")
       @stores[name] = @createStore(name)
       @lightCharts[name] = @createLightChart(retention)
+
+    # Init the subkeys-store to calculate which subkeys its best to show first:
+    @subkeysStore = Ext.create "Muleview.store.SubkeysStore",
+      dataStore: @stores[@defaultRetention]
+    @subkeysStore.loadSubkeys(@subkeys)
+
 
     # Init component:
     @items = @items()
@@ -106,21 +114,15 @@ Ext.define "Muleview.view.ChartsView",
 
   showSubkeysSelector: ->
     subkeysSelector = Ext.create "Muleview.view.SubkeysSelector",
-      availableSubkeys: @subkeys
-      selectedSubkeys: @selectedSubkeys
-      callback: @updateSelectedSubkeys
+      store: @subkeysStore
+      callback: @renderChart
       callbackScope: @
-      auto: !@customSelectedSubkeys
     subkeysSelector.show()
 
-  updateSelectedSubkeys: (newSelectedSubkeys) ->
-    @customSelectedSubkeys = newSelectedSubkeys
-    @renderChart(@currentRetName)
-
-  renderChart: (retName) ->
+  renderChart: (retName = @currentRetName) ->
     @chartContainer.removeAll()
-    @selectedSubkeys = @customSelectedSubkeys || @selectSubkeys()
-    @selectedSubkeys.unshift(@key) unless Ext.Array.contains(@selectedSubkeys, @key)
+    @selectedSubkeys = @subkeysStore.getSelectedNames()
+    @selectedSubkeys.unshift(@key)
     store = @stores[retName]
     unselectedSubkeys = Ext.Array.difference(@subkeys, @selectedSubkeys)
     if unselectedSubkeys.length > 0

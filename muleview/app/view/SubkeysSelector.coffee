@@ -4,9 +4,10 @@ Ext.define "Muleview.view.SubkeysSelector",
     "Ext.grid.column.CheckColumn"
   ]
 
-  height: 400
-  width: 700
   title: "Select Subkeys"
+  modal: true
+  height: "60%"
+  width: "40%"
   hidden: true
   layout:
     type: "vbox"
@@ -39,7 +40,6 @@ Ext.define "Muleview.view.SubkeysSelector",
 
       @grid = Ext.create "Ext.grid.Panel", {
         xtype: "grid"
-        hideHeaders: true
         disabled: @auto
         flex: 1
         store: @store
@@ -50,13 +50,19 @@ Ext.define "Muleview.view.SubkeysSelector",
             header: "Show"
             dataIndex: "selected"
           }
-        ,
+
           {
             header: "Name"
             dataIndex: "name"
-            flex: 1
+            flex: 3
             renderer: (name) ->
               name.substring(name.lastIndexOf(".") + 1)
+          }
+
+          {
+            header: "Heuristic Weight"
+            flex: 1
+            dataIndex: "heuristicWeight"
           }
         ]
       }
@@ -82,32 +88,17 @@ Ext.define "Muleview.view.SubkeysSelector",
     @grid.setDisabled(!enable)
 
   cancel: ->
+    @store.rejectChanges()
     @close()
 
   update: ->
-    keys = null
-    if !@auto
-      keys = []
-      @store.each (record) ->
-        keys.push record.get("name") if record.get("selected")
-
+    if @auto then @store.autoSelect() else @store.isAuto = false
+    @store.commitChanges()
     @close()
-    @callback.call(@callbackScope, keys)
+    @callback.call(@callbackScope)
 
   initComponent: ->
+    @auto = @store.isAuto
     @bbar = @bbar()
-    @store = @createStore()
     @items = @items()
     @callParent()
-
-  createStore: ->
-    data =  ([subkey, Ext.Array.contains(@selectedSubkeys, subkey)] for subkey in @availableSubkeys)
-    Ext.create "Ext.data.ArrayStore",
-      fields: [
-          name: "name"
-          type: "string"
-        ,
-          name: "selected"
-          type: "boolean"
-      ]
-      data: data
