@@ -52,7 +52,7 @@ Ext.define "Muleview.view.ChartsView",
               @retCombo = Ext.create "Ext.form.field.ComboBox",
                 fieldLabel: "Show"
                 forceSelection: true
-                # editable: false
+                editable: false
                 labelWidth: 40
                 displayField: "title"
                 valueField: "name"
@@ -70,6 +70,8 @@ Ext.define "Muleview.view.ChartsView",
             ,
               xtype: "button"
               text: "Select Subkeys"
+              handler: =>
+                @showSubkeysSelector()
             ,
               xtype: "button"
               text: "Refresh"
@@ -90,43 +92,39 @@ Ext.define "Muleview.view.ChartsView",
           items: @lightCharts
     ]
 
-  selectSubkeys: ->
-    ans = Ext.clone(@keys)
-
-
-
-    Ext.Array.include(ans, @othersKey)
-    ans
-
-  renderChart: ->
-    console.log('ChartsView.coffee\\ 97: @keys:', @keys);
-    console.log('ChartsView.coffee\\ 98: @subkeys:', @subkeys);
-    console.log('ChartsView.coffee\\ 99: @store:', @store);
-
-  preprocessData: (data) ->
-    data
-
   showRetention: (retName) ->
     return unless retName and retName != @currentRetName
     @renderChart(retName)
-
     @retCombo.select retName
     lightChart.setVisible(lightChart.retention != retName) for own _, lightChart of @lightCharts
     @currentRetName = retName
     Muleview.event "viewChange", @key, @currentRetName
 
-
   selectSubkeys: ->
+    # TODO: some heuristic algorithm
     @subkeys[0...Muleview.Settings.defaultSubkeys]
+
+  showSubkeysSelector: ->
+    subkeysSelector = Ext.create "Muleview.view.SubkeysSelector",
+      availableSubkeys: @subkeys
+      selectedSubkeys: @selectedSubkeys
+      callback: @updateSelectedSubkeys
+      callbackScope: @
+      auto: !@customSelectedSubkeys
+    subkeysSelector.show()
+
+  updateSelectedSubkeys: (newSelectedSubkeys) ->
+    @customSelectedSubkeys = newSelectedSubkeys
+    @renderChart(@currentRetName)
 
   renderChart: (retName) ->
     @chartContainer.removeAll()
-    selectedSubkeys = @customSelectedSubkeys || @selectSubkeys()
-    selectedSubkeys.unshift(@key)
+    @selectedSubkeys = @customSelectedSubkeys || @selectSubkeys()
+    @selectedSubkeys.unshift(@key) unless Ext.Array.contains(@selectedSubkeys, @key)
     store = @stores[retName]
-    unselectedSubkeys = Ext.Array.difference(@subkeys, selectedSubkeys)
+    unselectedSubkeys = Ext.Array.difference(@subkeys, @selectedSubkeys)
     if unselectedSubkeys.length > 0
-      selectedSubkeys.push(@othersKey)
+      @selectedSubkeys.push(@othersKey)
       store.each (record) =>
         sum = 0
         sum += record.get(otherSubkey) for otherSubkey in unselectedSubkeys
@@ -134,7 +132,7 @@ Ext.define "Muleview.view.ChartsView",
 
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
       showAreas: true
-      keys: selectedSubkeys
+      keys: @selectedSubkeys
       topKey: @key
       alerts: @alerts
       store: store
