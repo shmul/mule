@@ -72,7 +72,7 @@ Ext.define "Muleview.view.SubkeysSelector",
       },
       {
         xtype: "button"
-        text: "Update"
+        text: "OK"
         handler: =>
           @update()
       }
@@ -85,8 +85,8 @@ Ext.define "Muleview.view.SubkeysSelector",
     @close()
 
   update: ->
-    auto = null
-    if !auto
+    keys = null
+    if !@auto
       keys = []
       @store.each (record) ->
         keys.push record.get("name") if record.get("selected")
