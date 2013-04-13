@@ -73,6 +73,7 @@ Ext.define "Muleview.view.SubkeysSelector",
       "->",
       {
         xtype: "button"
+        width: 75
         text: "Cancel"
         handler: =>
           @cancel()
@@ -80,6 +81,7 @@ Ext.define "Muleview.view.SubkeysSelector",
       {
         xtype: "button"
         text: "OK"
+        width: 75
         handler: =>
           @update()
       }

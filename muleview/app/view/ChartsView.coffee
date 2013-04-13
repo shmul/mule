@@ -8,6 +8,7 @@ Ext.define "Muleview.view.ChartsView",
     "Muleview.view.MuleLightChart"
     "Ext.data.ArrayStore"
     "Muleview.store.SubkeysStore"
+    "Muleview.view.SubkeysSelector"
   ]
   header: false
   layout: "border"

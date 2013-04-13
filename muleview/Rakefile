@@ -1,5 +1,5 @@
-SEED = 0 # Random seed
-MAX_KIDS = 10 # Misc rands: Max number of child-nodes per node
+SEED = 1 # Random seed
+MAX_KIDS = 150 # Misc rands: Max number of child-nodes per node
 MAX_DEPTH = 3 # max graph depth
 MAX_HITS = 10 # Max number per key per timestamp
 KEYS_FILE = "tmp/keys.data"
@@ -76,7 +76,7 @@ def make_node(max_depth)
 
   # Create children:
   if max_depth > 0
-    10.times do
+    100.times do
       ans[:children] << make_node(max_depth - 1)
     end
   end
@@ -136,7 +136,7 @@ task :create_history => :read_root do
     time_s = time.to_i.to_s
     new_records = ""
     iterate_keys do |key|
-      new_records << "#{key} #{@rand.rand(1..MAX_KIDS)} #{time_s}\n"
+      new_records << "#{key} #{@rand.rand(1..100)} #{time_s}\n"
     end
     records << new_records
     time -= 5 * 60
