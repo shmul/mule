@@ -7,7 +7,6 @@ Ext.application
     "Ext.container.Viewport"
     "Ext.tree.Panel"
     "Muleview.Mule"
-    "Muleview.Graphs"
     "Muleview.RefreshTimer"
   ]
 
@@ -17,8 +16,8 @@ Ext.application
   autoCreateViewport: true
 
   controllers: [
-    "Viewport"
     "KeysTree"
     "StatusBar"
     "History"
+    "ChartsController"
   ]

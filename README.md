@@ -284,27 +284,22 @@ TODO provide nginx proxying configuration
 Mule ships with a simple [Ext JS](http://www.sencha.com/products/extjs/)-based client web-application written in [CoffeeScript](http://coffeescript.org/) called "Muleview".
 Muleview can display graphs of all of Mule's current data.
 
-
 #### Requirements
-Muleview requires [CoffeeScript](http://coffeescript.org/) For compilation and [Sencha Cmd](http://www.sencha.com/products/sencha-cmd/download) for creating a production-ready build (a single-file minified version of the entire framework+source (all_classes.js) and all the necessary static resources).
+Muleview requires [CoffeeScript](http://coffeescript.org/) For compilation and [Sencha Cmd](http://www.sencha.com/products/sencha-cmd/download) for creating a production-ready build (a single-file minified version of the entire framework + source (all_classes.js) and all the necessary static resources).
 
-#### Setup
-In order to setup Muleview, the first thing need be done is a production-ready build of the source. This includes compilation of the CoffeeScript source into JavaScript, concatination and minification of this source + the relevant Extjs framework code into a single file, and generation of all the other static resources (images and css).
-
-##### Build
+#### Build
 To build a produciton-ready folder:
 1. Install [CoffeeScript](http://coffeescript.org/#installation) and make sure the `coffee` command is available
 1. Install [Sencha Cmd](http://www.sencha.com/products/sencha-cmd/download) (This will require some additional 3rd parties such as Java and Compass)
 1. `cd` to muleview and run `sencha app bulid`
 1. The output should be generated under muleview/build/Muleview/production
 
-##### Serve
-You can use Mule itself as a web-server for Muleview. To do so, run Mule with the static files root path paraeter (`-R muleview/build/Muleview/production`).
+#### Built-in Serving with Mule
+You can use Mule itself as a web-server for Muleview. To do so, run Mule with the static files root path parameter (`-R muleview/build/Muleview/production`).
 A typical confiugration would be something like:
-`lua mule.lua -d db/my_great_db_cdb -T -R muleview/build/Muleview/production`
+`lua mule.lua -d db/my_great_db_cdb -T myserver:80 -R muleview/build/Muleview/production`
 
 If you run Mule and Muleview on different servers (and you should), you need to tell Muleview what's Mule's url. This is done in muleview/coffee/app/Settings.coffee . Needless to say, you should set this setting prior to compiling/buidling Muleview.
-
 
 ### CLI
 
