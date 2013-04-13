@@ -1,6 +1,7 @@
-packages/default/sass/.sass-cache/
+.sass-cache/
 build
 tmp
 *.js
 *.map
 .sencha_backup
+bootstrap.css

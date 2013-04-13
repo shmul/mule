@@ -1,0 +1,50 @@
+.#{$prefix}tree-icon-leaf {
+  width: $tree-elbow-width;
+  background-image: none;
+}
+
+@if $include-rtl {
+  .#{$prefix}rtl.#{$prefix}tree-icon-leaf {
+    background-image: none;
+  }
+}
+
+.#{$prefix}tree-icon-parent {
+  width: $tree-elbow-width;
+  background-image: none;
+}
+
+@if $include-rtl {
+  .#{$prefix}rtl.#{$prefix}tree-icon-parent {
+    background-image: none;
+  }
+}
+
+.#{$prefix}grid-tree-node-expanded .#{$prefix}tree-icon-parent {
+  background-image: none;
+}
+
+@if $include-rtl {
+  .#{$prefix}grid-tree-node-expanded .#{$prefix}rtl.#{$prefix}tree-icon-parent {
+    background-image: none;
+  }
+}
+
+.#{$prefix}grid-tree-loading .#{$prefix}tree-icon {
+  background-image: theme-background-image('tree/loading');
+}
+
+@if $include-rtl {
+  .#{$prefix}grid-tree-loading .#{$prefix}rtl.#{$prefix}tree-icon {
+    background-image: theme-background-image('tree/loading');
+  }
+}
+
+.#{$prefix}grid-tree-loading span {
+  font-style: italic;
+  color: #444444;
+}
+
+.#{$prefix}tree-animator-wrap {
+  overflow: hidden;
+}
