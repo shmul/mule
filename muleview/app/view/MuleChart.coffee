@@ -101,8 +101,8 @@ Ext.define "Muleview.view.MuleChart",
         listeners:
           itemmouseover: (item) ->
             Muleview.event "chartItemMouseOver", item
-          itemclick: (item) ->
-            Muleview.event "viewChange", item.storeField, null
+          itemclick: (item) =>
+            @areaClickHandler item.storeField
         tips:
           trackMouse: false
           anchor: "left"
@@ -147,3 +147,9 @@ Ext.define "Muleview.view.MuleChart",
 
   keyLegendName: (key) ->
     key.substring(key.lastIndexOf(".") + 1)
+
+  areaClickHandler: (key) ->
+    if key == Muleview.Settings.othersSubkeyName
+      @fireEvent "othersKeyClicked"
+    else
+      Muleview.event "viewChange", key, null
