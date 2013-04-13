@@ -79,6 +79,7 @@ Ext.define "Muleview.view.ChartsView",
             ,
               xtype: "button"
               text: "Select Subkeys"
+              disabled: @subkeys.length == 0
               handler: =>
                 @showSubkeysSelector()
             ,
@@ -136,6 +137,9 @@ Ext.define "Muleview.view.ChartsView",
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
       showAreas: true
       keys: @selectedSubkeys
+      listeners:
+        othersKeyClicked: =>
+          @showSubkeysSelector()
       topKey: @key
       alerts: @alerts
       store: store

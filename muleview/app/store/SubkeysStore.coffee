@@ -71,6 +71,7 @@ Ext.define "Muleview.store.SubkeysStore",
       @dataStore = newStore
       @initHeuristics()
 
+    count = @getCount()
     @each (subkey) =>
       @estimateSubkeyWeight(subkey)
 
@@ -80,9 +81,11 @@ Ext.define "Muleview.store.SubkeysStore",
 
     @sort "heuristicWeight", "DESC"
 
-    for ind in [0...@getCount()]
+    for ind in [0...count]
       record = @getAt(ind)
-      record.set "selected", ind <= Muleview.Settings.defaultSubkeys
+      selected = count <= Muleview.Settings.defaultSubkeys + Muleview.Settings.subkeysOffsetAllowed
+      selected ||= ind + 1 <= Muleview.Settings.defaultSubkeys
+      record.set "selected", selected
     @isAuto = true
     @commitChanges()
     @getSelectedNames()

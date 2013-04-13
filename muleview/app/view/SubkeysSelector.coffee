@@ -7,8 +7,6 @@ Ext.define "Muleview.view.SubkeysSelector",
 
   title: "Select Subkeys"
   modal: true
-  height: "60%"
-  width: "40%"
   hidden: true
   layout:
     type: "vbox"
@@ -20,11 +18,22 @@ Ext.define "Muleview.view.SubkeysSelector",
   items: ->
     [
       {
+        xtype: "container"
+        html: "Muleview can automatically group the least-important subkeys together to form a single area. <br/>You may customize which subkeys to show separately, and the others will be grouped.<hr/>"
+        margin: "0px 0px 5px 0px"
+      }
+      {
+        xtype: "container"
+        html: "Subkey selection:"
+        margin: "0px 0px 5px 0px"
+      }
+
+      {
         xtype: "radio"
         inputValue: "auto"
         name: "option"
         checked: @auto
-        boxLabel: "Automatic"
+        boxLabel: "<b>Automatic</b> - Select the " + (Muleview.Settings.defaultSubkeys + Muleview.Settings.subkeysOffsetAllowed) + " most significant subkeys"
         listeners:
           change: (me, value) =>
             @auto = value
@@ -36,7 +45,7 @@ Ext.define "Muleview.view.SubkeysSelector",
         name: "option"
         checked: !@auto
         inputValue: "custom"
-        boxLabel: "Custom"
+        boxLabel: "<b>Custom</b> - Select specific subkeys to display:"
       }
 
       @grid = Ext.create "Ext.grid.Panel", {
@@ -67,7 +76,7 @@ Ext.define "Muleview.view.SubkeysSelector",
             header: "Weight (heuristic)"
             flex: 1
             dataIndex: "weightPercentage"
-            renderer: Ext.util.Format.numberRenderer("0.00%")
+            renderer: Ext.util.Format.numberRenderer("0.0%")
           }
         ]
       }
@@ -105,6 +114,8 @@ Ext.define "Muleview.view.SubkeysSelector",
     @callback.call(@callbackScope)
 
   initComponent: ->
+    @height = Ext.dom.AbstractElement.getViewportHeight() * 0.6
+    @width = Ext.dom.AbstractElement.getViewportWidth() * 0.4
     @auto = @store.isAuto
     @bbar = @bbar()
     @items = @items()
