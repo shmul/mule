@@ -1,5 +1,5 @@
 SEED = 1 # Random seed
-MAX_KIDS = 150 # Misc rands: Max number of child-nodes per node
+MAX_KIDS = 5 # Misc rands: Max number of child-nodes per node
 MAX_DEPTH = 3 # max graph depth
 MAX_HITS = 10 # Max number per key per timestamp
 KEYS_FILE = "tmp/keys.data"
@@ -76,7 +76,7 @@ def make_node(max_depth)
 
   # Create children:
   if max_depth > 0
-    100.times do
+    MAX_KIDS.times do
       ans[:children] << make_node(max_depth - 1)
     end
   end

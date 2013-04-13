@@ -2,6 +2,7 @@ Ext.define "Muleview.view.SubkeysSelector",
   extend: "Ext.window.Window"
   requires: [
     "Ext.grid.column.CheckColumn"
+    "Ext.grid.RowNumberer"
   ]
 
   title: "Select Subkeys"
@@ -44,6 +45,9 @@ Ext.define "Muleview.view.SubkeysSelector",
         flex: 1
         store: @store
         columns: [
+          {
+            xtype: "rownumberer"
+          }
           {
             xtype: "checkcolumn"
             width: 50

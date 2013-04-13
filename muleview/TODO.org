@@ -5,6 +5,10 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Coffee 1.6 compatibility
 ** TODO Refresh timer not reset by reloading graph
 ** TODO "Loading" mask has double icons
+** TODO Subkeys pagination
+*** TODO Handle case when no subkeys
+*** TODO Disable subkeys selector when no subkeys
+** TODO prettier combobox in chart viewer
 * Features:
 ** DONE Fix Tooltip Errors somehow
 ** DONE Url Navigation:
