@@ -14,6 +14,9 @@ Ext.define "Muleview.store.SubkeysStore",
     ,
       name: "heuristicWeight"
       type: "int"
+    ,
+      name: "weightPercentage"
+      type: "float"
   ]
 
   loadSubkeys: (subkeys)->
@@ -70,6 +73,10 @@ Ext.define "Muleview.store.SubkeysStore",
 
     @each (subkey) =>
       @estimateSubkeyWeight(subkey)
+
+    totalWeight = @sum("heuristicWeight")
+    @each (subkey) =>
+      subkey.set("weightPercentage", 100 * subkey.get("heuristicWeight") / totalWeight)
 
     @sort "heuristicWeight", "DESC"
 

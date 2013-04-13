@@ -60,9 +60,10 @@ Ext.define "Muleview.view.SubkeysSelector",
           }
 
           {
-            header: "Heuristic Weight"
+            header: "Weight (heuristic)"
             flex: 1
-            dataIndex: "heuristicWeight"
+            dataIndex: "weightPercentage"
+            renderer: Ext.util.Format.numberRenderer("0.00%")
           }
         ]
       }
