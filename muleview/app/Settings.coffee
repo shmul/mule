@@ -6,6 +6,11 @@ Ext.define "Muleview.Settings",
   statusTimeFormat: "l, NS \\o\\f F Y, G:i:s" # Status-bar's time format, see above.
   defaultSubkeys: 5 # How much subkeys to display, and the rest will be summed in "Other"
   othersSubkeyName: "(Others)" # Key name used to store sum of hidden subkeys
+  subkeyHeuristics:
+    sampleCount: 5 # Amount of samples to take when calculating subkey heuristics
+    base: 3 # Exponentiation base
+    coefficientMin: 0.8 # How much to multiply the the weight of the oldest value
+    coefficientMax: 1.2 # How much to multiply the weight of the newest value
 
   # The following settings should probably not be changed:
   alerts: [
