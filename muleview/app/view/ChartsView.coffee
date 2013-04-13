@@ -9,6 +9,7 @@ Ext.define "Muleview.view.ChartsView",
     "Ext.data.ArrayStore"
     "Muleview.store.SubkeysStore"
     "Muleview.view.SubkeysSelector"
+    "Muleview.view.AlertsEditor"
   ]
   header: false
   layout: "border"
@@ -76,6 +77,8 @@ Ext.define "Muleview.view.ChartsView",
             ,
               xtype: "button"
               text: "Edit Alerts"
+              handler: =>
+                @showAlertsEditor()
             ,
               xtype: "button"
               text: "Select Subkeys"
@@ -109,6 +112,13 @@ Ext.define "Muleview.view.ChartsView",
     lightChart.setVisible(lightChart.retention != retName) for own _, lightChart of @lightCharts
     @currentRetName = retName
     Muleview.event "viewChange", @key, @currentRetName
+
+  showAlertsEditor: () ->
+    ae = Ext.create "Muleview.view.AlertsEditor",
+      alerts: @alerts
+      key: @key
+      retention: @currentRetName
+    ae.show()
 
   selectSubkeys: ->
     # TODO: some heuristic algorithm

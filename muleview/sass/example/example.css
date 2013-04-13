@@ -5,4 +5,4 @@
  * support capture of theme background, frame, and corner images for non-CSS3 
  * browsers.
  */
-@import '../../build/Muleview/testing/resources/Muleview-example.css';
+@import '../../build/Muleview/production/resources/Muleview-example.css';

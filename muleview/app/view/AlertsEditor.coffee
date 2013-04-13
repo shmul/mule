@@ -1,6 +1,9 @@
   Ext.define "Muleview.view.AlertsEditor",
-  extend: "Ext.form.Panel"
-  alias: "widget.muleviewAlertsEditor"
+  extend: "Ext.window.Window"
+
+  modal: true
+  resizable: false
+
   requires: [
     "Muleview.Settings"
     "Muleview.view.MuleTimeField"
@@ -8,36 +11,88 @@
     "Ext.form.field.Display"
     "Ext.container.Container"
   ]
-  bodyPadding: 10
-  layout:
-    type: "vbox"
-    align: "stretch"
-    pack: "start"
-  overflowY: "auto"
-  title: "Alerts"
 
-  items: [
-      xtype: "displayfield"
-      fieldLabel: "Graph"
-      name: "graphName"
-  ]
+  bodyPadding: 10
+  width: 300
+  height: 300
+
+  layout: "fit"
+  autoScroll: true
+
+  title: "Alerts"
+  defaults:
+    margin: "5px 0px 0px 0px"
+  items: ->
+    formItems = [
+        {
+          xtype: "displayfield"
+          fieldLabel: "Graph"
+          name: "graphName"
+        }
+
+        {
+          xtype: "container"
+          layout:
+            type: "hbox"
+            align: "middle"
+
+          defaults:
+            flex: 1
+
+          items: [
+              xtype: "container"
+              html: "Alerts"
+            ,
+              xtype: "radio"
+              name: "isOn"
+              boxLabel: "Off"
+              inputValue: "off"
+              listeners:
+                change: (me, val) =>
+                  @updateHeight(!val)
+            ,
+              xtype: "radio"
+              name: "isOn"
+              boxLabel: "On"
+              inputValue: "on"
+          ]
+        }
+      ]
+    formItems.push(@createField(alert)) for alert in Muleview.Settings.alerts
+
+    @form = Ext.create "Ext.form.Panel",
+      bodyPadding: 10
+      layout:
+        type: "vbox"
+        align: "stretch"
+        pack: "start"
+      items: formItems
+
+    [@form]
 
   formHashFromArray: (arr, base = {}) ->
     base[alert.name] = alert.value for alert in arr
     base
 
-  load: (curKey, curRet, alertsArr) ->
+  getForm: ->
+    @form.getForm()
+
+  load: (alertsArr) ->
     # Calculate Data:
+    hasAlerts = Ext.Object.getKeys(@alerts).length > 0
     data = {
-      graphName: "#{curKey};#{curRet}"
+      graphName: "#{@key};#{@retention}"
+      isOn: if hasAlerts then "on" else "off"
     }
     data = @formHashFromArray(Muleview.Settings.alerts, data )
-    data = @formHashFromArray(alertsArr, data) if alertsArr
+    data = @formHashFromArray(@alerts, data) if @alerts
     @getForm().setValues(data)
+    @getForm().clearInvalid()
+    @updateHeight(hasAlerts)
 
-    # Display correct items:
-    @updateButtons (if alertsArr then "edit" else "create")
-    @fieldsContainer.setVisible(alertsArr)
+  updateHeight: (mode)->
+    height = if mode then 315 else 154
+    @setHeight height
 
   createField: (alert) ->
     ans =
@@ -51,81 +106,42 @@
       ans.xtype = "numberfield"
     ans
 
+  bbar: ->
+    [
+        "->"
+      ,
+        text: "Cancel"
+        handler: => @doCancel()
+        width: 50
+      ,
+        text: "Save"
+        width: 50
+        handler: => @doSave()
+    ]
+
   initComponent: ->
-    # Fields:
-    fields = []
-    for alert in Muleview.Settings.alerts
-      fields.push @createField(alert)
-
-    # Field container
-    @fieldsContainer = Ext.create "Ext.container.Container",
-      layout:
-        type: "vbox"
-        align: "stretch"
-        pack: "start"
-
-      items: fields
-      border: false
-      hidden: true
-
-    @items.push @fieldsContainer
-
-    # Buttons:
-    @buttonsContainer = Ext.create "Ext.container.Container",
-      border: false
-      layout:
-        type: "hbox"
-        pack: "start"
-      defaults:
-        xtype: "button"
-        margin: "0px 5px 0px 0px"
-        hidden: true
-      items: [
-            text: "Save"
-            handler: => @doSave()
-            showInMode: ["edit", "creating"]
-        ,
-            text: "Delete"
-            handler: => @doDelete()
-            showInMode: ["edit"]
-        ,
-            text: "Set Alerts"
-            handler: => @doCreate()
-            showInMode: ["create"]
-        ,
-            text: "Cancel"
-            handler: => @doCancel()
-            showInMode: ["creating"]
-      ]
-    @items.push @buttonsContainer
+    @items = @items()
+    @bbar = @bbar()
     @callParent()
-
-  updateButtons: (mode) ->
-    @buttonsContainer.items.each (btn) ->
-      btn.setVisible(Ext.Array.contains(btn.showInMode, mode))
+    @load()
 
   doSave: ->
     @doMuleAction ("PUT") if @getForm().isValid()
 
   doMuleAction: (method) ->
-    @submit(
-      url: Muleview.Mule.getAlertCommandUrl(Muleview.currentKey, Muleview.currentRetention)
+    @getForm().submit(
+      url: Muleview.Mule.getAlertCommandUrl(@key, @retention)
       method: method
-      success: ->
-        Muleview.event "refreshRequest"
+      success: =>
+        @close()
+        Muleview.event "refresh"
       )
 
-  doDelete: ->
+  doDelete: ()->
     Ext.MessageBox.confirm "Delete alerts",
       "Are you sure you wish to delete all alerts for this graph?",
       (res) =>
         @doMuleAction("DELETE") if res == "yes"
 
-  doCreate: ->
-    @getForm().clearInvalid()
-    @fieldsContainer.show()
-    @updateButtons("creating")
-
   doCancel: ->
-    @fieldsContainer.hide()
-    @updateButtons("create")
+    @close()
