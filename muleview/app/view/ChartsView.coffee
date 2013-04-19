@@ -15,6 +15,14 @@ Ext.define "Muleview.view.ChartsView",
   layout: "border"
   othersKey: Muleview.Settings.othersSubkeyName
 
+  # Replace full Mule key names as keys with retention-name only
+  processAlertsHash: (alerts) ->
+    ans = {}
+    for own k, v of alerts
+      [muleKey, ret] = k.split(";")
+      ans[ret] = v if muleKey == @key
+    ans
+
   initComponent: ->
     # Init retentions (these are just the names, for the combo box)
     retentions = (new Muleview.model.Retention(retName) for own retName of @data)
@@ -29,6 +37,9 @@ Ext.define "Muleview.view.ChartsView",
     @subkeys = Ext.clone(@keys)
     Ext.Array.remove(@subkeys, @key)
     @keys.push(@othersKey) # Need to add othersKey as a key so that the records will have such an attribute
+
+    # Rename alerts' keys to be hashed only by the retName
+    @alerts = @processAlertsHash(@alerts)
 
     # Create all stores and light charts:
     @stores = {}
@@ -120,10 +131,6 @@ Ext.define "Muleview.view.ChartsView",
       retention: @currentRetName
     ae.show()
 
-  selectSubkeys: ->
-    # TODO: some heuristic algorithm
-    @subkeys[0...Muleview.Settings.defaultSubkeys]
-
   showSubkeysSelector: ->
     subkeysSelector = Ext.create "Muleview.view.SubkeysSelector",
       store: @subkeysStore
@@ -143,7 +150,6 @@ Ext.define "Muleview.view.ChartsView",
         sum = 0
         sum += record.get(otherSubkey) for otherSubkey in unselectedSubkeys
         record.set(@othersKey, sum)
-
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
       showAreas: true
       keys: @selectedSubkeys
@@ -151,7 +157,7 @@ Ext.define "Muleview.view.ChartsView",
         othersKeyClicked: =>
           @showSubkeysSelector()
       topKey: @key
-      alerts: @alerts
+      alerts: @alerts[retName]
       store: store
 
   # Creates a flat store from a hash of {
@@ -160,7 +166,8 @@ Ext.define "Muleview.view.ChartsView",
   # }
   createStore: (retName) ->
     # Create initial store:
-    store = @createEmptyStore()
+    alerts = @alerts[retName]
+    store = @createEmptyStore(alerts)
     # Convert data to timestamps-based hash:
     timestamps = {}
     for own key, keyData of @data[retName]
@@ -169,18 +176,18 @@ Ext.define "Muleview.view.ChartsView",
           timestamps[timestamp] = {
             timestamp: timestamp
           }
-          timestamps[timestamp][alert.name] = alert.value for alert in @alerts if @alerts
+          timestamps[timestamp][alert.name] = alert.value for alert in alerts if alerts
         timestamps[timestamp][key] = count
 
     # Add the data:
     store.add(Ext.Object.getValues(timestamps))
     store
 
-  createEmptyStore: ->
+  createEmptyStore: (alerts) ->
     # Initialize store:
     fields = (name: key, type: "integer" for key in @keys)
     fields.push(name: "timestamp", type: "integer")
-    fields.push {name: alert.name, type: "integer"} for alert in @alerts if @alerts
+    fields.push {name: alert.name, type: "integer"} for alert in alerts if alerts
 
     store = Ext.create "Ext.data.ArrayStore",
       fields: fields
