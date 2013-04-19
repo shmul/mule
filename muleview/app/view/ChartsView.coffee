@@ -15,8 +15,6 @@ Ext.define "Muleview.view.ChartsView",
   layout: "border"
   othersKey: Muleview.Settings.othersSubkeyName
 
-  showLegend: true # default
-
   # Replace full Mule key names as keys with retention-name only
   processAlertsHash: (alerts) ->
     ans = {}
@@ -56,6 +54,8 @@ Ext.define "Muleview.view.ChartsView",
       dataStore: @stores[@defaultRetention]
     @subkeysStore.loadSubkeys(@subkeys)
 
+    # Default to hiding the legend if no subkeys exist:
+    @showLegend = @subkeys.length > 0
 
     # Init component:
     @items = @items()
