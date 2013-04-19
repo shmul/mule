@@ -70,33 +70,21 @@ Ext.define "Muleview.view.ChartsView",
           header: false
           layout: "fit"
           tbar: [
-              @retCombo = Ext.create "Ext.form.field.ComboBox",
-                fieldLabel: "Show"
-                forceSelection: true
-                editable: false
-                labelWidth: 40
-                displayField: "title"
-                valueField: "name"
-                store: @retentionsStore
-                width: "auto"
-                listeners:
-                  scope: @
-                  select: (me, retentions)->
-                    retention = retentions[0]
-                    return unless retention
-                    Muleview.event "viewChange", @key, retention.get("name")
+              "Show:"
             ,
+              @retMenu = @createRetentionsMenu()
+            , "-",
               xtype: "button"
               text: "Edit Alerts"
               handler: =>
                 @showAlertsEditor()
-            ,
+            , "-",
               xtype: "button"
               text: "Select Subkeys"
               disabled: @subkeys.length == 0
               handler: =>
                 @showSubkeysSelector()
-            ,
+            , "-",
               xtype: "button"
               text: "Refresh"
               handler: ->
@@ -116,10 +104,37 @@ Ext.define "Muleview.view.ChartsView",
           items: @lightCharts
     ]
 
+  createRetentionsMenu: ->
+    clickHandler = (me) =>
+      Muleview.event "viewChange", @key, me.retention.get("name")
+
+    items = []
+    @retentionsStore.each (ret) =>
+      return unless ret
+      item = Ext.create "Ext.menu.CheckItem",
+        text: ret.get("title")
+        retention: ret
+        group: "retention"
+        checkHandler: clickHandler
+        showCheckbox: false
+
+      ret.menuItem = item
+      items.push item
+
+    Ext.create "Ext.button.Button",
+      selectRetention: (retName) ->
+        for item in items
+          selected = item.retention.get("name") == retName
+          item.setChecked(selected)
+          @setText(item.retention.get("title")) if selected
+      menu:
+        items: items
+
   showRetention: (retName) ->
     return unless retName and retName != @currentRetName
     @renderChart(retName)
-    @retCombo.select retName
+    @retMenu.selectRetention(retName)
+
     lightChart.setVisible(lightChart.retention != retName) for own _, lightChart of @lightCharts
     @currentRetName = retName
     Muleview.event "viewChange", @key, @currentRetName
