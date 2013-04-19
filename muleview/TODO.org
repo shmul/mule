@@ -20,15 +20,11 @@ It should immediately show the full path of the key, and then subsequently load 
 ** DONE Dymamic Tree improvements:
 *** DONE Show loading mask in node itself
 ** TODO Pointer cursor for clikable areas
-** TODO Clicking alerts focuses them on the editor
 ** DONE Toggle Legend
 ** TODO Color alert fieldLabels
 ** TODO Configurable refresh
 ** TODO Mule/Hinny picture
 ** TODO Something nicer with the status bar
-
-** TODO "This key has no graphs"
-Not sure this is a reasonable situation, though
 ** TODO Support for timestamp labels - Waiting for Mule API
 ** TODO Something cooler with tooltips?
 ** TODO Theme
@@ -40,7 +36,7 @@ Not sure this is a reasonable situation, though
  - [X] Only relevant small graphs
  - [X] Make small graphs clickable
 ** DONE Url navigation
-** DONE Maximize/restore button
+** TODO Maximize/restore button
 ** DONE Nicer title(s)
 ** DONE Status Bar
 ** DONE Refresh interval
@@ -70,14 +66,11 @@ aka "Add alerts" button
 ** DONE Dynamic tree
 ** TODO Try to implement onhashchange event myself
 This is related to histoy controller
-** TODO Generate big chart only on demand
+** DONE Generate big chart only on demand
 ** DONE Upgrade to Extjs 4.2
-** TODO Smooth refresh
-Refrehs instead of completely destroy and recreated all graphs - ask for updated data and when received, replace existing.
-both in refresh button and alerts editor
 * Misc:
 ** TODO Check data correctness
-** TODO Support for more than 2-3 retentions?
+** DONE Support for more than 2-3 retentions?
 ** TODO Refactor / naming, "Graph" object
  - Graph object will contain references to 2 charts + alerts
  - Distinguish "chart", "graph" and "retention"
@@ -87,10 +80,10 @@ in favor of this.application.whatever
 ** Ideas:
 *** Experiment with union-graph
 One graph to rule them all ( all retentions )
-*** Experiment with single graph component
+*** PASS - Experiment with single graph component
 the single graph component is a panel containing a chart and can have two viewing mode - big and light
 Think i'll pass this one
-*** Experiment with docked buttons instead of a tab bar
+*** PASS - Experiment with docked buttons instead of a tab bar
 *** Experiment with tree-grid
 Instead of having regular tree + tabs, use tree-grid, which will hold 3 (?) buttons for each node, button per graph/retention
 *** Color tree keys according to what they appear in the legend
