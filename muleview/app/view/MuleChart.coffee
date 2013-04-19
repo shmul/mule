@@ -109,11 +109,6 @@ Ext.define "Muleview.view.MuleChart",
           tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
           renderer: @tipsRenderer
           targetXY: @self.lastXY
-          listeners:
-            afterrender: (me)->
-              me.getEl().on
-                mousemove: ->
-                  me.hide()
 
     # Alerts:
     if @alerts

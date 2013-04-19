@@ -1,5 +1,6 @@
 Ext.Loader.setPath("Muleview", "app")
-Ext.Loader.setPath("Ext.ux", "ux");
+Ext.Loader.setPath("Ext.ux", "ux")
+
 Ext.application
   name: "Muleview"
   requires: [
@@ -8,6 +9,7 @@ Ext.application
     "Ext.tree.Panel"
     "Muleview.Mule"
     "Muleview.RefreshTimer"
+    "Muleview.view.Tooptip"
   ]
 
   launch: ->
