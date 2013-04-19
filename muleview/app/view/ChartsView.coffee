@@ -15,6 +15,8 @@ Ext.define "Muleview.view.ChartsView",
   layout: "border"
   othersKey: Muleview.Settings.othersSubkeyName
 
+  showLegend: true # default
+
   # Replace full Mule key names as keys with retention-name only
   processAlertsHash: (alerts) ->
     ans = {}
@@ -89,6 +91,14 @@ Ext.define "Muleview.view.ChartsView",
               text: "Refresh"
               handler: ->
                 Muleview.event "refresh"
+            , "-",
+              text: "Hide Legend"
+              enableToggle: true
+              pressed: !@showLegend
+              toggleHandler: (me, value) =>
+                @showLegend = !value
+                @renderChart()
+
           ]
       ,
         @rightPanel = Ext.create "Ext.panel.Panel",
@@ -174,6 +184,7 @@ Ext.define "Muleview.view.ChartsView",
       topKey: @key
       alerts: @alerts[retName]
       store: store
+      showLegend: @showLegend
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],

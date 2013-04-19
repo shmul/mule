@@ -134,6 +134,10 @@ Ext.define "Muleview.view.MuleChart",
               title: "Alert"
               html: "<i><b>#{alert.label}</b> (#{Ext.util.Format.number(alert.value, ",")})</i>"
               targetXY: @self.lastXY
+
+    # Remove default legend if necessary:
+    @legend = false unless @showLegend
+
     @callParent()
     @on
       mousemove: (e, opts) =>

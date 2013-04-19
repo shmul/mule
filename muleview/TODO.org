@@ -8,7 +8,7 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Subkeys pagination
 *** TODO Handle case when no subkeys
 *** TODO Disable subkeys selector when no subkeys
-** TODO prettier combobox in chart viewer
+** DONE prettier combobox in chart viewer
 ** DONE AlertsEditor not complete
 * Features:
 ** DONE Fix Tooltip Errors somehow
@@ -21,7 +21,7 @@ It should immediately show the full path of the key, and then subsequently load 
 *** DONE Show loading mask in node itself
 ** TODO Pointer cursor for clikable areas
 ** TODO Clicking alerts focuses them on the editor
-** TODO Toggle Legend
+** DONE Toggle Legend
 ** TODO Color alert fieldLabels
 ** TODO Configurable refresh
 ** TODO Mule/Hinny picture
@@ -36,7 +36,6 @@ Not sure this is a reasonable situation, though
 *** DONE Areas color pallete
 *** TODO Different color for topKey and areas
 *** TODO Less ugly keysTree icons
-** TODO Long legends support?
 ** DONE Redesign display
  - [X] Only relevant small graphs
  - [X] Make small graphs clickable
