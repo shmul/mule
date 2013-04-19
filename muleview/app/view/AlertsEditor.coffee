@@ -126,7 +126,11 @@
     @load()
 
   doSave: ->
-    @doMuleAction ("PUT") if @getForm().isValid()
+    alertsOn = @getForm().getValues().isOn
+    if alertsOn == "on"
+      @doMuleAction ("PUT") if @getForm().isValid()
+    else if alertsOn == "off"
+      @doMuleAction ("DELETE") if @getForm().isValid()
 
   doMuleAction: (method) ->
     @getForm().submit(
@@ -136,12 +140,6 @@
         @close()
         Muleview.event "refresh"
       )
-
-  doDelete: ()->
-    Ext.MessageBox.confirm "Delete alerts",
-      "Are you sure you wish to delete all alerts for this graph?",
-      (res) =>
-        @doMuleAction("DELETE") if res == "yes"
 
   doCancel: ->
     @close()

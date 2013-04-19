@@ -126,7 +126,7 @@ Ext.define "Muleview.view.ChartsView",
 
   showAlertsEditor: () ->
     ae = Ext.create "Muleview.view.AlertsEditor",
-      alerts: @alerts
+      alerts: @alerts[@currentRetName]
       key: @key
       retention: @currentRetName
     ae.show()
