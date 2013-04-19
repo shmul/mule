@@ -70,7 +70,9 @@ Ext.define "Muleview.view.ChartsView",
         @chartContainer = Ext.create "Ext.panel.Panel",
           region: "center"
           header: false
-          layout: "fit"
+          layout:
+            type: "vbox"
+            align: "stretch"
           tbar: [
               "Show:"
             ,
@@ -176,6 +178,7 @@ Ext.define "Muleview.view.ChartsView",
         sum += record.get(otherSubkey) for otherSubkey in unselectedSubkeys
         record.set(@othersKey, sum)
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
+      flex: 1
       showAreas: true
       keys: @selectedSubkeys
       listeners:
@@ -185,6 +188,8 @@ Ext.define "Muleview.view.ChartsView",
       alerts: @alerts[retName]
       store: store
       showLegend: @showLegend
+    @chartContainer.add Ext.create "Muleview.view.ZoomSlider",
+      store: store
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],
