@@ -9,7 +9,7 @@ it gets into "ready" even though still waiting for mule events
 *** TODO Handle case when no subkeys
 *** TODO Disable subkeys selector when no subkeys
 ** TODO prettier combobox in chart viewer
-** TODO AlertsEditor not complete
+** DONE AlertsEditor not complete
 * Features:
 ** DONE Fix Tooltip Errors somehow
 ** DONE Url Navigation:
