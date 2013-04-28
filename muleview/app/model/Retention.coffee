@@ -15,11 +15,11 @@ Ext.define "Muleview.model.Retention",
 
   statics:
     units: [
-      ["s", "seconds"]
-      ["m", "minutes"]
-      ["h", "hours"]
-      ["d", "days"]
-      ["y", "years"]
+      ["s", "Seconds"]
+      ["m", "Minutes"]
+      ["h", "Hours"]
+      ["d", "Days"]
+      ["y", "Years"]
     ]
 
   parseOne: (rawTimeUnit) ->
@@ -29,8 +29,8 @@ Ext.define "Muleview.model.Retention",
       if letter == unitLetter
         name = unitName
         letterIndex = ind
-    name = name.substring(0, name.length - 1) if count == 1 # Remove the "s" for a singular form
     count = parseInt(count)
+    name = name.substring(0, name.length - 1) if count == 1 # Remove the "s" for a singular form
     {
       name: name
       count: count
@@ -57,7 +57,7 @@ Ext.define "Muleview.model.Retention",
   #   "5m:1d" => "Last 1 days"
   #   "1s:3y" => "Last 3 years"
   getTitle: ->
-    "Last #{@total.count} #{@total.name}"
+    "Every #{@bucket.count} #{@bucket.name} / Last #{@total.count} #{@total.name}"
 
   # Creates an integer value for a retention - this functions describes an order between all possible retentions:
   # Examples:
