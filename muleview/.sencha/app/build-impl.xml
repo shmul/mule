@@ -86,6 +86,7 @@ this file in most cases.
                 <property name="build.compression" value="${build.compression.production}"/>
                 <property name="build.operations" value="${build.operations.production}"/>
                 <property name="build.options" value="${build.options.production}"/>
+                <property name="build.optimize" value="${build.optimize.production}"/>
             </then>
             <else>
                 <if>
@@ -97,6 +98,7 @@ this file in most cases.
                         <property name="build.compression" value="${build.compression.testing}"/>
                         <property name="build.operations" value="${build.operations.testing}"/>
                         <property name="build.options" value="${build.options.testing}"/>
+                        <property name="build.optimize" value="${build.optimize.testing}"/>
                     </then>
                     <else>
                         <fail>The ExtJS SDK currently supports 'production' and 'testing' builds not ${args.environment}</fail>
@@ -483,11 +485,13 @@ this file in most cases.
                 and
                 ${build.operations}
                 and
+                ${build.optimize}
+                and
                 save
                     page
             
             #page command
-                
+
                 and
                 concat
                     ${build.compression}
