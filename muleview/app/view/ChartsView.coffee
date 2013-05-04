@@ -13,7 +13,7 @@ Ext.define "Muleview.view.ChartsView",
   ]
   header: false
   layout: "border"
-  othersKey: Muleview.Settings.othersSubkeyName
+  othersKey: Muleview.Settings.othersSubkeyName # Will be used as the name for the key which will group all hidden subkeys
 
   # Replace full Mule key names as keys with retention-name only
   processAlertsHash: (alerts) ->

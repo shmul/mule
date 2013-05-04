@@ -19,6 +19,14 @@ Ext.define "Muleview.view.Viewport",
       split: true
       collapsible: true
       title: "Available Keys"
+      bbar: [
+          id: "btnSwitchToMultiple"
+          text: "Switch to Multiple-Mode"
+        ,
+          id: "btnSwitchToNormal"
+          text: "Switch to Normal-Mode"
+          hidden: true
+      ]
       items: [
           xtype: "treepanel"
           region: "center"

@@ -3,18 +3,30 @@ Ext.define "Muleview.controller.KeysTree",
   models: [
     "MuleKey"
   ]
+
+  multiMode: false
+
   refs: [
       ref: "tree"
       selector: "#keysTree"
     ,
       ref: "mainPanel"
       selector: "#mainPanel"
+    ,
+      ref: "normalModeBtn"
+      selector: "#btnSwitchToNormal"
+    ,
+      ref: "multiModeBtn"
+      selector: "#btnSwitchToMultiple"
   ]
 
   onSelectionChange: (me, selected)->
     return unless selected[0]
-    key = selected[0].get("fullname")
-    Muleview.event "viewChange", key, Muleview.currentRetention
+    if @multiMode
+      keys = node.get("fullname") for node in @getTree().getChecked()
+    else
+      keys = selected[0].get("fullname")
+    Muleview.event "viewChange", keys, Muleview.currentRetention
 
   onLaunch: ->
     @store = @getTree().getStore()
@@ -22,13 +34,35 @@ Ext.define "Muleview.controller.KeysTree",
     @getTree().on
       selectionchange: @onSelectionChange
       itemexpand: @onItemExpand
+      # checkchange: @onCheckChange
       scope: @
+
+    @getNormalModeBtn().on
+      scope: @
+      click: -> @setMultiMode(false)
+
+    @getMultiModeBtn().on
+      scope: @
+      click: -> @setMultiMode(true)
+
 
     Muleview.app.on
       viewChange: @updateSelection
       keysReceived: @addKeys
       scope: @
+
     @fillFirstkeys()
+
+  setMultiMode: (multi) ->
+    @multiMode = multi
+    @getMultiModeBtn().setVisible(!multi)
+    @getNormalModeBtn().setVisible(multi)
+    selectedNode = @getTree().getSelectionModel().getSelection()[0]
+    @store.getRootNode().cascadeBy (node) ->
+      checked = null
+      if multi
+        checked = node == selectedNode
+      node.set("checked", checked)
 
   onItemExpand: (node) ->
     # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
