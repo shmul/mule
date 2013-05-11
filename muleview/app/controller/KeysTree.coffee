@@ -21,11 +21,12 @@ Ext.define "Muleview.controller.KeysTree",
   ]
 
   onSelectionChange: (me, selected)->
-    return unless selected[0]
-    if @multiMode
-      keys = node.get("fullname") for node in @getTree().getChecked()
-    else
-      keys = selected[0].get("fullname")
+    return unless selected[0] and not @multiMode
+    key = selected[0].get("fullname")
+    Muleview.event "viewChange", key, Muleview.currentRetention
+
+  onCheckChange: ->
+    keys = (node.get("fullname") for node in @getTree().getChecked()).join(",")
     Muleview.event "viewChange", keys, Muleview.currentRetention
 
   onLaunch: ->
@@ -34,7 +35,7 @@ Ext.define "Muleview.controller.KeysTree",
     @getTree().on
       selectionchange: @onSelectionChange
       itemexpand: @onItemExpand
-      # checkchange: @onCheckChange
+      checkchange: @onCheckChange
       scope: @
 
     @getNormalModeBtn().on
