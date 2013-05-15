@@ -1,5 +1,10 @@
 Ext.define "Muleview.controller.ChartsController",
   extend: "Ext.app.Controller"
+
+  requires: [
+    "Muleview.view.SingleGraphChartsView"
+  ]
+
   refs: [
       ref: "ChartsViewContainer"
       selector: "#chartsViewContainer"
@@ -49,47 +54,33 @@ Ext.define "Muleview.controller.ChartsController",
     # If some keys were selected, set a loading mask before retreiving them:
     @chartsViewContainer.setLoading(true)
 
-    # Define the callback:
-    callback = (chartsView) =>
-      @chartsView = chartsView
+    Muleview.Mule.getKeysData keys, (keysData, alerts) =>
+      @chartsView = @createChartsView(keys, retention, keysData, alerts)
 
       # Add the new ChartsView to its container and remove loading mask:
       @chartsViewContainer.add(@chartsView)
       @chartsViewContainer.setLoading(false)
 
+      if keys.length = 1
+        # Set a nice title to the panel, replacing "." with "/":
+        @chartsViewContainer.setTitle(keys[0].replace(/\./, " / "))
+
+  createChartsView: (keys, retention, keysData, alerts) ->
     if keys.length == 1
-      key = keys[0]
-
-      # Set a nice title to the panel, replacing "." with "/":
-      @chartsViewContainer.setTitle(key.replace(/\./, " / "))
-
-      # Create the chartsView:
-      @createSingleKeyView key, retention, callback
-
-    else if keys.length > 1
-      @createMultipleKeysView keys, retention, callback
-
-
-
-  createSingleKeyView: (key, retention, callback) ->
-    # Obtain new data from Mule:
-    Muleview.Mule.getKeyData key, (keyData, alerts) =>
-      # Create the ChartsView
-      callback @getView("ChartsView").create
-        key: key
-        data: keyData
+      @getView("SingleGraphChartsView").create
+        key: keys[0]
+        data: keysData
         alerts: @processAlerts(alerts)
         defaultRetention: retention
 
-  createMultipleKeysView: (keys, retention, callback) ->
-    # Obtain all keys' data:
-    Muleview.Mule.getKeysData keys, (keysData) ->
-      console.log('ChartsController.coffee\\ 87: keysData:', keysData);
-      # callback @getView("ChartsView").create
-      #   keys: key
-      #   multipleKeys: true
-      #   data: keysData
-      #   defaultRetention: retention
+    else if keys.length > 1
+      @getView("ChartsView").create
+        topKeys: keys
+        data: keysData
+        defaultRetention: retention
+
+
+
 
   processAlerts: (rawAlertsHash) ->
     # Preprocess Mule's alerts array according to Muleview.Settings.alerts

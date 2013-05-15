@@ -47,11 +47,11 @@ Ext.define "Muleview.Mule",
   getKeysData: (keys, callback) ->
     callbacks = keys.length
     allKeys = {}
-    counterCallback = (moreKeys) ->
-      console.log('Mule.coffee\\ 51: arguments:', arguments);
-      console.log('Mule.coffee\\ 52: callbacks:', callbacks);
+    allAlerts = {}
+    counterCallback = (moreKeys, moreAlerts) ->
       Ext.merge(allKeys, moreKeys)
+      Ext.merge(allAlerts, moreAlerts)
       callbacks -= 1
       if callbacks == 0
-        callback(allKeys)
+        callback(allKeys, allAlerts)
     @getKeyData(key, counterCallback) for key in keys
