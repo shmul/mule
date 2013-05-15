@@ -82,7 +82,14 @@ Ext.define "Muleview.controller.ChartsController",
         defaultRetention: retention
 
   createMultipleKeysView: (keys, retention, callback) ->
-    console.log('ChartsController.coffee\\ 72: arguments:', arguments);
+    # Obtain all keys' data:
+    Muleview.Mule.getKeysData keys, (keysData) ->
+      console.log('ChartsController.coffee\\ 87: keysData:', keysData);
+      # callback @getView("ChartsView").create
+      #   keys: key
+      #   multipleKeys: true
+      #   data: keysData
+      #   defaultRetention: retention
 
   processAlerts: (rawAlertsHash) ->
     # Preprocess Mule's alerts array according to Muleview.Settings.alerts

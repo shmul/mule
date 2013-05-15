@@ -43,3 +43,15 @@ Ext.define "Muleview.Mule",
           keyData[retention][key] = data
       Muleview.event "keysReceived", keys
       callback(keyData, alerts)
+
+  getKeysData: (keys, callback) ->
+    callbacks = keys.length
+    allKeys = {}
+    counterCallback = (moreKeys) ->
+      console.log('Mule.coffee\\ 51: arguments:', arguments);
+      console.log('Mule.coffee\\ 52: callbacks:', callbacks);
+      Ext.merge(allKeys, moreKeys)
+      callbacks -= 1
+      if callbacks == 0
+        callback(allKeys)
+    @getKeyData(key, counterCallback) for key in keys

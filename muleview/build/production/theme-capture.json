@@ -480,11 +480,7 @@
         "tl": 3,
         "tr": 3
       },
-      "slices": {
-        "bg": "images/btn/btn-default-toolbar-small-bg.gif",
-        "frame_bg": "images/btn/btn-default-toolbar-small-fbg.gif"
-      },
-      "stretch": "bottom"
+      "slices": {}
     },
     {
       "border": {
@@ -594,9 +590,7 @@
         "tr": 3
       },
       "slices": {
-        "bg": "images/btn/btn-default-toolbar-small-disabled-bg.gif",
         "corners": "images/btn/btn-default-toolbar-small-disabled-corners.gif",
-        "frame_bg": "images/btn/btn-default-toolbar-small-disabled-fbg.gif",
         "sides": "images/btn/btn-default-toolbar-small-disabled-sides.gif"
       },
       "stretch": "bottom"
@@ -621,11 +615,7 @@
         "tl": 3,
         "tr": 3
       },
-      "slices": {
-        "bg": "images/btn/btn-default-toolbar-medium-bg.gif",
-        "frame_bg": "images/btn/btn-default-toolbar-medium-fbg.gif"
-      },
-      "stretch": "bottom"
+      "slices": {}
     },
     {
       "border": {
@@ -735,9 +725,7 @@
         "tr": 3
       },
       "slices": {
-        "bg": "images/btn/btn-default-toolbar-medium-disabled-bg.gif",
         "corners": "images/btn/btn-default-toolbar-medium-disabled-corners.gif",
-        "frame_bg": "images/btn/btn-default-toolbar-medium-disabled-fbg.gif",
         "sides": "images/btn/btn-default-toolbar-medium-disabled-sides.gif"
       },
       "stretch": "bottom"
@@ -762,11 +750,7 @@
         "tl": 3,
         "tr": 3
       },
-      "slices": {
-        "bg": "images/btn/btn-default-toolbar-large-bg.gif",
-        "frame_bg": "images/btn/btn-default-toolbar-large-fbg.gif"
-      },
-      "stretch": "bottom"
+      "slices": {}
     },
     {
       "border": {
@@ -876,9 +860,7 @@
         "tr": 3
       },
       "slices": {
-        "bg": "images/btn/btn-default-toolbar-large-disabled-bg.gif",
         "corners": "images/btn/btn-default-toolbar-large-disabled-corners.gif",
-        "frame_bg": "images/btn/btn-default-toolbar-large-disabled-fbg.gif",
         "sides": "images/btn/btn-default-toolbar-large-disabled-sides.gif"
       },
       "stretch": "bottom"
@@ -2055,8 +2037,8 @@
         "tr": 0
       },
       "slices": {
-        "corners": "images/grid-row-editor-buttons/-corners.gif",
-        "sides": "images/grid-row-editor-buttons/-sides.gif"
+        "corners": "images/grid-row-editor-buttons/null-corners.gif",
+        "sides": "images/grid-row-editor-buttons/null-sides.gif"
       }
     }
   ]

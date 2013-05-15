@@ -13,7 +13,6 @@ Ext.define "Muleview.view.MuleChart",
   showAreas: true
   shadow: false
 
-
   legend:
     position: "right"
   animate: false
