@@ -11,6 +11,8 @@ Ext.define "Muleview.view.ChartsView",
   layout: "border"
   othersKey: Muleview.Settings.othersSubkeyName # Will be used as the name for the key which will group all hidden subkeys
 
+  alerts: []
+
   initRetentions: ->
     # Init retentions (these are just the names, for the combo box)
     retentions = (new Muleview.model.Retention(retName) for own retName of @data)
@@ -38,6 +40,7 @@ Ext.define "Muleview.view.ChartsView",
       @lightCharts[name] = @createLightChart(retention)
 
   initComponent: ->
+    console.log('ChartsView.coffee\\ 43: @topKeys:', @topKeys);
     @initRetentions()
     @initKeys()
 
@@ -47,11 +50,13 @@ Ext.define "Muleview.view.ChartsView",
 
     # Init component:
     @items = @items()
+    console.log('ChartsView.coffee\\ 53: @topKeys:', @topKeys);
     @callParent()
+    console.log('ChartsView.coffee\\ 55: @topKeys:', @topKeys);
     @eachRetention (retention, name) =>
       @rightPanel.add(@lightCharts[name])
-
-    Ext.defer @showRetention, 1, @, [@defaultRetention]
+    console.log('ChartsView.coffee\\ 58: @topKeys:', @topKeys);
+    # Ext.defer @showRetention, 1, @, [@defaultRetention]
 
   items: ->
     [
@@ -61,35 +66,7 @@ Ext.define "Muleview.view.ChartsView",
           layout:
             type: "vbox"
             align: "stretch"
-          tbar: [ #TODO: remove single-chart buttons
-              "Show:"
-            ,
-              @retMenu = @createRetentionsMenu()
-            , "-",
-              xtype: "button"
-              text: "Edit Alerts"
-              handler: =>
-                @showAlertsEditor()
-            , "-",
-              xtype: "button"
-              text: "Select Subkeys"
-              disabled: @subKeys.length == 0
-              handler: =>
-                @showSubkeysSelector()
-            , "-",
-              xtype: "button"
-              text: "Refresh"
-              handler: ->
-                Muleview.event "refresh"
-            , "-",
-              text: "Hide Legend"
-              enableToggle: true
-              pressed: !@showLegend
-              toggleHandler: (me, value) =>
-                @showLegend = !value
-                @renderChart()
-
-          ]
+          tbar: @createChartContainerToolbar()
       ,
         @rightPanel = Ext.create "Ext.panel.Panel",
           title: "Previews"
@@ -104,9 +81,30 @@ Ext.define "Muleview.view.ChartsView",
           items: @lightCharts
     ]
 
+  createChartContainerToolbar: ->
+    [
+        "Show:"
+      ,
+        @retMenu = @createRetentionsMenu()
+      , "-",
+        xtype: "button"
+        text: "Refresh"
+        handler: ->
+          Muleview.event "refresh"
+      , "-",
+        text: "Hide Legend"
+        enableToggle: true
+        pressed: !@showLegend
+        toggleHandler: (me, value) =>
+          @showLegend = !value
+          @renderChart()
+
+    ]
+
   createRetentionsMenu: ->
     clickHandler = (me) =>
-      Muleview.event "viewChange", @key, me.retention.get("name")
+      return
+      Muleview.event "viewChange", @topKeys, me.retention.get("name")
 
     items = []
     @retentionsStore.each (ret) =>
@@ -131,17 +129,20 @@ Ext.define "Muleview.view.ChartsView",
         items: items
 
   showRetention: (retName) ->
-    return unless retName and retName != @currentRetName
+    return unless !@currentRetName or(retName and retName != @currentRetName)
+    retName ||= @retentionsStore.getAt(0).get("name")
     @renderChart(retName)
     @retMenu.selectRetention(retName)
 
     lightChart.setVisible(lightChart.retention != retName) for own _, lightChart of @lightCharts
     @currentRetName = retName
-    Muleview.event "viewChange", @key, @currentRetName
+    Muleview.event "viewChange", @topKeys, @currentRetName
 
   renderChart: (retName = @currentRetName) ->
+    console.log('ChartsView.coffee\\ 142: @topKeys:', @topKeys);
     @chartContainer.removeAll()
     store = @stores[retName]
+    console.log('ChartsView.coffee\\ 140: @topKeys:', @topKeys);
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
       flex: 1
       topKeys: @topKeys
@@ -149,6 +150,7 @@ Ext.define "Muleview.view.ChartsView",
       showLegend: @showLegend
     @chartContainer.add Ext.create "Muleview.view.ZoomSlider",
       store: store
+    console.log('ChartsView.coffee\\ 153: @topKeys:', @topKeys);
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],

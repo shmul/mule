@@ -20,8 +20,11 @@ Ext.define "Muleview.controller.ChartsController",
       refresh: @refresh
 
   viewChange: (keys, retention, force) ->
+    console.log("ChartsController.coffee\\ 23: <HERE>");
     # If given a string for keys, convert it to an array:
     keys = keys.split(",") if Ext.isString(keys)
+    console.log('ChartsController.coffee\\ 26: keys:', keys);
+    console.log('ChartsController.coffee\\ 27: @keys:', @keys);
 
     # Check if any keys were changed from the previous rendering:
     difference = @keys.length != keys.length || Ext.Array.difference(@keys, keys).length != 0
@@ -37,6 +40,7 @@ Ext.define "Muleview.controller.ChartsController",
       # If only the retention was changed, we ask the ChartsView to show the new one:
       @retention = retention
       @chartsView.showRetention(retention)
+    console.log("ChartsController.coffee\\ 43: <HERE>");
 
   refresh: ->
     # Run the view change with the power of the force:
@@ -53,10 +57,12 @@ Ext.define "Muleview.controller.ChartsController",
 
     # If some keys were selected, set a loading mask before retreiving them:
     @chartsViewContainer.setLoading(true)
-
+    console.log("ChartsController.coffee\\ 58: <HERE>");
     Muleview.Mule.getKeysData keys, (keysData, alerts) =>
       @chartsView = @createChartsView(keys, retention, keysData, alerts)
-
+      console.log('ChartsController.coffee\\ 61: @chartsView:', @chartsView);
+      @chartsView.showRetention(retention)
+      console.log("ChartsController.coffee\\ 63: <HERE>");
       # Add the new ChartsView to its container and remove loading mask:
       @chartsViewContainer.add(@chartsView)
       @chartsViewContainer.setLoading(false)
@@ -64,22 +70,24 @@ Ext.define "Muleview.controller.ChartsController",
       if keys.length = 1
         # Set a nice title to the panel, replacing "." with "/":
         @chartsViewContainer.setTitle(keys[0].replace(/\./, " / "))
+      else
+        @chartsViewContainer.setTitle("Comparison Mode") #FIXME
 
   createChartsView: (keys, retention, keysData, alerts) ->
     if keys.length == 1
-      @getView("SingleGraphChartsView").create
+      ans = @getView("SingleGraphChartsView").create
         key: keys[0]
         data: keysData
         alerts: @processAlerts(alerts)
         defaultRetention: retention
 
     else if keys.length > 1
-      @getView("ChartsView").create
+      console.log('ChartsController.coffee\\ 77: keys:', keys);
+      ans = @getView("ChartsView").create
         topKeys: keys
         data: keysData
         defaultRetention: retention
-
-
+    ans
 
 
   processAlerts: (rawAlertsHash) ->

@@ -16,10 +16,10 @@ Ext.define "Muleview.view.SingleGraphChartsView",
     ans
 
   initComponent: ->
+    this.topKeys = [@key]
     this.callParent()
 
   initKeys: ->
-    this.topKeys = [@key]
     this.callParent()
     @subKeys = Ext.Array.difference(@keys, [@key])
     @keys.push(@othersKey) # Need to add othersKey as a key so that the records will have such an attribute
@@ -75,3 +75,18 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       showLegend: @showLegend
     @chartContainer.add Ext.create "Muleview.view.ZoomSlider",
       store: store
+  createChartContainerToolbar: ->
+    toolbar = this.callParent()
+    toolbar.splice(2,0,[
+        "-",
+        xtype: "button"
+        text: "Edit Alerts"
+        handler: =>
+          @showAlertsEditor()
+      , "-",
+        xtype: "button"
+        text: "Select Subkeys"
+        disabled: @subKeys.length == 0
+        handler: =>
+          @showSubkeysSelector()
+      ])

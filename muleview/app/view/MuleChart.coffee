@@ -67,11 +67,12 @@ Ext.define "Muleview.view.MuleChart",
     @series = []
 
     # Top keys:
+    console.log('MuleChart.coffee\\ 70: @topKeys:', @topKeys);
     for topKey in @topKeys
       @series.push
         type: "line"
         axis: "left"
-        title: @keyLegendName topKey
+        title: @keyLegendName(topKey)
         xField: "timestamp"
         yField: [topKey]
         highlight: false
@@ -132,8 +133,9 @@ Ext.define "Muleview.view.MuleChart",
 
     # Remove default legend if necessary:
     @legend = false unless @showLegend
-
+    console.log("MuleChart.coffee\\ 136: <HERE>");
     @callParent()
+    console.log("MuleChart.coffee\\ 138: <HERE>");
     @on
       mousemove: (e, opts) =>
         @self.lastXY = e.getXY()

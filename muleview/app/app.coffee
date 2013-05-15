@@ -14,6 +14,9 @@ Ext.application
 
   launch: ->
     Muleview.event = Ext.Function.alias Muleview.app, "fireEvent"
+    Muleview.app.on
+      ViewChange: ->
+        console.log('app.coffee\\ 19: arguments:', arguments);
 
   autoCreateViewport: true
 

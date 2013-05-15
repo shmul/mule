@@ -5,6 +5,7 @@ Ext.define "Muleview.view.MuleLightChart",
   layout: "fit"
 
   initComponent: ->
+    console.log("MuleLightChart.coffee\\ 8: <HERE>");
     @chart = Ext.create "Muleview.view.MuleChart",
       data: @data
       store: @store
@@ -22,5 +23,6 @@ Ext.define "Muleview.view.MuleLightChart",
       handler: () =>
         Muleview.event "viewChange", @topKeys, @retention
     ]
-
+    console.log("MuleLightChart.coffee\\ 26: <HERE>");
     @callParent()
+    console.log("MuleLightChart.coffee\\ 28: <HERE>");

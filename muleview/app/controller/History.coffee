@@ -18,10 +18,10 @@ Ext.define "Muleview.controller.History",
     Ext.onReady =>
       Ext.util.History.init =>
         Ext.util.History.on
-          change: @gotoToken
+          # change: @gotoToken
           scope: @
       @gotoToken Ext.util.History.getToken()
     Muleview.app.on
       scope: @
-      viewChange: (key, ret) ->
-        @addToken(key, ret)
+      # viewChange: (key, ret) ->
+      #   @addToken(key, ret)
