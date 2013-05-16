@@ -23,7 +23,7 @@ Ext.define "Muleview.view.MuleChart",
 
   tipsRenderer: (storeItem, item) ->
     me = item.series.chart
-    key = item.storeField or me.topKeys[0] #FIXME
+    key = item.storeField or item.series.title
     value = storeItem.get(key)
     total = storeItem.get(me.topKey)
     percent = 100 * (value / total)
@@ -67,7 +67,6 @@ Ext.define "Muleview.view.MuleChart",
     @series = []
 
     # Top keys:
-    console.log('MuleChart.coffee\\ 70: @topKeys:', @topKeys);
     for topKey in @topKeys
       @series.push
         type: "line"
@@ -133,9 +132,7 @@ Ext.define "Muleview.view.MuleChart",
 
     # Remove default legend if necessary:
     @legend = false unless @showLegend
-    console.log("MuleChart.coffee\\ 136: <HERE>");
     @callParent()
-    console.log("MuleChart.coffee\\ 138: <HERE>");
     @on
       mousemove: (e, opts) =>
         @self.lastXY = e.getXY()

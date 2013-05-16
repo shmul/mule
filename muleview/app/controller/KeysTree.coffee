@@ -21,14 +21,11 @@ Ext.define "Muleview.controller.KeysTree",
   ]
 
   onSelectionChange: (me, selected)->
-    console.log("KeysTree.coffee\\ 24: <HERE>");
     return unless selected[0] and not @multiMode
-    console.log("KeysTree.coffee\\ 26: <HERE>");
     key = selected[0].get("fullname")
     Muleview.event "viewChange", key, Muleview.currentRetention
 
   onCheckChange: ->
-    console.log("KeysTree.coffee\\ 31: <HERE>");
     keys = (node.get("fullname") for node in @getTree().getChecked()).join(",")
     Muleview.event "viewChange", keys, Muleview.currentRetention
 
@@ -124,7 +121,6 @@ Ext.define "Muleview.controller.KeysTree",
     return newNode
 
   updateSelection: (newKey) ->
-    console.log("KeysTree.coffee\\ 127: <HERE>");
     record = @store.getById(newKey)
     @getTree().getSelectionModel().select(record, false, true)
     while record

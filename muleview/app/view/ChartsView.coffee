@@ -9,6 +9,7 @@ Ext.define "Muleview.view.ChartsView",
   ]
   header: false
   layout: "border"
+  showLegend: true
   othersKey: Muleview.Settings.othersSubkeyName # Will be used as the name for the key which will group all hidden subkeys
 
   alerts: []
@@ -40,7 +41,6 @@ Ext.define "Muleview.view.ChartsView",
       @lightCharts[name] = @createLightChart(retention)
 
   initComponent: ->
-    console.log('ChartsView.coffee\\ 43: @topKeys:', @topKeys);
     @initRetentions()
     @initKeys()
 
@@ -50,13 +50,9 @@ Ext.define "Muleview.view.ChartsView",
 
     # Init component:
     @items = @items()
-    console.log('ChartsView.coffee\\ 53: @topKeys:', @topKeys);
     @callParent()
-    console.log('ChartsView.coffee\\ 55: @topKeys:', @topKeys);
     @eachRetention (retention, name) =>
       @rightPanel.add(@lightCharts[name])
-    console.log('ChartsView.coffee\\ 58: @topKeys:', @topKeys);
-    # Ext.defer @showRetention, 1, @, [@defaultRetention]
 
   items: ->
     [
@@ -139,10 +135,8 @@ Ext.define "Muleview.view.ChartsView",
     Muleview.event "viewChange", @topKeys, @currentRetName
 
   renderChart: (retName = @currentRetName) ->
-    console.log('ChartsView.coffee\\ 142: @topKeys:', @topKeys);
     @chartContainer.removeAll()
     store = @stores[retName]
-    console.log('ChartsView.coffee\\ 140: @topKeys:', @topKeys);
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
       flex: 1
       topKeys: @topKeys
@@ -150,7 +144,6 @@ Ext.define "Muleview.view.ChartsView",
       showLegend: @showLegend
     @chartContainer.add Ext.create "Muleview.view.ZoomSlider",
       store: store
-    console.log('ChartsView.coffee\\ 153: @topKeys:', @topKeys);
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],
