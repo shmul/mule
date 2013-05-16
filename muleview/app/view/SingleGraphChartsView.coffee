@@ -77,16 +77,17 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       store: store
   createChartContainerToolbar: ->
     toolbar = this.callParent()
-    toolbar.splice(2,0,[
-        "-",
+    toolbar.splice(2,0,
+      "-",
         xtype: "button"
         text: "Edit Alerts"
         handler: =>
           @showAlertsEditor()
-      , "-",
+    , "-",
         xtype: "button"
         text: "Select Subkeys"
         disabled: @subKeys.length == 0
         handler: =>
           @showSubkeysSelector()
-      ])
+        )
+    toolbar
