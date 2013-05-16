@@ -559,7 +559,7 @@ function mule(sequences_)
     if success then
       return rv
     end
-    logw("process_line error",rv)
+    logw("process_line error",rv,metric_line_)
     return nil
   end
 
