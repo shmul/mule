@@ -526,32 +526,41 @@ function mule(sequences_)
   end
 
   local function process_line(metric_line_,update_sequences_)
-    local items,type = parse_input_line(metric_line_)
-    if #items==0 then return nil end
+    local function helper()
+      local items,type = parse_input_line(metric_line_)
+      if #items==0 then return nil end
 
-    if type=="command" then
-      return command(items)
-    end
-    -- there are 2 line formats:
-    -- 1) of the format event.phishing.phishing-host 20 74857843
-    -- 2) of the format (without the brackets) event.phishing.phishing-host;1h:30d (sum hits timestamp)+
-
-    -- 1) standard update
-    if not string.find(items[1],";",1,true) then
-      return update_line(items[1],tonumber(items[2]),tonumber(items[3]),update_sequences_)
-    end
-    -- 2) an entire line
-    local metric = items[1]
-    local seq = _sequences.get(metric)
-    table.remove(items,1)
-    if not seq then
-      local metric_name,time_pair = string.match(metric,"(.-);(.+)")
-      local step,period = parse_time_pair(time_pair)
-      if step and period then
-        seq = {_sequences.add(metric_name,step,period)}
+      if type=="command" then
+        return command(items)
       end
+      -- there are 2 line formats:
+      -- 1) of the format event.phishing.phishing-host 20 74857843
+      -- 2) of the format (without the brackets) event.phishing.phishing-host;1h:30d (sum hits timestamp)+
+
+      -- 1) standard update
+      if not string.find(items[1],";",1,true) then
+        return update_line(items[1],tonumber(items[2]),tonumber(items[3]),update_sequences_)
+      end
+      -- 2) an entire line
+      local metric = items[1]
+      local seq = _sequences.get(metric)
+      table.remove(items,1)
+      if not seq then
+        local metric_name,time_pair = string.match(metric,"(.-);(.+)")
+        local step,period = parse_time_pair(time_pair)
+        if step and period then
+          seq = {_sequences.add(metric_name,step,period)}
+        end
+      end
+      return update_sequence(seq[1],items)
     end
-    return update_sequence(seq[1],items)
+
+    local success,rv = pcall(helper)
+    if success then
+      return rv
+    end
+    logw("process_line error",rv)
+    return nil
   end
 
   local function serialize(out_)
