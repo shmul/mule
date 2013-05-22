@@ -21,6 +21,7 @@ Ext.define "Muleview.controller.KeysTree",
   ]
 
   updateSelectedKey: ->
+
     # Selection doesn't apply rendering in multiMode;
     return if @multiMode
 
@@ -36,6 +37,7 @@ Ext.define "Muleview.controller.KeysTree",
     Muleview.event "viewChange", key, Muleview.currentRetention
 
   onCheckChange: ->
+    # return if @updating
     keys = (node.get("fullname") for node in @getTree().getChecked()).join(",")
     Muleview.event "viewChange", keys, Muleview.currentRetention
 
@@ -65,17 +67,26 @@ Ext.define "Muleview.controller.KeysTree",
     @fillFirstkeys()
 
   setMultiMode: (multi) ->
-    @multiMode = multi
+    # Don't change to existing mode:
+    return if !!multi == @multiMode
+
+    # Save current state:
+    @multiMode = !!multi
+
+    # Update buttons:
     @getMultiModeBtn().setVisible(!multi)
     @getNormalModeBtn().setVisible(multi)
+
+    # Find current selection
     selectedNode = @getTree().getSelectionModel().getSelection()[0]
+
+    # Mark all nodes as unchecked, except for the current selected one:
     @store.getRootNode().cascadeBy (node) ->
-      checked = null
-      if multi
-        checked = node == selectedNode
+      checked = if multi then (node == selectedNode) else null
       node.set("checked", checked)
-    unless multi
-      @updateSelectedKey()
+
+    # If switching back to single, update the graph:
+    @updateSelectedKey() if not multi
 
   onItemExpand: (node) ->
     # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
@@ -132,9 +143,22 @@ Ext.define "Muleview.controller.KeysTree",
     # Return the new node:
     return newNode
 
-  updateSelection: (newKey) ->
-    record = @store.getById(newKey)
-    @getTree().getSelectionModel().select(record, false, true)
-    while record
-      record.expand()
-      record=record.parentNode
+  updateSelection: (newKeys) ->
+    # return if @updating
+    # @updating = true
+    keysArr = Ext.Array.from(newKeys)
+    # @setMultiMode(keysArr.length > 1)
+    if keysArr.length == 1
+      record = @store.getById(keysArr[0])
+      @getTree().getSelectionModel().select(record, false, true)
+      while record
+        record.expand()
+        record=record.parentNode
+    # else if keysArr.length > 1
+    #   for key in keysArr
+    #     record = @store.getById(key)
+    #     record?.set("checked", true)
+    #     while record
+    #       record.expand()
+    #       record=record.parentNode
+    # @updating = false
