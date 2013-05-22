@@ -90,6 +90,7 @@ Ext.define "Muleview.view.ChartsView",
           Muleview.event "refresh"
       , "-",
         text: "Hide Legend"
+        icon: "resources/default/images/legend.png"
         enableToggle: true
         pressed: !@showLegend
         toggleHandler: (me, value) =>

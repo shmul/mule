@@ -1,6 +1,6 @@
   Ext.define "Muleview.view.AlertsEditor",
   extend: "Ext.window.Window"
-
+  icon: "resources/default/images/alerts.png"
   modal: true
   resizable: false
 
@@ -112,10 +112,12 @@
       ,
         text: "Cancel"
         handler: => @doCancel()
-        width: 50
+        icon: "resources/default/images/cancel.png"
+        width: 76
       ,
         text: "Save"
-        width: 50
+        icon: "resources/default/images/ok.png"
+        width: 76
         handler: => @doSave()
     ]
 

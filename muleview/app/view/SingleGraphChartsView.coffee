@@ -81,11 +81,13 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       "-",
         xtype: "button"
         text: "Edit Alerts"
+        icon: "resources/default/images/alerts.png"
         handler: =>
           @showAlertsEditor()
     , "-",
         xtype: "button"
         text: "Select Subkeys"
+        icon: "resources/default/images/subkeys.png"
         disabled: @subKeys.length == 0
         handler: =>
           @showSubkeysSelector()
