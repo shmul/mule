@@ -47,7 +47,7 @@ Ext.define "Muleview.controller.ChartsController",
     @chartsViewContainer.removeAll()
 
     # If no keys were selected, don't display anything:
-    if keys.length == 0
+    if keys.length == 0 or keys[0] == ""
       @chartsView = null
       return
 

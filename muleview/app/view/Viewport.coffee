@@ -40,6 +40,9 @@ Ext.define "Muleview.view.Viewport",
       id: "chartsViewContainer"
       xtype: "panel"
       title: "Chart"
+      # FIXME:
+      bodyStyle: "background-image: url(resources/default/images/bg.png); background-position: center center; background-repeat: no-repeat; "
+
       region: "center"
       layout: "fit"
     ,
