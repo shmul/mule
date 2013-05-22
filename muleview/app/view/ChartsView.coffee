@@ -85,6 +85,7 @@ Ext.define "Muleview.view.ChartsView",
       , "-",
         xtype: "button"
         text: "Refresh"
+        icon: "resources/default/images/refresh.png"
         handler: ->
           Muleview.event "refresh"
       , "-",
