@@ -101,7 +101,6 @@ Ext.define "Muleview.view.ChartsView",
 
   createRetentionsMenu: ->
     clickHandler = (me) =>
-      return
       Muleview.event "viewChange", @topKeys, me.retention.get("name")
 
     items = []
