@@ -20,9 +20,19 @@ Ext.define "Muleview.controller.KeysTree",
       selector: "#btnSwitchToMultiple"
   ]
 
-  onSelectionChange: (me, selected)->
-    return unless selected[0] and not @multiMode
-    key = selected[0].get("fullname")
+  updateSelectedKey: ->
+    # Selection doesn't apply rendering in multiMode;
+    return if @multiMode
+
+    # Get current selection:
+    selection = @getTree().getSelectionModel().getSelection()
+    selected = selection[0]
+
+    # Quit if nothing selected:
+    return unless selected
+
+    # update:
+    key = selected.get("fullname")
     Muleview.event "viewChange", key, Muleview.currentRetention
 
   onCheckChange: ->
@@ -33,7 +43,7 @@ Ext.define "Muleview.controller.KeysTree",
     @store = @getTree().getStore()
 
     @getTree().on
-      selectionchange: @onSelectionChange
+      selectionchange: @updateSelectedKey
       itemexpand: @onItemExpand
       checkchange: @onCheckChange
       scope: @
@@ -64,6 +74,8 @@ Ext.define "Muleview.controller.KeysTree",
       if multi
         checked = node == selectedNode
       node.set("checked", checked)
+    unless multi
+      @updateSelectedKey()
 
   onItemExpand: (node) ->
     # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
