@@ -766,7 +766,7 @@ end
 
 
 function test_duplicate_timestamps()
-  local db = column_db_factory("duplicate_timestamps")
+  local db = column_db_factory("temp/duplicate_timestamps")
   local m = mule(db)
   m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
   m.process(n_lines(109,io.lines("./tests/fixtures/d_input.mule")))
