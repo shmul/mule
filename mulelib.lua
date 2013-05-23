@@ -8,6 +8,24 @@ local function name(metric_,step_,period_)
                            secs_to_time_unit(period_))
 end
 
+local nop = function() end
+local return_0 = function() return 0 end
+
+local NOP_SEQUENCE = {
+  slots = function() return {} end,
+    name = function() return "" end,
+    metric = return_0,
+    step = return_0,
+    period = return_0,
+    slot = nop,
+    slot_index = return_0,
+    update = nop,
+    update_batch = nop,
+    latest = nop,
+    latest_timestamp = return_0,
+    reset = nop,
+    serialize = nop,
+         }
 
 function sequence(db_,name_)
   local _metric,_step,_period,_name,_seq_storage
@@ -57,6 +75,11 @@ function sequence(db_,name_)
   _name = name_
 
   _metric,_step,_period = split_name(name_)
+  if not (_metric and _step and _period ) then
+    loge("failed generating sequence",name_)
+    return NOP_SEQUENCE
+  end
+
   _seq_storage = db_.sequence_storage(name_,_period/_step)
 
 
@@ -770,31 +793,41 @@ function mule(db_)
   end
 
   local function process_line(metric_line_,update_sequences_)
-    local items,type = parse_input_line(metric_line_)
-    if #items==0 then return nil end
+    local function helper()
+      local items,type = parse_input_line(metric_line_)
+      if #items==0 then return nil end
 
-    if type=="command" then
-      return command(items)
-    end
-    -- there are 2 line formats:
-    -- 1) of the format metric sum timestamp
-    -- 2) of the format (without the brackets) name (sum hits timestamp)+
-
-    -- 1) standard update
-    if not string.find(items[1],";",1,true) then
-      if #items~=3 then
-        return false
+      if type=="command" then
+        return command(items)
       end
-      return update_line(items[1],items[2],items[3],update_sequences_)
+      -- there are 2 line formats:
+      -- 1) of the format metric sum timestamp
+      -- 2) of the format (without the brackets) name (sum hits timestamp)+
+
+      -- 1) standard update
+      if not string.find(items[1],";",1,true) then
+        if #items~=3 then
+          return false
+        end
+        return update_line(items[1],items[2],items[3],update_sequences_)
+      end
+
+      -- 2) an entire sequence
+      local name = items[1]
+      table.remove(items,1)
+      -- here we DON'T use the sparse sequence as they aren't needed when reading an
+      -- entire sequence
+      -- TODO might be a corrupted line with ';' accidently in the line.
+      return sequence(_db,name).update_batch(items)
     end
 
-    -- 2) an entire sequence
-    local name = items[1]
-    table.remove(items,1)
-    -- here we DON'T use the sparse sequence as they aren't needed when reading an
-    -- entire sequence
-    -- TODO might be a corrupted line with ';' accidently in the line.
-    return sequence(_db,name).update_batch(items)
+    local success,rv = pcall(helper)
+    if success then
+      return rv
+    end
+    logw("process_line error",rv,metric_line_)
+    return nil
+
   end
 
 
