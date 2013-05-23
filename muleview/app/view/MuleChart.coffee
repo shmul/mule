@@ -10,9 +10,7 @@ Ext.define "Muleview.view.MuleChart",
   statics:
     lastXY: [0,0] # Used to workaround an Extjs bug causing errors when showing tooltips of a chart created below the mouse cursor
 
-  showAreas: true
   shadow: false
-
 
   legend:
     position: "right"
@@ -25,7 +23,7 @@ Ext.define "Muleview.view.MuleChart",
 
   tipsRenderer: (storeItem, item) ->
     me = item.series.chart
-    key = item.storeField or me.topKey
+    key = item.storeField or item.series.title
     value = storeItem.get(key)
     total = storeItem.get(me.topKey)
     percent = 100 * (value / total)
@@ -44,8 +42,6 @@ Ext.define "Muleview.view.MuleChart",
   initComponent: ->
     @timeLabel.renderer = @timeFormatter
 
-    keys = @keys
-
     @axes = [
       {
         type: "Numeric"
@@ -62,41 +58,40 @@ Ext.define "Muleview.view.MuleChart",
         type: 'Numeric'
         position: 'left'
         majorTickSteps: 20
-        fields: keys
+        fields: @keys
         minimum: 0
         grid: true
       }
     ]
 
-    areaKeys = Ext.Array.remove(Ext.Array.clone(keys), @topKey)
-
     @series = []
 
-    # Top key line:
-    @series.push
-      type: "line"
-      axis: "left"
-      title: @keyLegendName @topKey
-      xField: "timestamp"
-      yField: [@topKey]
-      highlight: false
-      listeners:
-        itemmouseover: (item) ->
-          Muleview.event "chartItemMouseOver", item
-      tips:
-        trackMouse: false
-        tpl: "{key} {value} ({timestamp})"
-        renderer: @tipsRenderer
-        targetXY: @self.lastXY
+    # Top keys:
+    for topKey in @topKeys
+      @series.push
+        type: "line"
+        axis: "left"
+        title: @keyLegendName(topKey)
+        xField: "timestamp"
+        yField: [topKey]
+        highlight: false
+        listeners:
+          itemmouseover: (item) ->
+            Muleview.event "chartItemMouseOver", item
+        tips:
+          trackMouse: false
+          tpl: "{key} {value} ({timestamp})"
+          renderer: @tipsRenderer
+          targetXY: @self.lastXY
 
-    # Areas:
-    if @showAreas
+    # Subkeys:
+    if @subKeys
       @series.push
         type: "area"
         axis: "left"
         xField: "timestamp"
-        yField: areaKeys
-        title: @keyLegendName(key) for key in areaKeys
+        yField: @subKeys
+        title: @keyLegendName(key) for key in @subKeys
         highlight: true
         listeners:
           itemmouseover: (item) ->
@@ -137,7 +132,6 @@ Ext.define "Muleview.view.MuleChart",
 
     # Remove default legend if necessary:
     @legend = false unless @showLegend
-
     @callParent()
     @on
       mousemove: (e, opts) =>

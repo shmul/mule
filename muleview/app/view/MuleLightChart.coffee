@@ -7,9 +7,8 @@ Ext.define "Muleview.view.MuleLightChart",
   initComponent: ->
     @chart = Ext.create "Muleview.view.MuleChart",
       data: @data
-      keys: @keys
       store: @store
-      topKey: @topKey
+      topKeys: @topKeys
       legend: false
       showAreas: false
       highlight: false
@@ -21,7 +20,6 @@ Ext.define "Muleview.view.MuleLightChart",
     @tools = [
       type: "prev"
       handler: () =>
-        Muleview.event "viewChange", @topKey, @retention
+        Muleview.event "viewChange", @topKeys, @retention
     ]
-
     @callParent()

@@ -3,32 +3,90 @@ Ext.define "Muleview.controller.KeysTree",
   models: [
     "MuleKey"
   ]
+
+  multiMode: false
+
   refs: [
       ref: "tree"
       selector: "#keysTree"
     ,
       ref: "mainPanel"
       selector: "#mainPanel"
+    ,
+      ref: "normalModeBtn"
+      selector: "#btnSwitchToNormal"
+    ,
+      ref: "multiModeBtn"
+      selector: "#btnSwitchToMultiple"
   ]
 
-  onSelectionChange: (me, selected)->
-    return unless selected[0]
-    key = selected[0].get("fullname")
+  updateSelectedKey: ->
+
+    # Selection doesn't apply rendering in multiMode;
+    return if @multiMode
+
+    # Get current selection:
+    selection = @getTree().getSelectionModel().getSelection()
+    selected = selection[0]
+
+    # Quit if nothing selected:
+    return unless selected
+
+    # update:
+    key = selected.get("fullname")
     Muleview.event "viewChange", key, Muleview.currentRetention
+
+  onCheckChange: ->
+    # return if @updating
+    keys = (node.get("fullname") for node in @getTree().getChecked()).join(",")
+    Muleview.event "viewChange", keys, Muleview.currentRetention
 
   onLaunch: ->
     @store = @getTree().getStore()
 
     @getTree().on
-      selectionchange: @onSelectionChange
+      selectionchange: @updateSelectedKey
       itemexpand: @onItemExpand
+      checkchange: @onCheckChange
       scope: @
+
+    @getNormalModeBtn().on
+      scope: @
+      click: -> @setMultiMode(false)
+
+    @getMultiModeBtn().on
+      scope: @
+      click: -> @setMultiMode(true)
+
 
     Muleview.app.on
       viewChange: @updateSelection
       keysReceived: @addKeys
       scope: @
+
     @fillFirstkeys()
+
+  setMultiMode: (multi) ->
+    # Don't change to existing mode:
+    return if !!multi == @multiMode
+
+    # Save current state:
+    @multiMode = !!multi
+
+    # Update buttons:
+    @getMultiModeBtn().setVisible(!multi)
+    @getNormalModeBtn().setVisible(multi)
+
+    # Find current selection
+    selectedNode = @getTree().getSelectionModel().getSelection()[0]
+
+    # Mark all nodes as unchecked, except for the current selected one:
+    @store.getRootNode().cascadeBy (node) ->
+      checked = if multi then (node == selectedNode) else null
+      node.set("checked", checked)
+
+    # If switching back to single, update the graph:
+    @updateSelectedKey() if not multi
 
   onItemExpand: (node) ->
     # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
@@ -85,9 +143,22 @@ Ext.define "Muleview.controller.KeysTree",
     # Return the new node:
     return newNode
 
-  updateSelection: (newKey) ->
-    record = @store.getById(newKey)
-    @getTree().getSelectionModel().select(record, false, true)
-    while record
-      record.expand()
-      record=record.parentNode
+  updateSelection: (newKeys) ->
+    # return if @updating
+    # @updating = true
+    keysArr = Ext.Array.from(newKeys)
+    # @setMultiMode(keysArr.length > 1)
+    if keysArr.length == 1
+      record = @store.getById(keysArr[0])
+      @getTree().getSelectionModel().select(record, false, true)
+      while record
+        record.expand()
+        record=record.parentNode
+    # else if keysArr.length > 1
+    #   for key in keysArr
+    #     record = @store.getById(key)
+    #     record?.set("checked", true)
+    #     while record
+    #       record.expand()
+    #       record=record.parentNode
+    # @updating = false

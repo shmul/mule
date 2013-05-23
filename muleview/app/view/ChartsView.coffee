@@ -1,69 +1,58 @@
 Ext.define "Muleview.view.ChartsView",
   extend: "Ext.panel.Panel"
-  alias: "widget.chartsview"
   requires: [
     "Ext.form.field.ComboBox"
     "Muleview.model.Retention"
     "Muleview.view.MuleChartPanel"
     "Muleview.view.MuleLightChart"
     "Ext.data.ArrayStore"
-    "Muleview.store.SubkeysStore"
-    "Muleview.view.SubkeysSelector"
-    "Muleview.view.AlertsEditor"
   ]
   header: false
   layout: "border"
-  othersKey: Muleview.Settings.othersSubkeyName
+  showLegend: true
+  othersKey: Muleview.Settings.othersSubkeyName # Will be used as the name for the key which will group all hidden subkeys
 
-  # Replace full Mule key names as keys with retention-name only
-  processAlertsHash: (alerts) ->
-    ans = {}
-    for own k, v of alerts
-      [muleKey, ret] = k.split(";")
-      ans[ret] = v if muleKey == @key
-    ans
+  alerts: []
 
-  initComponent: ->
+  initRetentions: ->
     # Init retentions (these are just the names, for the combo box)
     retentions = (new Muleview.model.Retention(retName) for own retName of @data)
     @retentionsStore = Ext.create "Ext.data.ArrayStore",
       model: "Muleview.model.Retention"
       sorters: ["sortValue"]
       data: retentions
-
     @defaultRetention ||= @retentionsStore.getAt(0).get("name")
+
+  initKeys: ->
     @keys = Ext.Object.getKeys(@data[@defaultRetention])
 
-    @subkeys = Ext.clone(@keys)
-    Ext.Array.remove(@subkeys, @key)
-    @keys.push(@othersKey) # Need to add othersKey as a key so that the records will have such an attribute
+  eachRetention: (cb) ->
+    @retentionsStore.each (retention) ->
+      cb(retention, retention.get("name"))
 
-    # Rename alerts' keys to be hashed only by the retName
-    @alerts = @processAlertsHash(@alerts)
-
-    # Create all stores and light charts:
+  initStores: ->
     @stores = {}
-    @lightCharts = {}
-    @retentionsStore.each (retention) =>
-      name = retention.get("name")
+    @eachRetention (retention, name) =>
       @stores[name] = @createStore(name)
+
+  initLightCharts: ->
+    @lightCharts = {}
+    @eachRetention (retention, name) =>
       @lightCharts[name] = @createLightChart(retention)
 
-    # Init the subkeys-store to calculate which subkeys its best to show first:
-    @subkeysStore = Ext.create "Muleview.store.SubkeysStore",
-      dataStore: @stores[@defaultRetention]
-    @subkeysStore.loadSubkeys(@subkeys)
+  initComponent: ->
+    @initRetentions()
+    @initKeys()
 
-    # Default to hiding the legend if no subkeys exist:
-    @showLegend = @subkeys.length > 0
+    # Create all stores and light charts:
+    @initStores()
+    @initLightCharts()
 
     # Init component:
     @items = @items()
     @callParent()
-    @retentionsStore.each (retention) =>
-      @rightPanel.add(@lightCharts[retention.get("name")])
-
-    Ext.defer @showRetention, 1, @, [@defaultRetention]
+    @eachRetention (retention, name) =>
+      @rightPanel.add(@lightCharts[name])
 
   items: ->
     [
@@ -73,35 +62,7 @@ Ext.define "Muleview.view.ChartsView",
           layout:
             type: "vbox"
             align: "stretch"
-          tbar: [
-              "Show:"
-            ,
-              @retMenu = @createRetentionsMenu()
-            , "-",
-              xtype: "button"
-              text: "Edit Alerts"
-              handler: =>
-                @showAlertsEditor()
-            , "-",
-              xtype: "button"
-              text: "Select Subkeys"
-              disabled: @subkeys.length == 0
-              handler: =>
-                @showSubkeysSelector()
-            , "-",
-              xtype: "button"
-              text: "Refresh"
-              handler: ->
-                Muleview.event "refresh"
-            , "-",
-              text: "Hide Legend"
-              enableToggle: true
-              pressed: !@showLegend
-              toggleHandler: (me, value) =>
-                @showLegend = !value
-                @renderChart()
-
-          ]
+          tbar: @createChartContainerToolbar()
       ,
         @rightPanel = Ext.create "Ext.panel.Panel",
           title: "Previews"
@@ -116,9 +77,31 @@ Ext.define "Muleview.view.ChartsView",
           items: @lightCharts
     ]
 
+  createChartContainerToolbar: ->
+    [
+        "Show:"
+      ,
+        @retMenu = @createRetentionsMenu()
+      , "-",
+        xtype: "button"
+        text: "Refresh"
+        icon: "resources/default/images/refresh.png"
+        handler: ->
+          Muleview.event "refresh"
+      , "-",
+        text: "Hide Legend"
+        icon: "resources/default/images/legend.png"
+        enableToggle: true
+        pressed: !@showLegend
+        toggleHandler: (me, value) =>
+          @showLegend = !value
+          @renderChart()
+
+    ]
+
   createRetentionsMenu: ->
     clickHandler = (me) =>
-      Muleview.event "viewChange", @key, me.retention.get("name")
+      Muleview.event "viewChange", @topKeys, me.retention.get("name")
 
     items = []
     @retentionsStore.each (ret) =>
@@ -143,49 +126,21 @@ Ext.define "Muleview.view.ChartsView",
         items: items
 
   showRetention: (retName) ->
-    return unless retName and retName != @currentRetName
+    return unless !@currentRetName or(retName and retName != @currentRetName)
+    retName ||= @retentionsStore.getAt(0).get("name")
     @renderChart(retName)
     @retMenu.selectRetention(retName)
 
     lightChart.setVisible(lightChart.retention != retName) for own _, lightChart of @lightCharts
     @currentRetName = retName
-    Muleview.event "viewChange", @key, @currentRetName
-
-  showAlertsEditor: () ->
-    ae = Ext.create "Muleview.view.AlertsEditor",
-      alerts: @alerts[@currentRetName]
-      key: @key
-      retention: @currentRetName
-    ae.show()
-
-  showSubkeysSelector: ->
-    subkeysSelector = Ext.create "Muleview.view.SubkeysSelector",
-      store: @subkeysStore
-      callback: @renderChart
-      callbackScope: @
-    subkeysSelector.show()
+    Muleview.event "viewChange", @topKeys, @currentRetName
 
   renderChart: (retName = @currentRetName) ->
     @chartContainer.removeAll()
-    @selectedSubkeys = @subkeysStore.getSelectedNames()
-    @selectedSubkeys.unshift(@key)
     store = @stores[retName]
-    unselectedSubkeys = Ext.Array.difference(@subkeys, @selectedSubkeys)
-    if unselectedSubkeys.length > 0
-      @selectedSubkeys.push(@othersKey)
-      store.each (record) =>
-        sum = 0
-        sum += record.get(otherSubkey) for otherSubkey in unselectedSubkeys
-        record.set(@othersKey, sum)
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
       flex: 1
-      showAreas: true
-      keys: @selectedSubkeys
-      listeners:
-        othersKeyClicked: =>
-          @showSubkeysSelector()
-      topKey: @key
-      alerts: @alerts[retName]
+      topKeys: @topKeys
       store: store
       showLegend: @showLegend
     @chartContainer.add Ext.create "Muleview.view.ZoomSlider",
@@ -230,9 +185,8 @@ Ext.define "Muleview.view.ChartsView",
     retName = retention.get("name")
     Ext.create "Muleview.view.MuleLightChart",
       title: retention.get("title")
-      keys: @keys
       flex: 1
-      topKey: @key
+      topKeys: @topKeys
       hidden: true
       retention: retName
       store: @stores[retName]

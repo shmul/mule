@@ -19,6 +19,14 @@ Ext.define "Muleview.view.Viewport",
       split: true
       collapsible: true
       title: "Available Keys"
+      bbar: [
+          id: "btnSwitchToMultiple"
+          text: "Switch to Multiple-Mode"
+        ,
+          id: "btnSwitchToNormal"
+          text: "Switch to Normal-Mode"
+          hidden: true
+      ]
       items: [
           xtype: "treepanel"
           region: "center"
@@ -32,6 +40,9 @@ Ext.define "Muleview.view.Viewport",
       id: "chartsViewContainer"
       xtype: "panel"
       title: "Chart"
+      # FIXME:
+      bodyStyle: "background-image: url(resources/default/images/bg.png); background-position: center center; background-repeat: no-repeat; "
+
       region: "center"
       layout: "fit"
     ,

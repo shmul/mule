@@ -1,5 +1,6 @@
 Ext.define "Muleview.view.SubkeysSelector",
   extend: "Ext.window.Window"
+  icon: "resources/default/images/subkeys.png"
   requires: [
     "Ext.grid.column.CheckColumn"
     "Ext.grid.RowNumberer"
@@ -86,7 +87,8 @@ Ext.define "Muleview.view.SubkeysSelector",
       "->",
       {
         xtype: "button"
-        width: 75
+        icon: "resources/default/images/cancel.png"
+        width: 76
         text: "Cancel"
         handler: =>
           @cancel()
@@ -94,7 +96,8 @@ Ext.define "Muleview.view.SubkeysSelector",
       {
         xtype: "button"
         text: "OK"
-        width: 75
+        icon: "resources/default/images/ok.png"
+        width: 76
         handler: =>
           @update()
       }

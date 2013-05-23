@@ -4,13 +4,14 @@ Ext.define "Muleview.controller.History",
     "Ext.util.History"
   ]
 
-  addToken: (key, ret) ->
-    return unless key and ret
-    Ext.util.History.add key + ";" + ret
+  addToken: (keys, ret) ->
+    return unless keys and ret
+    Ext.util.History.add (keys || []).join(",") + ";" + ret
 
   gotoToken: (token) ->
-    [key, retention] = (token ? "").split(";")
-    Muleview.event "viewChange", key, retention if key
+    [keys, retention] = (token ? "").split(";")
+    keys = keys.split(",")
+    Muleview.event "viewChange", keys, retention if keys.length > 0 and keys[0].length > 0
 
   init: ->
 
@@ -23,5 +24,5 @@ Ext.define "Muleview.controller.History",
       @gotoToken Ext.util.History.getToken()
     Muleview.app.on
       scope: @
-      viewChange: (key, ret) ->
-        @addToken(key, ret)
+      viewChange: (keys, ret) ->
+        @addToken(keys, ret)

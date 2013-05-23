@@ -43,3 +43,15 @@ Ext.define "Muleview.Mule",
           keyData[retention][key] = data
       Muleview.event "keysReceived", keys
       callback(keyData, alerts)
+
+  getKeysData: (keys, callback) ->
+    callbacks = keys.length
+    allKeys = {}
+    allAlerts = {}
+    counterCallback = (moreKeys, moreAlerts) ->
+      Ext.merge(allKeys, moreKeys)
+      Ext.merge(allAlerts, moreAlerts)
+      callbacks -= 1
+      if callbacks == 0
+        callback(allKeys, allAlerts)
+    @getKeyData(key, counterCallback) for key in keys
