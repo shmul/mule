@@ -194,6 +194,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
                      qs,content_)
     end)
 
+  logd("send_response - after with_mule")
   if handler_name=="stop" then
     logw("stopping, using: ",qs.token)
     stop_cond_(token)
@@ -222,12 +223,13 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
   local function send(socket_)
     return
       function(headers_,body_)
-      local s,err = ltn12.pump.all(
-        sr.cat(sr.string(headers_),
-               sr.string(body_)),
-        socket.sink("close-when-done",socket_))
-      logi("send",s,err)
-      return s,err
+        logd("about to send",headers_ and #headers_ or 0,body_ and #body_ or 0)
+        local s,err = ltn12.pump.all(
+          sr.cat(sr.string(headers_),
+                 sr.string(body_)),
+          socket.sink("close-when-done",socket_))
+        logi("send",s,err)
+        return s,err
       end
   end
 
@@ -235,24 +237,25 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
   local function send_file(socket_)
     return
       function(path_,if_none_match)
-      local file = root_ and not string.find(path_,"^/[/%.]+") and string.format("%s/%s",root_,path_)
-      if not file or not file_exists(file) then
-        return ltn12.pump.all(sr.string(standard_response(404)),
-                              socket.sink("close-when-done",socket_))
-      end
+        logd("send_file")
+        local file = root_ and not string.find(path_,"^/[/%.]+") and string.format("%s/%s",root_,path_)
+        if not file or not file_exists(file) then
+          return ltn12.pump.all(sr.string(standard_response(404)),
+                                socket.sink("close-when-done",socket_))
+        end
 
-      local etag = adler32(os.capture('ls -l '..file))
-      if if_none_match and tonumber(if_none_match)==etag then
+        local etag = adler32(os.capture('ls -l '..file))
+        if if_none_match and tonumber(if_none_match)==etag then
+          return ltn12.pump.all(
+            sr.string(standard_response(304)),
+            socket.sink("close-when-done",socket_))
+        end
+
         return ltn12.pump.all(
-          sr.string(standard_response(304)),
+          sr.cat(
+            sr.string(standard_response(200,file_size(file),{{"ETag",etag}})),
+            sr.file(io.open(file,"rb"))),
           socket.sink("close-when-done",socket_))
-      end
-
-      return ltn12.pump.all(
-        sr.cat(
-          sr.string(standard_response(200,file_size(file),{{"ETag",etag}})),
-          sr.file(io.open(file,"rb"))),
-        socket.sink("close-when-done",socket_))
       end
   end
 
