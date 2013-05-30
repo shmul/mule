@@ -770,6 +770,7 @@ function test_duplicate_timestamps()
   local m = mule(db)
   m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
   m.process(n_lines(109,io.lines("./tests/fixtures/d_input.mule")))
+  --print(m.dump("Johnston.Morfin",{to_str=true}).get_string())
   for l in string_lines(m.dump("Johnston.Morfin",{to_str=true}).get_string()) do
     if #l>0 then
       assert_equal(4,#split(l," "),l)

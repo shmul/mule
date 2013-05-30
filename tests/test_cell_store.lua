@@ -17,7 +17,7 @@ function test_read_write()
   local cs = c.cell_store(f,100,10,4)
   assert_not_nil(cs)
   assert_equal(0,p.from_binary(cs.read(0,0)))
-  assert_equal(0,p.from_binary(cs.read(10,10)))
+  assert_equal(0,p.from_binary(cs.read(10,9)))
 
   cs.write(1,1,"hello cruel world")
   cs.flush()
@@ -26,7 +26,7 @@ function test_read_write()
   local cs = c.cell_store(f,100,10,4)
   assert_not_nil(cs)
   assert_true(empty_cell(cs.read(0,0)))
-  assert_equal(0,p.from_binary(cs.read(10,10)))
+  assert_equal(0,p.from_binary(cs.read(10,9)))
   assert_equal("hell",cs.read(1,1))
 end
 

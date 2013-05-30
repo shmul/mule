@@ -18,11 +18,14 @@ definitions:
 
 --]]
 
+
+local PACK_FACTOR = 100
 function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
   local file = nil
   local dirty = false
+
   local function reset()
-    local file_size = num_sequences_*slots_per_sequence_*slot_size_
+    local file_size = num_sequences_*math.max(slots_per_sequence_,PACK_FACTOR)*slot_size_
     logi("creating file",file_,file_size)
 
     file = io.open(file_,"r+b") or io.open(file_,"w+b")
@@ -74,7 +77,11 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       logw("no file")
       return nil
     end
-    local cell_pos = slot_size_*(sid_*slots_per_sequence_+idx_)
+    local p = math.floor(idx_/PACK_FACTOR)
+    local q = idx_%PACK_FACTOR
+    local cell_pos = slot_size_*((p*num_sequences_*PACK_FACTOR)+sid_*PACK_FACTOR+q)
+--    print(sid_,idx_,p,q,cell_pos)
+--    local cell_pos = slot_size_*(sid_+idx_*num_sequences_)
     return file:seek("set",cell_pos)
   end
 
@@ -197,10 +204,10 @@ function column_db(base_dir_)
     local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
                                     secs_to_time_unit(step),
                                     secs_to_time_unit(period),
-                                    id / SEQUENCES_PER_FILE)
+                                    math.floor(id / SEQUENCES_PER_FILE))
     cdb = cell_store_cache[file_name]
     if not cdb then
-      cdb = cell_store(file_name,SEQUENCES_PER_FILE,1+period/step,p.PNS*3) -- 3 items per slot
+      cdb = cell_store(file_name,SEQUENCES_PER_FILE,period/step,p.PNS*3) -- 3 items per slot
       cell_store_cache[file_name] = cdb
       cell_store_cache[name_] = cdb
     end
