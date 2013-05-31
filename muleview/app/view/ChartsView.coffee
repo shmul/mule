@@ -3,7 +3,6 @@ Ext.define "Muleview.view.ChartsView",
   requires: [
     "Ext.form.field.ComboBox"
     "Muleview.model.Retention"
-    "Muleview.view.MuleChartPanel"
     "Muleview.view.MuleLightChart"
     "Ext.data.ArrayStore"
   ]
