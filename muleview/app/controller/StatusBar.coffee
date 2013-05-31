@@ -37,7 +37,7 @@ Ext.define "Muleview.controller.StatusBar",
     @getSb().setStatus conf
 
   timeFormat: (timestamp) ->
-    Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.statusTimeFormat)
+    Ext.Date.format(Muleview.toUTCDate(new Date(timestamp * 1000)), Muleview.Settings.statusTimeFormat)
 
   updateLastRefresh: ->
     timeStr = Ext.Date.format(new Date(), Muleview.Settings.statusTimeFormat)
