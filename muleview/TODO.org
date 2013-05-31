@@ -1,15 +1,19 @@
 * Issues
 ** DONE Graphs look awful in Firefox
+** TODO Navigation in compare-mode
 ** DONE Fix statusbar auto fade
 it gets into "ready" even though still waiting for mule events
 ** DONE Coffee 1.6 compatibility
 ** TODO Refresh timer not reset by reloading graph
 ** DONE "Loading" mask has double icons
 ** DONE Subkeys pagination
-*** TODO Handle case when no subkeys
-*** TODO Disable subkeys selector when no subkeys
+*** DONE Handle case when no subkeys
+*** DONE Disable subkeys selector when no subkeys
 ** DONE prettier combobox in chart viewer
 ** DONE AlertsEditor not complete
+** TODO The tool tip over the stack graph shows the % sign with no value
+** TODO Times are shown in local time, right? Should be UTC
+
 * Features:
 ** DONE Fix Tooltip Errors somehow
 ** DONE Url Navigation:
@@ -19,17 +23,25 @@ It should immediately show the full path of the key, and then subsequently load 
 ** DONE Color pallete
 ** DONE Dymamic Tree improvements:
 *** DONE Show loading mask in node itself
+** TODO The x-axis contains full time stamps which can be too much for the eye. What about showing the day only when they change?
+** TODO We should add some branding to the status bar. Maybe the project name and a link to github?
 ** TODO Pointer cursor for clickable areas
+** TODO Alert dashboard - a summary of the alert statuses. Navigating to the faulty graphs would be great.
+** TODO When presenting single graphs (i.e. not stacked) the lines should be thicker.
+** TODO Add an option to reset the zoom factor
 ** DONE Toggle Legend
 ** TODO Color alert fieldLabels
 ** TODO Configurable refresh
-** TODO Mule/Hinny picture
+** DONE Mule/Hinny picture
 ** TODO Something nicer with the status bar
 ** TODO Support for timestamp labels - Waiting for Mule API
 ** TODO Something cooler with tooltips?
 ** TODO Theme
 *** DONE Favicon
 *** DONE Areas color pallete
+*** TODO Nicer Mule Background
+"The mule picture should at least have the full "l" letter. I think it looks more like a bull than a mule so maybe adding another ear or a face will work."
+
 *** TODO Different color for topKey and areas
 *** TODO Less ugly keysTree icons
 ** DONE Redesign display
@@ -86,8 +98,11 @@ Think i'll pass this one
 *** PASS - Experiment with docked buttons instead of a tab bar
 *** Experiment with tree-grid
 Instead of having regular tree + tabs, use tree-grid, which will hold 3 (?) buttons for each node, button per graph/retention
+PASS - since I eventually implemented compare mode.
 *** Color tree keys according to what they appear in the legend
 *** Slideshow
 Add an option to save and manage a list of graphs and when played, switch between them with an interval
+Now even easier in compare-mode checkboxes
 *** Split Screen
 Add an option to see 4 or 9 graphs at the same time
+Now even easier in compare-mode checkboxes

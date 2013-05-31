@@ -25,7 +25,7 @@ Ext.define "Muleview.view.MuleChart",
     me = item.series.chart
     key = item.storeField or item.series.title
     value = storeItem.get(key)
-    total = storeItem.get(me.topKey)
+    total = storeItem.get(me.topKeys[0]) # We seriously hope there's only one topKey
     percent = 100 * (value / total)
     percentText = Ext.util.Format.number(percent, "0.00")
     timestamp = me.timeFormatter(storeItem.get('timestamp'))
