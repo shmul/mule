@@ -11,8 +11,8 @@ it gets into "ready" even though still waiting for mule events
 *** DONE Disable subkeys selector when no subkeys
 ** DONE prettier combobox in chart viewer
 ** DONE AlertsEditor not complete
-** TODO The tool tip over the stack graph shows the % sign with no value
-** TODO Times are shown in local time, right? Should be UTC
+** DONE The tool tip over the stack graph shows the % sign with no value
+** DONE Times should be shown in UTC
 
 * Features:
 ** DONE Fix Tooltip Errors somehow

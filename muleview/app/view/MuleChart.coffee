@@ -37,7 +37,10 @@ Ext.define "Muleview.view.MuleChart",
       percent: percentText
 
   timeFormatter: (timestamp) ->
-    Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
+    # convert the timestamp to UTC date and return a formatted string according to the formatting specified in Muleview's settings
+    rawDate = new Date(timestamp * 1000)
+    utcDate = Ext.Date.add(rawDate, Ext.Date.MINUTE, rawDate.getTimezoneOffset())
+    Ext.Date.format(utcDate, Muleview.Settings.labelFormat)
 
   initComponent: ->
     @timeLabel.renderer = @timeFormatter
