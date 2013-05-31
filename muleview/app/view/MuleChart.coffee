@@ -81,6 +81,8 @@ Ext.define "Muleview.view.MuleChart",
         listeners:
           itemmouseover: (item) ->
             Muleview.event "chartItemMouseOver", item
+        style:
+          "stroke-width": (if Ext.isEmpty(@subKeys) then 2.5 else 0)
         tips:
           trackMouse: false
           tpl: "{key} {value} ({timestamp})"
