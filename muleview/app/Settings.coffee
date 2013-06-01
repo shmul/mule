@@ -2,7 +2,9 @@ Ext.define "Muleview.Settings",
 
   muleUrlPrefix: "" # Base URL to Mule
   updateInterval: 1000 * 60 * 5 # Graph auto-refresh rate (millis)
-  labelFormat: "d/m/y H:i:s" # Graph label format, see http://docs.sencha.com/ext-js/4-1/#!/api/Ext.Date for formatting options
+  labelTimeFormat: "H:i" # Graph label time format, see http://docs.sencha.com/ext-js/4-2/#!/api/Ext.Date for formatting options
+  labelDateFormat: "d/m/y" # Graph label date format, see above
+  tipFormat: "d/m/y" # Graph Tooltip  date format, see above
   statusTimeFormat: "l, NS \\o\\f F Y, G:i:s" # Status-bar's time format, see above.
   othersSubkeyName: "(Others)" # Key name used to store sum of hidden subkeys
   defaultSubkeys: 15 # How much subkeys to initially display (the rest will be summed in "(Others)")

@@ -72,6 +72,7 @@ Ext.define "Muleview.view.ChartsView",
         @chartContainer = Ext.create "Ext.panel.Panel",
           region: "center"
           header: false
+          bodyPadding: 5
           layout:
             type: "vbox"
             align: "stretch"

@@ -25,7 +25,8 @@ It should immediately show the full path of the key, and then subsequently load 
 ** DONE Color pallete
 ** DONE Dymamic Tree improvements:
 *** DONE Show loading mask in node itself
-** TODO The x-axis contains full time stamps which can be too much for the eye. What about showing the day only when they change?
+** DONE The x-axis contains full time stamps which can be too much for the eye. What about showing the day only when they change?
+I hope this fix is suitable (Not trivial to check).
 ** TODO We should add some branding to the status bar. Maybe the project name and a link to github?
 ** TODO Pointer cursor for clickable areas
 ** TODO Alert dashboard - a summary of the alert statuses. Navigating to the faulty graphs would be great.
