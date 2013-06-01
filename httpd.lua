@@ -237,7 +237,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
   local function send_file(socket_)
     return
       function(path_,if_none_match)
-        logd("send_file")
+        logd("send_file",path_)
         local file = root_ and not string.find(path_,"^/[/%.]+") and string.format("%s/%s",root_,path_)
         if not file or not file_exists(file) then
           return ltn12.pump.all(sr.string(standard_response(404)),

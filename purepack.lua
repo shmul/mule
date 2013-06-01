@@ -46,6 +46,10 @@ else
 
   function from_binary(str_,s)
     s = s or 1
+    if not str_ then
+      logi(debug.traceback())
+    end
+
     local a,b,c,d = string.byte(str_,s,s+3)
     return (d or 0) +
       (c and c*256 or 0) +
