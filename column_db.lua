@@ -25,7 +25,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
   local dirty = false
 
   local function reset()
-    local file_size = num_sequences_*math.max(slots_per_sequence_,PACK_FACTOR)*slot_size_
+    local file_size = num_sequences_*PACK_FACTOR*math.ceil(slots_per_sequence_/PACK_FACTOR)*slot_size_
     logi("creating file",file_,file_size)
 
     file = io.open(file_,"r+b") or io.open(file_,"w+b")
