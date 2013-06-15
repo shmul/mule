@@ -23,7 +23,7 @@ local function guess_db(db_path_,readonly_)
   return nil
 end
 
-local function with_mule(db_path_,readonly_,callback_)
+local function new_mule(db_path_,readonly_)
   local db = guess_db(db_path_,readonly_)
   if not db then
     return
@@ -31,19 +31,37 @@ local function with_mule(db_path_,readonly_,callback_)
   local m = mule(db)
   logi("loading",db_path_,readonly_ and "read" or "write")
   m.load()
+  return m,db
+end
+
+local function safe_mule_call(m,db,callback_)
   local success,rv = pcall(callback_,m)
   if not success then
     loge("error",rv)
     db.close()
     return nil
   end
+  return rv
+end
+
+local function save_and_close(m,db,readonly_)
   if not readonly_ then
-    logi("saving",db_path_)
+    logi("saving")
     m.save()
   end
-  logi("closing",db_path_)
+  logi("closing")
   db.close()
   m = nil
+end
+
+local function with_mule(db_path_,readonly_,callback_)
+  local m,db = new_mule(db_path_,readonly_)
+  if not m then
+    loge("failed to create mule",db_path_)
+    return
+  end
+  local rv = safe_mule_call(m,db,callback_)
+  save_and_close(m,db,readonly_)
   return rv
 end
 
@@ -150,7 +168,13 @@ function main(opts,out_)
     logi("http daemon",opts["t"])
     local stopped = false
     local httpd_can_be_stopped = opts["x"]
-    http_loop(opts["t"],writable_mule,
+    local m,db = new_mule(opts["d"],false)
+    if not m then
+      loge("failed to create mule",db_path_)
+      return
+    end
+
+    http_loop(opts["t"],function(callback_) return safe_mule_call(m,db,callback_) end,
               backup(opts["d"]),
               function(token_)
                 -- this is confusing: when the function is called with param we match
@@ -162,6 +186,7 @@ function main(opts,out_)
               end,
               opts["R"] and strip_slash(opts["R"])
              )
+    save_and_close(m,db,false)
   end
 
   if opts["n"] then

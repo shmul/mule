@@ -170,7 +170,7 @@ function sequence(db_,name_)
       if opts_.period_only then
         min_timestamp = latest_timestamp()-_period
       end
-      for _,s in ipairs(ind) do
+      for j,s in ipairs(ind) do
         if not min_timestamp or min_timestamp<get_timestamp(s) then
           serialize_slot(s,opts_.skip_empty,slot_cb_)
         end
@@ -348,6 +348,7 @@ function mule(db_)
   local _factories = {}
   local _alerts = {}
   local _db = db_
+  local _updated_sequences = {}
 
   local function add_factory(metric_,retentions_)
     metric_ = string.match(metric_,"^(.-)%.*$")
@@ -748,7 +749,7 @@ function mule(db_)
   end
 
 
-  local function update_line(metric_,sum_,timestamp_,updated_sequences_)
+  local function update_line(metric_,sum_,timestamp_)
     local replace,sum = string.match(sum_,"(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
@@ -757,9 +758,9 @@ function mule(db_)
       return
     end
     for n in get_sequences(metric_) do
-      local seq = updated_sequences_[n] or sparse_sequence(n)
+      local seq = _updated_sequences[n] or sparse_sequence(n)
       seq.update(timestamp_,sum,1,replace)
-      updated_sequences_[n] = seq
+      _updated_sequences[n] = seq
     end
   end
 
@@ -792,7 +793,7 @@ function mule(db_)
     end
   end
 
-  local function process_line(metric_line_,update_sequences_)
+  local function process_line(metric_line_)
     local function helper()
       local items,type = parse_input_line(metric_line_)
       if #items==0 then return nil end
@@ -809,7 +810,7 @@ function mule(db_)
         if #items~=3 then
           return false
         end
-        return update_line(items[1],items[2],items[3],update_sequences_)
+        return update_line(items[1],items[2],items[3])
       end
 
       -- 2) an entire sequence
@@ -830,9 +831,37 @@ function mule(db_)
 
   end
 
+  local function update_sequences(max_)
+    -- we now update the real sequences
+    local now = time_now()
+    local sorted_updated_names = _db.sort_updated_names(keys(_updated_sequences))
+    local s = 1
+    local e = #sorted_updated_names
+    if e==0 then
+      --logd("no update required")
+      return
+    end
+    logi("update_sequences start")
+    -- why bother with randomness? to avoid starvation
+    if max_ and e>max_ then
+      s = math.random(e-max_)
+      e = s+max_
+    end
 
-  local function process(data_)
-    local updated_sequences = {}
+    for i =s,e do
+      local n = sorted_updated_names[i]
+      local seq = sequence(_db,n)
+      local s = _updated_sequences[n]
+      for _,sl in ipairs(s.slots()) do
+        seq.update(sl._timestamp,sl._sum,sl._hits or 1,sl._hits==nil)
+      end
+      alert_check(seq,now)
+      _updated_sequences[n] = nil
+    end
+    logi("update_sequences end",time_now()-now,s,e,#sorted_updated_names)
+  end
+
+  local function process(data_,dont_update_)
     -- strings are handled as file pointers if they exist or as a line
     -- tables as arrays of lines
     -- functions as iterators of lines
@@ -841,20 +870,20 @@ function mule(db_)
         local file_exists = with_file(data_,
                                       function(f)
                                         for l in f:lines() do
-                                          process_line(l,updated_sequences)
+                                          process_line(l)
                                         end
                                         return true
                                       end)
         if file_exists then
           return true
         end
-        return process_line(data_,updated_sequences)
+        return process_line(data_)
       end
 
       if type(data_)=="table" then
         local rv
         for _,d in ipairs(data_) do
-          rv = process_line(d,updated_sequences)
+          rv = process_line(d)
         end
         return rv
       end
@@ -863,7 +892,7 @@ function mule(db_)
       local rv
       local count = 0
       for d in data_ do
-        rv = process_line(d,updated_sequences)
+        rv = process_line(d)
         count = count + 1
         if 0==(count % PROGRESS_AMOUNT) then
           logd("process progress",count)
@@ -872,20 +901,11 @@ function mule(db_)
       return rv
     end
 
+
     local rv = helper()
-    -- we now update the real sequences
-    local now = time_now()
-    logi("process, handling updated_sequences start")
-    local sorted_updated_names = _db.sort_updated_names(keys(updated_sequences))
-    for _,n in ipairs(sorted_updated_names) do
-      local seq = sequence(_db,n)
-      local s = updated_sequences[n]
-      for _,sl in ipairs(s.slots()) do
-        seq.update(sl._timestamp,sl._sum,sl._hits or 1,sl._hits==nil)
-      end
-      alert_check(seq,now)
+    if not dont_update_ then
+      update_sequences()
     end
-    logi("process, handling updated_sequences end",#sorted_updated_names)
     return rv
   end
 
@@ -912,6 +932,7 @@ function mule(db_)
     slot = slot,
     modify_factories = modify_factories,
     process = process,
+    update = update_sequences,
     save = save,
     load = load,
     alert_set = alert_set,

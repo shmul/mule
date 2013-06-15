@@ -116,7 +116,7 @@ local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
     return mule_.graph(resource_,qs_params_)
   elseif req_.verb=="POST" then
     logd("calling",handler_)
-    return mule_.process(lines_without_comments(string_lines(content_)))
+    return mule_.process(lines_without_comments(string_lines(content_)),true)
   else
     logw("Only GET/POST can be used")
     return 405
@@ -197,7 +197,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   logd("send_response - after with_mule")
   if handler_name=="stop" then
     logw("stopping, using: ",qs.token)
-    stop_cond_(token)
+    stop_cond_(qs.token)
   elseif handler_name=="backup" then
     local path = backup_callback_()
     rv = path and string.format("{'path':'%s'}",path) or "{}"
@@ -274,7 +274,14 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
                     send_response(send(skt),send_file(skt),
                                   req,content,with_mule_,backup_callback_,stop_cond_)
                   end)
+
   while not stop_cond_() do
-    copas.step()
+    copas.step(1)
+
+    with_mule_(function(mule_)
+                 mule_.update(UPDATE_AMOUNT)
+               end)
   end
 end
+
+--verbose_log(true)
