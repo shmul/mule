@@ -58,6 +58,10 @@ local function read_request(socket_)
         logd("chunked encoding")
         content = read_chunks(socket_)
       end
+      -- we may be left with an _empty_ table, in which case we'll concat it
+      if type(content)=="table" then
+        content = table.concat(content)
+      end
       return req,content
     end
 
