@@ -6,7 +6,7 @@ local new,unpack
 local methods = nil
 
 local function split(string_)
-  local a,b = string.match(string_,"(%w+)[%.;](.+)")
+  local a,b = string.match(string_,"([^%.;]+)[%.;](.+)")
   if not a then
     a = string_
   end

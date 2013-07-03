@@ -778,5 +778,17 @@ function test_duplicate_timestamps()
   end
 end
 
+function test_dashes_in_keys()
+  local db = column_db_factory("temp/dashes_in_keys")
+  local m = mule(db)
+  m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
+  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+  assert(string.find(m.key("Johnston",{deep=true}),"Sweet%-Nuthin"))
+  assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
+  m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
+  assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")
