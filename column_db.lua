@@ -162,12 +162,19 @@ function column_db(base_dir_)
   local function save_meta_file()
     logi("save_meta_file",dirty)
     if dirty then
-      with_file(meta_file,
-                function(f_)
-                  f_:write(index:pack())
-                  f_:flush()
-                end,"w+b")
-      dirty = false
+      local tmp_meta = string.format("%s.%s.tmp",meta_file,os.date("%y%m%d-%H%M%S"))
+      local save_successful = with_file(tmp_meta,
+                                        function(f_)
+                                          f_:write(index:pack())
+                                          f_:flush()
+                                          return true
+                                        end,"w+b")
+      if save_successful then
+        os.rename(tmp_meta,meta_file)
+        dirty = false
+      else
+        loge("unable to same meta file")
+      end
     end
   end
 
