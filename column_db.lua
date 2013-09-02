@@ -115,7 +115,7 @@ end
 
 
 SEQUENCES_PER_FILE = 2000
-SAVE_PERIOD = 60
+SAVE_PERIOD = 60*10
 
 function column_db(base_dir_)
   local index = tr:new()
@@ -172,6 +172,7 @@ function column_db(base_dir_)
       if save_successful then
         os.rename(tmp_meta,meta_file)
         dirty = false
+        logi("save_meta_file. size",index:size())
       else
         loge("unable to same meta file")
       end
