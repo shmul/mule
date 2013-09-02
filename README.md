@@ -1,6 +1,6 @@
 # General
 
-Mule is a RRD tool designed with simplicity of use in mind. Its main use case is applicative monitoring.
+Mule is an RRD tool designed with simplicity of use in mind. Its main use case is applicative monitoring.
 
 * metrics need not be declared in advance - simple patterns define families of metrics.
 * simple input format
