@@ -92,14 +92,21 @@ Ext.define "Muleview.controller.KeysTree",
     # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
     node.set("loading", true)
     @fetchKeys node.get("fullname"), (keys) =>
+
+      # Commented out the following section after reducing subkey prefetching from 2 to 1 due to apparent overload in key data: <<< BEGIN COMMENTING OUT
+
+
+
       # We would like to mark subkeys which we know for sure that they are leaves
       # NOTE: We assume Mule returned at least 2 levels of keys!
-      for key in keys
-        record = @store.getById(key)
-        # Since at least 2 levels of keys were received, if a node in the first level has no children then it is definitely a leaf:
-        if record.parentNode == node and not record.firstChild
-          record.set("leaf", true)
-          record.set("loaded", true)
+      # for key in keys
+      #   record = @store.getById(key)
+      #   # Since at least 2 levels of keys were received, if a node in the first level has no children then it is definitely a leaf:
+      #   if record.parentNode == node and not record.firstChild
+      #     record.set("leaf", true)
+      #     record.set("loaded", true)
+
+      # END COMMENTING OUT  >>>
       # Mark the original node as done loading:
       node.set("loading", false)
 
@@ -112,10 +119,13 @@ Ext.define "Muleview.controller.KeysTree",
     @store.setRootNode(root)
 
     # Ask Mule for the first keys
-    @fetchKeys("")
+    @getTree().setLoading(true)
+    @fetchKeys "", =>
+      @getTree().setLoading(false)
+
 
   fetchKeys: (parent, callback) ->
-    Muleview.Mule.getSubKeys parent, 2, (keys) =>
+    Muleview.Mule.getSubKeys parent, 1, (keys) =>
       @addKeys keys
       callback?(keys)
 

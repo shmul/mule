@@ -14,6 +14,13 @@ Ext.application
 
   launch: ->
     Muleview.event = Ext.Function.alias Muleview.app, "fireEvent"
+    Muleview.toUTCDate = (date) ->
+      new Date date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds()
 
   autoCreateViewport: true
 

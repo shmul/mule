@@ -19,16 +19,16 @@ Ext.define "Muleview.view.MuleChart",
 
   timeLabel:
     rotate:
-      degrees: 315
+      degrees: -45
 
   tipsRenderer: (storeItem, item) ->
     me = item.series.chart
     key = item.storeField or item.series.title
     value = storeItem.get(key)
-    total = storeItem.get(me.topKey)
+    total = storeItem.get(me.topKeys[0]) # We seriously hope there's only one topKey
     percent = 100 * (value / total)
     percentText = Ext.util.Format.number(percent, "0.00")
-    timestamp = me.timeFormatter(storeItem.get('timestamp'))
+    timestamp = (new Date(storeItem.get('timestamp') * 1000)).toUTCString()
     @update
       key: key.substring(key.lastIndexOf(".") + 1)
       timestamp: timestamp
@@ -36,11 +36,21 @@ Ext.define "Muleview.view.MuleChart",
       value: Ext.util.Format.number(value, ",")
       percent: percentText
 
-  timeFormatter: (timestamp) ->
-    Ext.Date.format(new Date(timestamp * 1000), Muleview.Settings.labelFormat)
+  createTimeFormatter: () ->
+    lastDate = null
+    return (timestamp) ->
+      # convert the timestamp to UTC date and return a formatted string according to the formatting specified in Muleview's settings
+      rawDate = new Date(timestamp * 1000)
+      day = rawDate.getUTCDay()
+      utcDate = Muleview.toUTCDate(rawDate)
+      ans = Ext.Date.format(utcDate, Muleview.Settings.labelTimeFormat)
+      if (lastDate != day)
+        lastDate = day
+        ans = Ext.Date.format(utcDate, Muleview.Settings.labelDateFormat) + "\n" + ans
+      ans
 
   initComponent: ->
-    @timeLabel.renderer = @timeFormatter
+    @timeLabel.renderer = @createTimeFormatter()
 
     @axes = [
       {
@@ -78,6 +88,8 @@ Ext.define "Muleview.view.MuleChart",
         listeners:
           itemmouseover: (item) ->
             Muleview.event "chartItemMouseOver", item
+        style:
+          "stroke-width": (if Ext.isEmpty(@subKeys) then 2.5 else 0)
         tips:
           trackMouse: false
           tpl: "{key} {value} ({timestamp})"

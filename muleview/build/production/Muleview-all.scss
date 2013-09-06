@@ -534,7 +534,7 @@ $include-muleview-store-subkeysstore: true;
 $include-muleview-view-alertseditor: true;
 $include-muleview-view-chartsview: true;
 $include-muleview-view-mulechart: true;
-$include-muleview-view-mulechartpanel: true;
+$include-muleview-view-mulechartpanel: false;
 $include-muleview-view-mulelightchart: true;
 $include-muleview-view-muletimefield: true;
 $include-muleview-view-singlegraphchartsview: true;
@@ -543,15 +543,15 @@ $include-muleview-view-theme: true;
 $include-muleview-view-tooltip: true;
 $include-muleview-view-viewport: true;
 $include-muleview-view-zoomslider: true;
-$relative-image-path-for-uis: 'images';
+/* including package ext-theme-base */
 @import '../../packages/ext-theme-base/sass/etc/all';
-$relative-image-path-for-uis: 'images';
+/* including package ext-theme-classic */
 @import '../../packages/ext-theme-classic/sass/etc/all';
-$relative-image-path-for-uis: 'images';
+/* including package muleview-theme */
 @import '../../packages/muleview-theme/sass/etc/all';
-$relative-image-path-for-uis: 'images';
+/* including package muleview-theme */
 @import '../../packages/muleview-theme/sass/var/tree/Panel';
-$relative-image-path-for-uis: 'images';
+/* including package ext-theme-classic */
 @import '../../packages/ext-theme-classic/sass/var/Component';
 @import '../../packages/ext-theme-classic/sass/var/LoadMask';
 @import '../../packages/ext-theme-classic/sass/var/ProgressBar';
@@ -581,7 +581,7 @@ $relative-image-path-for-uis: 'images';
 @import '../../packages/ext-theme-classic/sass/var/resizer/Resizer';
 @import '../../packages/ext-theme-classic/sass/var/slider/Multi';
 @import '../../packages/ext-theme-classic/sass/var/tab/Panel';
-$relative-image-path-for-uis: 'images';
+/* including package ext-theme-neutral */
 @import '../../packages/ext-theme-neutral/sass/var/Component';
 @import '../../packages/ext-theme-neutral/sass/var/FocusManager';
 @import '../../packages/ext-theme-neutral/sass/var/LoadMask';
@@ -628,9 +628,11 @@ $relative-image-path-for-uis: 'images';
 @import '../../packages/ext-theme-neutral/sass/var/slider/Multi';
 @import '../../packages/ext-theme-neutral/sass/var/tab/Panel';
 @import '../../packages/ext-theme-neutral/sass/var/tree/Panel';
-$relative-image-path-for-uis: 'images';
+/* including package ext-theme-base */
 @import '../../packages/ext-theme-base/sass/var/Component';
-$relative-image-path-for-uis: 'images';
+/* including package ext-theme-base */
+$ext-theme-base-resource-path: 'images' !default;
+$relative-image-path-for-uis: $ext-theme-base-resource-path;
 @import '../../packages/ext-theme-base/sass/src/Component';
 @import '../../packages/ext-theme-base/sass/src/layout/container/Container';
 @import '../../packages/ext-theme-base/sass/src/LoadMask';
@@ -662,7 +664,9 @@ $relative-image-path-for-uis: 'images';
 @import '../../packages/ext-theme-base/sass/src/resizer/SplitterTracker';
 @import '../../packages/ext-theme-base/sass/src/slider/Multi';
 @import '../../packages/ext-theme-base/sass/src/tab/Panel';
-$relative-image-path-for-uis: 'images';
+/* including package ext-theme-neutral */
+$ext-theme-neutral-resource-path: 'images' !default;
+$relative-image-path-for-uis: $ext-theme-neutral-resource-path;
 @import '../../packages/ext-theme-neutral/sass/src/Component';
 @import '../../packages/ext-theme-neutral/sass/src/FocusManager';
 @import '../../packages/ext-theme-neutral/sass/src/LoadMask';
@@ -700,7 +704,9 @@ $relative-image-path-for-uis: 'images';
 @import '../../packages/ext-theme-neutral/sass/src/selection/CheckboxModel';
 @import '../../packages/ext-theme-neutral/sass/src/tab/Panel';
 @import '../../packages/ext-theme-neutral/sass/src/tree/Panel';
-$relative-image-path-for-uis: 'images';
+/* including package ext-theme-classic */
+$ext-theme-classic-resource-path: 'images' !default;
+$relative-image-path-for-uis: $ext-theme-classic-resource-path;
 @import '../../packages/ext-theme-classic/sass/src/dom/Element';
 @import '../../packages/ext-theme-classic/sass/src/toolbar/Toolbar';
 @import '../../packages/ext-theme-classic/sass/src/window/MessageBox';
@@ -710,5 +716,7 @@ $relative-image-path-for-uis: 'images';
 @import '../../packages/ext-theme-classic/sass/src/resizer/Resizer';
 @import '../../packages/ext-theme-classic/sass/src/slider/Multi';
 @import '../../packages/ext-theme-classic/sass/src/tab/Panel';
-$relative-image-path-for-uis: 'images';
+/* including package muleview-theme */
+$muleview-theme-resource-path: 'images' !default;
+$relative-image-path-for-uis: $muleview-theme-resource-path;
 @import '../../packages/muleview-theme/sass/src/tree/Panel';
