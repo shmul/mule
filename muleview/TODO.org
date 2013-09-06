@@ -1,5 +1,8 @@
 * Issues
 ** DONE Graphs look awful in Firefox
+** TODO Misordered responses issue
+   When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
+   We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
 ** TODO Navigation in compare-mode
 ** TODO Status bar doesn't have busy icon
 ** DONE Fix statusbar auto fade

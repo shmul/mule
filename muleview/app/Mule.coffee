@@ -11,6 +11,7 @@ Ext.define "Muleview.Mule",
     Muleview.event "commandSent", command
     Ext.Ajax.request
       url: @prefix() + command
+      timeout: 10 * 60 * 1000 # 10 minutes
       success: (response) =>
         Muleview.event "commandReceived", command
         fn(JSON.parse(response.responseText).data)
