@@ -1,3 +1,4 @@
+/* including package ext-theme-base */
 /**
  * @class Global_CSS
  *
@@ -22,6 +23,11 @@
  * but this can be changed by changing the default value of $include-missing-images to
  * be true.
  */
+/* including package ext-theme-classic */
+/* including package muleview-theme */
+/* including package muleview-theme */
+/* including package ext-theme-classic */
+/* including package ext-theme-neutral */
 /**
  * @class Ext.Component
  */
@@ -301,6 +307,7 @@
  * The direction to rotate the contents of a right-aligned tab.  `right` to rotate
  * clockwise or `left` to rotate counterclockwise. Defaults to `right`.
  */
+/* including package ext-theme-base */
 /**
  * @class Ext.Component
  */
@@ -370,6 +377,7 @@
 /**
  * Default search path for images
  */
+/* including package ext-theme-base */
 /*
  * Although this file only contains a variable, all vars are included by default
  * in application sass builds, so this needs to be in the rule file section
@@ -1889,6 +1897,7 @@ table.x-form-checkboxgroup {
   overflow: visible;
 }
 
+/* including package ext-theme-neutral */
 /* line 1, ../../../packages/ext-theme-neutral/sass/src/Component.scss */
 .x-body {
   color: black;
@@ -15497,6 +15506,7 @@ body.x-nbr .x-tab-default-right {
   border-color: green;
 }
 
+/* including package ext-theme-classic */
 /* line 2, ../../../packages/ext-theme-classic/sass/src/dom/Element.scss */
 .x-box-tl {
   background: transparent no-repeat 0 0;
@@ -15871,6 +15881,7 @@ body.x-nbr .x-tab-default-right {
   display: none;
 }
 
+/* including package muleview-theme */
 /* line 1, ../../../packages/muleview-theme/sass/src/tree/Panel.scss */
 .x-tree-icon-leaf {
   width: 14px;

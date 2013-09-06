@@ -2,8 +2,8 @@ Ext.define "Muleview.view.ChartsView",
   extend: "Ext.panel.Panel"
   requires: [
     "Ext.form.field.ComboBox"
+    "Muleview.view.ZoomSlider"
     "Muleview.model.Retention"
-    "Muleview.view.MuleChartPanel"
     "Muleview.view.MuleLightChart"
     "Ext.data.ArrayStore"
   ]
@@ -50,19 +50,34 @@ Ext.define "Muleview.view.ChartsView",
 
     # Init component:
     @items = @items()
+
     @callParent()
     @eachRetention (retention, name) =>
       @rightPanel.add(@lightCharts[name])
+
+  setBbar: (store) ->
+    return unless store
+    # Remove all old docked items:
+    @zoomSliderContainer.removeAll()
+
+    # Create Slider:
+    @zoomSlider = Ext.create "Muleview.view.ZoomSlider",
+      store: store
+
+    # Add items to the dock:
+    @zoomSliderContainer.add @zoomSlider
 
   items: ->
     [
         @chartContainer = Ext.create "Ext.panel.Panel",
           region: "center"
           header: false
+          bodyPadding: 5
           layout:
             type: "vbox"
             align: "stretch"
           tbar: @createChartContainerToolbar()
+          bbar: @createChartContainerZoomSlider()
       ,
         @rightPanel = Ext.create "Ext.panel.Panel",
           title: "Previews"
@@ -75,6 +90,24 @@ Ext.define "Muleview.view.ChartsView",
             type: "vbox"
             align: "stretch"
           items: @lightCharts
+    ]
+
+  createChartContainerZoomSlider: ->
+    [
+      @zoomSliderContainer = Ext.create("Ext.container.Container",
+        flex: 1
+        layout: "fit"
+        # Slider will be created upon chart render
+      ),
+
+      {
+        xtype: "button"
+        text: "Reset"
+        margin: "0px 0px 0px 3px"
+        dock: "bottom"
+        handler: =>
+          @zoomSlider.reset()
+      }
     ]
 
   createChartContainerToolbar: ->
@@ -143,8 +176,7 @@ Ext.define "Muleview.view.ChartsView",
       topKeys: @topKeys
       store: store
       showLegend: @showLegend
-    @chartContainer.add Ext.create "Muleview.view.ZoomSlider",
-      store: store
+    @setBbar(store)
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],

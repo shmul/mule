@@ -41,13 +41,17 @@ Ext.define "Muleview.view.Viewport",
       xtype: "panel"
       title: "Chart"
       # FIXME:
-      bodyStyle: "background-image: url(resources/default/images/bg.png); background-position: center center; background-repeat: no-repeat; "
+      bodyStyle: "background-image: url(resources/default/images/bg.png)"
 
       region: "center"
       layout: "fit"
     ,
-      xtype: "panel"
-      layout: "fit"
+      xtype: "toolbar"
+      layout:
+        type: "hbox"
+        align: "stretch"
+        pack: "start"
+
       collapsible: true
       collapsed: false
       collapseMode: "mini"
@@ -57,23 +61,51 @@ Ext.define "Muleview.view.Viewport",
       items: [
         {
           xtype: "statusbar"
+          margin: 0
+          border: false
           id: "statusBar"
+          flex: 1
           autoClear: 3000
           defaultText: "Ready"
           items: [
-              xtype: "label"
-              cls: "statusbar-text"
-              id: "lastRefreshLabel"
-            ,
-              "-"
-            ,
-              xtype: "tool"
-              type: "minimize"
-              tooltip: "Collapse status bar"
-              handler: (event, toolEl, owner) ->
-                owner.up().collapse()
+            xtype: "label"
+            cls: "statusbar-text"
+            id: "lastRefreshLabel"
           ]
+        },
+
+        {
+          xtype: "container"
+          flex: 1
+          layout:
+            type: "hbox"
+            align: "middle"
+            pack: "center"
+
+          items: [
+          ]
+        },
+
+        {
+          xtype: "container"
+          flex: 1
+          layout:
+            type: "hbox"
+            align: "middle"
+            pack: "end"
+
+          items: [
+          ]
+        },
+
+        {
+          icon: "resources/default/images/mule_icon.png"
+          handler: ->
+            Ext.MessageBox.show
+              title: "About"
+              msg: "[Add Branding Here]"
+              buttons: Ext.Msg.OK
+              icon: Ext.Msg.INFO
         }
       ]
-
   ]

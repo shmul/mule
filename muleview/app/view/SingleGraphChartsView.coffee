@@ -73,8 +73,9 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       alerts: @alerts[retName]
       store: store
       showLegend: @showLegend
-    @chartContainer.add Ext.create "Muleview.view.ZoomSlider",
-      store: store
+
+    @setBbar(store)
+
   createChartContainerToolbar: ->
     toolbar = this.callParent()
     toolbar.splice(2,0,
