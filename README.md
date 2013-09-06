@@ -100,13 +100,14 @@ To update mule's configuration POST a configuration file to
 ##### Retrieve graph data
 Use a GET request
 
-    http://muleserver/graph/<metric-or-name>?<timestamps>|<deep>|<alerts>
+    http://muleserver/graph/<metric-or-name>?<timestamps>|<deep>|<alerts>|<numchilds>
 
 * metric-or-name is a metric or a name (i.e. including the retention data). If the metric is used then all the graphs for the metric will be returned, i.e. the graphs for all the names for which the metric is a prefix.
 * query string parameters are
   * `timestamps` - the graph data will be restricted to the given timestamps. Timestamps can be a comma separated list of seconds or simple arithmetic expressions using the predefined variables `now` (or `n`) and `latest` (or `l`), like `l-10s`, `now-20d` .
   * `alerts` - if set to true, the alerts status will be added to the names for which alerts are defined.
   * `deep` - if set to true (which can be `true,yes,1`) then the graphs data for the metric childs (one level deep) will also be returned. This may be compbined with timestamps. Defaults to `false`. As this option is popular, a syntactic sugar for it exists in the form of a url
+  * `numchilds` - if set to true (or its equivalents) the count of immediate childs will be returned but **without** their data.
 
     http://muleserver/piechart/<metric-or-name>?<timestamps>
 

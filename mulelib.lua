@@ -527,6 +527,7 @@ function mule(db_)
                    period_only=true}
     local depth = is_true(options_.deep) and one_level_childs or immediate_metrics
     local alerts = is_true(options_.alerts)
+    local numchilds = is_true(options_.numchilds) and 0 or nil
     local names = {}
 
     col.head()
@@ -536,18 +537,26 @@ function mule(db_)
         if alerts then
           names[#names+1] = seq.name()
         end
-        local col1 = collectionout(str,": [","]\n")
-        seq.serialize(opts,
-                      function()
-                        col.elem(format("\"%s\"",seq.name()))
-                        col1.head()
-                      end,
-                      function(sum,hits,timestamp)
-                        col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
-                      end)
-        col1.tail()
+        if numchilds then -- we are only counting the number of childs
+          numchilds = numchilds + 1
+        else
+          local col1 = collectionout(str,": [","]\n")
+          seq.serialize(opts,
+                        function()
+                          col.elem(format("\"%s\"",seq.name()))
+                          col1.head()
+                        end,
+                        function(sum,hits,timestamp)
+                          col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+                        end)
+          col1.tail()
+        end
+      end
+      if numchilds then
+        col.elem(format("\"numchilds\": \%d",numchilds))
       end
     end
+
     if alerts then
       col.elem(format("\"alerts\": %s",output_alerts(names).get_string()))
     end
