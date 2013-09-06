@@ -203,7 +203,7 @@ Creates a backup of the db next to it. Returns the path.
 
 * install either lua 5.1 or 5.2, preferably using your standard package manager. Alternatively installation [from source](http://www.lua.org/download.html) is also very simple.
 * luarocks should also be installed using the package manager or (from source)[http://luarocks.org/en/Download].
-* install additional rocks - copas, lpack
+* install additional rocks - copas, lpack, luaposix
 
 ### Kyotocabinet (or tokyocabinet)
 
@@ -335,3 +335,6 @@ Copas of the Kepler project is used and is disributed under [this license](http:
 
 ## lpack
 [lpack](http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lpack) is used.
+
+## luaposix
+[luaposix](https://github.com/luaposix/luaposix) is used.
