@@ -3,6 +3,7 @@ require "helpers"
 
 local _,p = pcall(require,"purepack")
 local _,tr = pcall(require,"trie")
+local _,posix = pcall(require,'posix')
 
 --[[
 Sequences are stored column by column, i.e. all the Nth slots of each sequences are stored
@@ -160,8 +161,7 @@ function column_db(base_dir_)
   end
 
   local function save_meta_file()
-    logi("save_meta_file",dirty)
-    if dirty then
+    local function helper()
       local tmp_meta = string.format("%s.%s.tmp",meta_file,os.date("%y%m%d-%H%M%S"))
       local save_successful = with_file(tmp_meta,
                                         function(f_)
@@ -169,13 +169,30 @@ function column_db(base_dir_)
                                           f_:flush()
                                           return true
                                         end,"w+b")
-      if save_successful then
-        os.rename(tmp_meta,meta_file)
-        dirty = false
-        logi("save_meta_file. size",index:size())
-      else
+      if not save_successful then
         loge("unable to same meta file")
+        return false
       end
+      os.rename(tmp_meta,meta_file)
+      logi("save_meta_file. size",index:size())
+      return true
+
+    end
+
+    logi("save_meta_file",dirty)
+    if not dirty then
+      return
+    end
+    if posix then
+      local child = posix.fork()
+      if child==0 then
+        helper()
+        os.exit()
+      else
+        dirty = false
+      end
+    else
+      helper()
     end
   end
 
