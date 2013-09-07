@@ -57,28 +57,20 @@ Ext.define "Muleview.controller.KeysTree",
   # Event handling:
 
   setMultiMode: (multi) ->
-    console.log("SETMULTIMODE: ", multi)
     return if !!multi == @isMulti
     @isMulti = !!multi
 
     # Find current selection
     selectedNode = @getSelectedNode()
 
-    @store.suspendEvents(false) #TODO: check
-
     @forAllNodes (node) ->
       checked = if multi then (node == selectedNode) else null
-      node.suspendEvents(false) #TODO: check
       node.set("checked", checked)
-      node.resumeEvents(true) #TODO: check
-
-    @store.resumeEvents() #TODO: check
 
     @getMultiModeBtn().setVisible(!multi)
     @getNormalModeBtn().setVisible(multi)
 
   createViewChangeEvent: ->
-    console.log("CREATE VIEW CHANGE")
     chosenKeys = []
     if @isMulti
       # keys are chosen by their checked value:
@@ -89,27 +81,21 @@ Ext.define "Muleview.controller.KeysTree",
     Muleview.event "viewChange", chosenKeys , Muleview.currentRetention
 
   receiveViewChangeEvent: (keys) ->
-    console.log("RECEIVE VIEW CHANGE EVENT - ", keys)
     keysArr = Ext.Array.from(keys)
     @setMultiMode(@isMulti or keysArr.length > 1)
-
-    @store.suspendEvents(false) #TODO: check
-    @tree.suspendEvents(false) #TODO: check
 
     if @isMulti
       @tree.getSelectionModel().deselectAll()
       @forAllNodes (node) =>
         checked = Ext.Array.contains(keysArr, node.get("fullname"))
-        node.suspendEvents(false) #TODO: check
         node.set("checked", checked)
-        node.resumeEvents() #TODO: check
+        @expandKey(node) if checked
 
     else
       chosenNode = @store.getById(keysArr[0])
-      @tree.getSelectionModel().select(chosenNode)
-
-    @store.resumeEvents() #TODO: check
-    @tree.resumeEvents() #TODO: check
+      if chosenNode
+        @tree.getSelectionModel().select(chosenNode)
+        @expandKey(chosenNode)
 
   # ================================================================
   # Data fetching and displaying:
