@@ -1,9 +1,11 @@
 * Issues
 ** DONE Graphs look awful in Firefox
+** TODO Going back to no-graphs page
+   When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
 ** TODO Misordered responses issue
    When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
    We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
-** TODO Navigation in compare-mode
+** DONE Navigation in compare-mode
 ** TODO Status bar doesn't have busy icon
 ** DONE Fix statusbar auto fade
 it gets into "ready" even though still waiting for mule events
@@ -20,6 +22,8 @@ it gets into "ready" even though still waiting for mule events
 
 * Features:
 ** DONE Fix Tooltip Errors somehow
+** TODO Implement numchild
+   In the keys tree - show + sign next to keys which are known to have subkeys.
 ** TODO Loading mask when loading keys
 ** DONE Url Navigation:
 *** DONE Fix history-landing keys Tree

@@ -6,7 +6,7 @@ Ext.define "Muleview.controller.History",
 
   addToken: (keys, ret) ->
     return unless keys and ret
-    Ext.util.History.add (keys || []).join(",") + ";" + ret
+    Ext.util.History.add Ext.Array.from(keys).join(",") + ";" + ret
 
   gotoToken: (token) ->
     [keys, retention] = (token ? "").split(";")
