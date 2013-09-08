@@ -1,6 +1,7 @@
 module("column_db",package.seeall)
 require "helpers"
 
+local _,lr = pcall(require,"luarocks.require")
 local _,p = pcall(require,"purepack")
 local _,tr = pcall(require,"trie")
 local _,posix = pcall(require,'posix')
