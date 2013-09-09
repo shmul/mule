@@ -36,7 +36,7 @@ Ext.define "Muleview.controller.ChartsController",
     else if @retention != retention
       # If only the retention was changed, we ask the ChartsView to show the new one:
       @retention = retention
-      @chartsView.showRetention(retention)
+      @chartsView?.showRetention(retention)
 
   refresh: ->
     # Run the view change with the power of the force:
