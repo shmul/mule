@@ -52,7 +52,8 @@ local function read_request(socket_)
         local s,err = ltn12.pump.all(socket.source("by-length",socket_,content_len),sink)
         content = s and table.concat(content)
         if not content or #content<content_len then
-          logw("insufficient content received",#content,content_len)
+          logw("insufficient content received",content and #content or "nil",
+               content and content_len or 0)
         end
       elseif req["Transfer-Encoding"]=="chunked" then
         logd("chunked encoding")
