@@ -69,8 +69,9 @@ local function backup(db_path_)
   function helper()
     local db_path = strip_slash(db_path_)
     local bak = string.format("%s.bak.%s",db_path,os.date("%y%m%d-%H%M%S"))
+    logi("starting to backup to",bak)
     os.execute(string.format("cp -r %s %s",db_path_,bak))
-    logi("backed up to",bak)
+    logi("backup completed",bak)
     return bak
   end
 
