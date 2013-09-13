@@ -4,7 +4,6 @@ require "helpers"
 local _,lr = pcall(require,"luarocks.require")
 local _,p = pcall(require,"purepack")
 local _,tr = pcall(require,"trie")
-local _,posix = pcall(require,'posix')
 
 --[[
 Sequences are stored column by column, i.e. all the Nth slots of each sequences are stored

@@ -112,13 +112,12 @@ local function generic_get_handler(mule_,handler_,req_,resource_,qs_params_,cont
     return
   end
   logd("calling",handler_)
-  return mule_[handler_](resource_,qs_params_)
+  return fork_and_exit(function() return mule_[handler_](resource_,qs_params_) end)
 end
 
 local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="GET" then
-    logd("calling",handler_)
-    return mule_.graph(resource_,qs_params_)
+    return generic_get_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   elseif req_.verb=="POST" then
     logd("calling",handler_)
     return mule_.process(lines_without_comments(string_lines(content_)),true)
@@ -142,7 +141,7 @@ local function crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   elseif req_.verb=="DELETE" then
     return mule_.alert_remove(resource_)
   elseif req_.verb=="GET" then
-    return mule_.alert(resource_)
+    return fork_and_exit(function() return mule_.alert(resource_) end)
   end
   return 405
 end
