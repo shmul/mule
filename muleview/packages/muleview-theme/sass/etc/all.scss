@@ -1,0 +1,24 @@
+.alert-state {
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.alert-critical-high {
+  background-image: url("critical_high.png")
+}
+
+.alert-warning-high {
+  background-image: url("warning_high.png");
+}
+
+.alert-critical-low {
+  background-image: url("warning_high.png");
+}
+
+.alert-warning-low {
+  background-image: url("warning_high.png");
+}
+
+.alert-normal {
+
+}

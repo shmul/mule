@@ -1,5 +1,6 @@
 * Issues
 ** DONE Graphs look awful in Firefox
+** TODO mask when switching retentions in the same graph
 ** TODO Going back to no-graphs page
    When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
 ** TODO Misordered responses issue

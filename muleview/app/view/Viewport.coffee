@@ -19,14 +19,6 @@ Ext.define "Muleview.view.Viewport",
       split: true
       collapsible: true
       title: "Available Keys"
-      bbar: [
-          id: "btnSwitchToMultiple"
-          text: "Switch to Multiple-Mode"
-        ,
-          id: "btnSwitchToNormal"
-          text: "Switch to Normal-Mode"
-          hidden: true
-      ]
       items: [
           xtype: "treepanel"
           region: "center"
@@ -35,6 +27,39 @@ Ext.define "Muleview.view.Viewport",
           useArrows: true
           rootVisible: false
           lines: true
+          bbar: [
+              id: "btnSwitchToMultiple"
+              text: "Switch to Multiple-Mode"
+            ,
+              id: "btnSwitchToNormal"
+              text: "Switch to Normal-Mode"
+              hidden: true
+          ]
+        ,
+          xtype: "grid"
+          collapsible: true
+          region: "south"
+          id: "alertsReport"
+          title: "Alerts Status"
+          height: "40%"
+          split: true
+          columns: [
+              # Icon
+              width: 20
+              renderer: (value, meta, record) ->
+                meta.tdCls = "alert-state alert-" + record.get("state").replace(/[ _-]/, "-").toLowerCase()
+                meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
+
+                ""
+            ,
+              header: "Name"
+              dataIndex: "name"
+              flex: 2
+            ,
+              header: "State"
+              dataIndex: "state"
+              width: 100
+          ]
       ]
     ,
       id: "chartsViewContainer"
