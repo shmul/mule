@@ -102,10 +102,10 @@ Ext.define "Muleview.view.Viewport",
           icon: "resources/default/images/mule_icon.png"
           handler: ->
             Ext.MessageBox.show
-              title: "About"
-              msg: "[Add Branding Here]"
+              title: "About Mule"
+              msg: "<p style=\"text-align:center\"><b>Mule</b> is an <a href=http://github.com/trusteer/mule>open-source</a> project written by <a href=mailto:shmul@trusteer.com>Shmulik Regev</a> & <a href=mailto:dan@carmon.org.il>Dan Carmon</a><br /></p>"
               buttons: Ext.Msg.OK
-              icon: Ext.Msg.INFO
+
         }
       ]
   ]
