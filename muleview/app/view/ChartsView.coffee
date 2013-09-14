@@ -154,7 +154,6 @@ Ext.define "Muleview.view.ChartsView",
 
     Ext.create "Ext.button.Button",
       selectRetention: (retName) ->
-        console.log('ChartsView.coffee\\ 154: retName:', retName);
         for item in items
           selected = item.retention.get("name") == retName
           item.setChecked(selected, true) # true to suppress events

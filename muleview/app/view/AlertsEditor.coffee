@@ -140,6 +140,7 @@
       method: method
       success: =>
         @close()
+        Muleview.event "alertsChanged"
         Muleview.event "refresh"
       )
 

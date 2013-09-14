@@ -39,7 +39,7 @@ Ext.define "Muleview.store.AlertsStore",
       readRecords: (root) ->
         recordsHash = root.data
         records = []
-        fields = Muleview.model.Alert.getFields()
+        fields = Ext.clone(Muleview.model.Alert.getFields())
         fields.shift() # name
         for key, values of root.data
           record = Ext.create("Muleview.model.Alert")
@@ -68,12 +68,35 @@ Ext.define "Muleview.controller.AlertsReportController",
   onLaunch: ->
     @grid = @getGrid()
     @grid.reconfigure Ext.create("Muleview.store.AlertsStore")
-    @grid.getStore().load()
     @grid.on
       selectionchange: @clickHandler
       scope: @
+
+    Muleview.app.on
+      viewChange: @updateSelection
+      alertsChanged: @refresh
+      scope: @
+
+      window.setInterval( =>
+        @refresh()
+      , Muleview.Settings.alertsReportUpdateInterval)
+    @refresh()
+
+
+  updateSelection: (key, retention) ->
+    return unless Ext.typeOf(key) == "string" or (Ext.typeOf(key) == "array" and key.length == 1)
+    graphName = "#{Ext.Array.from(key)[0]};#{retention}"
+    alert = @grid.getStore().findRecord("name", graphName)
+    selModel = @grid.getSelectionModel()
+    if alert
+       selModel.select(alert, false, false)
+    else
+      selModel.deselectAll()
 
   clickHandler: (me, selection) =>
     return if Ext.isEmpty(selection)
     [key, retention]  = selection[0].get("name").split(";")
     Muleview.event "viewChange", key, retention
+
+  refresh: ->
+    @grid.getStore().load()
