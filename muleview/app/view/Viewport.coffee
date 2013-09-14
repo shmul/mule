@@ -48,9 +48,9 @@ Ext.define "Muleview.view.Viewport",
               width: 20
               sortable: false
               renderer: (value, meta, record) ->
-                meta.tdCls = "alert-state alert-" + record.get("state").replace(/[ _-]/, "-").toLowerCase()
+                # This cell gets its icon from the row alert-state-specific  class, see viewConfig blow
+                meta.tdCls = "icon-cell"
                 meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
-
                 ""
             ,
               header: "Name"
@@ -74,6 +74,10 @@ Ext.define "Muleview.view.Viewport",
               dataIndex: "formatted_stale"
               width: 100
           ]
+          viewConfig:
+            getRowClass: (record) ->
+              console.log('Viewport.coffee\\ 80: arguments:', arguments);
+              "alert-row-#{record.get("stateClass")}"
       ]
     ,
       id: "chartsViewContainer"
