@@ -13,8 +13,6 @@ Ext.define "Muleview.controller.History",
     keys = keys.split(",")
     Muleview.event "viewChange", keys, retention if keys.length > 0 and keys[0].length > 0
 
-  init: ->
-
   onLaunch: ->
     Ext.onReady =>
       Ext.util.History.init =>

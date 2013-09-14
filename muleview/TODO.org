@@ -1,5 +1,8 @@
 * Issues
 ** DONE Graphs look awful in Firefox
+** TODO Back button issue
+** TODO Nicer formatting of stale/period values in alerts report
+** TODO Mask when switching retentions in the same graph
 ** TODO Going back to no-graphs page
    When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
 ** TODO Misordered responses issue
@@ -7,6 +10,7 @@
    We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
 ** DONE Navigation in compare-mode
 ** TODO Status bar doesn't have busy icon
+   Also, it should utilize Ext.Ajax.is(something, loading or waiting or something like that)
 ** DONE Fix statusbar auto fade
 it gets into "ready" even though still waiting for mule events
 ** DONE Coffee 1.6 compatibility
@@ -24,7 +28,7 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Fix Tooltip Errors somehow
 ** TODO Implement numchild
    In the keys tree - show + sign next to keys which are known to have subkeys.
-** TODO Loading mask when loading keys
+** DONE Loading mask when loading keys
 ** DONE Url Navigation:
 *** DONE Fix history-landing keys Tree
 When entering Muleview with a graph url, the keys-tree doesn't update nicely.p
@@ -34,9 +38,11 @@ It should immediately show the full path of the key, and then subsequently load 
 *** DONE Show loading mask in node itself
 ** DONE The x-axis contains full time stamps which can be too much for the eye. What about showing the day only when they change?
 I hope this fix is suitable (Not trivial to check).
-** TODO We should add some branding to the status bar. Maybe the project name and a link to github?
+** DONE We should add some branding to the status bar. Maybe the project name and a link to github?
+** TODO Nicer about box?
+   perhaps, god forbig, an image or something?
 ** TODO Pointer cursor for clickable areas
-** TODO Alert dashboard - a summary of the alert statuses. Navigating to the faulty graphs would be great.
+** DONE Alert dashboard - a summary of the alert statuses. Navigating to the faulty graphs would be great.
 ** DONE When presenting single graphs (i.e. not stacked) the lines should be thicker.
 ** DONE Add an option to reset the zoom factor
 ** DONE Toggle Legend
@@ -49,11 +55,12 @@ I hope this fix is suitable (Not trivial to check).
 ** TODO Theme
 *** DONE Favicon
 *** DONE Areas color pallete
-*** TODO Nicer Mule Background
+*** DONE Nicer Mule Background
 "The mule picture should at least have the full "l" letter. I think it looks more like a bull than a mule so maybe adding another ear or a face will work."
 
 *** TODO Different color for topKey and areas
-*** TODO Less ugly keysTree icons
+*** DONE Less ugly keysTree icons
+    I simply removed them.
 ** DONE Redesign display
  - [X] Only relevant small graphs
  - [X] Make small graphs clickable
