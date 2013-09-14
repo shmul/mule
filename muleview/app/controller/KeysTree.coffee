@@ -94,7 +94,7 @@ Ext.define "Muleview.controller.KeysTree",
     else
       chosenNode = @store.getById(keysArr[0])
       if chosenNode
-        @tree.getSelectionModel().select(chosenNode)
+        @tree.getSelectionModel().select(chosenNode, false, true) # Don't keep existing selection, suppress events
         @expandKey(chosenNode)
 
   # ================================================================

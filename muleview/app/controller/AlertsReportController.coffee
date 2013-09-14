@@ -70,7 +70,10 @@ Ext.define "Muleview.controller.AlertsReportController",
     @grid.reconfigure Ext.create("Muleview.store.AlertsStore")
     @grid.getStore().load()
     @grid.on
-      itemclick: (me, record) =>
-        [key, retention]  = record.get("name").split(";")
-        #TODO: fix bug related to the following line:
-        # Muleview.event "viewChange", key, retention
+      selectionchange: @clickHandler
+      scope: @
+
+  clickHandler: (me, selection) =>
+    return if Ext.isEmpty(selection)
+    [key, retention]  = selection[0].get("name").split(";")
+    Muleview.event "viewChange", key, retention
