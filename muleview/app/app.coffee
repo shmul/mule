@@ -29,4 +29,5 @@ Ext.application
     "StatusBar"
     "History"
     "ChartsController"
+    "AlertsReportController"
   ]

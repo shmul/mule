@@ -134,7 +134,10 @@ Ext.define "Muleview.view.ChartsView",
 
   createRetentionsMenu: ->
     clickHandler = (me) =>
-      Muleview.event "viewChange", @topKeys, me.retention.get("name")
+      # We make sure the retention checkbox is checked before raising an event,
+      # because Extjs causes previously-checked buttons to invoke their own click event upon "implicitly" getting unchecked
+      # (as a result of a different checkbox getting checked)
+      Muleview.event "viewChange", @topKeys, me.retention.get("name") if me.checked
 
     items = []
     @retentionsStore.each (ret) =>
@@ -153,7 +156,7 @@ Ext.define "Muleview.view.ChartsView",
       selectRetention: (retName) ->
         for item in items
           selected = item.retention.get("name") == retName
-          item.setChecked(selected)
+          item.setChecked(selected, true) # true to suppress events
           @setText(item.retention.get("title")) if selected
       menu:
         items: items

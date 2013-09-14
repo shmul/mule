@@ -25,6 +25,32 @@
  */
 /* including package ext-theme-classic */
 /* including package muleview-theme */
+/* line 1, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-state {
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+/* line 6, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-critical-high {
+  background-image: url("critical_high.png");
+}
+
+/* line 10, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-warning-high {
+  background-image: url("warning_high.png");
+}
+
+/* line 14, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-critical-low {
+  background-image: url("critical_low.png");
+}
+
+/* line 18, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-warning-low {
+  background-image: url("warning_low.png");
+}
+
 /* including package muleview-theme */
 /* including package ext-theme-classic */
 /* including package ext-theme-neutral */

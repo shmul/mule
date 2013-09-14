@@ -6,14 +6,12 @@ Ext.define "Muleview.controller.History",
 
   addToken: (keys, ret) ->
     return unless keys and ret
-    Ext.util.History.add (keys || []).join(",") + ";" + ret
+    Ext.util.History.add Ext.Array.from(keys).join(",") + ";" + ret
 
   gotoToken: (token) ->
     [keys, retention] = (token ? "").split(";")
     keys = keys.split(",")
     Muleview.event "viewChange", keys, retention if keys.length > 0 and keys[0].length > 0
-
-  init: ->
 
   onLaunch: ->
     Ext.onReady =>

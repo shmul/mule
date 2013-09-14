@@ -19,14 +19,6 @@ Ext.define "Muleview.view.Viewport",
       split: true
       collapsible: true
       title: "Available Keys"
-      bbar: [
-          id: "btnSwitchToMultiple"
-          text: "Switch to Multiple-Mode"
-        ,
-          id: "btnSwitchToNormal"
-          text: "Switch to Normal-Mode"
-          hidden: true
-      ]
       items: [
           xtype: "treepanel"
           region: "center"
@@ -35,6 +27,53 @@ Ext.define "Muleview.view.Viewport",
           useArrows: true
           rootVisible: false
           lines: true
+          bbar: [
+              id: "btnSwitchToMultiple"
+              text: "Switch to Multiple-Mode"
+            ,
+              id: "btnSwitchToNormal"
+              text: "Switch to Normal-Mode"
+              hidden: true
+          ]
+        ,
+          xtype: "grid"
+          collapsible: true
+          region: "south"
+          id: "alertsReport"
+          title: "Alerts Status"
+          height: "40%"
+          split: true
+          columns: [
+              # Icon
+              width: 20
+              sortable: false
+              renderer: (value, meta, record) ->
+                meta.tdCls = "alert-state alert-" + record.get("state").replace(/[ _-]/, "-").toLowerCase()
+                meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
+
+                ""
+            ,
+              header: "Name"
+              dataIndex: "name"
+              width: 200
+            ,
+              header: "State"
+              dataIndex: "state"
+              width: 100
+            ,
+              header: "Sum"
+              dataIndex: "sum"
+              width: 100
+              renderer: Ext.util.Format.numberRenderer(",")
+            ,
+              header: "Period"
+              dataIndex: "formatted_period"
+              width: 100
+            ,
+              header: "Stale"
+              dataIndex: "formatted_stale"
+              width: 100
+          ]
       ]
     ,
       id: "chartsViewContainer"
@@ -102,10 +141,10 @@ Ext.define "Muleview.view.Viewport",
           icon: "resources/default/images/mule_icon.png"
           handler: ->
             Ext.MessageBox.show
-              title: "About"
-              msg: "[Add Branding Here]"
+              title: "About Mule"
+              msg: "<p style=\"text-align:center\"><b>Mule</b> is an <a href=http://github.com/trusteer/mule>open-source</a> project written by <a href=mailto:shmul@trusteer.com>Shmulik Regev</a> & <a href=mailto:dan@carmon.org.il>Dan Carmon</a><br /></p>"
               buttons: Ext.Msg.OK
-              icon: Ext.Msg.INFO
+
         }
       ]
   ]

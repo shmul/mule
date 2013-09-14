@@ -29,6 +29,7 @@ Ext.define "Muleview.controller.ChartsController",
     # Create or update the ChartsView object:
     if difference or force
       @keys = Ext.clone(keys)  # Must clone due to mysterious bug causing multiple keys to reduce to the just the first one.
+      @retention = retention
 
       # If we have new keys, we completely replace the current ChartsView with a new one:
       @createKeysView(keys, retention || @retention)
@@ -36,7 +37,7 @@ Ext.define "Muleview.controller.ChartsController",
     else if @retention != retention
       # If only the retention was changed, we ask the ChartsView to show the new one:
       @retention = retention
-      @chartsView.showRetention(retention)
+      @chartsView?.showRetention(retention)
 
   refresh: ->
     # Run the view change with the power of the force:

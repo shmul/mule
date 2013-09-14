@@ -20,79 +20,92 @@ Ext.define "Muleview.controller.KeysTree",
       selector: "#btnSwitchToMultiple"
   ]
 
-  updateSelectedKey: ->
-
-    # Selection doesn't apply rendering in multiMode;
-    return if @multiMode
-
-    # Get current selection:
-    selection = @getTree().getSelectionModel().getSelection()
-    selected = selection[0]
-
-    # Quit if nothing selected:
-    return unless selected
-
-    # update:
-    key = selected.get("fullname")
-    Muleview.event "viewChange", key, Muleview.currentRetention
-
-  onCheckChange: ->
-    # return if @updating
-    keys = (node.get("fullname") for node in @getTree().getChecked()).join(",")
-    Muleview.event "viewChange", keys, Muleview.currentRetention
-
   onLaunch: ->
-    @store = @getTree().getStore()
+    @tree = @getTree()
+    @store = @tree.getStore()
 
-    @getTree().on
-      selectionchange: @updateSelectedKey
+    @tree.on
+      selectionchange: @createViewChangeEvent
       itemexpand: @onItemExpand
-      checkchange: @onCheckChange
+      checkchange: @createViewChangeEvent
       scope: @
 
     @getNormalModeBtn().on
-      scope: @
-      click: -> @setMultiMode(false)
+      click: => @setMultiMode(false)
 
     @getMultiModeBtn().on
-      scope: @
-      click: -> @setMultiMode(true)
+      click: => @setMultiMode(true)
 
 
     Muleview.app.on
-      viewChange: @updateSelection
+      viewChange: @receiveViewChangeEvent
       keysReceived: @addKeys
       scope: @
 
     @fillFirstkeys()
 
+  # ================================================================
+  # Helpers:
+
+  forAllNodes: (fn) ->
+    @store.getRootNode().cascadeBy fn
+
+  getSelectedNode: () ->
+    @getTree().getSelectionModel().getSelection()[0]
+
+  # ================================================================
+  # Event handling:
+
   setMultiMode: (multi) ->
-    # Don't change to existing mode:
-    return if !!multi == @multiMode
-
-    # Save current state:
-    @multiMode = !!multi
-
-    # Update buttons:
-    @getMultiModeBtn().setVisible(!multi)
-    @getNormalModeBtn().setVisible(multi)
+    return if !!multi == @isMulti
+    @isMulti = !!multi
 
     # Find current selection
-    selectedNode = @getTree().getSelectionModel().getSelection()[0]
+    selectedNode = @getSelectedNode()
 
-    # Mark all nodes as unchecked, except for the current selected one:
-    @store.getRootNode().cascadeBy (node) ->
+    @forAllNodes (node) ->
       checked = if multi then (node == selectedNode) else null
       node.set("checked", checked)
 
-    # If switching back to single, update the graph:
-    @updateSelectedKey() if not multi
+    @getMultiModeBtn().setVisible(!multi)
+    @getNormalModeBtn().setVisible(multi)
+
+  createViewChangeEvent: ->
+    chosenKeys = []
+    if @isMulti
+      # keys are chosen by their checked value:
+      chosenKeys = (node.get("fullname") for node in @getTree().getChecked())
+    else
+      # the chosen key is the selected key (no, really)
+      chosenKeys = @getSelectedNode().get("fullname")
+    Muleview.event "viewChange", chosenKeys , Muleview.currentRetention
+
+  receiveViewChangeEvent: (keys) ->
+    keysArr = Ext.Array.from(keys)
+    @setMultiMode(@isMulti or keysArr.length > 1)
+
+    if @isMulti
+      @tree.getSelectionModel().deselectAll()
+      @forAllNodes (node) =>
+        checked = Ext.Array.contains(keysArr, node.get("fullname"))
+        node.set("checked", checked)
+        @expandKey(node) if checked
+
+    else
+      chosenNode = @store.getById(keysArr[0])
+      if chosenNode
+        @tree.getSelectionModel().select(chosenNode, false, true) # Don't keep existing selection, suppress events
+        @expandKey(chosenNode)
+
+  # ================================================================
+  # Data fetching and displaying:
 
   onItemExpand: (node) ->
     # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
     node.set("loading", true)
     @fetchKeys node.get("fullname"), (keys) =>
 
+      #TODO: implement numchild
       # Commented out the following section after reducing subkey prefetching from 2 to 1 due to apparent overload in key data: <<< BEGIN COMMENTING OUT
 
 
@@ -123,7 +136,6 @@ Ext.define "Muleview.controller.KeysTree",
     @fetchKeys "", =>
       @getTree().setLoading(false)
 
-
   fetchKeys: (parent, callback) ->
     Muleview.Mule.getSubKeys parent, 1, (keys) =>
       @addKeys keys
@@ -153,22 +165,8 @@ Ext.define "Muleview.controller.KeysTree",
     # Return the new node:
     return newNode
 
-  updateSelection: (newKeys) ->
-    # return if @updating
-    # @updating = true
-    keysArr = Ext.Array.from(newKeys)
-    # @setMultiMode(keysArr.length > 1)
-    if keysArr.length == 1
-      record = @store.getById(keysArr[0])
-      @getTree().getSelectionModel().select(record, false, true)
-      while record
-        record.expand()
-        record=record.parentNode
-    # else if keysArr.length > 1
-    #   for key in keysArr
-    #     record = @store.getById(key)
-    #     record?.set("checked", true)
-    #     while record
-    #       record.expand()
-    #       record=record.parentNode
-    # @updating = false
+  # expand a tree item and all its ancestors:
+  expandKey: (record) ->
+    if (record)
+      record.expand()
+      @expandKey(record.parentNode)
