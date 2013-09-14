@@ -1,7 +1,9 @@
 * Issues
 ** DONE Graphs look awful in Firefox
 ** TODO Back button issue
-** TODO Nicer formatting of stale/period values in alerts report
+** TODO Nicer sorting in alerts report
+   There should be a way to sort by critical > warning > normal..
+** DONE Nicer formatting of stale/period values in alerts report
 ** TODO Mask when switching retentions in the same graph
 ** TODO Going back to no-graphs page
    When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.

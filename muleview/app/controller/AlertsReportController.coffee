@@ -27,7 +27,42 @@ Ext.define "Muleview.model.Alert",
     ,
       name: "state"
       type: "string"
+    ,
+      name: "formatted_period"
+      type: "string"
+    ,
+      name: "formatted_stale"
+      type: "string"
   ]
+
+  set: (attr, value) ->
+    console.log('AlertsReportController.coffee\\ 39: attr, value:', attr, value);
+    @callParent(arguments)
+    if attr == "stale" or attr == "period"
+      @set("formatted_#{attr}", @formatSeconds(value))
+
+
+  formatSeconds: (secs) ->
+    deviders = [
+      ["Year",  60 * 60 * 24 * 365]
+      ["Day",  60 * 60 * 24]
+      ["Hour",  60 * 60]
+      ["Minute",  60]
+      ["Second",  1]
+    ]
+    ans = []
+    for [devider, size], i in deviders
+      if secs >= size
+        remainder = secs % size
+        subtract = (secs - remainder) / size
+        secs = remainder
+        ans.push(if remainder == 0 then " and " else ", ") if ans.length > 0
+        ans.push "#{subtract} #{devider}"
+        ans.push "s" if subtract > 1
+    ans.join("")
+
+
+
 
 Ext.define "Muleview.store.AlertsStore",
   extend: "Ext.data.Store"
@@ -39,11 +74,21 @@ Ext.define "Muleview.store.AlertsStore",
       readRecords: (root) ->
         recordsHash = root.data
         records = []
-        fields = Ext.clone(Muleview.model.Alert.getFields())
-        fields.shift() # name
+
+        fields = [
+          "critical_low"
+          "warning_low"
+          "warning_high"
+          "critical_high"
+          "period"
+          "stale"
+          "sum"
+          "state"
+        ]
+
         for key, values of root.data
           record = Ext.create("Muleview.model.Alert")
-          record.set(prop.name, values.shift()) for prop in fields
+          record.set(prop, values.shift()) for prop in fields
           record.set("name", key)
           record.commit()
           records.push(record)

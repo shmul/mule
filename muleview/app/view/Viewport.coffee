@@ -67,15 +67,11 @@ Ext.define "Muleview.view.Viewport",
               renderer: Ext.util.Format.numberRenderer(",")
             ,
               header: "Period"
-              dataIndex: "period"
+              dataIndex: "formatted_period"
               width: 100
-              renderer: (value) ->
-                Ext.util.Format.number(value, ", Seconds")
             ,
               header: "Stale"
-              dataIndex: "stale"
-              renderer: (value) ->
-                Ext.util.Format.number(value, ", Seconds")
+              dataIndex: "formatted_stale"
               width: 100
           ]
       ]
