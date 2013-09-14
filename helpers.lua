@@ -1,5 +1,11 @@
 local s,url = pcall(require,"socket.url")
 local pp = require "purepack"
+local posix_exists,posix = pcall(require,'posix')
+
+if not posix_exists or lunit then
+  print("disabling posix")
+  posix = nil
+end
 
 -- file/stdout logging
 local logfile = nil
@@ -640,4 +646,17 @@ function adler32(str_)
     b = math.fmod(b + a,65521)
   end
   return b*65536 + a
+end
+
+function fork_and_exit(callback_)
+  if not posix then
+    return callback_()
+  end
+
+  local child = posix.fork()
+  if child~=0 then
+    return
+  end
+  callback_()
+  os.exit()
 end

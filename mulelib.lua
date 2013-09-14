@@ -298,7 +298,8 @@ function one_level_childs(db_,name_)
       end
       local find = string.find
       for name in db_.matching_keys(prefix) do
-        if name~=name_ and find(name,rp,1,true) and not find(name,".",#prefix+2,true) then
+        if name~=name_ and find(name,rp,1,true) and
+          not find(name,".",#prefix+2,true) then
           -- we are intersted only in child metrics of the format
           -- m.sub-key;ts where sub-key contains no dots
           coroutine.yield(sequence(db_,name))
@@ -527,13 +528,15 @@ function mule(db_)
                    period_only=true}
     local depth = is_true(options_.deep) and one_level_childs or immediate_metrics
     local alerts = is_true(options_.alerts)
-    local numchilds = is_true(options_.numchilds) and 0 or nil
     local names = {}
 
     col.head()
 
     for m in split_helper(resource_,"/") do
+      if m=="*" then m = "" end
+      local numchilds = is_true(options_.numchilds) and 0 or nil
       for seq in depth(db_,m) do
+        logd("graph - processing",seq.name())
         if alerts then
           names[#names+1] = seq.name()
         end
@@ -553,8 +556,13 @@ function mule(db_)
         end
       end
       if numchilds then
-        col.elem(format("\"numchilds\": \%d",numchilds))
+        local col1 = collectionout(str,": {","}\n")
+        col.elem(format("\"%s\"",m))
+        col1.head()
+        col1.elem(format("\"numchilds\": \%d",numchilds))
+        col1.tail()
       end
+
     end
 
     if alerts then
