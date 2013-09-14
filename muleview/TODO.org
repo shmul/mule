@@ -1,7 +1,8 @@
 * Issues
 ** DONE Graphs look awful in Firefox
 ** TODO Back button issue
-** TODO mask when switching retentions in the same graph
+** TODO Nicer formatting of stale/period values in alerts report
+** TODO Mask when switching retentions in the same graph
 ** TODO Going back to no-graphs page
    When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
 ** TODO Misordered responses issue
@@ -41,7 +42,7 @@ I hope this fix is suitable (Not trivial to check).
 ** TODO Nicer about box?
    perhaps, god forbig, an image or something?
 ** TODO Pointer cursor for clickable areas
-** TODO Alert dashboard - a summary of the alert statuses. Navigating to the faulty graphs would be great.
+** DONE Alert dashboard - a summary of the alert statuses. Navigating to the faulty graphs would be great.
 ** DONE When presenting single graphs (i.e. not stacked) the lines should be thicker.
 ** DONE Add an option to reset the zoom factor
 ** DONE Toggle Legend
