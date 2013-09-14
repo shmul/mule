@@ -11,96 +11,95 @@ Ext.define "Muleview.view.Viewport",
   ]
 
   items: [
-      id: "leftPanel"
-      xtype: "panel"
+      xtype: "container",
+      region: "center"
       layout: "border"
-      region: "west"
-      width: "20%"
-      split: true
-      collapsible: true
-      title: "Available Keys"
       items: [
-          xtype: "treepanel"
-          region: "center"
-          id: "keysTree"
-          displayField: "name"
-          useArrows: true
-          rootVisible: false
-          lines: true
-          bbar: [
-              id: "btnSwitchToMultiple"
-              text: "Switch to Multiple-Mode"
-            ,
-              id: "btnSwitchToNormal"
-              text: "Switch to Normal-Mode"
-              hidden: true
-          ]
-        ,
-          xtype: "grid"
-          collapsible: true
-          region: "south"
-          id: "alertsReport"
-          title: "Alerts Status"
-          height: "40%"
-          split: true
-          columns: [
-              # Icon
-              width: 20
-              sortable: false
-              renderer: (value, meta, record) ->
-                # This cell gets its icon from the row alert-state-specific  class, see viewConfig blow
-                meta.tdCls = "icon-cell"
-                meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
-                ""
-            ,
-              header: "Name"
-              dataIndex: "name"
-              width: 200
-            ,
-              header: "State"
-              dataIndex: "state"
-              width: 100
-            ,
-              header: "Sum"
-              dataIndex: "sum"
-              width: 100
-              renderer: Ext.util.Format.numberRenderer(",")
-            ,
-              header: "Period"
-              dataIndex: "formatted_period"
-              width: 100
-            ,
-              header: "Stale"
-              dataIndex: "formatted_stale"
-              width: 100
-          ]
-          viewConfig:
-            getRowClass: (record) ->
-              console.log('Viewport.coffee\\ 80: arguments:', arguments);
-              "alert-row-#{record.get("stateClass")}"
+        id: "leftPanel"
+        xtype: "panel"
+        layout: "border"
+        region: "west"
+        width: "20%"
+        split: true
+        collapsible: true
+        title: "Available Keys"
+        items: [
+            xtype: "treepanel"
+            region: "center"
+            id: "keysTree"
+            displayField: "name"
+            useArrows: true
+            rootVisible: false
+            lines: true
+            bbar: [
+                id: "btnSwitchToMultiple"
+                text: "Switch to Multiple-Mode"
+              ,
+                id: "btnSwitchToNormal"
+                text: "Switch to Normal-Mode"
+                hidden: true
+            ]
+        ]
+      ,
+        id: "chartsViewContainer"
+        xtype: "panel"
+        title: "Chart"
+        # FIXME:
+        bodyStyle: "background-image: url(resources/default/images/bg.png)"
+
+        region: "center"
+        layout: "fit"
+      ,
+
+        xtype: "grid"
+        collapsible: true
+        collapsed: true
+        region: "south"
+        id: "alertsReport"
+        title: "Alerts Status"
+        height: "30%"
+        split: true
+        columns: [
+            # Icon
+            width: 20
+            sortable: false
+            renderer: (value, meta, record) ->
+              # This cell gets its icon from the row alert-state-specific  class, see viewConfig blow
+              meta.tdCls = "icon-cell"
+              meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
+              ""
+          ,
+            header: "Name"
+            dataIndex: "name"
+            flex: 2
+          ,
+            header: "State"
+            dataIndex: "state"
+            flex: 1
+          ,
+            header: "Sum"
+            dataIndex: "sum"
+            flex: 1
+            renderer: Ext.util.Format.numberRenderer(",")
+          ,
+            header: "Period"
+            dataIndex: "formatted_period"
+            flex: 1
+          ,
+            header: "Stale"
+            dataIndex: "formatted_stale"
+            flex: 1
+
+        ]
+        viewConfig:
+          getRowClass: (record) ->
+            console.log('Viewport.coffee\\ 80: arguments:', arguments);
+            "alert-row-#{record.get("stateClass")}"
       ]
     ,
-      id: "chartsViewContainer"
-      xtype: "panel"
-      title: "Chart"
-      # FIXME:
-      bodyStyle: "background-image: url(resources/default/images/bg.png)"
-
-      region: "center"
-      layout: "fit"
-    ,
-      xtype: "toolbar"
-      layout:
-        type: "hbox"
-        align: "stretch"
-        pack: "start"
-
-      collapsible: true
-      collapsed: false
-      collapseMode: "mini"
-      region: "south"
-      header: false
       height: 23
+      region: "south"
+      xtype: "container"
       items: [
         {
           xtype: "statusbar"

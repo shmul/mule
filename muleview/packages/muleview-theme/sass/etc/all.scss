@@ -1,5 +1,4 @@
-.icon-cell {
-  background-color: white !important;
+.icon-cell > div{
   background-position: center center;
   background-repeat: no-repeat;
 }
@@ -8,8 +7,7 @@
   > td > div {
     background-color: #F5A9A9;
   }
-  .icon-cell {
-    background-color: white !important;
+  .icon-cell > div {
     background-image: url("critical_high.png")
   }
 }
@@ -18,8 +16,7 @@
   > td > div {
     background-color: #F5DA81;
   }
-  .icon-cell {
-    background-color: white !important;
+  .icon-cell > div {
     background-image: url("warning_high.png");
   }
 }
@@ -28,8 +25,7 @@
   > td > div {
     background-color: #F5DA81;
   }
-  .icon-cell {
-    background-color: white !important;
+  .icon-cell > div{
     background-image: url("critical_low.png");
   }
 }
@@ -38,8 +34,7 @@
   > td > div {
     background-color: #F5A9A9;
   }
-  .icon-cell {
-    background-color: white !important;
+  .icon-cell > div{
     background-image: url("warning_low.png");
   }
 }
