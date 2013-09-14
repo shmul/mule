@@ -26,28 +26,49 @@
 /* including package ext-theme-classic */
 /* including package muleview-theme */
 /* line 1, ../../../packages/muleview-theme/sass/etc/all.scss */
-.alert-state {
+.icon-cell {
+  background-color: white !important;
   background-position: center center;
   background-repeat: no-repeat;
 }
 
-/* line 6, ../../../packages/muleview-theme/sass/etc/all.scss */
-.alert-critical-high {
+/* line 8, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-critical-high > td > div {
+  background-color: #F5A9A9;
+}
+/* line 11, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-critical-high .icon-cell {
+  background-color: white !important;
   background-image: url("critical_high.png");
 }
 
-/* line 10, ../../../packages/muleview-theme/sass/etc/all.scss */
-.alert-warning-high {
+/* line 18, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-warning-high > td > div {
+  background-color: #F5DA81;
+}
+/* line 21, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-warning-high .icon-cell {
+  background-color: white !important;
   background-image: url("warning_high.png");
 }
 
-/* line 14, ../../../packages/muleview-theme/sass/etc/all.scss */
-.alert-critical-low {
+/* line 28, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-critical-low > td > div {
+  background-color: #F5DA81;
+}
+/* line 31, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-critical-low .icon-cell {
+  background-color: white !important;
   background-image: url("critical_low.png");
 }
 
-/* line 18, ../../../packages/muleview-theme/sass/etc/all.scss */
-.alert-warning-low {
+/* line 38, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-warning-low > td > div {
+  background-color: #F5A9A9;
+}
+/* line 41, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-warning-low .icon-cell {
+  background-color: white !important;
   background-image: url("warning_low.png");
 }
 

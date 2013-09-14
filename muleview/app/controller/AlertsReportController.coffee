@@ -33,13 +33,18 @@ Ext.define "Muleview.model.Alert",
     ,
       name: "formatted_stale"
       type: "string"
+    ,
+      name: "stateClass"
+      type: "string"
   ]
 
   set: (attr, value) ->
-    console.log('AlertsReportController.coffee\\ 39: attr, value:', attr, value);
     @callParent(arguments)
     if attr == "stale" or attr == "period"
       @set("formatted_#{attr}", @formatSeconds(value))
+    else if attr == "state"
+      # State class is used for icon and background color selection in the grid.
+      @set("stateClass", value.replace(/[ _-]/, "-").toLowerCase())
 
 
   formatSeconds: (secs) ->

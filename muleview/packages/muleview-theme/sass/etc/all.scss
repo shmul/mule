@@ -1,24 +1,45 @@
-.alert-state {
+.icon-cell {
+  background-color: white !important;
   background-position: center center;
   background-repeat: no-repeat;
 }
 
-.alert-critical-high {
-  background-image: url("critical_high.png")
+.alert-row-critical-high {
+  > td > div {
+    background-color: #F5A9A9;
+  }
+  .icon-cell {
+    background-color: white !important;
+    background-image: url("critical_high.png")
+  }
 }
 
-.alert-warning-high {
-  background-image: url("warning_high.png");
+.alert-row-warning-high {
+  > td > div {
+    background-color: #F5DA81;
+  }
+  .icon-cell {
+    background-color: white !important;
+    background-image: url("warning_high.png");
+  }
 }
 
-.alert-critical-low {
-  background-image: url("critical_low.png");
+.alert-row-critical-low {
+  > td > div {
+    background-color: #F5DA81;
+  }
+  .icon-cell {
+    background-color: white !important;
+    background-image: url("critical_low.png");
+  }
 }
 
-.alert-warning-low {
-  background-image: url("warning_low.png");
-}
-
-.alert-normal {
-
+.alert-row-warning-low {
+  > td > div {
+    background-color: #F5A9A9;
+  }
+  .icon-cell {
+    background-color: white !important;
+    background-image: url("warning_low.png");
+  }
 }
