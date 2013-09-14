@@ -46,6 +46,7 @@ Ext.define "Muleview.view.Viewport",
           columns: [
               # Icon
               width: 20
+              sortable: false
               renderer: (value, meta, record) ->
                 meta.tdCls = "alert-state alert-" + record.get("state").replace(/[ _-]/, "-").toLowerCase()
                 meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
@@ -54,10 +55,27 @@ Ext.define "Muleview.view.Viewport",
             ,
               header: "Name"
               dataIndex: "name"
-              flex: 2
+              width: 200
             ,
               header: "State"
               dataIndex: "state"
+              width: 100
+            ,
+              header: "Sum"
+              dataIndex: "sum"
+              width: 100
+              renderer: Ext.util.Format.numberRenderer(",")
+            ,
+              header: "Period"
+              dataIndex: "period"
+              width: 100
+              renderer: (value) ->
+                Ext.util.Format.number(value, ", Seconds")
+            ,
+              header: "Stale"
+              dataIndex: "stale"
+              renderer: (value) ->
+                Ext.util.Format.number(value, ", Seconds")
               width: 100
           ]
       ]
