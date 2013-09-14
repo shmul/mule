@@ -637,6 +637,14 @@ function mule(db_)
     return wrap_json(str)
   end
 
+  local function save()
+    logi("save",table_size(_factories),table_size(_alerts))
+    _db.put("metadata=version",pp.pack(CURRENT_VERSION))
+    _db.put("metadata=factories",pp.pack(_factories))
+    _db.put("metadata=alerts",pp.pack(_alerts))
+  end
+
+
   local function alert_set(resource_,options_)
     if not resource_ or #resource_==0 then
       return nil
@@ -657,6 +665,7 @@ function mule(db_)
       return nil
     end
     logi("set alert",resource_,t2s(_alerts[resource_]))
+    save()
     return ""
   end
 
@@ -668,6 +677,7 @@ function mule(db_)
 
     _alerts[resource_] = nil
     logi("remove alert",resource_)
+    save()
     return ""
   end
 
@@ -743,13 +753,6 @@ function mule(db_)
   end
 
 
-  local function save()
-    logi("save",table_size(_factories))
-    _db.put("metadata=version",pp.pack(CURRENT_VERSION))
-    _db.put("metadata=factories",pp.pack(_factories))
-    _db.put("metadata=alerts",pp.pack(_alerts))
-  end
-
 
   local function load()
     logi("load")
@@ -763,6 +766,7 @@ function mule(db_)
     end
     _factories = factories and pp.unpack(factories) or {}
     _alerts = alerts and pp.unpack(alerts) or {}
+    logi("load",table_size(_factories),table_size(_alerts))
   end
 
 
