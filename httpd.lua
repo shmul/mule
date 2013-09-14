@@ -112,7 +112,7 @@ local function generic_get_handler(mule_,handler_,req_,resource_,qs_params_,cont
     return
   end
   logd("calling",handler_)
-  return fork_and_exit(function() return mule_[handler_](resource_,qs_params_) end)
+  return function() return mule_[handler_](resource_,qs_params_) end
 end
 
 local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
@@ -141,7 +141,7 @@ local function crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   elseif req_.verb=="DELETE" then
     return mule_.alert_remove(resource_)
   elseif req_.verb=="GET" then
-    return fork_and_exit(function() return mule_.alert(resource_) end)
+    return function() return mule_.alert(resource_) end
   end
   return 405
 end
@@ -185,7 +185,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     return send_(standard_response(200,nil,CORS))
   end
 
-  rv = with_mule_(
+  handler_result = with_mule_(
     function(mule_)
       table.remove(segments,1)
       local decoded_segments = {}
@@ -198,25 +198,36 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
                      qs,content_)
     end)
 
-  logd("send_response - after with_mule")
-  if handler_name=="stop" then
-    logw("stopping, using: ",qs.token)
-    stop_cond_(qs.token)
-  elseif handler_name=="backup" then
-    local path = backup_callback_()
-    rv = path and string.format("{'path':'%s'}",path) or "{}"
+  local function response_continuation(rv)
+    logd("send_response - after with_mule")
+    if handler_name=="stop" then
+      logw("stopping, using: ",qs.token)
+      stop_cond_(qs.token)
+    elseif handler_name=="backup" then
+      local path = backup_callback_()
+      rv = path and string.format("{'path':'%s'}",path) or "{}"
+    end
+
+    if not rv or (type(rv)=="string" and #rv==0) then
+      return send_(standard_response(204))
+    elseif type(rv)=="number" then
+      return send_(standard_response(rv))
+    end
+
+    if qs.jsonp then
+      rv = string.format("%s(%s)",qs.jsonp,rv)
+    end
+    return send_(standard_response(200,rv),rv)
   end
 
-  if not rv or (type(rv)=="string" and #rv==0) then
-    return send_(standard_response(204))
-  elseif type(rv)=="number" then
-    return send_(standard_response(rv))
+  if type(handler_result)=="function" then
+    fork_and_exit(function()
+                    response_continuation(handler_result())
+                  end
+                 )
+    return
   end
-
-  if qs.jsonp then
-    rv = string.format("%s(%s)",qs.jsonp,rv)
-  end
-  return send_(standard_response(200,rv),rv)
+  response_continuation(handler_result)
 end
 
 

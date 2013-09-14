@@ -658,5 +658,6 @@ function fork_and_exit(callback_)
     return
   end
   callback_()
+  logi("exiting")
   os.exit()
 end
