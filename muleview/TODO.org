@@ -1,5 +1,11 @@
 * Issues
 ** DONE Graphs look awful in Firefox
+** TODO Fix status bar
+*** TODO Auto clear
+*** TODO Icons
+** TODO Don't pull all retentions per graph
+** TODO Renovate Alerts Report
+   Should be a different window or something
 ** TODO Back button issue
 ** TODO Nicer sorting in alerts report
    There should be a way to sort by critical > warning > normal..

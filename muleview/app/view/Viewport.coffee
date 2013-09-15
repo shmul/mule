@@ -51,14 +51,15 @@ Ext.define "Muleview.view.Viewport",
         layout: "fit"
       ,
 
+        id: "alertsReport"
         xtype: "grid"
+        region: "south"
+        title: "Alerts Status"
+        split: true
         collapsible: true
         collapsed: true
-        region: "south"
-        id: "alertsReport"
-        title: "Alerts Status"
-        height: "30%"
-        split: true
+        collapseMode: "mini"
+        height: "35%"
         columns: [
             # Icon
             width: 20
@@ -93,61 +94,64 @@ Ext.define "Muleview.view.Viewport",
         ]
         viewConfig:
           getRowClass: (record) ->
-            console.log('Viewport.coffee\\ 80: arguments:', arguments);
             "alert-row-#{record.get("stateClass")}"
       ]
     ,
-      height: 23
+      xtype: "toolbar"
+      id: "statusBar"
+      height: 25
       region: "south"
-      xtype: "container"
+      margin: 0
+      border: false
+      autoClear: 3000
+      defaultText: "Ready"
       items: [
-        {
-          xtype: "statusbar"
-          margin: 0
-          border: false
-          id: "statusBar"
+          xtype: "label"
           flex: 1
-          autoClear: 3000
-          defaultText: "Ready"
-          items: [
-            xtype: "label"
-            cls: "statusbar-text"
-            id: "lastRefreshLabel"
-          ]
-        },
-
-        {
+          id: "statusLabel"
+          frame: true
+          border: true
+          value: "Hello world"
+          enable: false
+        ,
+          "-"
+        ,
+          "Alerts Summary:"
+        ,
+          ""
+        ,
+          id: "alertsSummaryCritical"
+          iconCls: "alert-summary-critical"
+          text: "Critical: ?"
+        ,
+          "-"
+        ,
+          id: "alertsSummaryWarning"
+          iconCls: "alert-summary-warning"
+          text: "Warning: ?"
+        ,
+          "-"
+        ,
+          id: "alertsSummaryNormal"
+          iconCls: "alert-summary-normal"
+          text: "Normal: ?"
+        ,
+          "-"
+        ,
+          id: "alertsSummaryStale"
+          iconCls: "alert-summary-stale"
+          text: "Stale: ?"
+        ,
+          "-"
+        ,
           xtype: "container"
           flex: 1
-          layout:
-            type: "hbox"
-            align: "middle"
-            pack: "center"
-
-          items: [
-          ]
-        },
-
-        {
-          xtype: "container"
-          flex: 1
-          layout:
-            type: "hbox"
-            align: "middle"
-            pack: "end"
-
-          items: [
-          ]
-        },
-
-        {
+        ,
           icon: "resources/default/images/mule_icon.png"
           handler: ->
             Ext.MessageBox.show
               title: "About Mule"
               msg: "<p style=\"text-align:center\"><b>Mule</b> is an <a href=http://github.com/trusteer/mule>open-source</a> project written by <a href=mailto:shmul@trusteer.com>Shmulik Regev</a> & <a href=mailto:dan@carmon.org.il>Dan Carmon</a><br /></p>"
               buttons: Ext.Msg.OK
-
-        }
       ]
   ]

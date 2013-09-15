@@ -38,3 +38,19 @@
     background-image: url("warning_low.png");
   }
 }
+
+.alert-summary-critical {
+  background-image: url("summary_critical.png");
+}
+
+.alert-summary-warning {
+  background-image: url("summary_warning.png");
+}
+
+.alert-summary-normal {
+  background-image: url("summary_normal.png");
+}
+
+.alert-summary-stale {
+  background-image: url("summary_stale.png");
+}

@@ -7,13 +7,23 @@ Ext.define "Muleview.controller.StatusBar",
     ,
       ref: "lastRefreshLabel"
       selector: "#lastRefreshLabel"
+    ,
+      ref: "statusLabel"
+      selector: "#statusLabel"
+    ,
+      ref: "alertsReport"
+      selector: "#alertsReport"
   ]
 
   onLaunch: ->
     eventsConf = {scope: @}
     eventsConf[eventName] = Ext.bind(handler, @) for own eventName, handler of @handlers
     Muleview.app.on eventsConf
+    for severity in ["Critical", "Warning", "Normal", "Stale"]
+      Ext.getCmp("alertsSummary#{severity}").on("click", @openAlertsReport, @)
 
+  openAlertsReport: ->
+    @getAlertsReport().expand()
   progress: (txt) ->
     @status
       iconCls: "x-status-busy"
@@ -34,7 +44,14 @@ Ext.define "Muleview.controller.StatusBar",
         wait: 3000
         useDefaults: true
 
-    @getSb().setStatus conf
+    # TODO: fix all old statusdbar code
+
+    @getStatusLabel().setText conf.text
+    clearTimeout(@lastTimeout) if @lastTimeout
+    @lastTimeout = setTimeout( =>
+      @status("Ready.")
+    , 3000)
+
 
   timeFormat: (timestamp) ->
     Ext.Date.format(Muleview.toUTCDate(new Date(timestamp * 1000)), Muleview.Settings.statusTimeFormat)
@@ -50,8 +67,8 @@ Ext.define "Muleview.controller.StatusBar",
     commandReceived: (command)->
       @success "Received request: #{command}"
 
-    chartItemMouseOver: (item) ->
-      @status @timeFormat(item.storeItem.get("timestamp"))
+    # chartItemMouseOver: (item) ->
+    #   @status @timeFormat(item.storeItem.get("timestamp"))
 
     graphsCreated: ->
       @updateLastRefresh()

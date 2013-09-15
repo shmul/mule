@@ -36,7 +36,18 @@ Ext.define "Muleview.model.Alert",
     ,
       name: "stateClass"
       type: "string"
+    ,
+      name: "severity"
+      type: "string"
   ]
+
+  severityClasses:
+    "CRITICAL HIGH": "Critical"
+    "CRITICAL LOW": "Critical"
+    "WARNING HIGH": "Warning"
+    "WARNING LOW": "Warning"
+    "STALE": "Stale"
+    "NORMAL": "Normal"
 
   set: (attr, value) ->
     @callParent(arguments)
@@ -45,6 +56,8 @@ Ext.define "Muleview.model.Alert",
     else if attr == "state"
       # State class is used for icon and background color selection in the grid.
       @set("stateClass", value.replace(/[ _-]/, "-").toLowerCase())
+      @set("severityClass", @severityClasses[value.toUpperCase()])
+
 
 
   formatSeconds: (secs) ->
@@ -117,7 +130,9 @@ Ext.define "Muleview.controller.AlertsReportController",
 
   onLaunch: ->
     @grid = @getGrid()
-    @grid.reconfigure Ext.create("Muleview.store.AlertsStore")
+    @store = Ext.create("Muleview.store.AlertsStore")
+    @store.addListener("datachanged", @calculateSummary, @)
+    @grid.reconfigure @store
     @grid.on
       selectionchange: @clickHandler
       scope: @
@@ -131,6 +146,19 @@ Ext.define "Muleview.controller.AlertsReportController",
         @refresh()
       , Muleview.Settings.alertsReportUpdateInterval)
     @refresh()
+
+  calculateSummary: (store) ->
+    summary = {
+      Critical: 0
+      Warning: 0
+      Normal: 0
+      Stale: 0
+    }
+    store.each (record) ->
+      severity = record.get("severityClass")
+      summary[severity] += 1
+    for severity, value of summary
+      Ext.getCmp("alertsSummary#{severity}").setText("#{severity}: #{value}")
 
 
   updateSelection: (key, retention) ->

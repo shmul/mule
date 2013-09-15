@@ -67,6 +67,26 @@
   background-image: url("warning_low.png");
 }
 
+/* line 42, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-summary-critical {
+  background-image: url("summary_critical.png");
+}
+
+/* line 46, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-summary-warning {
+  background-image: url("summary_warning.png");
+}
+
+/* line 50, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-summary-normal {
+  background-image: url("summary_normal.png");
+}
+
+/* line 54, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-summary-stale {
+  background-image: url("summary_stale.png");
+}
+
 /* including package muleview-theme */
 /* including package ext-theme-classic */
 /* including package ext-theme-neutral */
