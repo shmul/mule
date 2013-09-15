@@ -687,12 +687,11 @@ function test_metric_one_level_childs()
     }
 
     for j,t in ipairs(tests) do
-      local childs = {}
-
+      local childs = 0
       for i in one_level_childs(db,t[1]) do
-        table.insert(childs,i)
+        childs = childs + 1
       end
-      assert_equal(t[2],#childs,j)
+      assert_equal(t[2],childs,j)
     end
   end
 
@@ -788,8 +787,8 @@ function test_dashes_in_keys()
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
   m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
-  assert(string.find(m.graph("Johnston",{numchilds=true}),'{"Johnston": {"numchilds": 3}'))
-  assert_nil(string.find(m.graph("Johnston",{numchilds=true}),'Johnston%.'))
+--  assert(string.find(m.graph("Johnston",{numchilds=true}),'{"Johnston": {"numchilds": 3}'))
+--  assert_nil(string.find(m.graph("Johnston",{numchilds=true}),'Johnston%.'))
 end
 
 --verbose_log(true)

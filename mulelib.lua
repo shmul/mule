@@ -299,7 +299,7 @@ function one_level_childs(db_,name_)
       local find = string.find
       for name in db_.matching_keys(prefix) do
         if name~=name_ and find(name,rp,1,true) and
-          not find(name,".",#prefix+2,true) then
+          (#prefix>0 and not find(name,".",#prefix+2,true)) then
           -- we are intersted only in child metrics of the format
           -- m.sub-key;ts where sub-key contains no dots
           coroutine.yield(sequence(db_,name))
@@ -534,35 +534,22 @@ function mule(db_)
 
     for m in split_helper(resource_,"/") do
       if m=="*" then m = "" end
-      local numchilds = is_true(options_.numchilds) and 0 or nil
       for seq in depth(db_,m) do
         logd("graph - processing",seq.name())
         if alerts then
           names[#names+1] = seq.name()
         end
-        if numchilds then -- we are only counting the number of childs
-          numchilds = numchilds + 1
-        else
-          local col1 = collectionout(str,": [","]\n")
-          seq.serialize(opts,
-                        function()
-                          col.elem(format("\"%s\"",seq.name()))
-                          col1.head()
-                        end,
-                        function(sum,hits,timestamp)
-                          col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
-                        end)
-          col1.tail()
-        end
-      end
-      if numchilds then
-        local col1 = collectionout(str,": {","}\n")
-        col.elem(format("\"%s\"",m))
-        col1.head()
-        col1.elem(format("\"numchilds\": \%d",numchilds))
+        local col1 = collectionout(str,": [","]\n")
+        seq.serialize(opts,
+                      function()
+                        col.elem(format("\"%s\"",seq.name()))
+                        col1.head()
+                      end,
+                      function(sum,hits,timestamp)
+                        col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+                      end)
         col1.tail()
       end
-
     end
 
     if alerts then
