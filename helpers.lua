@@ -1,3 +1,4 @@
+local _,lr = pcall(require,"luarocks.require")
 local s,url = pcall(require,"socket.url")
 local pp = require "purepack"
 local posix_exists,posix = pcall(require,'posix')
