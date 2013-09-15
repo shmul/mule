@@ -185,7 +185,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     return send_(standard_response(200,nil,CORS))
   end
 
-  handler_result = with_mule_(
+  local handler_result = with_mule_(
     function(mule_)
       table.remove(segments,1)
       local decoded_segments = {}
