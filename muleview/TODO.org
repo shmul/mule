@@ -1,8 +1,10 @@
 * Issues
 ** DONE Graphs look awful in Firefox
-** TODO Fix status bar
-*** TODO Auto clear
-*** TODO Icons
+** DONE Fix status bar
+*** DONE Auto clear
+*** DONE Icons
+** TODO failure function for keys expand
+   This is to prevent the loading circle from stayign there forever
 ** TODO Don't pull all retentions per graph
 ** TODO Renovate Alerts Report
    Should be a different window or something

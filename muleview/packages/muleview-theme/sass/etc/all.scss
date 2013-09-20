@@ -54,3 +54,28 @@
 .alert-summary-stale {
   background-image: url("summary_stale.png");
 }
+
+.statusLabel {
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-top: 1px;
+  padding-left: 18px;
+}
+
+.statusLabel-normal {
+  padding-left: 0px;
+}
+
+.statusLabel-progress {
+  background-image: url("loading.gif")
+}
+
+.statusLabel-success {
+  background-image: url("status-ok.png")
+}
+
+.statusLabel-error {
+  color: red;
+  background-image: url("status-error.gif")
+}

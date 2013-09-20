@@ -13,6 +13,7 @@ Ext.application
   ]
 
   launch: ->
+    Ext.get("initMask").hide()
     Muleview.event = Ext.Function.alias Muleview.app, "fireEvent"
     Muleview.toUTCDate = (date) ->
       new Date date.getUTCFullYear(),

@@ -87,6 +87,36 @@
   background-image: url("summary_stale.png");
 }
 
+/* line 58, ../../../packages/muleview-theme/sass/etc/all.scss */
+.statusLabel {
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-top: 1px;
+  padding-left: 18px;
+}
+
+/* line 66, ../../../packages/muleview-theme/sass/etc/all.scss */
+.statusLabel-normal {
+  padding-left: 0px;
+}
+
+/* line 70, ../../../packages/muleview-theme/sass/etc/all.scss */
+.statusLabel-progress {
+  background-image: url("loading.gif");
+}
+
+/* line 74, ../../../packages/muleview-theme/sass/etc/all.scss */
+.statusLabel-success {
+  background-image: url("status-ok.png");
+}
+
+/* line 78, ../../../packages/muleview-theme/sass/etc/all.scss */
+.statusLabel-error {
+  color: red;
+  background-image: url("status-error.gif");
+}
+
 /* including package muleview-theme */
 /* including package ext-theme-classic */
 /* including package ext-theme-neutral */

@@ -106,9 +106,10 @@ Ext.define "Muleview.view.Viewport",
       autoClear: 3000
       defaultText: "Ready"
       items: [
+          id: "statusLabel"
           xtype: "label"
           flex: 1
-          id: "statusLabel"
+          cls: "statusLabel" # needed to reduce CSS headache
           frame: true
           border: true
           value: "Hello world"

@@ -5,9 +5,6 @@ Ext.define "Muleview.controller.StatusBar",
       ref: "sb"
       selector: "#statusBar"
     ,
-      ref: "lastRefreshLabel"
-      selector: "#lastRefreshLabel"
-    ,
       ref: "statusLabel"
       selector: "#statusLabel"
     ,
@@ -16,59 +13,61 @@ Ext.define "Muleview.controller.StatusBar",
   ]
 
   onLaunch: ->
-    eventsConf = {scope: @}
-    eventsConf[eventName] = Ext.bind(handler, @) for own eventName, handler of @handlers
-    Muleview.app.on eventsConf
+    @sbLabel = @getStatusLabel()
+    # Register all handlers:
+    Muleview.app.on Ext.merge(@handlers, {scope: @ })
+
+    # Register alerts summary buttons click handlers:
     for severity in ["Critical", "Warning", "Normal", "Stale"]
       Ext.getCmp("alertsSummary#{severity}").on("click", @openAlertsReport, @)
 
   openAlertsReport: ->
     @getAlertsReport().expand()
-  progress: (txt) ->
-    @status
-      iconCls: "x-status-busy"
-      text: txt
-      clear: false
 
-  success: (txt) ->
-    @status
-      iconCls: "x-status-valid"
-      text: txt
+  inProgress: []
 
-  status: (conf) ->
-    conf = {text: conf} if Ext.isString(conf)
-    Ext.applyIf conf,
-      iconCls: ""
-      clear:
-        anim: false
-        wait: 3000
-        useDefaults: true
+  progress: (txt, progressId) ->
+    @inProgress.push(progressId)
+    @status txt, "progress"
 
-    # TODO: fix all old statusdbar code
+  success: (txt, progressId) ->
+    Ext.Array.remove(@inProgress, progressId)
+    @status txt, "success"
 
-    @getStatusLabel().setText conf.text
+  failure: (txt, progressId) ->
+    Ext.Array.remove(@inProgress, progressId)
+    @status "ERROR - " + txt, "error"
+
+  status: (text, iconCls = "normal") ->
+    # Set current text and icon:
+    @sbLabel.setText text
+    @setIcon iconCls
+
+    # Reset clearance method:
     clearTimeout(@lastTimeout) if @lastTimeout
-    @lastTimeout = setTimeout( =>
-      @status("Ready.")
-    , 3000)
+    @lastTimeout = setTimeout( Ext.bind(@resetSb, @) , 3000)
 
+  resetSb: ->
+    if Ext.isEmpty(@inProgress)
+      @status "Ready."
+    else
+      @status "Pending..", "progress"
 
-  timeFormat: (timestamp) ->
-    Ext.Date.format(Muleview.toUTCDate(new Date(timestamp * 1000)), Muleview.Settings.statusTimeFormat)
-
-  updateLastRefresh: ->
-    timeStr = Ext.Date.format(new Date(), Muleview.Settings.statusTimeFormat)
-    @getLastRefreshLabel().setText("Last updated: #{timeStr}")
+  setIcon: (clsSuffix) ->
+    cls = "statusLabel-" + clsSuffix
+    @sbLabel.removeCls(@lastCls) if @lastCls
+    @sbLabel.addCls(cls)
+    @lastCls = cls
 
   handlers:
-    commandSent: (command) ->
-      @progress "Requested: #{command}"
+    commandSent: (command, eventId) ->
+      @progress "Requested: #{command}", eventId
 
-    commandReceived: (command)->
-      @success "Received request: #{command}"
-
-    # chartItemMouseOver: (item) ->
-    #   @status @timeFormat(item.storeItem.get("timestamp"))
+    commandReceived: (command, eventId, success)->
+      if success
+        @success "Received request: #{command}", eventId
+      else
+        @failure "Could not receive request for: #{command}", eventId
 
     graphsCreated: ->
       @updateLastRefresh()
