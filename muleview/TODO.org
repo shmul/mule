@@ -3,13 +3,20 @@
 ** DONE Fix status bar
 *** DONE Auto clear
 *** DONE Icons
+** TODO Alerts Editor
+*** TODO "Save" When the alert is initially turned off doesn't work
+    This is because the default values are invalid + hidden
+*** TODO Add default values
+    According to the current chart data...
+*** TODO Tooltip issue
+    The error tooltip is broken
 ** TODO failure function for keys expand
    This is to prevent the loading circle from stayign there forever
 ** TODO Don't pull all retentions per graph
 ** TODO Renovate Alerts Report
    Should be a different window or something
 ** TODO Back button issue
-** TODO Nicer sorting in alerts report
+** DONE Nicer sorting in alerts report
    There should be a way to sort by critical > warning > normal..
 ** DONE Nicer formatting of stale/period values in alerts report
 ** TODO Mask when switching retentions in the same graph
@@ -19,8 +26,10 @@
    When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
    We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
 ** DONE Navigation in compare-mode
-** TODO Status bar doesn't have busy icon
+** DONE Status bar doesn't have busy icon
    Also, it should utilize Ext.Ajax.is(something, loading or waiting or something like that)
+   ---------------------
+   I end up implementing it with an array of request ids
 ** DONE Fix statusbar auto fade
 it gets into "ready" even though still waiting for mule events
 ** DONE Coffee 1.6 compatibility
@@ -59,7 +68,9 @@ I hope this fix is suitable (Not trivial to check).
 ** TODO Color alert fieldLabels
 ** TODO Configurable refresh
 ** DONE Mule/Hinny picture
-** TODO Something nicer with the status bar
+** DONE Something nicer with the status bar
+   Added alert status
+   Can always add more events to reportin the sb...
 ** TODO Support for timestamp labels - Waiting for Mule API
 ** TODO Something cooler with tooltips?
 ** TODO Theme
