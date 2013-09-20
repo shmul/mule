@@ -21,15 +21,15 @@ function test_create()
 
   local str = strout("")
   main({ v=false,d=db("test_create"),rest = {".key *"}},str)
-  assert(string.find(str.get_string(),'"data": []',1,true))
+  assert(string.find(str.get_string(),'"data": {}',1,true))
   str = strout("")
   main({ v=false,y=false,d=db("test_create"),rest={"./tests/fixtures/input1.mule"}},str)
   assert_equal('true',str.get_string())
   main({ v=false,d=db("test_create"),g="beer.stout.irish"},str)
 
   str = strout("")
-  main({ v=false,d=db("test_create"),rest = {".key beer.ale.pale"}},str)
-  assert_equal('{"version": 3,\n"data": ["beer.ale.pale;1h:30d","beer.ale.pale;1d:3y","beer.ale.pale;5m:2d"]\n}',str.get_string())
+  main({ v=false,d=db("test_create"),rest = {".key beer.ale"}},str)
+  assert_equal('{"version": 3,\n"data": {"beer.ale;1d:3y": {"childs": true},"beer.ale.pale;1h:30d": {},"beer.ale.pale;1d:3y": {},"beer.ale.pale;5m:2d": {},"beer.ale;1h:30d": {"childs": true},"beer.ale;5m:2d": {"childs": true}}\n}',str.get_string())
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest={"./tests/fixtures/input2.mule"}})

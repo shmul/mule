@@ -183,17 +183,8 @@ function column_db(base_dir_)
     if not dirty then
       return
     end
-    if posix then
-      local child = posix.fork()
-      if child==0 then
-        helper()
-        os.exit()
-      else
-        dirty = false
-      end
-    else
-      helper()
-    end
+    fork_and_exit(helper)
+    dirty = false
   end
 
 

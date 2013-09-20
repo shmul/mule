@@ -128,7 +128,7 @@ mule_graph({"version": 3,
 
 Multiple metrics (or names) can be use by separating them with `/`, i.e.
 
-    http://muleserver/key/<metric>
+    http://muleserver/graph/<metric>
 
 
 ##### Update graph
@@ -156,13 +156,7 @@ Example output (`deep=true`)
 
 ```json
 mule_keys({"version": 3,
-"data": ["wine.pinotage.south_africa;1d:3y","wine.pinotage.south_africa;1h:30d",
-        "wine.pinotage.south_africa;5m:2d","wine.pinotage.brazil;1d:3y",
-        "wine.pinotage.brazil;1h:30d","wine.pinotage.brazil;5m:2d",
-        "wine.pinotage.canada;1d:3y","wine.pinotage.canada;1h:30d",
-        "wine.pinotage.canada;5m:2d","wine.pinotage.us;1d:3y",
-        "wine.pinotage.us;1h:30d","wine.pinotage.us;5m:2d",
-        "wine.pinotage;1d:3y","wine.pinotage;1h:30d","wine.pinotage;5m:2d"]
+"data": {"beer.ale;1d:3y": { "childs": true },"beer.ale.pale;1h:30d": { },"beer.ale.pale;1d:3y": { },"beer.ale.pale;5m:2d": { },"beer.ale;1h:30d": { "childs": true },"beer.ale;5m:2d": { "childs": true }}
 })
 ```
 

@@ -742,13 +742,13 @@ function test_key()
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
     -- (cut -d' ' -f 1 tests/fixtures/pale.mule  | sort | uniq | wc -l)
-    local all_keys = string.match(m.key("beer",{deep=true}),"%[(.+)%]")
-    assert_equal((61+2)*3,#split(all_keys,","))
-    all_keys = string.match(m.key("beer",{level=4}),"%[(.+)%]")
-    assert_equal((61+2)*3,#split(all_keys,","))
+    local all_keys = string.match(m.key("beer",{deep=true}),"%{(.+)%}")
+    assert_equal(1+(61+2)*3,#split(all_keys,","))
+    all_keys = string.match(m.key("beer",{level=4}),"%{(.+)%}")
+    assert_equal(1+(61+2)*3,#split(all_keys,","))
 
-    all_keys = string.match(m.key("beer",{level=2}),"%[(.+)%]")
-    assert_equal((2+2)*3,#split(all_keys,","))
+    all_keys = string.match(m.key("beer",{level=2}),"{(.+)}")
+    assert_equal(1+(2+2)*3,#split(all_keys,","))
 
   end
 

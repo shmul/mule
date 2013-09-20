@@ -350,6 +350,7 @@ function mule(db_)
   local _alerts = {}
   local _db = db_
   local _updated_sequences = {}
+  local _hints = {}
 
   local function add_factory(metric_,retentions_)
     metric_ = string.match(metric_,"^(.-)%.*$")
@@ -382,7 +383,7 @@ function mule(db_)
           for _,frp in ipairs(metric_rps) do
             if is_prefix(m,frp[1]) then
               for _,rp in ipairs(frp[2]) do
-                coroutine.yield(name(m,rp[1],rp[2]))
+                coroutine.yield(name(m,rp[1],rp[2]),m)
               end
             end
           end
@@ -607,7 +608,7 @@ function mule(db_)
     local str = strout("")
     local format = string.format
     local find = string.find
-    local col = collectionout(str,"[","]")
+    local col = collectionout(str,"{","}")
     local level = tonumber(options_.level) or 1
     local deep = is_true(options_.deep)
     col.head()
@@ -616,7 +617,9 @@ function mule(db_)
       prefix = (prefix=="*" and "") or prefix
       for k in db_.matching_keys(prefix) do
         if deep or bounded_by_level(k,prefix,level) then
-          col.elem(format("\"%s\"",k))
+          local hash = (_hints[k] and _hints[k]._haschilds and "{\"childs\": true}") or "{}"
+          col.elem(format("\"%s\": %s",k,hash))
+
         end
       end
     end
@@ -625,10 +628,11 @@ function mule(db_)
   end
 
   local function save()
-    logi("save",table_size(_factories),table_size(_alerts))
+    logi("save",table_size(_factories),table_size(_alerts),table_size(_hints))
     _db.put("metadata=version",pp.pack(CURRENT_VERSION))
     _db.put("metadata=factories",pp.pack(_factories))
     _db.put("metadata=alerts",pp.pack(_alerts))
+    _db.put("metadata=hints",pp.pack(_hints))
   end
 
 
@@ -747,6 +751,7 @@ function mule(db_)
     local ver = _db.get("metadata=version")
     local factories = _db.get("metadata=factories")
     local alerts = _db.get("metadata=alerts")
+    local hints = _db.get("metadata=hints")
     local version = ver and pp.unpack(ver) or CURRENT_VERSION
     if not version==CURRENT_VERSION then
       error("unknown version")
@@ -754,7 +759,8 @@ function mule(db_)
     end
     _factories = factories and pp.unpack(factories) or {}
     _alerts = alerts and pp.unpack(alerts) or {}
-    logi("load",table_size(_factories),table_size(_alerts))
+    _hints = hints and pp.unpack(hints) or {}
+    logi("load",table_size(_factories),table_size(_alerts),table_size(_hints))
   end
 
 
@@ -766,10 +772,13 @@ function mule(db_)
       logw("update_line - missing params")
       return
     end
-    for n in get_sequences(metric_) do
+    for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
       seq.update(timestamp_,sum,1,replace)
       _updated_sequences[n] = seq
+      if m~=metric_ then -- we check the metric, but the *name* is updated
+        _hints[n] = _hints[n] or { _haschilds = true }
+      end
     end
   end
 
