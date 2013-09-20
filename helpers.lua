@@ -662,3 +662,9 @@ function fork_and_exit(callback_)
   logi("exiting")
   os.exit()
 end
+
+function noblock_wait_for_childs()
+  if posix then
+    posix.wait(-1,posix.WNOHANG)
+  end
+end
