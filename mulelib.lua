@@ -96,14 +96,14 @@ function sequence(db_,name_)
     -- or if are way ahead of the previous time the slot was updated
     -- over-write its value
 
-    if replace_ then
-      set_slot(idx,adjusted_timestamp,hits_ or 1,sum_)
-    elseif adjusted_timestamp==timestamp and hits>0 then
+    if not replace_ and adjusted_timestamp==timestamp and hits>0 then
       -- no need to worry about the latest here, as we have the same (adjusted) timestamp
-      set_slot(idx,adjusted_timestamp,hits+(hits_ or 1),sum+sum_)
+      hits,sum = hits+(hits_ or 1), sum+sum_
     else
-      set_slot(idx,adjusted_timestamp,hits_ or 1,sum_)
+      hits,sum = hits_ or 1,sum_
     end
+    set_slot(idx,adjusted_timestamp,hits,sum)
+
     if adjusted_timestamp>latest_timestamp() then
       latest(idx)
     end
