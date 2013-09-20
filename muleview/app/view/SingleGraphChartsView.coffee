@@ -39,9 +39,7 @@ Ext.define "Muleview.view.SingleGraphChartsView",
 
   showAlertsEditor: () ->
     ae = Ext.create "Muleview.view.AlertsEditor",
-      alerts: @alerts[@currentRetName]
-      key: @key
-      retention: @currentRetName
+      alertName: "#{@key};#{@currentRetName}"
     ae.show()
 
   showSubkeysSelector: ->

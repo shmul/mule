@@ -1,8 +1,13 @@
+# === Model =====================================================
 Ext.define "Muleview.model.Alert",
   extend: "Ext.data.Model",
   fields: [
       name: "name"
       type: "string"
+    ,
+      name: "isOn"
+      type: "boolean"
+      default: true
     ,
       name: "critical_low"
       type: "int"
@@ -58,8 +63,6 @@ Ext.define "Muleview.model.Alert",
       @set("stateClass", value.replace(/[ _-]/, "-").toLowerCase())
       @set("severityClass", @severityClasses[value.toUpperCase()])
 
-
-
   formatSeconds: (secs) ->
     deviders = [
       ["Year",  60 * 60 * 24 * 365]
@@ -79,11 +82,10 @@ Ext.define "Muleview.model.Alert",
         ans.push "s" if subtract > 1
     ans.join("")
 
-
-
-
+# ==== Store =====================================================
 Ext.define "Muleview.store.AlertsStore",
   extend: "Ext.data.Store"
+  id: "alertsStore"
   model: "Muleview.model.Alert"
   proxy:
     type: "ajax"
@@ -116,6 +118,8 @@ Ext.define "Muleview.store.AlertsStore",
           count: records.length
           records: records
           success: true
+
+# === Controller ========================================================
 
 Ext.define "Muleview.controller.AlertsReportController",
   extend: "Ext.app.Controller"

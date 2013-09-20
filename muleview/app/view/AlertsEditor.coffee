@@ -24,13 +24,10 @@
     margin: "5px 0px 0px 0px"
   items: ->
     formItems = [
-        {
           xtype: "displayfield"
           fieldLabel: "Graph"
-          name: "graphName"
-        }
-
-        {
+          name: "name"
+        ,
           xtype: "container"
           layout:
             type: "hbox"
@@ -56,9 +53,28 @@
               boxLabel: "On"
               inputValue: "on"
           ]
-        }
+
+        ,
+          name: "critical_high"
+          fieldLabel: "Critical High"
+        ,
+          name: "warning_high"
+          fieldLabel: "Warning High"
+        ,
+          name: "warning_low"
+          fieldLabel: "Warning Low"
+        ,
+          name: "critical_low"
+          fieldLabel: "Critical Low"
+        ,
+          xtype: "muletimefield"
+          name: "period"
+          fieldLabel: "Period"
+        ,
+          xtype: "muletimefield"
+          name: "stale"
+          fieldLabel: "Stale"
       ]
-    formItems.push(@createField(alert)) for alert in Muleview.Settings.alerts
 
     @form = Ext.create "Ext.form.Panel",
       bodyPadding: 10
@@ -66,6 +82,9 @@
         type: "vbox"
         align: "stretch"
         pack: "start"
+      defaults:
+        allowBlank: false
+        xtype: "numberfield"
       items: formItems
 
     [@form]
@@ -77,18 +96,14 @@
   getForm: ->
     @form.getForm()
 
-  load: (alertsArr) ->
-    # Calculate Data:
-    hasAlerts = Ext.Object.getKeys(@alerts).length > 0
-    data = {
-      graphName: "#{@key};#{@retention}"
-      isOn: if hasAlerts then "on" else "off"
-    }
-    data = @formHashFromArray(Muleview.Settings.alerts, data )
-    data = @formHashFromArray(@alerts, data) if @alerts
-    @getForm().setValues(data)
+  load: () ->
+    debugger
+    alert = Ext.StoreManager.get("alertsStore").findRecord("name", @alertName)
+    alert ||= Ext.create "Muleview.model.Alert",
+      name: @alertName
+    @form.loadRecord(alert)
     @getForm().clearInvalid()
-    @updateHeight(hasAlerts)
+    @updateHeight(alert.get("isOn"))
 
   updateHeight: (mode)->
     height = if mode then 315 else 154
