@@ -17,13 +17,6 @@ Ext.define "Muleview.controller.StatusBar",
     # Register all handlers:
     Muleview.app.on Ext.merge(@handlers, {scope: @ })
 
-    # Register alerts summary buttons click handlers:
-    for severity in ["Critical", "Warning", "Normal", "Stale"]
-      Ext.getCmp("alertsSummary#{severity}").on("click", @openAlertsReport, @)
-
-  openAlertsReport: ->
-    @getAlertsReport().expand()
-
   inProgress: []
 
   progress: (txt, progressId) ->

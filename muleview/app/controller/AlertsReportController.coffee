@@ -131,10 +131,14 @@ Ext.define "Muleview.controller.AlertsReportController",
   onLaunch: ->
     @grid = @getGrid()
     @store = Ext.create("Muleview.store.AlertsStore")
-    @store.addListener("datachanged", @calculateSummary, @)
+    @store.on
+      load: @handleLoad
+      scope: @
+
     @grid.reconfigure @store
     @grid.on
       selectionchange: @clickHandler
+      collapse: @handleGridCollapse
       scope: @
 
     Muleview.app.on
@@ -147,18 +151,42 @@ Ext.define "Muleview.controller.AlertsReportController",
       , Muleview.Settings.alertsReportUpdateInterval)
     @refresh()
 
-  calculateSummary: (store) ->
+    # Register alerts summary buttons click handlers:
+    @alertSummaryButtons = (Ext.getCmp("alertsSummary#{severity}") for severity in ["Total", "Critical", "Warning", "Normal", "Stale"])
+    for button in @alertSummaryButtons
+      button.on "click", @alertsSummaryButtonClick, @
+
+  handleGridCollapse: ->
+    for button in @alertSummaryButtons
+      button.toggle false
+
+  alertsSummaryButtonClick: (el, e) ->
+    selectedState = null
+    @store.clearFilter()
+    for button in @alertSummaryButtons
+      if button.pressed
+        selectedState = button.alertState
+    if selectedState == null
+      @grid.collapse()
+    else
+      @store.filter("stateClass", new RegExp(selectedState, "i")) if selectedState != "total"
+      @grid.expand()
+
+  handleLoad: (store, records) ->
     summary = {
       Critical: 0
       Warning: 0
       Normal: 0
       Stale: 0
     }
-    store.each (record) ->
+
+    Ext.each records, (record) ->
       severity = record.get("severityClass")
       summary[severity] += 1
+
     for severity, value of summary
       Ext.getCmp("alertsSummary#{severity}").setText("#{severity}: #{value}")
+    Ext.getCmp("alertsSummaryTotal").setText("Total: #{records.length}")
 
 
   updateSelection: (key, retention) ->
@@ -177,4 +205,4 @@ Ext.define "Muleview.controller.AlertsReportController",
     Muleview.event "viewChange", key, retention
 
   refresh: ->
-    @grid.getStore().load()
+    @store.load()

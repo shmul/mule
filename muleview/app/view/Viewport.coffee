@@ -122,26 +122,41 @@ Ext.define "Muleview.view.Viewport",
           ""
         ,
           id: "alertsSummaryCritical"
+          alertState: "critical"
           iconCls: "alert-summary-critical"
           text: "Critical: ?"
+          toggleGroup: "alersSummaryStates"
         ,
           "-"
         ,
           id: "alertsSummaryWarning"
+          alertState: "warning"
           iconCls: "alert-summary-warning"
           text: "Warning: ?"
+          toggleGroup: "alersSummaryStates"
         ,
           "-"
         ,
           id: "alertsSummaryNormal"
+          alertState: "normal"
           iconCls: "alert-summary-normal"
           text: "Normal: ?"
+          toggleGroup: "alersSummaryStates"
         ,
           "-"
         ,
           id: "alertsSummaryStale"
+          alertState: "stale"
           iconCls: "alert-summary-stale"
           text: "Stale: ?"
+          toggleGroup: "alersSummaryStates"
+        ,
+          "-"
+        ,
+          id: "alertsSummaryTotal"
+          alertState: "total"
+          text: "Total: ?"
+          toggleGroup: "alersSummaryStates"
         ,
           "-"
         ,
