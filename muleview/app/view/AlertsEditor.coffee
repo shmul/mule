@@ -12,48 +12,29 @@
     "Ext.container.Container"
   ]
 
+  title: "Alerts"
   bodyPadding: 10
   width: 300
-  height: 300
-
+  height: 320
   layout: "fit"
   autoScroll: true
 
-  title: "Alerts"
   defaults:
     margin: "5px 0px 0px 0px"
+
   items: ->
     formItems = [
           xtype: "displayfield"
           fieldLabel: "Graph"
           name: "name"
         ,
-          xtype: "container"
-          layout:
-            type: "hbox"
-            align: "middle"
-
-          defaults:
-            flex: 1
-
-          items: [
-              xtype: "container"
-              html: "Alerts"
-            ,
-              xtype: "radio"
-              name: "isOn"
-              boxLabel: "Off"
-              inputValue: "off"
-              listeners:
-                change: (me, val) =>
-                  @updateHeight(!val)
-            ,
-              xtype: "radio"
-              name: "isOn"
-              boxLabel: "On"
-              inputValue: "on"
-          ]
-
+          xtype: "checkbox"
+          fieldLabel: "Enable Alert"
+          name: "isOn"
+          boxLabel: "Enable"
+          listeners:
+            change: (me, val) =>
+              @updateHeight(val)
         ,
           name: "critical_high"
           fieldLabel: "Critical High"
@@ -78,6 +59,7 @@
 
     @form = Ext.create "Ext.form.Panel",
       bodyPadding: 10
+      trackResetOnLoad: true
       layout:
         type: "vbox"
         align: "stretch"
@@ -86,55 +68,84 @@
         allowBlank: false
         xtype: "numberfield"
       items: formItems
+      listeners:
+        validitychange: (me, valid) =>
+          Ext.getCmp("alertsEditorSaveButton").setDisabled(!valid)
 
     [@form]
-
-  formHashFromArray: (arr, base = {}) ->
-    base[alert.name] = alert.value for alert in arr
-    base
 
   getForm: ->
     @form.getForm()
 
   load: () ->
-    debugger
-    alert = Ext.StoreManager.get("alertsStore").findRecord("name", @alertName)
-    alert ||= Ext.create "Muleview.model.Alert",
-      name: @alertName
-    @form.loadRecord(alert)
+    alertName = @key + ";" + @retention
+    @alert = Ext.StoreManager.get("alertsStore").findRecord("name", alertName)
+    @alert ||= @createDefaultAlert()
+    @form.loadRecord(@alert)
     @getForm().clearInvalid()
-    @updateHeight(alert.get("isOn"))
+    @updateHeight(@alert.get("isOn"))
+
+  createDefaultAlert: () ->
+    max = @store.max(@key)
+    min = @store.min(@key)
+    step = new Muleview.model.Retention(@retention).getStep()
+    Ext.create "Muleview.model.Alert",
+      name: @key + ";" + @retention
+      warning_low: min
+      critical_low: min * 0.9
+      warning_high: max
+      critical_high: max * 1.1
+      stale:  step * 2
+      period: step * 2
+      isOn: false
 
   updateHeight: (mode)->
-    height = if mode then 315 else 154
+    height = if mode then 320 else 154
     @setHeight height
 
-  createField: (alert) ->
-    ans =
-      allowBlank: false
-      name: alert.name
-      value: 0
-      fieldLabel: alert.label
-    if alert.time
-      ans.xtype = "muletimefield"
-    else
-      ans.xtype = "numberfield"
-    ans
+    # Defering the centering due to a mysterious bug
+    setTimeout( =>
+      @center()
+    , 10)
 
   bbar: ->
     [
-        "->"
+        text: "Reset"
+        icon: "resources/default/images/reset.png"
+        flex: 1
+        handler: =>
+          @getForm().reset()
+      ,
+        "-"
+      ,
+        text: "Auto"
+        tooltip: "Set values according to currently known graph data"
+        flex: 1
+        icon: "resources/default/images/wand.png"
+        handler: =>
+          @adjust()
+      ,
+        "-"
       ,
         text: "Cancel"
         handler: => @doCancel()
         icon: "resources/default/images/cancel.png"
-        width: 76
+        flex: 1
       ,
+        "-"
+      ,
+        id: "alertsEditorSaveButton"
         text: "Save"
         icon: "resources/default/images/ok.png"
-        width: 76
+        flex: 1
         handler: => @doSave()
     ]
+
+  adjust: ->
+    adjustedAlert = @createDefaultAlert()
+    adjustedAlert.set("isOn", true)
+    @getForm().getFields().each (field) =>
+      field.setValue(adjustedAlert.get(field.name))
 
   initComponent: ->
     @items = @items()
@@ -143,11 +154,12 @@
     @load()
 
   doSave: ->
-    alertsOn = @getForm().getValues().isOn
-    if alertsOn == "on"
-      @doMuleAction ("PUT") if @getForm().isValid()
-    else if alertsOn == "off"
-      @doMuleAction ("DELETE") if @getForm().isValid()
+    @getForm().updateRecord()
+    alertsOn = @alert.get("isOn")
+    if alertsOn
+      @doMuleAction("PUT") if @getForm().isValid()
+    else
+      @doMuleAction("DELETE")
 
   doMuleAction: (method) ->
     @getForm().submit(

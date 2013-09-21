@@ -5,9 +5,9 @@ Ext.define "Muleview.model.Alert",
       name: "name"
       type: "string"
     ,
-      name: "isOn"
+      name: "isOn" # Not really persistent - used only by AlertsEditor
       type: "boolean"
-      default: true
+      defaultValue: true
     ,
       name: "critical_low"
       type: "int"

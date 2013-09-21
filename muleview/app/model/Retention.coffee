@@ -75,3 +75,7 @@ Ext.define "Muleview.model.Retention",
     ]
     ans += Math.pow(base, ind) * element for element, ind in elements
     ans
+
+  # Returns the step size
+  getStep: ->
+    @bucket.count

@@ -90,11 +90,10 @@ Ext.define "Muleview.view.Viewport",
             header: "Stale"
             dataIndex: "formatted_stale"
             flex: 1
-
         ]
         viewConfig:
           getRowClass: (record) ->
-            "alert-row-#{record.get("stateClass")}"
+            "alert-row-#{record.get("severityClass").toLowerCase()} alert-row-#{record.get("stateClass")}"
       ]
     ,
       xtype: "toolbar"
