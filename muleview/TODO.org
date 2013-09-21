@@ -3,18 +3,20 @@
 ** DONE Fix status bar
 *** DONE Auto clear
 *** DONE Icons
-** TODO Alerts Editor
-*** TODO "Save" When the alert is initially turned off doesn't work
+** DONE Alerts Editor
+*** DONE "Save" When the alert is initially turned off doesn't work
     This is because the default values are invalid + hidden
-*** TODO Add default values
+*** DONE Add default values
     According to the current chart data...
-*** TODO Tooltip issue
+*** DONE Tooltip issue
     The error tooltip is broken
 ** TODO failure function for keys expand
    This is to prevent the loading circle from stayign there forever
 ** TODO Don't pull all retentions per graph
-** TODO Renovate Alerts Report
+** DONE Renovate Alerts Report
    Should be a different window or something
+   ----
+   I went for the mini dock implementation
 ** TODO Back button issue
 ** DONE Nicer sorting in alerts report
    There should be a way to sort by critical > warning > normal..
@@ -45,6 +47,8 @@ it gets into "ready" even though still waiting for mule events
 
 * Features:
 ** DONE Fix Tooltip Errors somehow
+** TODO Editable Settings
+   There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
 ** TODO Implement numchild
    In the keys tree - show + sign next to keys which are known to have subkeys.
 ** DONE Loading mask when loading keys
@@ -114,16 +118,22 @@ aka "Add alerts" button
 *** DONE Load alerts with graph
 * Optimizations:
 ** DONE Dynamic tree
+** TODO Utilize numchilds
+** TODO Don't pull all graph data, only relevant retention
 ** TODO Try to implement onhashchange event myself
 This is related to histoy controller
 ** DONE Generate big chart only on demand
 ** DONE Upgrade to Extjs 4.2
 * Misc:
-** TODO Check data correctness
+** DONE Check data correctness
+   --------
+   Seems legit AFAIK
 ** DONE Support for more than 2-3 retentions?
-** TODO Refactor / naming, "Graph" object
+** DONE Refactor / naming, "Graph" object
  - Graph object will contain references to 2 charts + alerts
  - Distinguish "chart", "graph" and "retention"
+ ---------
+ Close enough
 ** DONE Get rid of Muleview.Events
 in favor of this.application.whatever
 ** TODO Fix rare tootip "surface" error davar
@@ -138,6 +148,8 @@ Think i'll pass this one
 Instead of having regular tree + tabs, use tree-grid, which will hold 3 (?) buttons for each node, button per graph/retention
 PASS - since I eventually implemented compare mode.
 *** Color tree keys according to what they appear in the legend
+*** Use Google charts instead of Extjs
+    It looks nicer
 *** Slideshow
 Add an option to save and manage a list of graphs and when played, switch between them with an interval
 Now even easier in compare-mode checkboxes
