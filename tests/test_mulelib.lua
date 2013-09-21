@@ -780,7 +780,7 @@ end
 function test_dashes_in_keys()
   local db = column_db_factory("temp/dashes_in_keys")
   local m = mule(db)
-  m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
+  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
   assert(string.find(m.key("Johnston",{deep=true}),"Sweet%-Nuthin"))
@@ -789,6 +789,18 @@ function test_dashes_in_keys()
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
 --  assert(string.find(m.graph("Johnston",{numchilds=true}),'{"Johnston": {"numchilds": 3}'))
 --  assert_nil(string.find(m.graph("Johnston",{numchilds=true}),'Johnston%.'))
+end
+
+function test_rank_output()
+  local db = column_db_factory("temp/rank_output")
+  local m = mule(db)
+  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{deep=true,count=1}))
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[5,1,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{deep=true,count=2}))
 end
 
 

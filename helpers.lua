@@ -475,10 +475,14 @@ function parse_time_pair(str_)
   return parse_time_unit(step),parse_time_unit(period)
 end
 
+function normalize_timestamp(timestamp_,step_,period_)
+  return math.floor(timestamp_/step_)*step_
+end
+
 function calculate_idx(timestamp_,step_,period_)
   local idx = math.floor((timestamp_ % period_) / step_)
   -- adjust the timestamp so it'll be at the beginning of the step
-  return idx,math.floor(timestamp_/step_)*step_
+  return idx,normalize_timestamp(timestamp_,step_,period_)
 end
 
 function to_timestamp_helper(expr_,now_,latest_)
