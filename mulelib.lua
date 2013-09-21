@@ -109,6 +109,7 @@ function sequence(db_,name_)
     end
 
     _seq_storage.save(_name)
+    return adjusted_timestamp,sum
   end
 
   local function update_batch(slots_)
@@ -774,10 +775,11 @@ function mule(db_)
     end
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
-      seq.update(timestamp_,sum,1,replace)
+      local adjusted_timestamp,sum = seq.update(timestamp_,sum,1,replace)
       _updated_sequences[n] = seq
       if m~=metric_ then -- we check the metric, but the *name* is updated
-        _hints[n] = _hints[n] or { _haschilds = true }
+        _hints[n] = _hints[n] or {}
+        _hints[n]._haschilds = true
       end
     end
   end
@@ -871,7 +873,16 @@ function mule(db_)
       local seq = sequence(_db,n)
       local s = _updated_sequences[n]
       for _,sl in ipairs(s.slots()) do
-        seq.update(sl._timestamp,sl._sum,sl._hits or 1,sl._hits==nil)
+        local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._sum,sl._hits or 1,
+                                                  sl._hits==nil)
+        _hints[n] = _hints[n] or {}
+        if not _hints[n]._rank_ts then
+          _hints[n]._rank = 0
+          _hints[n]._rank_ts = 0
+        end
+        _hints[n]._rank_ts,_hints[n]._rank = update_rank(
+          _hints[n]._rank_ts,_hints[n]._rank,
+          adjusted_timestamp,sum,seq.step())
       end
       alert_check(seq,now)
       _updated_sequences[n] = nil
