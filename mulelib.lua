@@ -299,7 +299,7 @@ function one_level_childs(db_,name_)
       end
       local find = string.find
       for name in db_.matching_keys(prefix) do
-        if name~=name_ and find(name,rp,1,true) and
+        if name~=prefix and name~=name_ and find(name,rp,1,true) and
           (#prefix>0 and not find(name,".",#prefix+2,true)) then
           -- we are intersted only in child metrics of the format
           -- m.sub-key;ts where sub-key contains no dots
@@ -317,7 +317,7 @@ function immediate_metrics(db_,name_)
         coroutine.yield(sequence(db_,name_))
       else
         for name in db_.matching_keys(name_) do
-          if not find(name,".",#name_+2,true) then
+          if not find(name,".",#name_+1,true) then
             coroutine.yield(sequence(db_,name))
           end
         end
@@ -528,7 +528,7 @@ function mule(db_)
                    sorted=false,
                    skip_empty=true,
                    period_only=true}
-    local depth = is_true(options_.deep) and one_level_childs or immediate_metrics
+    local depth = immediate_metrics
     local alerts = is_true(options_.alerts)
     local names = {}
 
@@ -536,6 +536,30 @@ function mule(db_)
 
     for m in split_helper(resource_,"/") do
       if m=="*" then m = "" end
+      if is_true(options_.deep) then
+        local ranked_childs = {}
+        local insert = table.insert
+        local now = time_now()
+        for seq in one_level_childs(db_,m) do
+          -- we call update_rank to get adjusted ranks (in case the previous update was
+          -- long ago). This is a readonly operation
+          local hint = _hints[seq.name()] or {}
+          local _,seq_rank = update_rank(
+            hint._rank_ts or 0 ,hint._rank or 0,
+            normalize_timestamp(now,seq.step(),seq.period()),0,seq.step())
+          insert(ranked_childs,{seq,seq_rank})
+        end
+        table.sort(ranked_childs,function(a,b) return a[2]>b[2] end)
+        depth = function()
+          return coroutine.wrap(
+            function()
+              for i=1,(math.min(#ranked_childs,options_.count or DEFAULT_COUNT)) do
+                coroutine.yield(ranked_childs[i][1])
+              end
+            end)
+        end
+      end
+
       for seq in depth(db_,m) do
         logd("graph - processing",seq.name())
         if alerts then
