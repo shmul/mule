@@ -1,8 +1,13 @@
+# === Model =====================================================
 Ext.define "Muleview.model.Alert",
   extend: "Ext.data.Model",
   fields: [
       name: "name"
       type: "string"
+    ,
+      name: "isOn" # Not really persistent - used only by AlertsEditor
+      type: "boolean"
+      defaultValue: true
     ,
       name: "critical_low"
       type: "int"
@@ -36,7 +41,18 @@ Ext.define "Muleview.model.Alert",
     ,
       name: "stateClass"
       type: "string"
+    ,
+      name: "severity"
+      type: "string"
   ]
+
+  severityClasses:
+    "CRITICAL HIGH": "Critical"
+    "CRITICAL LOW": "Critical"
+    "WARNING HIGH": "Warning"
+    "WARNING LOW": "Warning"
+    "STALE": "Stale"
+    "NORMAL": "Normal"
 
   set: (attr, value) ->
     @callParent(arguments)
@@ -45,7 +61,7 @@ Ext.define "Muleview.model.Alert",
     else if attr == "state"
       # State class is used for icon and background color selection in the grid.
       @set("stateClass", value.replace(/[ _-]/, "-").toLowerCase())
-
+      @set("severityClass", @severityClasses[value.toUpperCase()])
 
   formatSeconds: (secs) ->
     deviders = [
@@ -66,11 +82,10 @@ Ext.define "Muleview.model.Alert",
         ans.push "s" if subtract > 1
     ans.join("")
 
-
-
-
+# ==== Store =====================================================
 Ext.define "Muleview.store.AlertsStore",
   extend: "Ext.data.Store"
+  id: "alertsStore"
   model: "Muleview.model.Alert"
   proxy:
     type: "ajax"
@@ -104,6 +119,8 @@ Ext.define "Muleview.store.AlertsStore",
           records: records
           success: true
 
+# === Controller ========================================================
+
 Ext.define "Muleview.controller.AlertsReportController",
   extend: "Ext.app.Controller"
   models: [
@@ -117,9 +134,15 @@ Ext.define "Muleview.controller.AlertsReportController",
 
   onLaunch: ->
     @grid = @getGrid()
-    @grid.reconfigure Ext.create("Muleview.store.AlertsStore")
+    @store = Ext.create("Muleview.store.AlertsStore")
+    @store.on
+      load: @handleLoad
+      scope: @
+
+    @grid.reconfigure @store
     @grid.on
       selectionchange: @clickHandler
+      collapse: @handleGridCollapse
       scope: @
 
     Muleview.app.on
@@ -131,6 +154,43 @@ Ext.define "Muleview.controller.AlertsReportController",
         @refresh()
       , Muleview.Settings.alertsReportUpdateInterval)
     @refresh()
+
+    # Register alerts summary buttons click handlers:
+    @alertSummaryButtons = (Ext.getCmp("alertsSummary#{severity}") for severity in ["Total", "Critical", "Warning", "Normal", "Stale"])
+    for button in @alertSummaryButtons
+      button.on "click", @alertsSummaryButtonClick, @
+
+  handleGridCollapse: ->
+    for button in @alertSummaryButtons
+      button.toggle false
+
+  alertsSummaryButtonClick: (el, e) ->
+    selectedState = null
+    @store.clearFilter()
+    for button in @alertSummaryButtons
+      if button.pressed
+        selectedState = button.alertState
+    if selectedState == null
+      @grid.collapse()
+    else
+      @store.filter("stateClass", new RegExp(selectedState, "i")) if selectedState != "total"
+      @grid.expand()
+
+  handleLoad: (store, records) ->
+    summary = {
+      Critical: 0
+      Warning: 0
+      Normal: 0
+      Stale: 0
+    }
+
+    Ext.each records, (record) ->
+      severity = record.get("severityClass")
+      summary[severity] += 1
+
+    for severity, value of summary
+      Ext.getCmp("alertsSummary#{severity}").setText("#{severity}: #{value}")
+    Ext.getCmp("alertsSummaryTotal").setText("Total: #{records.length}")
 
 
   updateSelection: (key, retention) ->
@@ -149,4 +209,4 @@ Ext.define "Muleview.controller.AlertsReportController",
     Muleview.event "viewChange", key, retention
 
   refresh: ->
-    @grid.getStore().load()
+    @store.load()

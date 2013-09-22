@@ -3,38 +3,80 @@
   background-repeat: no-repeat;
 }
 
-.alert-row-critical-high {
+.alert-row-critical {
   > td > div {
     background-color: #F5A9A9;
   }
+}
+
+.alert-row-warning {
+  > td > div {
+    background-color: #F5DA81;
+  }
+}
+
+.alert-row-critical-high {
   .icon-cell > div {
     background-image: url("critical_high.png")
   }
 }
 
 .alert-row-warning-high {
-  > td > div {
-    background-color: #F5DA81;
-  }
   .icon-cell > div {
     background-image: url("warning_high.png");
   }
 }
 
 .alert-row-critical-low {
-  > td > div {
-    background-color: #F5DA81;
-  }
-  .icon-cell > div{
+  .icon-cell > div {
     background-image: url("critical_low.png");
   }
 }
 
 .alert-row-warning-low {
-  > td > div {
-    background-color: #F5A9A9;
-  }
-  .icon-cell > div{
+  .icon-cell > div {
     background-image: url("warning_low.png");
   }
+}
+
+
+.alert-summary-critical {
+  background-image: url("summary_critical.png");
+}
+
+.alert-summary-warning {
+  background-image: url("summary_warning.png");
+}
+
+.alert-summary-normal {
+  background-image: url("summary_normal.png");
+}
+
+.alert-summary-stale {
+  background-image: url("summary_stale.png");
+}
+
+.statusLabel {
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-top: 1px;
+  padding-left: 18px;
+}
+
+.statusLabel-normal {
+  padding-left: 0px;
+}
+
+.statusLabel-progress {
+  background-image: url("loading.gif")
+}
+
+.statusLabel-success {
+  background-image: url("status-ok.png")
+}
+
+.statusLabel-error {
+  color: red;
+  background-image: url("status-error.gif")
 }

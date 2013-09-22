@@ -8,13 +8,16 @@ Ext.define "Muleview.Mule",
 
   # General method to query mule
   askMule: (command, fn) ->
-    Muleview.event "commandSent", command
+    eventId = Ext.id()
+    Muleview.event "commandSent", command, eventId
     Ext.Ajax.request
       url: @prefix() + command
       timeout: 10 * 60 * 1000 # 10 minutes
       success: (response) =>
-        Muleview.event "commandReceived", command
+        Muleview.event "commandReceived", command, eventId, true
         fn(JSON.parse(response.responseText).data)
+      failure: =>
+        Muleview.event "commandReceived", command, eventId, false
 
   # Returns child keys for the given parent
   getSubKeys: (parent, depth, callback) ->

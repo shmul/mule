@@ -5,7 +5,7 @@ MAX_HITS = 10 # Max number per key per timestamp
 KEYS_FILE = "tmp/keys.data"
 TIMESTAMP_FILE = "tmp/input"
 CONF_FILE = "tmp/conf"
-CURL = "curl localhost:3000/graph -X POST -T #{TIMESTAMP_FILE}"
+CURL = "curl 10.0.2.15:3000/graph -X POST -T #{TIMESTAMP_FILE}"
 RETENTION = "1s:1m 5m:48h 1h:30d 1d:3y"
 
 @names = File.read("names_list.txt").split(/\s/) # Names list file

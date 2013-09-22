@@ -11,6 +11,31 @@
         <!-- </x-bootstrap> -->
         <script src="app/app.js"></script>
     <!-- </x-compile> -->
+    <style>
+      body {
+        background: #dfe8f6;
+      }
+
+      #initMask {
+        position: absolute;
+        top: 40%;
+        width: 100%;
+        text-align:center;
+        color: rgb(6, 52, 170);
+        font-style: italic;
+        font-size: 2em;
+        font-weight: bold;
+      }
+    </style>
 </head>
-<body></body>
+<body>
+  <div id="initMask">
+    Saddling...
+  </div>
+  <div style="visibility: visible">
+    <div class="statusLabel-progress"> </div>
+    <div class="statusLabel-success"> </div>
+    <div class="statusLabel-error"> </div>
+  </div>
+</body>
 </html>
