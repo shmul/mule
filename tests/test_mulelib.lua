@@ -805,19 +805,19 @@ end
 
 
 function test_rank()
-  local ts,r = update_rank(0,0,100,20,10)
+  local ts,r = update_rank_helper(0,0,100,20,10)
   assert_equal(100,ts)
   assert_equal(20,r)
 
-  ts,r = update_rank(ts,r,100,30,10)
+  ts,r = update_rank_helper(ts,r,100,30,10)
   assert_equal(100,ts)
   assert_equal(50,r)
 
-  ts,r = update_rank(ts,r,110,10,10)
+  ts,r = update_rank_helper(ts,r,110,10,10)
   assert_equal(110,ts)
   assert_equal(10+25,r)
 
-  ts,r = update_rank(ts,r,130,20,10)
+  ts,r = update_rank_helper(ts,r,130,20,10)
   assert_equal(130,ts)
   assert_equal(20+35*0.25,r)
 

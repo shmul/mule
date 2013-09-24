@@ -517,6 +517,21 @@ function mule(db_)
     return str
   end
 
+  local function update_rank(rank_timestamp_,rank_,timestamp_,value_,name_,step_)
+    local ts,rk,same_ts = update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
+    if same_ts then
+      return ts,rk
+    end
+
+    -- new timestamp. We need to check for spikes
+    if rank_*POSITIVE_SPIKE_FACTOR<rk or rank_*NEGATIVE_SPIKE_FACTOR>rk then
+      -- TODO, we need to keep it around (in _alerts?)
+      -- TODO small values should be shooshed
+      logi("spike detected for",name_,timestamp_,rank_,rk)
+    end
+    return ts,rk
+  end
+
   local function graph(resource_,options_)
     local str = strout("")
     options_ = options_ or {}
@@ -546,7 +561,7 @@ function mule(db_)
           local hint = _hints[seq.name()] or {}
           local _,seq_rank = update_rank(
             hint._rank_ts or 0 ,hint._rank or 0,
-            normalize_timestamp(now,seq.step(),seq.period()),0,seq.step())
+            normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
           insert(ranked_childs,{seq,seq_rank})
         end
         table.sort(ranked_childs,function(a,b) return a[2]>b[2] end)
@@ -906,7 +921,7 @@ function mule(db_)
         end
         _hints[n]._rank_ts,_hints[n]._rank = update_rank(
           _hints[n]._rank_ts,_hints[n]._rank,
-          adjusted_timestamp,sum,seq.step())
+          adjusted_timestamp,sum,n,seq.step())
       end
       alert_check(seq,now)
       _updated_sequences[n] = nil
