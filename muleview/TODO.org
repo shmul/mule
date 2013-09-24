@@ -1,5 +1,7 @@
 * Issues
 ** DONE Graphs look awful in Firefox
+** TODO Alert lines in charts should be thicker
+   Perhaps even some marker on the side?
 ** DONE Fix status bar
 *** DONE Auto clear
 *** DONE Icons

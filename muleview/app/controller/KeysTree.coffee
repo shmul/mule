@@ -142,21 +142,24 @@ Ext.define "Muleview.controller.KeysTree",
       callback?(keys)
 
   addKeys: (newKeys) ->
-    @addKey(key) for key in newKeys
+    @addKey(key, hasKids) for key, hasKids of newKeys
 
-  addKey: (key) ->
+  addKey: (key, hasKids) ->
     # Don't add already existing keys:
     return @store.getRootNode() unless key
     existingNode = @store.getById(key)
-    return existingNode if existingNode
+    if existingNode
+      existingNode.set("leaf", !hasKids)
+      return existingNode
 
     # Make sure the parent exists:
     parentName = key.substring(0, key.lastIndexOf("."))
-    parent = @addKey(parentName)
+    parent = @addKey(parentName, true)
 
     # Create the new node:
     newNode = @getMuleKeyModel().create
       name: key.substring(key.lastIndexOf(".") + 1)
+      leaf: !hasKids
       fullname: key
 
     # Add the new node as a child to its parent:

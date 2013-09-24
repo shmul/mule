@@ -1,6 +1,6 @@
-SEED = 1 # Random seed
-MAX_KIDS = 5 # Misc rands: Max number of child-nodes per node
-MAX_DEPTH = 3 # max graph depth
+SEED = 8 # Random seed
+MAX_KIDS = 3 # Misc rands: Max number of child-nodes per node
+MAX_DEPTH = 4 # max graph depth
 MAX_HITS = 10 # Max number per key per timestamp
 KEYS_FILE = "tmp/keys.data"
 TIMESTAMP_FILE = "tmp/input"
@@ -90,7 +90,7 @@ end
 desc "Create a graph hash of names"
 task :create_keys do
   # Create graph:
-  @root = make_node(2)
+  @root = make_node(MAX_DEPTH)
 
   # Write serialized graph hash:
   File.open(KEYS_FILE, "w") do |f|

@@ -19,14 +19,14 @@ Ext.define "Muleview.Mule",
       failure: =>
         Muleview.event "commandReceived", command, eventId, false
 
-  # Returns child keys for the given parent
+  # Returns a hash of all child keys for the given parent and a flag specifying if they have subkeys
   getSubKeys: (parent, depth, callback) ->
     @askMule "key/#{parent}?level=#{depth}", (retentions)->
       keys = {}
-      for ret in retentions
+      for ret, data of retentions
         key = ret.substring(0, ret.indexOf(";"))
-        keys[key] = true
-      callback(keyName for own keyName of keys)
+        keys[key] = data.childs
+      callback(keys)
 
   # Returns all mule's "graph" data for a given key,
   # In the form of "retention => key => data array" double-hash
