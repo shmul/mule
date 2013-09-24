@@ -664,7 +664,7 @@ function test_update_only_relevant()
 end
 
 
-function test_metric_one_level_childs()
+function test_metric_one_level_children()
   local function helper(db)
     local m = mule(db)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
@@ -687,15 +687,15 @@ function test_metric_one_level_childs()
     }
 
     for j,t in ipairs(tests) do
-      local childs = 0
-      for i in one_level_childs(db,t[1]) do
-        childs = childs + 1
+      local children = 0
+      for i in one_level_children(db,t[1]) do
+        children = children + 1
       end
-      assert_equal(t[2],childs,j)
+      assert_equal(t[2],children,j)
     end
   end
 
-  for_each_db("./tests/temp/one_level_childs",helper,true)
+  for_each_db("./tests/temp/one_level_children",helper,true)
 end
 
 
@@ -787,8 +787,6 @@ function test_dashes_in_keys()
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
   m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
---  assert(string.find(m.graph("Johnston",{numchilds=true}),'{"Johnston": {"numchilds": 3}'))
---  assert_nil(string.find(m.graph("Johnston",{numchilds=true}),'Johnston%.'))
 end
 
 function test_rank_output()

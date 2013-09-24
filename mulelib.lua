@@ -289,7 +289,7 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_)
     end)
 end
 
-function one_level_childs(db_,name_)
+function one_level_children(db_,name_)
   return coroutine.wrap(
     function()
       local prefix,rp = string.match(name_,"(.-);(.+)")
@@ -552,24 +552,24 @@ function mule(db_)
     for m in split_helper(resource_,"/") do
       if m=="*" then m = "" end
       if is_true(options_.deep) then
-        local ranked_childs = {}
+        local ranked_children = {}
         local insert = table.insert
         local now = time_now()
-        for seq in one_level_childs(db_,m) do
+        for seq in one_level_children(db_,m) do
           -- we call update_rank to get adjusted ranks (in case the previous update was
           -- long ago). This is a readonly operation
           local hint = _hints[seq.name()] or {}
           local _,seq_rank = update_rank(
             hint._rank_ts or 0 ,hint._rank or 0,
             normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
-          insert(ranked_childs,{seq,seq_rank})
+          insert(ranked_children,{seq,seq_rank})
         end
-        table.sort(ranked_childs,function(a,b) return a[2]>b[2] end)
+        table.sort(ranked_children,function(a,b) return a[2]>b[2] end)
         depth = function()
           return coroutine.wrap(
             function()
-              for i=1,(math.min(#ranked_childs,options_.count or DEFAULT_COUNT)) do
-                coroutine.yield(ranked_childs[i][1])
+              for i=1,(math.min(#ranked_children,options_.count or DEFAULT_COUNT)) do
+                coroutine.yield(ranked_children[i][1])
               end
             end)
         end
@@ -657,7 +657,7 @@ function mule(db_)
       prefix = (prefix=="*" and "") or prefix
       for k in db_.matching_keys(prefix) do
         if deep or bounded_by_level(k,prefix,level) then
-          local hash = (_hints[k] and _hints[k]._haschilds and "{\"childs\": true}") or "{}"
+          local hash = (_hints[k] and _hints[k]._haschildren and "{\"children\": true}") or "{}"
           col.elem(format("\"%s\": %s",k,hash))
 
         end
@@ -818,7 +818,7 @@ function mule(db_)
       _updated_sequences[n] = seq
       if m~=metric_ then -- we check the metric, but the *name* is updated
         _hints[n] = _hints[n] or {}
-        _hints[n]._haschilds = true
+        _hints[n]._haschildren = true
       end
     end
   end

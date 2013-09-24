@@ -292,7 +292,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
 
   while not stop_cond_() do
     copas.step(1)
-    noblock_wait_for_childs()
+    noblock_wait_for_children()
     with_mule_(function(mule_)
                  mule_.update(UPDATE_AMOUNT)
                end)

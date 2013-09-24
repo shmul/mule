@@ -5,7 +5,7 @@ Mule is an RRD tool designed with simplicity of use in mind. Its main use case i
 * metrics need not be declared in advance - simple patterns define families of metrics.
 * simple input format
 * can keep multiple sequences for the same metric with different retention settings.
-* metrics are organized in hierarchies. Sequences of parent nodes are automatically updated when their childs are.
+* metrics are organized in hierarchies. Sequences of parent nodes are automatically updated when their children are.
 * JSON interface which can be used for graph generation and threshold monitoring (by tools like nagios).
 
 # Definitions
@@ -100,14 +100,13 @@ To update mule's configuration POST a configuration file to
 ##### Retrieve graph data
 Use a GET request
 
-    http://muleserver/graph/<metric-or-name>?<timestamps>|<deep>|<alerts>|<numchilds>
+    http://muleserver/graph/<metric-or-name>?<timestamps>|<deep>|<alerts>
 
 * metric-or-name is a metric or a name (i.e. including the retention data). If the metric is used then all the graphs for the metric will be returned, i.e. the graphs for all the names for which the metric is a prefix.
 * query string parameters are
   * `timestamps` - the graph data will be restricted to the given timestamps. Timestamps can be a comma separated list of seconds or simple arithmetic expressions using the predefined variables `now` (or `n`) and `latest` (or `l`), like `l-10s`, `now-20d` .
   * `alerts` - if set to true, the alerts status will be added to the names for which alerts are defined.
-  * `deep` - if set to true (which can be `true,yes,1`) then the graphs data for the metric childs (one level deep) will also be returned. This may be compbined with timestamps. Defaults to `false`. As this option is popular, a syntactic sugar for it exists in the form of a url
-  * `numchilds` - if set to true (or its equivalents) the count of immediate childs will be returned but **without** their data.
+  * `deep` - if set to true (which can be `true,yes,1`) then the graphs data for the metric children (one level deep) will also be returned. This may be compbined with timestamps. Defaults to `false`. As this option is popular, a syntactic sugar for it exists in the form of a url
 
     http://muleserver/piechart/<metric-or-name>?<timestamps>
 
@@ -149,14 +148,14 @@ The metrics and names create a hierarchy which can be retrieved by sending a GET
     http://muleserver/key/<metric>?<deep>
 
 * `metric` - Returns all the names for which metric is a prefix.
-* `deep` - if set to true (which can be `true,yes,1`) then all the names which are prefixe by `metric` will be returned. Otherwise only the immediate childs are returned. Defaults to `false` .
+* `deep` - if set to true (which can be `true,yes,1`) then all the names which are prefixe by `metric` will be returned. Otherwise only the immediate children are returned. Defaults to `false` .
 * `level` - an optional number of sub key levels to retrieve. Each dot counts for one level. Default level is 1
 
 Example output (`deep=true`)
 
 ```json
 mule_keys({"version": 3,
-"data": {"beer.ale;1d:3y": { "childs": true },"beer.ale.pale;1h:30d": { },"beer.ale.pale;1d:3y": { },"beer.ale.pale;5m:2d": { },"beer.ale;1h:30d": { "childs": true },"beer.ale;5m:2d": { "childs": true }}
+"data": {"beer.ale;1d:3y": { "children": true },"beer.ale.pale;1h:30d": { },"beer.ale.pale;1d:3y": { },"beer.ale.pale;5m:2d": { },"beer.ale;1h:30d": { "children": true },"beer.ale;5m:2d": { "children": true }}
 })
 ```
 
