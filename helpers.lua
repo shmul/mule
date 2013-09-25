@@ -2,10 +2,19 @@ local _,lr = pcall(require,"luarocks.require")
 local s,url = pcall(require,"socket.url")
 local pp = require "purepack"
 local posix_exists,posix = pcall(require,'posix')
+local stp_exists,stp = pcall(require,"StackTracePlus")
 
 if not posix_exists or lunit then
   print("disabling posix")
   posix = nil
+end
+
+if stp_exists then
+  if lunit then
+    stp = nil
+  else
+    debug.traceback = stp.stacktrace
+  end
 end
 
 -- file/stdout logging
@@ -425,6 +434,9 @@ local parse_time_unit_cache = {}
 
 function parse_time_unit(str_)
   local secs = nil
+  if not str_ then
+    return nil
+  end
   if not parse_time_unit_cache[str_] then
     string.gsub(str_,"^(%d+)([smhdwy])$",
                 function(num,unit)
@@ -682,4 +694,9 @@ function update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
 
   -- we need to multiply the current rank
   return timestamp_,value_+rank_/(2^((timestamp_-rank_timestamp_)/step_)),false
+end
+
+function pcall_wrapper(callback_,...)
+  local params = ...
+  return xpcall(function() return callback_(params) end ,stp and stp.stacktrace or nil)
 end

@@ -35,7 +35,7 @@ local function new_mule(db_path_,readonly_)
 end
 
 local function safe_mule_call(m,db,callback_)
-  local success,rv = pcall(callback_,m)
+  local success,rv = pcall_wrapper(callback_,m)
   if not success then
     loge("error",rv)
     db.close()
