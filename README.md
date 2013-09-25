@@ -302,6 +302,16 @@ Mule also has a command line interface which is useful for tests (and developmen
 
 TODO provide a list of the common commands
 
+
+### Vagrant box
+Mule ships with a [Vagrant](http://vagrantup.com) box for development.
+To setup the box:
+1. Install vagrant
+1. `cd vagrant`
+1. `vagrant up`
+1. `vagrant ssh`
+1. /vagrant/setup.sh
+This should setup a machine with all the relevant development dependencies + an Nginx server accessible from the your host @ localhost:3000/mule/
 # License
 
 Mule is distributed under the MIT license reproduced below. Mule uses several 3rd party modules whose licenses are described below
