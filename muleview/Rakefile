@@ -1,11 +1,12 @@
-SEED = 8 # Random seed
-MAX_KIDS = 3 # Misc rands: Max number of child-nodes per node
+SEED = 1 # Random seed
+MAX_KIDS = 7 # Misc rands: Max number of child-nodes per node
 MAX_DEPTH = 4 # max graph depth
 MAX_HITS = 10 # Max number per key per timestamp
 KEYS_FILE = "tmp/keys.data"
 TIMESTAMP_FILE = "tmp/input"
+APPENDED_TIMESTAMP_FILE = "tmp/agg_input"
 CONF_FILE = "tmp/conf"
-CURL = "curl 10.0.2.15:3000/graph -X POST -T #{TIMESTAMP_FILE}"
+CURL = "curl 10.0.2.15:3000/mule/api/graph -X POST -T #{TIMESTAMP_FILE}"
 RETENTION = "1s:1m 5m:48h 1h:30d 1d:3y"
 
 @names = File.read("names_list.txt").split(/\s/) # Names list file
@@ -40,6 +41,7 @@ def feed_mule()
   # Show and write the result:
   puts ans
   File.write(TIMESTAMP_FILE, ans)
+  File.open(APPENDED_TIMESTAMP_FILE,"a" ){ |f| f.write ans + "\n"} if ENV["AGG"]
 
   # Feed mule with the result:
   puts %x[#{CURL}]
@@ -76,7 +78,7 @@ def make_node(max_depth)
 
   # Create children:
   if max_depth > 0
-    MAX_KIDS.times do
+    @rand.rand(0..MAX_KIDS).times do
       ans[:children] << make_node(max_depth - 1)
     end
   end

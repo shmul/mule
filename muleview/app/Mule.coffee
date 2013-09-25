@@ -33,7 +33,7 @@ Ext.define "Muleview.Mule",
   # Also returns the alerts in the form "key;retention" => array
   # Also throws a keysReceived event with all the given keys - so that the keys store will update
   getKeyData: (key, callback) ->
-    @askMule "graph/#{key}?alerts=true", (response) =>
+    @askMule "graph/#{key}?deep=true&alerts=true", (response) =>
       keys = []
       keyData = {}
       alerts = null
@@ -45,7 +45,7 @@ Ext.define "Muleview.Mule",
           keys.push key
           keyData[retention] ||= {}
           keyData[retention][key] = data
-      Muleview.event "keysReceived", keys
+      # Muleview.event "keysReceived", keysHash
       callback(keyData, alerts)
 
   getKeysData: (keys, callback) ->

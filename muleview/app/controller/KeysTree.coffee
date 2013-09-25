@@ -82,6 +82,14 @@ Ext.define "Muleview.controller.KeysTree",
 
   receiveViewChangeEvent: (keys) ->
     keysArr = Ext.Array.from(keys)
+
+    # First, we add all the keys for the current view;
+    # We optimistically assume every node is a parent; the truth will eventually be revealed since we expand each key,
+    # causing @onItemExpand() to reveal its true status
+    keysHash = {}
+    keysHash[key] = true for key in keysArr
+    @addKeys(keysHash)
+
     @setMultiMode(@isMulti or keysArr.length > 1)
 
     if @isMulti
@@ -97,32 +105,15 @@ Ext.define "Muleview.controller.KeysTree",
         @tree.getSelectionModel().select(chosenNode, false, true) # Don't keep existing selection, suppress events
         @expandKey(chosenNode)
 
-  # ================================================================
-  # Data fetching and displaying:
-
   onItemExpand: (node) ->
     # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
     node.set("loading", true)
     @fetchKeys node.get("fullname"), (keys) =>
-
-      #TODO: implement numchild
-      # Commented out the following section after reducing subkey prefetching from 2 to 1 due to apparent overload in key data: <<< BEGIN COMMENTING OUT
-
-
-
-      # We would like to mark subkeys which we know for sure that they are leaves
-      # NOTE: We assume Mule returned at least 2 levels of keys!
-      # for key in keys
-      #   record = @store.getById(key)
-      #   # Since at least 2 levels of keys were received, if a node in the first level has no children then it is definitely a leaf:
-      #   if record.parentNode == node and not record.firstChild
-      #     record.set("leaf", true)
-      #     record.set("loaded", true)
-
-      # END COMMENTING OUT  >>>
       # Mark the original node as done loading:
       node.set("loading", false)
 
+  # ================================================================
+  # Data fetching and displaying:
 
   fillFirstkeys: ->
     # Add Root key:
@@ -160,6 +151,7 @@ Ext.define "Muleview.controller.KeysTree",
     newNode = @getMuleKeyModel().create
       name: key.substring(key.lastIndexOf(".") + 1)
       leaf: !hasKids
+      checked: if @isMulti then false else undefined
       fullname: key
 
     # Add the new node as a child to its parent:
