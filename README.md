@@ -107,6 +107,7 @@ Use a GET request
   * `timestamps` - the graph data will be restricted to the given timestamps. Timestamps can be a comma separated list of seconds or simple arithmetic expressions using the predefined variables `now` (or `n`) and `latest` (or `l`), like `l-10s`, `now-20d` .
   * `alerts` - if set to true, the alerts status will be added to the names for which alerts are defined.
   * `deep` - if set to true (which can be `true,yes,1`) then the graphs data for the metric children (one level deep) will also be returned. This may be compbined with timestamps. Defaults to `false`. As this option is popular, a syntactic sugar for it exists in the form of a url
+  * `filter` - can be set to `now` or `latest`. If `now`, only results in the time period of `now-period`..`now` will be returned. Similarly with `latest` which filters according to the latest time at which the sequence was updated.
 
     http://muleserver/piechart/<metric-or-name>?<timestamps>
 
@@ -196,7 +197,7 @@ Creates a backup of the db next to it. Returns the path.
 
 * install either lua 5.1 or 5.2, preferably using your standard package manager. Alternatively installation [from source](http://www.lua.org/download.html) is also very simple.
 * luarocks should also be installed using the package manager or (from source)[http://luarocks.org/en/Download].
-* install additional rocks - copas, lpack, luaposix
+* install additional rocks - copas, lpack, luaposix, StackTracePlus (optional)
 
 ### Kyotocabinet (or tokyocabinet)
 

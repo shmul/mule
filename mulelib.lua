@@ -156,22 +156,13 @@ function sequence(db_,name_)
     opts_ = opts_ or {}
     metric_cb_(_metric,_step,_period)
 
+    local now,latest_ts = time_now(),latest_timestamp()
+    local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
+      (opts_.filter=="now" and now-_period) or nil
 
-    local function one_slot(ts_)
-      local idx,_ = calculate_idx(ts_,_step,_period)
-      if ts_-get_timestamp(idx)<_period then
-        serialize_slot(idx,nil,slot_cb_)
-      end
-    end
-
-    local ind = indices(opts_.sorted)
 
     if opts_.deep then
-      local min_timestamp = nil
-      if opts_.period_only then
-        min_timestamp = latest_timestamp()-_period
-      end
-      for j,s in ipairs(ind) do
+      for j,s in ipairs(indices(opts_.sorted)) do
         if not min_timestamp or min_timestamp<get_timestamp(s) then
           serialize_slot(s,opts_.skip_empty,slot_cb_)
         end
@@ -180,20 +171,22 @@ function sequence(db_,name_)
     end
 
     if opts_.timestamps then
-      local now,latest_ts = time_now(),latest_timestamp()
       for _,t in ipairs(opts_.timestamps) do
         if t=="*" then
-          for _,s in ipairs(ind) do
+          for _,s in ipairs(indices(opts_.sorted)) do
             serialize_slot(s,nil,slot_cb_)
           end
         else
           local ts = to_timestamp(t,now,latest_ts)
           if ts then
             if type(ts)=="number" then
-              one_slot(ts)
-            else
-              for t = ts[1],ts[2],(ts[1]<ts[2] and _step or -_step) do
-                one_slot(t)
+              ts = {ts,ts+_step-1}
+            end
+            for t = ts[1],ts[2],(ts[1]<ts[2] and _step or -_step) do
+              local idx,_ = calculate_idx(t,_step,_period)
+              local ts = get_timestamp(idx)
+              if t-ts<_period and (not min_timestamp or min_timestamp<ts) then
+                serialize_slot(idx,nil,slot_cb_)
               end
             end
           end
@@ -267,6 +260,7 @@ function sparse_sequence(name_)
       slot._sum = slot._sum+sum_
       slot._hits = slot._hits+hits_
     end
+    return adjusted_timestamp,slot._sum
   end
 
   return {
@@ -324,6 +318,7 @@ function immediate_metrics(db_,name_)
       end
     end)
 end
+
 
 local function wrap_json(stream_)
   local str = stream_.get_string()
@@ -508,9 +503,9 @@ function mule(db_)
       local seq = sequence(db_,n)
       local a = alert_check(seq,now)
       if a then
-        col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%d,%d,\"%s\"]",
+        col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%s,%d,\"%s\"]",
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
-                        a._period,a._stale,a._sum,a._state))
+                        a._period,a._stale or "",a._sum,a._state))
       end
     end
     col.tail()
@@ -539,16 +534,15 @@ function mule(db_)
     local format = string.format
     local col = collectionout(str,"{","}")
     local opts = { deep=not timestamps,
+                   filter=options_.filter,
                    timestamps=timestamps,
                    sorted=false,
-                   skip_empty=true,
-                   period_only=true}
+                   skip_empty=true}
     local depth = immediate_metrics
     local alerts = is_true(options_.alerts)
     local names = {}
 
     col.head()
-
     for m in split_helper(resource_,"/") do
       if m=="*" then m = "" end
       if is_true(options_.deep) then
@@ -815,10 +809,14 @@ function mule(db_)
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
       local adjusted_timestamp,sum = seq.update(timestamp_,sum,1,replace)
-      _updated_sequences[n] = seq
-      if m~=metric_ then -- we check the metric, but the *name* is updated
-        _hints[n] = _hints[n] or {}
-        _hints[n]._haschildren = true
+      -- it might happen that we try to update a too old timestamp. In such a case
+      -- the update function returns null
+      if adjusted_timestamp then
+        _updated_sequences[n] = seq
+        if m~=metric_ then -- we check the metric, but the *name* is updated
+          _hints[n] = _hints[n] or {}
+          _hints[n]._haschildren = true
+        end
       end
     end
   end
@@ -855,7 +853,10 @@ function mule(db_)
   local function process_line(metric_line_)
     local function helper()
       local items,type = parse_input_line(metric_line_)
-      if #items==0 then return nil end
+      if #items==0 then
+        logd("bad input",metric_line_)
+        return nil
+      end
 
       if type=="command" then
         return command(items)
@@ -866,9 +867,6 @@ function mule(db_)
 
       -- 1) standard update
       if not string.find(items[1],";",1,true) then
-        if #items~=3 then
-          return false
-        end
         return update_line(items[1],items[2],items[3])
       end
 
@@ -911,7 +909,7 @@ function mule(db_)
       local n = sorted_updated_names[i]
       local seq = sequence(_db,n)
       local s = _updated_sequences[n]
-      for _,sl in ipairs(s.slots()) do
+      for j,sl in ipairs(s.slots()) do
         local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._sum,sl._hits or 1,
                                                   sl._hits==nil)
         _hints[n] = _hints[n] or {}

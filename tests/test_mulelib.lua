@@ -707,7 +707,10 @@ function test_dump_restore()
     -- the maximal time stamp is 1353179400 and there are exactly 4 slots which are no more
     -- than 48 hours ago
     m.process(line)
-    assert(string.find(m.graph("beer.stout.irish;5m:2d"),'"data": {"beer.stout.irish;5m:2d": [[1,1,1353074400],[1,1,1353087600],[1,1,1353179400],[2,1,1353019200]]',1,true))
+    assert(string.find(m.graph("beer.stout.irish;5m:2d",{timestamp="latest-2d+1..latest",filter="latest"}),'"data": {"beer.stout.irish;5m:2d": [[1,1,1353179400],[2,1,1353019200],[1,1,1353074400],[1,1,1353087600]]',1,true))
+    assert(string.find(m.graph("beer.stout.irish;5m:2d",{timestamp="latest-2d+1..latest",filter="now"}),'"data": {"beer.stout.irish;5m:2d": []',1,true))
+    assert(string.find(m.graph("beer.stout.irish;5m:2d",{filter="latest"}),'"data": {"beer.stout.irish;5m:2d": [[1,1,1353074400],[1,1,1353087600],[1,1,1353179400],[2,1,1353019200]]',1,true))
+
   end
 
   for_each_db("./tests/temp/dump_restore",helper)
