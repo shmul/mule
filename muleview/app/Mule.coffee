@@ -25,7 +25,7 @@ Ext.define "Muleview.Mule",
       keys = {}
       for ret, data of retentions
         key = ret.substring(0, ret.indexOf(";"))
-        keys[key] = data.childs
+        keys[key] = data.children
       callback(keys)
 
   # Returns all mule's "graph" data for a given key,

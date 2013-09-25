@@ -285,7 +285,7 @@ Muleview requires [CoffeeScript](http://coffeescript.org/) For compilation and [
 To build a produciton-ready folder:
 1. Install [CoffeeScript](http://coffeescript.org/#installation) and make sure the `coffee` command is available
 1. Install [Sencha Cmd](http://www.sencha.com/products/sencha-cmd/download) (This will require some additional 3rd parties such as Java and Compass)
-1. `cd` to muleview and run `sencha app bulid`
+1. `cd muleview` and run `sencha app bulid`
 1. The output should be generated under muleview/build/Muleview/production
 
 #### Built-in Serving with Mule

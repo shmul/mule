@@ -1,3 +1,5 @@
 temp/*
 tests/temp/*
 profiler.out*
+build/production/Muleview-all.scss
+build/production/Muleview-example.scss
