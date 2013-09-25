@@ -41,7 +41,7 @@ def feed_mule()
   # Show and write the result:
   puts ans
   File.write(TIMESTAMP_FILE, ans)
-  File.open(APPENDED_TIMESTAMP_FILE,"a" ){ |f| f.write ans}
+  File.open(APPENDED_TIMESTAMP_FILE,"a" ){ |f| f.write ans + "\n"} if ENV["AGG"]
 
   # Feed mule with the result:
   puts %x[#{CURL}]
