@@ -28,32 +28,28 @@ Ext.define "Muleview.Mule",
         keys[key] = data.children
       callback(keys)
 
-  # Returns all mule's "graph" data for a given key,
-  # In the form of "retention => key => data array" double-hash
-  # Also returns the alerts in the form "key;retention" => array
-  getKeyData: (key, withKids, callback) ->
-    @askMule "graph/#{key}?deep=#{withKids}&alerts=true", (response) =>
-      keys = []
-      keyData = {}
-      alerts = null
+  # For a given key, returns data per each retention
+  # in the form of "retention => data array"
+  getKeyData: (key, callback) ->
+    @askMule "graph/#{key}?deep=false?alerts=false", (response) =>
+      retentions = {}
       for own name, data of response
-        if name == "alerts"
-          alerts = data
-        else
-          [key, retention] = name.split(";")
-          keys.push key
-          keyData[retention] ||= {}
-          keyData[retention][key] = data
-      callback(keyData, alerts)
+        [keyName, retention] = name.split(";")
+        throw "Invalid key received: '#{keyName}'" unless key == keyName
+        retentions[retention] = data
+      callback(retentions)
 
-  getKeysData: (keys, withKids, callback) ->
+  # For a list of keys, returns data per retention per key
+  # in a double hash: retention => key => data
+  # The method aggregates multiple asynch requests' data
+  getKeysData: (keys, callback) ->
     callbacks = keys.length
-    allKeys = {}
-    allAlerts = {}
-    counterCallback = (moreKeys, moreAlerts) ->
-      Ext.merge(allKeys, moreKeys)
-      Ext.merge(allAlerts, moreAlerts)
-      callbacks -= 1
-      if callbacks == 0
-        callback(allKeys, allAlerts)
-    @getKeyData(key, withKids, counterCallback) for key in keys
+    retentions = {}
+    for key in keys
+      do (key) =>
+        @getKeyData key, (keyData) ->
+          for ret, retData of keyData
+            retentions[ret] ||= {}
+            retentions[ret][key] = retData
+          callbacks--
+          callback(retentions) if callbacks == 0
