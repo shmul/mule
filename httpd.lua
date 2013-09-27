@@ -97,6 +97,8 @@ local function build_response(status_,headers_,body_)
 end
 
 local CORS = {{"Access-Control-Allow-Origin","*"},{"Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept"}}
+local CONTENT_TYPE_JSON = {"Content-Type","application/json"}
+
 local function standard_response(status_,content_,extra_headers_)
   local headers = {{"Connection","keep-alive"}}
   if extra_headers_ then
@@ -217,7 +219,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     if qs.jsonp then
       rv = string.format("%s(%s)",qs.jsonp,rv)
     end
-    return send_(standard_response(200,rv),rv)
+    return send_(standard_response(200,rv,{CONTENT_TYPE_JSON}),rv)
   end
 
   if type(handler_result)=="function" then

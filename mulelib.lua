@@ -129,19 +129,25 @@ function sequence(db_,name_)
 
 
   local function indices(sorted_)
-    -- the sorted list is of indices to the main one
+    if not sorted_ then
+      return coroutine.wrap(
+        function()
+          for i=1,(_period/_step) do
+            coroutine.yield(i-1)
+          end
+        end)
+    end
     local array = {}
     for i=1,(_period/_step) do
-      array[i] = i-1
+      array[i] = {i-1,get_timestamp(i-1)}
     end
-    if sorted_ then
-      table.sort(array,
-                 function(u,v)
-                   return get_timestamp(u)<get_timestamp(v)
-                 end)
-    end
-
-    return array
+    table.sort(array, function(u,v) return u[2]<v[2] end)
+    return coroutine.wrap(
+      function()
+        for _,s in ipairs(array) do
+          coroutine.yield(s[1])
+        end
+      end)
   end
 
   local function serialize(opts_,metric_cb_,slot_cb_)
@@ -162,7 +168,7 @@ function sequence(db_,name_)
 
 
     if opts_.deep then
-      for j,s in ipairs(indices(opts_.sorted)) do
+      for s in indices(opts_.sorted) do
         if not min_timestamp or min_timestamp<get_timestamp(s) then
           serialize_slot(s,opts_.skip_empty,slot_cb_)
         end
@@ -173,7 +179,7 @@ function sequence(db_,name_)
     if opts_.timestamps then
       for _,t in ipairs(opts_.timestamps) do
         if t=="*" then
-          for _,s in ipairs(indices(opts_.sorted)) do
+          for s in indices(opts_.sorted) do
             serialize_slot(s,nil,slot_cb_)
           end
         else
@@ -184,8 +190,8 @@ function sequence(db_,name_)
             end
             for t = ts[1],ts[2],(ts[1]<ts[2] and _step or -_step) do
               local idx,_ = calculate_idx(t,_step,_period)
-              local ts = get_timestamp(idx)
-              if t-ts<_period and (not min_timestamp or min_timestamp<ts) then
+              local its = get_timestamp(idx)
+              if t-its<_period and (not min_timestamp or min_timestamp<its) then
                 serialize_slot(idx,nil,slot_cb_)
               end
             end
@@ -293,7 +299,7 @@ function one_level_children(db_,name_)
       end
       local find = string.find
       for name in db_.matching_keys(prefix) do
-        if name~=prefix and name~=name_ and find(name,rp,1,true) and
+        if name~=prefix and find(name,rp,1,true) and
           (#prefix>0 and not find(name,".",#prefix+2,true)) then
           -- we are intersted only in child metrics of the format
           -- m.sub-key;ts where sub-key contains no dots
@@ -562,6 +568,9 @@ function mule(db_)
         depth = function()
           return coroutine.wrap(
             function()
+--              for s in immediate_metrics(db_,m) do
+--                coroutine.yield(s)
+--              end
               for i=1,(math.min(#ranked_children,options_.count or DEFAULT_COUNT)) do
                 coroutine.yield(ranked_children[i][1])
               end
