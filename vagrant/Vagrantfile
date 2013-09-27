@@ -1,0 +1,7 @@
+Vagrant::Config.run do |config|
+  config.vm.box = "raring64_20130917"
+  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/raring/20130917/raring-server-cloudimg-amd64-vagrant-disk1.box"
+  config.vm.customize ["modifyvm", :id, "--memory", "2048"]
+  config.vm.forward_port 3000, 3000
+  config.vm.share_folder "mule", "/home/vagrant/mule", "../"
+end

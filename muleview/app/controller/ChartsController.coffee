@@ -53,32 +53,26 @@ Ext.define "Muleview.controller.ChartsController",
       return
 
     # If some keys were selected, set a loading mask before retreiving them:
-    @chartsViewContainer.setLoading(true)
-    Muleview.Mule.getKeysData keys, (keysData, alerts) =>
-      @chartsView = @createChartsView(keys, retention, keysData, alerts)
-      @chartsView.showRetention(retention)
-      # Add the new ChartsView to its container and remove loading mask:
-      @chartsViewContainer.add(@chartsView)
-      @chartsViewContainer.setLoading(false)
+    @chartsView = @createChartsView(keys, retention)
 
-      if keys.length == 1
-        # Set a nice title to the panel, replacing "." with "/":
-        @chartsViewContainer.setTitle(keys[0].replace(/\./, " / "))
-      else
-        @chartsViewContainer.setTitle("Comparison Mode") #FIXME
+    # Add the new ChartsView to its container and remove loading mask:
+    @chartsViewContainer.add(@chartsView)
 
-  createChartsView: (keys, retention, keysData, alerts) ->
+    if keys.length == 1
+      # Set a nice title to the panel, replacing "." with "/":
+      @chartsViewContainer.setTitle(keys[0].replace(/\./, " / "))
+    else
+      @chartsViewContainer.setTitle("Comparison Mode") #FIXME
+
+  createChartsView: (keys, retention) ->
     if keys.length == 1
       ans = @getView("SingleGraphChartsView").create
         key: keys[0]
-        data: keysData
-        alerts: @processAlerts(alerts)
         defaultRetention: retention
 
     else if keys.length > 1
       ans = @getView("ChartsView").create
-        topKeys: keys
-        data: keysData
+        keys: keys
         defaultRetention: retention
     ans
 

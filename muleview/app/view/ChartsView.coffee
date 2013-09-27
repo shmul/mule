@@ -12,47 +12,58 @@ Ext.define "Muleview.view.ChartsView",
   showLegend: true
   othersKey: Muleview.Settings.othersSubkeyName # Will be used as the name for the key which will group all hidden subkeys
 
-  alerts: []
+  alerts: [] #TODO: remove
 
-  initRetentions: ->
-    # Init retentions (these are just the names, for the combo box)
-    retentions = (new Muleview.model.Retention(retName) for own retName of @data)
+  initComponent: ->
+    # Fetch all retentions and their data:
+    Muleview.Mule.getKeysData @keys, (keysData) =>
+      @fillRetentionsAndLightCharts(keysData)
+
+    # Init component:
+    @items = @items()
+    @toolbar =  @chartContainer.dockedItems.getAt(0)
+
+    @callParent()
+
+  fillRetentionsAndLightCharts: (data) ->
+    @initRetentionsStore(data)
+    @defaultRetention ||= @retentionsStore.getAt(0).get("name")
+    @initRetentionsMenu(data)
+    @initStores(data)
+    @initLightCharts(data)
+    @showRetention(@defaultRetention)
+
+  initRetentionsStore: (data) ->
+    retentions = (new Muleview.model.Retention(retName) for own retName of data)
+
+    # init retentions store:
     @retentionsStore = Ext.create "Ext.data.ArrayStore",
       model: "Muleview.model.Retention"
       sorters: ["sortValue"]
       data: retentions
-    @defaultRetention ||= @retentionsStore.getAt(0).get("name")
 
-  initKeys: ->
-    @keys = Ext.Object.getKeys(@data[@defaultRetention])
+  initRetentionsMenu: (data) ->
+    # Add retentions selection to the toolbar:
+    # We replace the placeholder with the created menu:
+    placeholder = @toolbar.down("button[cls=\"RetentionsPlaceholder\"]")
+    placeholderIndex = @toolbar.items.indexOf(placeholder)
+    @toolbar.remove(placeholder)
+    @retMenu = @createRetentionsMenu()
+    @toolbar.insert(placeholderIndex, @retMenu)
 
   eachRetention: (cb) ->
     @retentionsStore.each (retention) ->
       cb(retention, retention.get("name"))
 
-  initStores: ->
+  initStores: (data) ->
     @stores = {}
     @eachRetention (retention, name) =>
-      @stores[name] = @createStore(name)
+      @stores[name] = @createStore(data[name])
 
-  initLightCharts: ->
+  initLightCharts: (data) ->
     @lightCharts = {}
     @eachRetention (retention, name) =>
-      @lightCharts[name] = @createLightChart(retention)
-
-  initComponent: ->
-    @initRetentions()
-    @initKeys()
-
-    # Create all stores and light charts:
-    @initStores()
-    @initLightCharts()
-
-    # Init component:
-    @items = @items()
-
-    @callParent()
-    @eachRetention (retention, name) =>
+      @lightCharts[name] = @createLightChart(retention, data)
       @rightPanel.add(@lightCharts[name])
 
   setBbar: (store) ->
@@ -89,7 +100,7 @@ Ext.define "Muleview.view.ChartsView",
           layout:
             type: "vbox"
             align: "stretch"
-          items: @lightCharts
+          items: [] # will be added upone data retrieval
     ]
 
   createChartContainerZoomSlider: ->
@@ -114,7 +125,12 @@ Ext.define "Muleview.view.ChartsView",
     [
         "Show:"
       ,
-        @retMenu = @createRetentionsMenu()
+        # Placeholder with "loading..." until retentions are resolved
+        xtype: "button"
+        text: "Loading..."
+        icon: "resources/default/images/loading.gif"
+        cls: "RetentionsPlaceholder"
+
       , "-",
         xtype: "button"
         text: "Refresh"
@@ -137,7 +153,7 @@ Ext.define "Muleview.view.ChartsView",
       # We make sure the retention checkbox is checked before raising an event,
       # because Extjs causes previously-checked buttons to invoke their own click event upon "implicitly" getting unchecked
       # (as a result of a different checkbox getting checked)
-      Muleview.event "viewChange", @topKeys, me.retention.get("name") if me.checked
+      Muleview.event "viewChange", @keys, me.retention.get("name") if me.checked
 
     items = []
     @retentionsStore.each (ret) =>
@@ -162,36 +178,55 @@ Ext.define "Muleview.view.ChartsView",
         items: items
 
   showRetention: (retName) ->
+    # Be oh-so-idempotent:
     return unless !@currentRetName or(retName and retName != @currentRetName)
+
     retName ||= @retentionsStore.getAt(0).get("name")
-    @renderChart(retName)
+    @createChart(retName)
     @retMenu.selectRetention(retName)
-
-    lightChart.setVisible(lightChart.retention != retName) for own _, lightChart of @lightCharts
+    for own _, lightChart of @lightCharts
+      lightChart.setVisible(lightChart.retention != retName)
     @currentRetName = retName
-    Muleview.event "viewChange", @topKeys, @currentRetName
+    Muleview.event "viewChange", @keys, @currentRetName
 
-  renderChart: (retName = @currentRetName) ->
+  createChart: (retName = @currentRetName) ->
+    @store = @stores[retName]
+    @renderChart()
+    @setBbar(@store)
+
+  renderChart: () ->
     @chartContainer.removeAll()
-    store = @stores[retName]
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
       flex: 1
-      topKeys: @topKeys
-      store: store
+      topKeys: @keys
+      store: @store
       showLegend: @showLegend
-    @setBbar(store)
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],
   #   key2 => [[count, batch, timestamp], ...]
   # }
-  createStore: (retName) ->
+  createStore: (data, alerts = []) ->
+    fields = []
+    addField = (name) ->
+      fields.push
+        name: name
+        type: "integer"
+
     # Create initial store:
-    alerts = @alerts[retName]
-    store = @createEmptyStore(alerts)
+    addField "timestamp"
+    addField key for key, _ of data
+    addField alert.name for alert in alerts
+
+    store = Ext.create "Ext.data.ArrayStore",
+      fields: fields
+      sorters: [
+          property: "timestamp"
+      ]
+
     # Convert data to timestamps-based hash:
     timestamps = {}
-    for own key, keyData of @data[retName]
+    for own key, keyData of data
       for [count, _, timestamp] in keyData
         unless timestamps[timestamp]
           timestamps[timestamp] = {
@@ -204,24 +239,12 @@ Ext.define "Muleview.view.ChartsView",
     store.add(Ext.Object.getValues(timestamps))
     store
 
-  createEmptyStore: (alerts) ->
-    # Initialize store:
-    fields = (name: key, type: "integer" for key in @keys)
-    fields.push(name: "timestamp", type: "integer")
-    fields.push {name: alert.name, type: "integer"} for alert in alerts if alerts
-
-    store = Ext.create "Ext.data.ArrayStore",
-      fields: fields
-      sorters: [
-          property: "timestamp"
-      ]
-
-  createLightChart: (retention) ->
+  createLightChart: (retention, data) ->
     retName = retention.get("name")
     Ext.create "Muleview.view.MuleLightChart",
       title: retention.get("title")
       flex: 1
-      topKeys: @topKeys
+      topKeys: @keys
       hidden: true
       retention: retName
       store: @stores[retName]
