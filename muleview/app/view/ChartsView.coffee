@@ -58,7 +58,7 @@ Ext.define "Muleview.view.ChartsView",
   initStores: (data) ->
     @stores = {}
     @eachRetention (retention, name) =>
-      @stores[name] = @createStore(name, data)
+      @stores[name] = @createStore(data[name])
 
   initLightCharts: (data) ->
     @lightCharts = {}
@@ -203,13 +203,13 @@ Ext.define "Muleview.view.ChartsView",
   #   key1 => [[count, batch, timestamp], ...],
   #   key2 => [[count, batch, timestamp], ...]
   # }
-  createStore: (retName, data) ->
+  createStore: (data) ->
+    alerts = {} #TODO: remove
     # Create initial store:
-    alerts = @alerts[retName] # TODO: replace with known alerts
-    store = @createEmptyStore(alerts)
+    store = @createEmptyStore(Ext.Object.getKeys(data), alerts)
     # Convert data to timestamps-based hash:
     timestamps = {}
-    for own key, keyData of data[retName]
+    for own key, keyData of data
       for [count, _, timestamp] in keyData
         unless timestamps[timestamp]
           timestamps[timestamp] = {
@@ -222,9 +222,9 @@ Ext.define "Muleview.view.ChartsView",
     store.add(Ext.Object.getValues(timestamps))
     store
 
-  createEmptyStore: (alerts) ->
+  createEmptyStore: (keys, alerts) ->
     # Initialize store:
-    fields = (name: key, type: "integer" for key in @keys)
+    fields = (name: key, type: "integer" for key in keys)
     fields.push(name: "timestamp", type: "integer")
     fields.push {name: alert.name, type: "integer"} for alert in alerts if alerts
 

@@ -53,3 +53,12 @@ Ext.define "Muleview.Mule",
             retentions[ret][key] = retData
           callbacks--
           callback(retentions) if callbacks == 0
+
+  getGraphData: (key, retention, callback) ->
+    @askMule "graph/#{key};#{retention}?deep=true&alerts=false", (response) =>
+      ans = {}
+      for name, data of response
+        [key, ret] = name.split(";")
+        throw "Invalid retention received: #{ret}" unless ret = retention
+        ans[key] = data
+      callback(ans)
