@@ -182,22 +182,25 @@ Ext.define "Muleview.view.ChartsView",
     return unless !@currentRetName or(retName and retName != @currentRetName)
 
     retName ||= @retentionsStore.getAt(0).get("name")
-    @renderChart(retName)
+    @createChart(retName)
     @retMenu.selectRetention(retName)
     for own _, lightChart of @lightCharts
       lightChart.setVisible(lightChart.retention != retName)
     @currentRetName = retName
     Muleview.event "viewChange", @keys, @currentRetName
 
-  renderChart: (retName = @currentRetName) ->
+  createChart: (retName = @currentRetName) ->
+    @store = @stores[retName]
+    @renderChart()
+    @setBbar(@store)
+
+  renderChart: () ->
     @chartContainer.removeAll()
-    store = @stores[retName]
     @chartContainer.add Ext.create "Muleview.view.MuleChart",
       flex: 1
       topKeys: @keys
-      store: store
+      store: @store
       showLegend: @showLegend
-    @setBbar(store)
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],
