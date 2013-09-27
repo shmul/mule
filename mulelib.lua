@@ -299,7 +299,7 @@ function one_level_children(db_,name_)
       end
       local find = string.find
       for name in db_.matching_keys(prefix) do
-        if name~=prefix and name~=name_ and find(name,rp,1,true) and
+        if name~=prefix and find(name,rp,1,true) and
           (#prefix>0 and not find(name,".",#prefix+2,true)) then
           -- we are intersted only in child metrics of the format
           -- m.sub-key;ts where sub-key contains no dots
@@ -568,6 +568,9 @@ function mule(db_)
         depth = function()
           return coroutine.wrap(
             function()
+--              for s in immediate_metrics(db_,m) do
+--                coroutine.yield(s)
+--              end
               for i=1,(math.min(#ranked_children,options_.count or DEFAULT_COUNT)) do
                 coroutine.yield(ranked_children[i][1])
               end
