@@ -23,6 +23,7 @@ Ext.define "Muleview.view.ChartsView",
       data: retentions
     @defaultRetention ||= @retentionsStore.getAt(0).get("name")
 
+  # Initialize keys, allowing subclasses to override this behaviour
   initKeys: ->
     @keys = Ext.Object.getKeys(@data[@defaultRetention])
 
@@ -41,6 +42,7 @@ Ext.define "Muleview.view.ChartsView",
       @lightCharts[name] = @createLightChart(retention)
 
   initComponent: ->
+    # Init Retentions-store for the combobox:
     @initRetentions()
     @initKeys()
 
@@ -162,7 +164,9 @@ Ext.define "Muleview.view.ChartsView",
         items: items
 
   showRetention: (retName) ->
+    # Be oh-so-idempotent:
     return unless !@currentRetName or(retName and retName != @currentRetName)
+
     retName ||= @retentionsStore.getAt(0).get("name")
     @renderChart(retName)
     @retMenu.selectRetention(retName)

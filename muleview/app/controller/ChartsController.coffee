@@ -54,7 +54,7 @@ Ext.define "Muleview.controller.ChartsController",
 
     # If some keys were selected, set a loading mask before retreiving them:
     @chartsViewContainer.setLoading(true)
-    Muleview.Mule.getKeysData keys, (keysData, alerts) =>
+    Muleview.Mule.getKeysData keys, true, (keysData, alerts) =>
       @chartsView = @createChartsView(keys, retention, keysData, alerts)
       @chartsView.showRetention(retention)
       # Add the new ChartsView to its container and remove loading mask:
