@@ -82,8 +82,14 @@
     @alert = Ext.StoreManager.get("alertsStore").getById(alertName)
     @alert ||= @createDefaultAlert()
     @form.loadRecord(@alert)
+    @formatTimeFields()
     @getForm().clearInvalid()
     @updateHeight(@alert.get("isOn"))
+
+  formatTimeFields: ->
+    for timeField in @form.query("muletimefield")
+      value = timeField.getValue()
+      timeField.setValue(Muleview.model.Retention.toShortFormat(value)) unless timeField.value.match(/[smhdy]$/)
 
   createDefaultAlert: () ->
     max = @store.max(@key)
@@ -115,6 +121,7 @@
         flex: 1
         handler: =>
           @getForm().reset()
+          @formatTimeFields()
       ,
         "-"
       ,
@@ -124,6 +131,7 @@
         icon: "resources/default/images/wand.png"
         handler: =>
           @adjust()
+          @formatTimeFields()
       ,
         "-"
       ,

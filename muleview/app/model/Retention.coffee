@@ -15,34 +15,62 @@ Ext.define "Muleview.model.Retention",
 
   statics:
     units: [
-      ["s", "Seconds"]
-      ["m", "Minutes"]
-      ["h", "Hours"]
-      ["d", "Days"]
-      ["y", "Years"]
+      ["s", "Second", 1]
+      ["m", "Minute", 60]
+      ["h", "Hour", 60 * 60]
+      ["d", "Day", 60 * 60 * 24]
+      ["y", "Year", 60 * 60 * 24 * 365]
     ]
 
-  parseOne: (rawTimeUnit) ->
-    [_all, count, letter] = rawTimeUnit.match(/(\d+)([mhsdy])/)
-    name = null
-    for [unitLetter, unitName], ind in @self.units
-      if letter == unitLetter
-        name = unitName
-        letterIndex = ind
-    count = parseInt(count)
-    name = name.substring(0, name.length - 1) if count == 1 # Remove the "s" for a singular form
-    {
-      name: name
-      count: count
-      letter: letter
-      letterValue: letterIndex
-    }
+    # Receives something like "5s", "2m" or "1h",
+    # Returns something like 5, 120, 3600
+    getMuleTimeValue: (str) ->
+      parsed = @parseOne(str)
+      [_, _, size] = Ext.Array.findBy @units, (unit) ->
+        [letter, _, _] = unit
+        letter == parsed.letter
+      parsed.count * size
+
+    toLongFormat: (secs) ->
+      ans = []
+      for [_, devider, size], i in @units by -1
+        if secs >= size
+          remainder = secs % size
+          subtract = (secs - remainder) / size
+          secs = remainder
+          ans.push(if remainder == 0 then " and " else ", ") if ans.length > 0
+          ans.push "#{subtract} #{devider}"
+          ans.push "s" if subtract > 1
+      ans.join("")
+
+    toShortFormat: (secs) ->
+      for [letter, _, size] in @units by -1
+        return "#{secs / size}#{letter}" if secs % size == 0
+
+    parseOne: (rawTimeUnit) ->
+      [_all, count, letter] = rawTimeUnit.match(/(\d+)([mhsdy])/)
+      name = null
+      for [unitLetter, unitName, size], ind in @units
+        if letter == unitLetter
+          name = unitName
+          letterIndex = ind
+          letterSize = size
+      count = parseInt(count)
+      secs = letterSize * count
+      name += "s" if count == 1 # Add "s" for plural form
+      {
+        name: name
+        count: count
+        letter: letter
+        letterValue: letterIndex
+        secs: secs
+      }
 
   constructor: (ret) ->
     split = ret.split(":")
     last = split[1]
-    @bucket = @parseOne(split[0])
-    @total = @parseOne(split[1])
+    @bucket = @self.parseOne(split[0])
+    @total = @self.parseOne(split[1])
     @title = @getTitle()
     @value = @getValue()
     @callParent()
@@ -78,4 +106,4 @@ Ext.define "Muleview.model.Retention",
 
   # Returns the step size
   getStep: ->
-    @bucket.count
+    @bucket.secs

@@ -58,30 +58,11 @@ Ext.define "Muleview.model.Alert",
   set: (attr, value) ->
     @callParent(arguments)
     if attr == "stale" or attr == "period"
-      @set("formatted_#{attr}", @formatSeconds(value))
+      @set("formatted_#{attr}", Muleview.model.Retention.toLongFormat(value))
     else if attr == "state"
       # State class is used for icon and background color selection in the grid.
       @set("stateClass", value.replace(/[ _-]/, "-").toLowerCase())
       @set("severityClass", @severityClasses[value.toUpperCase()])
-
-  formatSeconds: (secs) ->
-    deviders = [
-      ["Year",  60 * 60 * 24 * 365]
-      ["Day",  60 * 60 * 24]
-      ["Hour",  60 * 60]
-      ["Minute",  60]
-      ["Second",  1]
-    ]
-    ans = []
-    for [devider, size], i in deviders
-      if secs >= size
-        remainder = secs % size
-        subtract = (secs - remainder) / size
-        secs = remainder
-        ans.push(if remainder == 0 then " and " else ", ") if ans.length > 0
-        ans.push "#{subtract} #{devider}"
-        ans.push "s" if subtract > 1
-    ans.join("")
 
   alertComponents: [
       name: "critical_high"
