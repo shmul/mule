@@ -170,6 +170,7 @@
       @doMuleAction("DELETE")
 
   doMuleAction: (method) ->
+    @setLoading(true)
     @getForm().submit(
       url: Muleview.Mule.getAlertCommandUrl(@key, @retention)
       method: method
