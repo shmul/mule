@@ -79,7 +79,7 @@
 
   load: () ->
     alertName = @key + ";" + @retention
-    @alert = Ext.StoreManager.get("alertsStore").findRecord("name", alertName)
+    @alert = Ext.StoreManager.get("alertsStore").getById(alertName)
     @alert ||= @createDefaultAlert()
     @form.loadRecord(@alert)
     @getForm().clearInvalid()

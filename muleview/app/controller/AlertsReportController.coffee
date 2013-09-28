@@ -1,6 +1,7 @@
 # === Model =====================================================
 Ext.define "Muleview.model.Alert",
   extend: "Ext.data.Model",
+  idProperty: "name"
   fields: [
       name: "name"
       type: "string"
@@ -82,6 +83,30 @@ Ext.define "Muleview.model.Alert",
         ans.push "s" if subtract > 1
     ans.join("")
 
+  alertTypes:
+    "critical_low":
+      label: "Critical Low"
+      color: "red"
+
+    "warning_low":
+      label: "Warning Low"
+      color: "yellow"
+
+    "warning_high":
+      label: "Warning High"
+      color: "red"
+
+    "critical_high":
+      label: "Critical High"
+      color: "yellow"
+
+  toGraphArray: () ->
+    for key, attributes of @alertTypes
+      name: key
+      label: attributes.label
+      color: attributes.color
+      value: @get(key)
+
 # ==== Store =====================================================
 Ext.define "Muleview.store.AlertsStore",
   extend: "Ext.data.Store"
@@ -89,10 +114,9 @@ Ext.define "Muleview.store.AlertsStore",
   model: "Muleview.model.Alert"
   proxy:
     type: "ajax"
-    url: Muleview.Settings.muleUrlPrefix + "/alert"
+    url: Muleview.Settings.muleUrlPrefix + "alert"
     reader: Ext.create "Ext.data.reader.Json",
       readRecords: (root) ->
-        recordsHash = root.data
         records = []
 
         fields = [
@@ -136,7 +160,7 @@ Ext.define "Muleview.controller.AlertsReportController",
     @grid = @getGrid()
     @store = Ext.create("Muleview.store.AlertsStore")
     @store.on
-      load: @handleLoad
+      datachanged: @handleLoad
       scope: @
 
     @grid.reconfigure @store
@@ -176,7 +200,7 @@ Ext.define "Muleview.controller.AlertsReportController",
       @store.filter("stateClass", new RegExp(selectedState, "i")) if selectedState != "total"
       @grid.expand()
 
-  handleLoad: (store, records) ->
+  handleLoad: (store) ->
     summary = {
       Critical: 0
       Warning: 0
@@ -184,19 +208,18 @@ Ext.define "Muleview.controller.AlertsReportController",
       Stale: 0
     }
 
-    Ext.each records, (record) ->
+    store.each (record) ->
       severity = record.get("severityClass")
       summary[severity] += 1
 
     for severity, value of summary
       Ext.getCmp("alertsSummary#{severity}").setText("#{severity}: #{value}")
-    Ext.getCmp("alertsSummaryTotal").setText("Total: #{records.length}")
-
+    Ext.getCmp("alertsSummaryTotal").setText("Total: #{store.getCount()}")
 
   updateSelection: (key, retention) ->
     return unless Ext.typeOf(key) == "string" or (Ext.typeOf(key) == "array" and key.length == 1)
     graphName = "#{Ext.Array.from(key)[0]};#{retention}"
-    alert = @grid.getStore().findRecord("name", graphName)
+    alert = @grid.getStore().getById(graphName)
     selModel = @grid.getSelectionModel()
     if alert
        selModel.select(alert, false, false)
