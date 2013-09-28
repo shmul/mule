@@ -83,29 +83,27 @@ Ext.define "Muleview.model.Alert",
         ans.push "s" if subtract > 1
     ans.join("")
 
-  alertTypes:
-    "critical_low":
+  alertComponents: [
+      name: "critical_high"
+      label: "Critical High"
+      color: "red"
+    ,
+      name: "warning_high"
+      label: "Warning High"
+      color: "orange"
+    ,
+      name: "warning_low"
+      label: "Warning Low"
+      color: "orange"
+    ,
+      name: "critical_low"
       label: "Critical Low"
       color: "red"
-
-    "warning_low":
-      label: "Warning Low"
-      color: "yellow"
-
-    "warning_high":
-      label: "Warning High"
-      color: "red"
-
-    "critical_high":
-      label: "Critical High"
-      color: "yellow"
+  ]
 
   toGraphArray: () ->
-    for key, attributes of @alertTypes
-      name: key
-      label: attributes.label
-      color: attributes.color
-      value: @get(key)
+    for cmp in @alertComponents
+      Ext.apply({value: @get(cmp.name)}, cmp)
 
 # ==== Store =====================================================
 Ext.define "Muleview.store.AlertsStore",
