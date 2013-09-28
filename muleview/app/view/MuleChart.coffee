@@ -113,7 +113,7 @@ Ext.define "Muleview.view.MuleChart",
         tips:
           trackMouse: false
           anchor: "left"
-          tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
+          tpl: "<b>{key}</b> <hr /> <b>Time: </b>{timestamp}<br><b> Value: </b> {value} <br /><b>Percent:</b>{percent}%"
           renderer: @tipsRenderer
           targetXY: @self.lastXY
 
