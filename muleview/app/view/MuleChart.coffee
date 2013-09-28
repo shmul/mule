@@ -128,6 +128,7 @@ Ext.define "Muleview.view.MuleChart",
             stroke: alert.color
             opacity: 0.3
             "stroke-width": 3
+            "stroke-dasharray": 10
           markerConfig:
             type: "arrow"
             radius: 0.1
