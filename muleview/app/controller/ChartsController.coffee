@@ -75,28 +75,3 @@ Ext.define "Muleview.controller.ChartsController",
         keys: keys
         defaultRetention: retention
     ans
-
-
-  processAlerts: (rawAlertsHash) ->
-    # Preprocess Mule's alerts array according to Muleview.Settings.alerts
-    # From:
-    #  {
-    #    "mykey;1m:1h": [0,1,100,250, 60, 60],
-    #    "mykey;1d:3y": [0,10,200,350, 60, 360],
-    #   ...
-    #  }
-    # To:
-    # {
-    #   "mykey;1m:1h": [
-    #     {name: "critical_low", label: "Critical Low", value: 0, ...},
-    #     {name: "warning_low", label: "Warning Low", value: 1, ...},
-    #     ...
-    #     ],
-    #  "mykey;1d:3y": [
-    #    {name: "critical_low", ... ],
-    #    ...
-    # }
-    ans = {}
-    for own retName, rawArr of rawAlertsHash
-      ans[retName] = (Ext.apply {}, obj, {value: rawArr.shift()} for obj in Muleview.Settings.alerts)
-    ans
