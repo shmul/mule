@@ -1,6 +1,7 @@
 # === Model =====================================================
 Ext.define "Muleview.model.Alert",
   extend: "Ext.data.Model",
+  idProperty: "name"
   fields: [
       name: "name"
       type: "string"
@@ -57,30 +58,33 @@ Ext.define "Muleview.model.Alert",
   set: (attr, value) ->
     @callParent(arguments)
     if attr == "stale" or attr == "period"
-      @set("formatted_#{attr}", @formatSeconds(value))
+      @set("formatted_#{attr}", Muleview.model.Retention.toLongFormat(value))
     else if attr == "state"
       # State class is used for icon and background color selection in the grid.
       @set("stateClass", value.replace(/[ _-]/, "-").toLowerCase())
       @set("severityClass", @severityClasses[value.toUpperCase()])
 
-  formatSeconds: (secs) ->
-    deviders = [
-      ["Year",  60 * 60 * 24 * 365]
-      ["Day",  60 * 60 * 24]
-      ["Hour",  60 * 60]
-      ["Minute",  60]
-      ["Second",  1]
-    ]
-    ans = []
-    for [devider, size], i in deviders
-      if secs >= size
-        remainder = secs % size
-        subtract = (secs - remainder) / size
-        secs = remainder
-        ans.push(if remainder == 0 then " and " else ", ") if ans.length > 0
-        ans.push "#{subtract} #{devider}"
-        ans.push "s" if subtract > 1
-    ans.join("")
+  alertComponents: [
+      name: "critical_high"
+      label: "Critical High"
+      color: "red"
+    ,
+      name: "warning_high"
+      label: "Warning High"
+      color: "orange"
+    ,
+      name: "warning_low"
+      label: "Warning Low"
+      color: "orange"
+    ,
+      name: "critical_low"
+      label: "Critical Low"
+      color: "red"
+  ]
+
+  toGraphArray: () ->
+    for cmp in @alertComponents
+      Ext.apply({value: @get(cmp.name)}, cmp)
 
 # ==== Store =====================================================
 Ext.define "Muleview.store.AlertsStore",
@@ -89,10 +93,9 @@ Ext.define "Muleview.store.AlertsStore",
   model: "Muleview.model.Alert"
   proxy:
     type: "ajax"
-    url: Muleview.Settings.muleUrlPrefix + "/alert"
+    url: Muleview.Settings.muleUrlPrefix + "alert"
     reader: Ext.create "Ext.data.reader.Json",
       readRecords: (root) ->
-        recordsHash = root.data
         records = []
 
         fields = [
@@ -136,7 +139,7 @@ Ext.define "Muleview.controller.AlertsReportController",
     @grid = @getGrid()
     @store = Ext.create("Muleview.store.AlertsStore")
     @store.on
-      load: @handleLoad
+      datachanged: @handleLoad
       scope: @
 
     @grid.reconfigure @store
@@ -176,7 +179,7 @@ Ext.define "Muleview.controller.AlertsReportController",
       @store.filter("stateClass", new RegExp(selectedState, "i")) if selectedState != "total"
       @grid.expand()
 
-  handleLoad: (store, records) ->
+  handleLoad: (store) ->
     summary = {
       Critical: 0
       Warning: 0
@@ -184,19 +187,18 @@ Ext.define "Muleview.controller.AlertsReportController",
       Stale: 0
     }
 
-    Ext.each records, (record) ->
+    store.each (record) ->
       severity = record.get("severityClass")
       summary[severity] += 1
 
     for severity, value of summary
       Ext.getCmp("alertsSummary#{severity}").setText("#{severity}: #{value}")
-    Ext.getCmp("alertsSummaryTotal").setText("Total: #{records.length}")
-
+    Ext.getCmp("alertsSummaryTotal").setText("Total: #{store.getCount()}")
 
   updateSelection: (key, retention) ->
     return unless Ext.typeOf(key) == "string" or (Ext.typeOf(key) == "array" and key.length == 1)
     graphName = "#{Ext.Array.from(key)[0]};#{retention}"
-    alert = @grid.getStore().findRecord("name", graphName)
+    alert = @grid.getStore().getById(graphName)
     selModel = @grid.getSelectionModel()
     if alert
        selModel.select(alert, false, false)

@@ -76,7 +76,11 @@ Ext.define "Muleview.view.Viewport",
           ,
             header: "State"
             dataIndex: "state"
-            flex: 1
+            width: 100
+            align: "center"
+            renderer: (value, meta) ->
+              meta.tdCls = "state-cell"
+              value
           ,
             header: "Sum"
             dataIndex: "sum"

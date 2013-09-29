@@ -1,6 +1,6 @@
 * Issues
 ** DONE Graphs look awful in Firefox
-** TODO Alert lines in charts should be thicker
+** DONE Alert lines in charts should be thicker
    Perhaps even some marker on the side?
 ** DONE Fix status bar
 *** DONE Auto clear
@@ -14,7 +14,7 @@
     The error tooltip is broken
 ** TODO failure function for keys expand
    This is to prevent the loading circle from stayign there forever
-** TODO Don't pull all retentions per graph
+** DONE Don't pull all retentions per graph
 ** DONE Renovate Alerts Report
    Should be a different window or something
    ----
@@ -23,7 +23,7 @@
 ** DONE Nicer sorting in alerts report
    There should be a way to sort by critical > warning > normal..
 ** DONE Nicer formatting of stale/period values in alerts report
-** TODO Mask when switching retentions in the same graph
+** DONE Mask when switching retentions in the same graph
 ** TODO Going back to no-graphs page
    When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
 ** TODO Misordered responses issue
@@ -51,7 +51,7 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Fix Tooltip Errors somehow
 ** TODO Editable Settings
    There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
-** TODO Implement numchild
+** DONE Implement children
    In the keys tree - show + sign next to keys which are known to have subkeys.
 ** DONE Loading mask when loading keys
 ** DONE Url Navigation:
@@ -120,8 +120,8 @@ aka "Add alerts" button
 *** DONE Load alerts with graph
 * Optimizations:
 ** DONE Dynamic tree
-** TODO Utilize numchilds
-** TODO Don't pull all graph data, only relevant retention
+** DONE Utilize numchilds
+** DONE Don't pull all graph data, only relevant retention
 ** TODO Try to implement onhashchange event myself
 This is related to histoy controller
 ** DONE Generate big chart only on demand

@@ -113,34 +113,36 @@ Ext.define "Muleview.view.MuleChart",
         tips:
           trackMouse: false
           anchor: "left"
-          tpl: "<b>{key}, {timestamp} </b></br><hr>{value} / {total} (<b>{percent}%</b>)"
+          tpl: "<b>{key}</b> <hr /> <b>Time: </b>{timestamp}<br><b> Value: </b> {value} <br /><b>Percent:</b>{percent}%"
           renderer: @tipsRenderer
           targetXY: @self.lastXY
 
     # Alerts:
     if @alerts
       for alert in @alerts
-        do (alert) =>
-          unless alert.time then @series.push
-            type: "line"
-            title: "'#{alert.label}' alert"
-            showMarkers: true
-            style:
-              stroke: alert.color
-            markerConfig:
-              type: "arrow"
-              radius: 0.1
-              opacity: 0
-            axis: "left"
-            xField: "timestamp"
-            yField: [alert.name]
-            highlight: false
-            tips:
-              trackMouse: false
-              anchor: "bottom"
-              title: "Alert"
-              html: "<i><b>#{alert.label}</b> (#{Ext.util.Format.number(alert.value, ",")})</i>"
-              targetXY: @self.lastXY
+        @series.push
+          type: "line"
+          title: "'#{alert.label}' alert"
+          showMarkers: true
+          style:
+            stroke: alert.color
+            opacity: 0.3
+            "stroke-width": 3
+            "stroke-dasharray": 10
+          markerConfig:
+            type: "arrow"
+            radius: 0.1
+            opacity: 0
+          axis: "left"
+          xField: "timestamp"
+          yField: [alert.name]
+          highlight: false
+          tips:
+            trackMouse: false
+            anchor: "bottom"
+            title: "Alert"
+            html: "<i><b>#{alert.label}</b> (#{Ext.util.Format.number(alert.value, ",")})</i>"
+            targetXY: @self.lastXY
 
     # Remove default legend if necessary:
     @legend = false unless @showLegend

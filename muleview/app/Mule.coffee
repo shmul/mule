@@ -54,9 +54,14 @@ Ext.define "Muleview.Mule",
           callbacks--
           callback(retentions) if callbacks == 0
 
+  # Receive data for a stacked graph, including alerts
+  # Updates the alerts store as a side-effect
   getGraphData: (key, retention, callback) ->
-    @askMule "graph/#{key};#{retention}?deep=true&alerts=false", (response) =>
+    @askMule "graph/#{key};#{retention}?deep=true&alerts=true", (response) =>
       ans = {}
+      alerts = response.alerts?[retention]
+      delete response.alerts
+      Ext.StoreManager.get("alertsStore").loadRawData({data: alerts}, "append")
       for name, data of response
         [key, ret] = name.split(";")
         throw "Invalid retention received: #{ret}" unless ret = retention
