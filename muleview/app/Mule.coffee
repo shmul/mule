@@ -31,7 +31,7 @@ Ext.define "Muleview.Mule",
   # For a given key, returns data per each retention
   # in the form of "retention => data array"
   getKeyData: (key, callback) ->
-    @askMule "graph/#{key}?deep=false?alerts=false", (response) =>
+    @askMule "graph/#{key}?deep=false&alerts=false&filter=now", (response) =>
       retentions = {}
       for own name, data of response
         [keyName, retention] = name.split(";")
@@ -57,7 +57,7 @@ Ext.define "Muleview.Mule",
   # Receive data for a stacked graph, including alerts
   # Updates the alerts store as a side-effect
   getGraphData: (key, retention, callback) ->
-    @askMule "graph/#{key};#{retention}?deep=true&alerts=true", (response) =>
+    @askMule "graph/#{key};#{retention}?deep=true&alerts=true&filter=now", (response) =>
       ans = {}
       alerts = response.alerts?[retention]
       delete response.alerts
