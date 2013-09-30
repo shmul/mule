@@ -511,7 +511,7 @@ function mule(db_)
       if a then
         col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%s,%d,\"%s\"]",
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
-                        a._period,a._stale or "",a._sum,a._state))
+                        a._period,a._stale or "-1",a._sum,a._state))
       end
     end
     col.tail()
