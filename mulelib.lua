@@ -482,7 +482,7 @@ function mule(db_)
       if ts>=slot._timestamp and slot._hits>0 then
         if ts==start then
           -- we need to take only the proportionate part of the first slot
-          average_sum = average_sum + (slot._sum*(sequence_.period()-ts+slot._timestamp)/step)
+          average_sum = slot._sum*(start-slot._timestamp)/step
         else
           average_sum = average_sum + slot._sum
         end
