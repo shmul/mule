@@ -92,17 +92,33 @@
       timeField.setValue(Muleview.model.Retention.toShortFormat(value)) unless timeField.value.match(/[smhdy]$/)
 
   createDefaultAlert: () ->
-    max = @store.max(@key)
-    min = @store.min(@key)
+    defaultPeriodCount = 3 # How much bucket-size steps to take for the default period value
+    defaultStaleCount = 3 # How much bucket-size steps to take for the default stale value
+    criticalOffset = 0.1 # How much to offset from extreme points to take in percentage to calculate critical values
+
+    max = 0
+    min = 9007199254740992 # That's quite a lot, isn't it
+
+    # Find min/max values:
+    for i in [0..(@store.getCount() - defaultPeriodCount - 1)]
+      sum = 0
+      for j in [i..i + defaultPeriodCount]
+        sum += @store.getAt(j).get(@key)
+      max = Math.max(max, sum)
+      min = Math.min(min, sum)
+
     step = new Muleview.model.Retention(@retention).getStep()
+    stale = step * defaultStaleCount
+    period = step * defaultPeriodCount
+
     Ext.create "Muleview.model.Alert",
       name: @key + ";" + @retention
       warning_low: min
-      critical_low: min * 0.9
+      critical_low: min * (1 - criticalOffset)
       warning_high: max
-      critical_high: max * 1.1
-      stale:  step * 2
-      period: step * 2
+      critical_high: max * (1 + criticalOffset)
+      stale:  step * defaultStaleCount
+      period: step * defaultPeriodCount
       isOn: false
 
   updateHeight: (mode)->
