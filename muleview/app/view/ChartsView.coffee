@@ -5,6 +5,7 @@ Ext.define "Muleview.view.ChartsView",
     "Muleview.view.ZoomSlider"
     "Muleview.model.Retention"
     "Muleview.view.MuleLightChart"
+    "Muleview.view.MuleChart"
     "Ext.data.ArrayStore"
   ]
   header: false

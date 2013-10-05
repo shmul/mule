@@ -138,8 +138,11 @@ Ext.define "Muleview.controller.AlertsReportController",
   onLaunch: ->
     @grid = @getGrid()
     @store = Ext.create("Muleview.store.AlertsStore")
+
     @store.on
       datachanged: @handleLoad
+      beforeload: -> Muleview.event "alertsRequest"
+      load: -> Muleview.event "alertsReceived"
       scope: @
 
     @grid.reconfigure @store

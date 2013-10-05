@@ -29,9 +29,9 @@ Ext.define "Muleview.controller.StatusBar",
 
   failure: (txt, progressId) ->
     Ext.Array.remove(@inProgress, progressId)
-    @status "ERROR - " + txt, "error"
+    @status "ERROR - " + txt, "error", "ERORR"
 
-  status: (text, iconCls = "normal") ->
+  status: (text, iconCls = "normal", logLevel = "INFO") ->
     # Set current text and icon:
     @sbLabel.setText text
     @setIcon iconCls
@@ -40,11 +40,14 @@ Ext.define "Muleview.controller.StatusBar",
     clearTimeout(@lastTimeout) if @lastTimeout
     @lastTimeout = setTimeout( Ext.bind(@resetSb, @) , 3000)
 
+    # Log to console:
+    console.log logLevel, new Date(), "(#{iconCls})", text if console and logLevel
+
   resetSb: ->
     if Ext.isEmpty(@inProgress)
-      @status "Ready."
+      @status "Ready.", null, false
     else
-      @status "Pending..", "progress"
+      @status "Pending...", "progress", false
 
   setIcon: (clsSuffix) ->
     cls = "statusLabel-" + clsSuffix
@@ -53,6 +56,12 @@ Ext.define "Muleview.controller.StatusBar",
     @lastCls = cls
 
   handlers:
+    alertsRequest: () ->
+      @progress "Requested alert status", "alerts"
+
+    alertsReceived: (eventId) ->
+      @success "Updated alerts status", "alerts"
+
     commandSent: (command, eventId) ->
       @progress "Requested: #{command}", eventId
 
