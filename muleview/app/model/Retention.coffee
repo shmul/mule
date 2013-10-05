@@ -57,7 +57,7 @@ Ext.define "Muleview.model.Retention",
           letterSize = size
       count = parseInt(count)
       secs = letterSize * count
-      name += "s" if count == 1 # Add "s" for plural form
+      name += "s" if count > 1 # Add "s" for plural form
       {
         name: name
         count: count
