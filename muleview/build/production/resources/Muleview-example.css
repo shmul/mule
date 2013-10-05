@@ -98,24 +98,26 @@
   background-position: left center;
   padding-top: 1px;
   padding-left: 18px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-/* line 71, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 73, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-normal {
   padding-left: 0px;
 }
 
-/* line 75, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 77, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-progress {
   background-image: url("loading.gif");
 }
 
-/* line 79, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 81, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-success {
   background-image: url("status-ok.png");
 }
 
-/* line 83, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 85, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-error {
   color: red;
   background-image: url("status-error.gif");
