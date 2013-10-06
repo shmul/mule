@@ -1,5 +1,10 @@
 * Issues
+** DONE Retention names are wrong in combobox (missing "s")
 ** DONE Graphs look awful in Firefox
+** TODO Default alerts
+*** DONE Calculation should be based upon period
+*** DONE Period should be bigger
+    We should start with bucket * 3
 ** DONE Alert lines in charts should be thicker
    Perhaps even some marker on the side?
 ** DONE Fix status bar

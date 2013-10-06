@@ -134,6 +134,7 @@ Ext.define "Muleview.controller.KeysTree",
 
   addKeys: (newKeys) ->
     @addKey(key, hasKids) for key, hasKids of newKeys
+    @store.sort ["name"]
 
   addKey: (key, hasKids) ->
     # Don't add already existing keys:
