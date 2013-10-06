@@ -155,6 +155,10 @@ function sequence(db_,name_)
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
+        -- due to some bug we may have sum~timestamp, in such case we return 0
+        if sum>=1380000000 then
+          sum = 0
+        end
         slot_cb_(sum,hits,timestamp)
       end
     end
@@ -479,6 +483,7 @@ function mule(db_)
     local start = timestamp_-alert._period
     for ts = start,timestamp_,step do
       local slot = sequence_.slot(sequence_.slot_index(ts))
+      logd("alert_check",ts,start,slot._timestamp,slot._sum,step)
       if ts>=slot._timestamp and slot._hits>0 then
         if ts==start then
           -- we need to take only the proportionate part of the first slot
