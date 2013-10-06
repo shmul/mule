@@ -481,11 +481,13 @@ function mule(db_)
 
     local average_sum = 0
     local step = sequence_.step()
+    local period = sequence_.period()
     local start = timestamp_-alert._period
     for ts = start,timestamp_,step do
-      local slot = sequence_.slot(sequence_.slot_index(ts))
-      logd("alert_check",name,ts,start,slot._timestamp,slot._sum,step,average_sum)
-      if ts>=slot._timestamp and slot._hits>0 then
+      local idx,normalized_ts = calculate_idx(ts,step,period)
+      local slot = sequence_.slot(idx)
+--      logd("alert_check",name,ts,start,slot._timestamp,slot._sum,step,average_sum)
+      if normalized_ts==slot._timestamp and slot._hits>0 then
         if ts==start then
           -- we need to take only the proportionate part of the first slot
           average_sum = slot._sum*(start-slot._timestamp)/step

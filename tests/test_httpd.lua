@@ -106,4 +106,6 @@ function test_alerts()
 
   res = request("OPTIONS","graph/beer?deep=true&alerts=true")
   assert(string.find(res.headers,'Access-Control-Allow-Origin: *',1,true))
+
+  -- todo add alert for a graph that has holes in it (i.e. slots that weren't updated recently)
 end
