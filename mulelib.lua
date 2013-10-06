@@ -469,7 +469,8 @@ function mule(db_)
   end
 
   local function alert_check(sequence_,timestamp_)
-    local alert = _alerts[sequence_.name()]
+    local name = sequence_.name()
+    local alert = _alerts[name]
     if not alert then
       return nil
     end
@@ -483,7 +484,7 @@ function mule(db_)
     local start = timestamp_-alert._period
     for ts = start,timestamp_,step do
       local slot = sequence_.slot(sequence_.slot_index(ts))
-      logd("alert_check",ts,start,slot._timestamp,slot._sum,step)
+      logd("alert_check",name,ts,start,slot._timestamp,slot._sum,step,average_sum)
       if ts>=slot._timestamp and slot._hits>0 then
         if ts==start then
           -- we need to take only the proportionate part of the first slot
