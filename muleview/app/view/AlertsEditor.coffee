@@ -70,7 +70,7 @@
       items: formItems
       listeners:
         validitychange: (me, valid) =>
-          Ext.getCmp("alertsEditorSaveButton").setDisabled(!valid)
+          this.saveButton.setDisabled(!valid)
 
     [@form]
 
@@ -100,10 +100,11 @@
     min = 9007199254740992 # That's quite a lot, isn't it
 
     # Find min/max values:
-    for i in [0..(@store.getCount() - defaultPeriodCount - 1)]
+    iterations = Math.max(0, (@store.getCount() - defaultPeriodCount - 1))
+    for i in [0..iterations]
       sum = 0
       for j in [i..i + defaultPeriodCount]
-        sum += @store.getAt(j).get(@key)
+        sum += @store.getAt(j).get(@key) if j < @store.getCount()
       max = Math.max(max, sum)
       min = Math.min(min, sum)
 
@@ -158,11 +159,11 @@
       ,
         "-"
       ,
-        id: "alertsEditorSaveButton"
-        text: "Save"
-        icon: "resources/default/images/ok.png"
-        flex: 1
-        handler: => @doSave()
+        this.saveButton = Ext.create "Ext.button.Button",
+          text: "Save"
+          icon: "resources/default/images/ok.png"
+          flex: 1
+          handler: => @doSave()
     ]
 
   adjust: ->

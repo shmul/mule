@@ -1,7 +1,11 @@
 * Issues
 ** DONE Retention names are wrong in combobox (missing "s")
+** TODO Can't open alerts editor in the same graph different retention
+** TODO Alets - not all are shown
+** TODO "Hide Legend" isn't toggled by default on single graphs
+** TODO Retentions aren't saved when switching between keys
 ** DONE Graphs look awful in Firefox
-** TODO Default alerts
+** DONE Default alerts
 *** DONE Calculation should be based upon period
 *** DONE Period should be bigger
     We should start with bucket * 3
@@ -17,7 +21,7 @@
     According to the current chart data...
 *** DONE Tooltip issue
     The error tooltip is broken
-** TODO failure function for keys expand
+** TODO Failure function for keys expand
    This is to prevent the loading circle from stayign there forever
 ** DONE Don't pull all retentions per graph
 ** DONE Renovate Alerts Report
@@ -54,7 +58,13 @@ it gets into "ready" even though still waiting for mule events
 
 * Features:
 ** DONE Fix Tooltip Errors somehow
-** TODO Lexicographic order of keys
+** DONE Lexicographic order of keys
+** TODO Add error handling to request functions
+** TODO Add value field to main key tooltip
+** TODO Remove "GMT" from tooltip timestamp
+** TODO Implement "Average Alerts" instead of meaningless alert lines in charts
+** TODO Easy way to show only main key (hide all subkeys)
+** TODO Add automatic retries for requests
 ** TODO Editable Settings
    There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
 ** DONE Implement children
