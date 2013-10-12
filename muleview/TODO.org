@@ -1,5 +1,6 @@
 * Issues
 ** DONE Retention names are wrong in combobox (missing "s")
+** TODO Masking when opening new graph before receiving retentions
 ** DONE Multimode seems to be broken
    Can't check keys
 ** DONE Can't open alerts editor in the same graph different retention
@@ -60,11 +61,13 @@ it gets into "ready" even though still waiting for mule events
 
 * Features:
 ** DONE Fix Tooltip Errors somehow
+** TODO Add combo box to MuleTimeField
+   Instead of using the regex, have a combo with ["Seconds", "Minutes", ...]
 ** DONE Lexicographic order of keys
 ** TODO Add error handling to request functions
 ** DONE Add value field to main key tooltip
 ** DONE Remove "GMT" from tooltip timestamp
-** TODO Implement "Average Alerts" instead of meaningless alert lines in charts
+** DONE Implement "Average Alerts" instead of meaningless alert lines in charts
 ** TODO Easy way to show only main key (hide all subkeys)
 ** DONE Add automatic retries for requests
 ** TODO Editable Settings

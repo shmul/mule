@@ -178,7 +178,7 @@ Ext.define "Muleview.view.AlertsEditor",
     iterations = Math.max(0, (@store.getCount() - defaultPeriodCount - 1))
     for i in [0..iterations]
       sum = 0
-      for j in [i..i + defaultPeriodCount]
+      for j in [i...i + defaultPeriodCount]
         sum += @store.getAt(j).get(@key) if j < @store.getCount()
       max = Math.max(max, sum)
       min = Math.min(min, sum)
