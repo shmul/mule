@@ -123,6 +123,12 @@
   background-image: url("status-error.gif");
 }
 
+/* line 90, ../../../packages/muleview-theme/sass/etc/all.scss */
+.mule-tt-head {
+  text-align: center;
+  font-weight: bolder;
+}
+
 /* including package muleview-theme */
 /* including package ext-theme-classic */
 /* including package ext-theme-neutral */

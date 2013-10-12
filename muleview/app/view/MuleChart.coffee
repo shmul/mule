@@ -21,20 +21,64 @@ Ext.define "Muleview.view.MuleChart",
     rotate:
       degrees: -45
 
+  createTips: (opts) ->
+    tplArr = ["
+      <div class=\"mule-tt-head\">
+        {key}
+      </div>
+      <hr />
+      <table>"
+    ]
+
+    addData = (td1, td2) ->
+      tplArr.push("
+        <tr>
+          <td><b>#{td1}:</b></td>
+          <td>{#{td2}}</td>
+        </tr>")
+
+    addData("Value", "value")
+    addData("Percent", "percent") if opts.showPercent
+    tplArr.push("<tr><td colspan=2><hr /></td></tr>")
+    addData("Day", "day")
+    addData("Date", "date")
+    addData("Time", "time")
+
+    tplArr.push("</table>")
+
+    return {
+      anchor: "left"
+      trackMouse: false
+      targetXY: @self.lastXY
+      tpl: tplArr.join("")
+      dismissDelay: 0
+      renderer: @tipsRenderer
+    }
   tipsRenderer: (storeItem, item) ->
-    me = item.series.chart
-    key = item.storeField or item.series.title
+    # Main:
+    chart = item.series.chart
+    key = item.storeField or item.series.yField[0]
+
+    # Values:
     value = storeItem.get(key)
-    total = storeItem.get(me.topKeys[0]) # We seriously hope there's only one topKey
+    total = storeItem.get(chart.topKeys[0]) # 'Total' field is only used by subkeys => we seriously hope there's only one topKey
+
+    # Percent:
     percent = 100 * (value / total)
-    percentText = Ext.util.Format.number(percent, "0.00")
-    timestamp = (new Date(storeItem.get('timestamp') * 1000)).toUTCString()
+
+    # Time:
+    utcOffset = new Date().getTimezoneOffset() * 60
+    dateObj = new Date((storeItem.get('timestamp') + utcOffset) * 1000)
+
+    # Update html according to tpl with formatted values:
     @update
       key: key.substring(key.lastIndexOf(".") + 1)
-      timestamp: timestamp
-      total: Ext.util.Format.number(total, ",")
-      value: Ext.util.Format.number(value, ",")
-      percent: percentText
+      date:    Ext.Date.format(dateObj, "Y-m-d")
+      day:     Ext.Date.format(dateObj, "l")
+      time:    Ext.Date.format(dateObj, "H:i:s")
+      total:   Ext.util.Format.number(total, ",")
+      value:   Ext.util.Format.number(value, ",")
+      percent: Ext.util.Format.number(percent, "0.00") + "%"
 
   createTimeFormatter: () ->
     lastDate = null
@@ -90,11 +134,9 @@ Ext.define "Muleview.view.MuleChart",
             Muleview.event "chartItemMouseOver", item
         style:
           "stroke-width": (if Ext.isEmpty(@subKeys) then 2.5 else 0)
-        tips:
-          trackMouse: false
-          tpl: "{key} {value} ({timestamp})"
-          renderer: @tipsRenderer
-          targetXY: @self.lastXY
+        tips: @createTips
+          includeTimestamp: false
+
 
     # Subkeys:
     if @subKeys
@@ -110,12 +152,8 @@ Ext.define "Muleview.view.MuleChart",
             Muleview.event "chartItemMouseOver", item
           itemclick: (item) =>
             @areaClickHandler item.storeField
-        tips:
-          trackMouse: false
-          anchor: "left"
-          tpl: "<b>{key}</b> <hr /> <b>Time: </b>{timestamp}<br><b> Value: </b> {value} <br /><b>Percent:</b>{percent}%"
-          renderer: @tipsRenderer
-          targetXY: @self.lastXY
+        tips: @createTips
+          showPercent: true
 
     # Alerts:
     if @alerts
