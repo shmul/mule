@@ -25,9 +25,10 @@ Ext.define "Muleview.controller.KeysTree",
     @store = @tree.getStore()
 
     @tree.on
-      selectionchange: @createViewChangeEvent
+      selectionchange: @handleSelectionChange
       itemexpand: @onItemExpand
-      checkchange: @createViewChangeEvent
+      itemclick: @handleItemClick
+      checkchange: @handleCheckChange
       scope: @
 
     @getNormalModeBtn().on
@@ -70,6 +71,18 @@ Ext.define "Muleview.controller.KeysTree",
     @getMultiModeBtn().setVisible(!multi)
     @getNormalModeBtn().setVisible(multi)
 
+  handleItemClick: (me, node) ->
+    # Reverse the check flag if in multi-mode:
+    if @isMulti
+      node.set("checked", !node.get("checked"))
+      @createViewChangeEvent()
+
+  handleCheckChange: ->
+    @createViewChangeEvent() if @isMulti
+
+  handleSelectionChange: ->
+    @createViewChangeEvent() unless @isMulti
+
   createViewChangeEvent: ->
     chosenKeys = []
     if @isMulti
@@ -78,6 +91,7 @@ Ext.define "Muleview.controller.KeysTree",
     else
       # the chosen key is the selected key (no, really)
       chosenKeys = @getSelectedNode().get("fullname")
+
     Muleview.event "viewChange", chosenKeys , Muleview.currentRetention
 
   receiveViewChangeEvent: (keys) ->
