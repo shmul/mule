@@ -515,11 +515,11 @@ function mule(db_)
 
     for _,n in ipairs(names_) do
       local seq = sequence(db_,n)
-      local a = alert_check(seq,now)
+      local a,msg = alert_check(seq,now)
       if a then
-        col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%s,%d,\"%s\"]",
+        col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%s,%d,\"%s\",%d,\"%s\"]",
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
-                        a._period,a._stale or "-1",a._sum,a._state))
+                        a._period,a._stale or "-1",a._sum,a._state,now,msg or ""))
       end
     end
     col.tail()
@@ -576,9 +576,6 @@ function mule(db_)
         depth = function()
           return coroutine.wrap(
             function()
---              for s in immediate_metrics(db_,m) do
---                coroutine.yield(s)
---              end
               for i=1,(math.min(#ranked_children,options_.count or DEFAULT_COUNT)) do
                 coroutine.yield(ranked_children[i][1])
               end
@@ -929,16 +926,18 @@ function mule(db_)
       for j,sl in ipairs(s.slots()) do
         local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._sum,sl._hits or 1,
                                                   sl._hits==nil)
-        _hints[n] = _hints[n] or {}
-        if not _hints[n]._rank_ts then
-          _hints[n]._rank = 0
-          _hints[n]._rank_ts = 0
+        if adjusted_timestamp and sum then
+          _hints[n] = _hints[n] or {}
+          if not _hints[n]._rank_ts then
+            _hints[n]._rank = 0
+            _hints[n]._rank_ts = 0
+          end
+          _hints[n]._rank_ts,_hints[n]._rank = update_rank(
+            _hints[n]._rank_ts,_hints[n]._rank,
+            adjusted_timestamp,sum,n,seq.step())
         end
-        _hints[n]._rank_ts,_hints[n]._rank = update_rank(
-          _hints[n]._rank_ts,_hints[n]._rank,
-          adjusted_timestamp,sum,n,seq.step())
+        alert_check(seq,now)
       end
-      alert_check(seq,now)
       _updated_sequences[n] = nil
     end
     logi("update_sequences end",time_now()-now,s,e,#sorted_updated_names)

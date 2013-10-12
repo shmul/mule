@@ -64,18 +64,18 @@ function test_alerts()
   assert_nil(res.body)
 
   res = request("GET","alert/beer.ale;5m:12h")
-  assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,0,"stale"]}',1,true))
+  assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,0,"stale"',1,true))
 
   -- hehe, just now we are really configuring mule
   m.configure(table_itr({"beer.ale 5m:12h 1h:30d"}))
   m.process("beer.ale.brown.newcastle 12 "..os.time())
   res = request("GET","alert/beer.ale;5m:12h")
-  assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,12,"WARNING LOW"]}',1,true))
+  assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,12,"WARNING LOW"',1,true))
 
   m.process("beer.ale.brown.newcastle 20 "..os.time())
 
   res = request("GET","alert/beer.ale;5m:12h")
-  assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,32,"NORMAL"]}',1,true))
+  assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,32,"NORMAL"',1,true))
 
   res = request("DELETE","alert/beer.ale;5m:12h")
   assert(string.find(res.headers,'204'))
@@ -88,7 +88,7 @@ function test_alerts()
   assert_nil(res.body)
 
   res = request("GET","alert")
-  assert(string.find(res.body,'"data": {"beer.ale.brown;5m:12h": [4,8,16,18,600,360,32,"CRITICAL HIGH"]}',1,true))
+  assert(string.find(res.body,'"data": {"beer.ale.brown;5m:12h": [4,8,16,18,600,360,32,"CRITICAL HIGH"',1,true))
 
   res = request("PUT","alert/beer.stout;1d:14d","critical_high=900&warning_high=800&warning_low=100&critical_low=34&stale=2d&period=1d")
   assert(string.find(res.headers,'201',1,true))
@@ -96,13 +96,13 @@ function test_alerts()
 
   res = request("GET","alert")
 
-  assert(string.find(res.body,'"beer.ale.brown;5m:12h": [4,8,16,18,600,360,32,"CRITICAL HIGH"]',1,true))
-  assert(string.find(res.body,'"beer.stout;1d:14d": [34,100,800,900,86400,172800,0,"stale"]}',1,true))
+  assert(string.find(res.body,'"beer.ale.brown;5m:12h": [4,8,16,18,600,360,32,"CRITICAL HIGH"',1,true))
+  assert(string.find(res.body,'"beer.stout;1d:14d": [34,100,800,900,86400,172800,0,"stale"',1,true))
 
   assert_nil(string.find(res.headers,'Access-Control-Allow-Origin: *',1,true))
 
   res = request("GET","graph/beer?deep=true&alerts=true")
-  assert(string.find(res.body,'"alerts": {"beer.stout;1d:14d": [34,100,800,900,86400,172800,0,"stale"]}',1,true))
+  assert(string.find(res.body,'"alerts": {"beer.stout;1d:14d": [34,100,800,900,86400,172800,0,"stale"',1,true))
 
   res = request("OPTIONS","graph/beer?deep=true&alerts=true")
   assert(string.find(res.headers,'Access-Control-Allow-Origin: *',1,true))
