@@ -14,6 +14,7 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       handler: =>
         @showAlertsEditor()
 
+
   showAlertsEditor: ->
     ae = Ext.create "Muleview.view.AlertsEditor",
       key: @key
@@ -30,6 +31,7 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       @store = @createStore(data, @alerts)
       @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
       @showLegend = not Ext.isEmpty(@subkeys)
+      @legendButton.toggle(@showLegend)
       @renderChart()
       @setBbar(@store)
 

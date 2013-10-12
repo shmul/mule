@@ -139,13 +139,14 @@ Ext.define "Muleview.view.ChartsView",
         handler: ->
           Muleview.event "refresh"
       , "-",
-        text: "Hide Legend"
-        icon: "resources/default/images/legend.png"
-        enableToggle: true
-        pressed: !@showLegend
-        toggleHandler: (me, value) =>
-          @showLegend = !value
-          @renderChart()
+        @legendButton = Ext.create "Ext.button.Button",
+          text: "Legend"
+          icon: "resources/default/images/legend.png"
+          enableToggle: true
+          pressed: @showLegend
+          toggleHandler: (me, value) =>
+            @showLegend = value
+            @renderChart()
 
     ]
 
