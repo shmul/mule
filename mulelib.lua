@@ -172,6 +172,7 @@ function sequence(db_,name_)
 
 
     if opts_.deep then
+      _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
       for s in indices(opts_.sorted) do
         if not min_timestamp or min_timestamp<get_timestamp(s) then
           serialize_slot(s,opts_.skip_empty,slot_cb_)

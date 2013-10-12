@@ -81,8 +81,6 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
     local p = math.floor(idx_/PACK_FACTOR)
     local q = idx_%PACK_FACTOR
     local cell_pos = slot_size_*((p*num_sequences_*PACK_FACTOR)+sid_*PACK_FACTOR+q)
---    print(sid_,idx_,p,q,cell_pos)
---    local cell_pos = slot_size_*(sid_+idx_*num_sequences_)
     return file:seek("set",cell_pos)
   end
 
@@ -124,7 +122,10 @@ function column_db(base_dir_)
   local meta_file = base_dir_.."/db.meta"
   local cell_store_cache = {}
   local last_save = nil
+  local seq_cache = {}
+  local seq_cache_size = 0
   logi("column_db")
+
   local function extract_from_name(name_)
     local node = index:find(name_)
 
@@ -282,6 +283,11 @@ function column_db(base_dir_)
                         function(cdb_,sid_)
                           -- trying to access one past the cdb size is interpreted as
                           -- getting the latest index
+                          local cached = seq_cache[name_]
+                          if cached then
+                            return unpack(cached[idx_+1])
+                          end
+
                           if cdb_.size()==idx_ then
                             return latest(name_)
                           end
@@ -297,6 +303,10 @@ function column_db(base_dir_)
                         function(cdb_,sid_)
                           -- trying to access one past the cdb size is interpreted as
                           -- setting the latest index
+                          local cached = seq_cache[name_]
+                          if cached then
+                            cached[idx_+1] = {a,b,c}
+                          end
                           if cdb_.size()==idx_ then
                             return latest(name_,a)
                           end
@@ -309,6 +319,33 @@ function column_db(base_dir_)
                           end
                         end
                        )
+  end
+
+  local function cache(name_)
+    if seq_cache[name_] then
+      return
+    end
+
+    return with_cell_store(name_,
+                           function(cdb_,sid_)
+                             if seq_cache_size==MAX_CACHE_SIZE then
+                               local first_name,_ = next(seq_cache)
+                               logi("seq_cache is of maximum size. dropping",first_name)
+                               seq_cache[first_name] = nil
+                               seq_cache_size = seq_cache_size - 1
+                             end
+                             local cached = {}
+                             local insert = table.insert
+                             for idx=0,cdb_.size() do
+                               local slot = cdb_.read(sid_,idx)
+                               local a,b,c = get_slot(slot,0)
+                               insert(cached,{a,b,c})
+                             end
+                             seq_cache[name_] = cached
+                             seq_cache_size = seq_cache_size + 1
+                           end
+                          )
+
   end
 
   if not file_exists(meta_file) then
@@ -328,6 +365,7 @@ function column_db(base_dir_)
     set_slot = internal_set_slot,
     get_slot = internal_get_slot,
     matching_keys = matching_keys,
+    cache = function(name_) return cache(name_) end,
     sort_updated_names = function(names_)
       -- TODO - is it worth it?
       table.sort(names_,
@@ -351,6 +389,7 @@ function column_db(base_dir_)
       end,
       save = function() -- nop
       end,
+      cache = function(name_) return self.cache(name_) end,
       reset = function() print("reset",name_) end,
            }
   end

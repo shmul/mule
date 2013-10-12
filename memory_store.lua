@@ -20,6 +20,7 @@ function in_memory_db()
     out = function(key_) _storage[key_] = nil end,
     matching_keys = matching_keys,
     close = function () end,
+    cache = function() end,
     sort_updated_names = function(names_)
       table.sort(names_)
       return names_
