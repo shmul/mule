@@ -40,6 +40,9 @@ Ext.define "Muleview.view.AlertsEditor",
           xtype: "muletimefield"
           name: "period"
           fieldLabel: "Alert Period"
+          listeners:
+            change: () =>
+              @updateAverages()
         ,
           html: "<hr />"
           border: false
@@ -66,12 +69,12 @@ Ext.define "Muleview.view.AlertsEditor",
             ,
               xtype: "label"
               cls: "alerts-editor-table-header"
-              text: "Total Period"
+              text: "Total in Period"
 
             ,
               xtype: "label"
               cls: "alerts-editor-table-header"
-              text: "Average Step"
+              text: "Average per Bucket"
           ].concat(@createAlertRows())
         ,
           html: "<hr />"
@@ -100,48 +103,40 @@ Ext.define "Muleview.view.AlertsEditor",
     [@form]
 
   createAlertRows: () ->
+    @alertRows = []
     ans = []
 
     allAlerts = [
       ["Critical", "High"]
-      ["Critical", "Low"]
-      ["Warning" , "Low"]
       ["Warning" , "High"]
+      ["Warning" , "Low"]
+      ["Critical", "Low"]
     ]
 
-    for [severity, pos] in allAlerts
-      ans = ans.concat(@createAlertRow(severity, pos))
+    for [severityCase, posCase] in allAlerts
+      do (severityCase, posCase) =>
+        severity = severityCase.toLowerCase()
+        pos = posCase.toLowerCase()
+
+        label = Ext.create "Ext.form.Label",
+          xtype: "label"
+          cls: "alerts-editor-row-#{severity}-#{pos}"
+          text: "#{severityCase} #{posCase}"
+
+        total = Ext.create "Ext.form.field.Number",
+          name: "#{severity}_#{pos}"
+          width: 100
+          listeners:
+            change: =>
+              @updateAverages()
+
+        average = Ext.create "Ext.form.Label",
+          name: "#{severity}_#{pos}_average"
+
+        @alertRows.push([total, average])
+        ans.push(label, total, average)
+
     ans
-
-  createAlertRow: (severityCase, posCase) ->
-    severity = severityCase.toLowerCase()
-    pos = posCase.toLowerCase()
-
-    label = Ext.create "Ext.form.Label",
-      xtype: "label"
-      cls: "alerts-editor-row-#{severity}-#{pos}"
-      text: "#{severityCase} #{posCase}"
-
-    total = Ext.create "Ext.form.field.Number",
-      name: "#{severity}_#{pos}"
-      width: 100
-      # listeners:
-      #   change: =>
-      #     @updateAverages
-
-
-    average = Ext.create "Ext.form.field.Number",
-      name: "#{severity}_#{pos}_average"
-      fieldLabel: "="
-      labelWidth: 10
-      labelSeparator: ""
-      # listeners:
-      #   change: =>
-      #     total.setValue(average.getValue() * @conversionRate)
-
-    @alertRows.push([total, average])
-
-    [label, total, average]
 
   getForm: ->
     @form.getForm()
@@ -151,25 +146,20 @@ Ext.define "Muleview.view.AlertsEditor",
     @alert = Ext.StoreManager.get("alertsStore").getById(alertName)
     @alert ||= @createDefaultAlert()
     @form.loadRecord(@alert)
-    @updateConversionRate()
     @formatTimeFields()
     @getForm().clearInvalid()
+    @updateAverages()
     @updateHeight(@alert.get("isOn"))
 
-  updateConversionRate: ->
+  updateAverages: ->
     return unless @getForm().isValid()
     periodStr = @getForm().getValues().period
     periodStr += "s" unless periodStr.match(/[smhdy]/)
     period = Muleview.model.Retention.getMuleTimeValue(periodStr)
     bucket = new Muleview.model.Retention(@retention).getStep()
     @conversionRate = period / bucket
-    @updateAverages()
-
-  alertRows: []
-
-  updateAverages: ->
     for [total, average] in @alertRows
-      average.setValue total.getValue() / @conversionRate
+      average.setText("= " + Ext.util.Format.number((total.getValue() / @conversionRate), "0,0.00"))
 
   formatTimeFields: ->
     for timeField in @form.query("muletimefield")
@@ -224,6 +214,8 @@ Ext.define "Muleview.view.AlertsEditor",
         handler: =>
           @getForm().reset()
           @formatTimeFields()
+          @updateAverages()
+
       ,
         "-"
       ,
@@ -234,6 +226,7 @@ Ext.define "Muleview.view.AlertsEditor",
         handler: =>
           @adjust()
           @formatTimeFields()
+          @updateAverages()
       ,
         "-"
       ,
