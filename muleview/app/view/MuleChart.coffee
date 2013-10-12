@@ -47,7 +47,8 @@ Ext.define "Muleview.view.MuleChart",
     tplArr.push("</table>")
 
     return {
-      anchor: "left"
+      anchor: opts.anchor
+      anchorOffset: 120
       trackMouse: false
       targetXY: @self.lastXY
       tpl: tplArr.join("")
@@ -135,7 +136,7 @@ Ext.define "Muleview.view.MuleChart",
         style:
           "stroke-width": (if Ext.isEmpty(@subKeys) then 2.5 else 0)
         tips: @createTips
-          includeTimestamp: false
+          anchor: "botom"
 
 
     # Subkeys:
@@ -153,6 +154,7 @@ Ext.define "Muleview.view.MuleChart",
           itemclick: (item) =>
             @areaClickHandler item.storeField
         tips: @createTips
+          anchor: "top"
           showPercent: true
 
     # Alerts:
@@ -177,7 +179,7 @@ Ext.define "Muleview.view.MuleChart",
           highlight: false
           tips:
             trackMouse: false
-            anchor: "bottom"
+            anchor: "right"
             title: "Alert"
             html: "<i><b>#{alert.label}</b> (#{Ext.util.Format.number(alert.value, ",")})</i>"
             targetXY: @self.lastXY
