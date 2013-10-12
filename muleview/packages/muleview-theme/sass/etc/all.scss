@@ -1,3 +1,7 @@
+.charts-view-container.x-panel-body-default {
+  background-image: url("bg.png");
+}
+
 .icon-cell > div{
   background-position: center center;
   background-repeat: no-repeat;
@@ -16,6 +20,12 @@
   .state-cell > div {
     background-color: orange;
     color: white;
+  }
+}
+
+.alert-row-normal {
+  .state-cell > div {
+    background-color: white;
   }
 }
 

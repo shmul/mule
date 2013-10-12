@@ -44,9 +44,7 @@ Ext.define "Muleview.view.Viewport",
         id: "chartsViewContainer"
         xtype: "panel"
         title: "Chart"
-        # FIXME:
-        bodyStyle: "background-image: url(resources/default/images/bg.png)"
-
+        bodyCls: "charts-view-container"
         region: "center"
         layout: "fit"
       ,
@@ -70,10 +68,6 @@ Ext.define "Muleview.view.Viewport",
               meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
               ""
           ,
-            header: "Name"
-            dataIndex: "name"
-            flex: 2
-          ,
             header: "State"
             dataIndex: "state"
             width: 100
@@ -81,6 +75,10 @@ Ext.define "Muleview.view.Viewport",
             renderer: (value, meta) ->
               meta.tdCls = "state-cell"
               value
+          ,
+            header: "Name"
+            dataIndex: "name"
+            flex: 2
           ,
             header: "Sum"
             dataIndex: "sum"
@@ -167,6 +165,7 @@ Ext.define "Muleview.view.Viewport",
           id: "alertsSummaryRefresh"
           text: ""
           icon: "resources/default/images/refresh.png"
+          tooltip: "Refresh Alerts Now"
           handler: ->
             Muleview.event "alertsChanged"
         ,

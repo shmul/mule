@@ -3,7 +3,7 @@
 ** DONE Multimode seems to be broken
    Can't check keys
 ** DONE Can't open alerts editor in the same graph different retention
-** TODO Alets - not all are shown
+** DONE Alets - not all are shown
 ** DONE "Hide Legend" isn't toggled by default on single graphs
 ** TODO Retentions aren't saved when switching between keys
 ** DONE Graphs look awful in Firefox
@@ -62,11 +62,11 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Fix Tooltip Errors somehow
 ** DONE Lexicographic order of keys
 ** TODO Add error handling to request functions
-** TODO Add value field to main key tooltip
-** TODO Remove "GMT" from tooltip timestamp
+** DONE Add value field to main key tooltip
+** DONE Remove "GMT" from tooltip timestamp
 ** TODO Implement "Average Alerts" instead of meaningless alert lines in charts
 ** TODO Easy way to show only main key (hide all subkeys)
-** TODO Add automatic retries for requests
+** DONE Add automatic retries for requests
 ** TODO Editable Settings
    There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
 ** DONE Implement children
@@ -96,6 +96,7 @@ I hope this fix is suitable (Not trivial to check).
    Added alert status
    Can always add more events to reportin the sb...
 ** TODO Support for timestamp labels - Waiting for Mule API
+   Probably can't implement in Ext Chart :(
 ** TODO Something cooler with tooltips?
 ** TODO Theme
 *** DONE Favicon
