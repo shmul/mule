@@ -8,16 +8,33 @@ Ext.define "Muleview.Mule",
 
   # General method to query mule
   askMule: (command, fn) ->
+    successFn = failureFn = askFn = null
+    attempt = 0
     eventId = Ext.id()
-    Muleview.event "commandSent", command, eventId
-    Ext.Ajax.request
-      url: @prefix() + command
-      timeout: 10 * 60 * 1000 # 10 minutes
-      success: (response) =>
-        Muleview.event "commandReceived", command, eventId, true
-        fn(JSON.parse(response.responseText).data)
-      failure: =>
+
+    askFn = () =>
+      Ext.Ajax.request
+        url: @prefix() + command
+        timeout: 10 * 60 * 1000 # 10 minutes
+        success: (response) => successFn(response)
+        failure: => failureFn()
+
+    failureFn = () =>
+      attempt += 1
+      if attempt < Muleview.Settings.muleRequestRetries
+        # try again
+        Muleview.event "commandRetry", command, attempt
+        askFn()
+      else
+        # Failed too many times :(
         Muleview.event "commandReceived", command, eventId, false
+
+    successFn =  (response) =>
+      Muleview.event "commandReceived", command, eventId, true
+      fn(JSON.parse(response.responseText).data)
+
+    Muleview.event "commandSent", command, eventId
+    askFn()
 
   # Returns a hash of all child keys for the given parent and a flag specifying if they have subkeys
   getSubKeys: (parent, depth, callback) ->
