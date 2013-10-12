@@ -48,7 +48,7 @@ Ext.define "Muleview.view.MuleChart",
 
     return {
       anchor: opts.anchor
-      anchorOffset: 120
+      anchorOffset: 135
       trackMouse: false
       targetXY: @self.lastXY
       tpl: tplArr.join("")

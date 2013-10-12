@@ -163,6 +163,15 @@ Ext.define "Muleview.view.Viewport",
         ,
           "-"
         ,
+          xtype: "button"
+          id: "alertsSummaryRefresh"
+          text: ""
+          icon: "resources/default/images/refresh.png"
+          handler: ->
+            Muleview.event "alertsChanged"
+        ,
+          "-"
+        ,
           xtype: "container"
           flex: 1
         ,
