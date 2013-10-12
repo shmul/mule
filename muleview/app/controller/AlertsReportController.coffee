@@ -82,9 +82,11 @@ Ext.define "Muleview.model.Alert",
       color: "red"
   ]
 
-  toGraphArray: () ->
+  toGraphArray: (retentionName) ->
+    ret = new Muleview.model.Retention(retentionName)
+    devider = @get("period") / ret.getStep()
     for cmp in @alertComponents
-      Ext.apply({value: @get(cmp.name)}, cmp)
+      Ext.apply({value: @get(cmp.name) / devider}, cmp)
 
 # ==== Store =====================================================
 Ext.define "Muleview.store.AlertsStore",

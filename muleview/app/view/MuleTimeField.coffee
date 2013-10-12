@@ -14,9 +14,17 @@ Ext.define "Muleview.view.MuleTimeField",
       <li>  3h</li>
     </ul>
         "
-  listeners:
-    afterrender: (me) ->
-      me.createTip()
+  initComponent: ->
+    this.on
+      afterrender: () =>
+        @createTip()
+    @callParent()
+
+  validator: (value) ->
+    try
+      return Muleview.model.Retention.getMuleTimeValue(value) > 0 and true
+    catch e
+      "Invalid input"
 
   createTip: ->
     Ext.create "Ext.tip.ToolTip",

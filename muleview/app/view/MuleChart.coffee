@@ -162,7 +162,7 @@ Ext.define "Muleview.view.MuleChart",
       for alert in @alerts
         @series.push
           type: "line"
-          title: "'#{alert.label}' alert"
+          title: "'#{alert.label}' (avg.)"
           showMarkers: true
           style:
             stroke: alert.color
@@ -179,8 +179,8 @@ Ext.define "Muleview.view.MuleChart",
           highlight: false
           tips:
             trackMouse: false
-            anchor: "right"
-            title: "Alert"
+            anchor: alert.name.match("critical") and "right" or "left"
+            title: "Alert Average"
             html: "<i><b>#{alert.label}</b> (#{Ext.util.Format.number(alert.value, ",")})</i>"
             targetXY: @self.lastXY
 

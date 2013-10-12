@@ -1,4 +1,4 @@
-  Ext.define "Muleview.view.AlertsEditor",
+Ext.define "Muleview.view.AlertsEditor",
   extend: "Ext.window.Window"
   icon: "resources/default/images/alerts.png"
   modal: true
@@ -14,8 +14,9 @@
 
   title: "Alerts"
   bodyPadding: 10
-  width: 300
-  height: 320
+  width: 440
+  bigHeight: 390
+  smallHeight: 154
   layout: "fit"
   autoScroll: true
 
@@ -36,28 +37,56 @@
             change: (me, val) =>
               @updateHeight(val)
         ,
-          name: "critical_high"
-          fieldLabel: "Critical High"
-        ,
-          name: "warning_high"
-          fieldLabel: "Warning High"
-        ,
-          name: "warning_low"
-          fieldLabel: "Warning Low"
-        ,
-          name: "critical_low"
-          fieldLabel: "Critical Low"
-        ,
           xtype: "muletimefield"
           name: "period"
-          fieldLabel: "Period"
+          fieldLabel: "Alert Period"
+          listeners:
+            change: () =>
+              @updateAverages()
+        ,
+          html: "<hr />"
+          border: false
+        ,
+          xtype: "container"
+
+          layout:
+            type: "table"
+            columns: 3
+
+            tableAttrs:
+              style:
+                width: "100%"
+
+            trAttrs:
+              style:
+                height: "30px"
+                "vertical-align": "middle"
+
+          items: [
+              xtype: "label"
+              cls: "alerts-editor-table-header"
+              text: "Alert Type"
+            ,
+              xtype: "label"
+              cls: "alerts-editor-table-header"
+              text: "Total in Period"
+
+            ,
+              xtype: "label"
+              cls: "alerts-editor-table-header"
+              text: "Average per Bucket"
+          ].concat(@createAlertRows())
+        ,
+          html: "<hr />"
+          border: false
         ,
           xtype: "muletimefield"
           name: "stale"
-          fieldLabel: "Stale"
+          fieldLabel: "Stale Period"
       ]
 
     @form = Ext.create "Ext.form.Panel",
+
       bodyPadding: 10
       trackResetOnLoad: true
       layout:
@@ -66,13 +95,48 @@
         pack: "start"
       defaults:
         allowBlank: false
-        xtype: "numberfield"
       items: formItems
       listeners:
         validitychange: (me, valid) =>
           this.saveButton.setDisabled(!valid)
 
     [@form]
+
+  createAlertRows: () ->
+    @alertRows = []
+    ans = []
+
+    allAlerts = [
+      ["Critical", "High"]
+      ["Warning" , "High"]
+      ["Warning" , "Low"]
+      ["Critical", "Low"]
+    ]
+
+    for [severityCase, posCase] in allAlerts
+      do (severityCase, posCase) =>
+        severity = severityCase.toLowerCase()
+        pos = posCase.toLowerCase()
+
+        label = Ext.create "Ext.form.Label",
+          xtype: "label"
+          cls: "alerts-editor-row-#{severity}-#{pos}"
+          text: "#{severityCase} #{posCase}"
+
+        total = Ext.create "Ext.form.field.Number",
+          name: "#{severity}_#{pos}"
+          width: 100
+          listeners:
+            change: =>
+              @updateAverages()
+
+        average = Ext.create "Ext.form.Label",
+          name: "#{severity}_#{pos}_average"
+
+        @alertRows.push([total, average])
+        ans.push(label, total, average)
+
+    ans
 
   getForm: ->
     @form.getForm()
@@ -84,7 +148,18 @@
     @form.loadRecord(@alert)
     @formatTimeFields()
     @getForm().clearInvalid()
+    @updateAverages()
     @updateHeight(@alert.get("isOn"))
+
+  updateAverages: ->
+    return unless @getForm().isValid()
+    periodStr = @getForm().getValues().period
+    periodStr += "s" unless periodStr.match(/[smhdy]/)
+    period = Muleview.model.Retention.getMuleTimeValue(periodStr)
+    bucket = new Muleview.model.Retention(@retention).getStep()
+    @conversionRate = period / bucket
+    for [total, average] in @alertRows
+      average.setText("= " + Ext.util.Format.number((total.getValue() / @conversionRate), "0,0.00"))
 
   formatTimeFields: ->
     for timeField in @form.query("muletimefield")
@@ -103,7 +178,7 @@
     iterations = Math.max(0, (@store.getCount() - defaultPeriodCount - 1))
     for i in [0..iterations]
       sum = 0
-      for j in [i..i + defaultPeriodCount]
+      for j in [i...i + defaultPeriodCount]
         sum += @store.getAt(j).get(@key) if j < @store.getCount()
       max = Math.max(max, sum)
       min = Math.min(min, sum)
@@ -123,7 +198,7 @@
       isOn: false
 
   updateHeight: (mode)->
-    height = if mode then 320 else 154
+    height = if mode then @bigHeight else @smallHeight
     @setHeight height
 
     # Defering the centering due to a mysterious bug
@@ -139,6 +214,8 @@
         handler: =>
           @getForm().reset()
           @formatTimeFields()
+          @updateAverages()
+
       ,
         "-"
       ,
@@ -149,6 +226,7 @@
         handler: =>
           @adjust()
           @formatTimeFields()
+          @updateAverages()
       ,
         "-"
       ,
