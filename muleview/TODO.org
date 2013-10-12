@@ -1,6 +1,6 @@
 * Issues
 ** DONE Retention names are wrong in combobox (missing "s")
-** TODO Multimode seems to be broken
+** DONE Multimode seems to be broken
    Can't check keys
 ** DONE Can't open alerts editor in the same graph different retention
 ** TODO Alets - not all are shown
