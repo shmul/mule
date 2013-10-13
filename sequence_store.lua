@@ -18,6 +18,10 @@ function sequence_storage(db_,name_,numslots_)
     db_.put(name_,_data)
   end
 
+  local function cache()
+    db_.cache()
+  end
+
   local function reset()
     _data = string.rep(pp.to_binary(0),3*numslots_+1)
     return _data
@@ -30,6 +34,7 @@ function sequence_storage(db_,name_,numslots_)
     get_slot = internal_get_slot,
     set_slot = internal_set_slot,
     save = save,
+    cache = cache,
     reset = reset
          }
 end

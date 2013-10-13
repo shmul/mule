@@ -824,5 +824,32 @@ function test_rank()
 
 end
 
+function test_caching()
+  local db = column_db_factory("temp/rank_output")
+  local m = mule(db)
+  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+  m.graph("Johnston.Morfin.Jamal.Marcela",{deep=true,count=1})
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{deep=true,count=1}))
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[5,1,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{deep=true,count=2}))
+  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{deep=true,count=1}))
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[10,2,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{deep=true,count=2}))
+  MAX_CACHE_SIZE = 1
+  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{deep=true,count=1}))
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[15,3,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{deep=true,count=2}))
+end
+
+
 --verbose_log(true)
 --profiler.start("profiler.out")

@@ -98,6 +98,7 @@ function cabinet_db(db_name_,readonly_)
     out = tc_out,
     matching_keys = matching_keys,
     close = tc_done,
+    cache = function() end,
     sort_updated_names = function(names_)
       table.sort(names_)
       return names_
