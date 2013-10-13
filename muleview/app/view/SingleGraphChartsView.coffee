@@ -14,6 +14,7 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       handler: =>
         @showAlertsEditor()
 
+
   showAlertsEditor: ->
     ae = Ext.create "Muleview.view.AlertsEditor",
       key: @key
@@ -26,10 +27,11 @@ Ext.define "Muleview.view.SingleGraphChartsView",
     @chartContainer.setLoading(true)
     Muleview.Mule.getGraphData @key, retName, (data) =>
       @chartContainer.setLoading(false)
-      @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@currentRetName}")?.toGraphArray()
+      @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@currentRetName}")?.toGraphArray(@currentRetName)
       @store = @createStore(data, @alerts)
       @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
       @showLegend = not Ext.isEmpty(@subkeys)
+      @legendButton.toggle(@showLegend)
       @renderChart()
       @setBbar(@store)
 

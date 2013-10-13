@@ -29,7 +29,7 @@ Ext.define "Muleview.controller.ChartsController",
     # Create or update the ChartsView object:
     if difference or force
       @keys = Ext.clone(keys)  # Must clone due to mysterious bug causing multiple keys to reduce to the just the first one.
-      @retention = retention
+      @retention = retention if retention
 
       # If we have new keys, we completely replace the current ChartsView with a new one:
       @createKeysView(keys, retention || @retention)

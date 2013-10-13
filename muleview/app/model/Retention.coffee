@@ -85,7 +85,7 @@ Ext.define "Muleview.model.Retention",
   #   "5m:1d" => "Last 1 days"
   #   "1s:3y" => "Last 3 years"
   getTitle: ->
-    "Every #{@bucket.count} #{@bucket.name} / Last #{@total.count} #{@total.name}"
+    "Last #{@total.count} #{@total.name} (Every #{@bucket.count} #{@bucket.name})"
 
   # Creates an integer value for a retention - this functions describes an order between all possible retentions:
   # Examples:

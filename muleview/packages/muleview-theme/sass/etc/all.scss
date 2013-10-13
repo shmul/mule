@@ -1,3 +1,7 @@
+.charts-view-container.x-panel-body-default {
+  background-image: url("bg.png");
+}
+
 .icon-cell > div{
   background-position: center center;
   background-repeat: no-repeat;
@@ -19,6 +23,12 @@
   }
 }
 
+.alert-row-normal {
+  .state-cell > div {
+    background-color: white;
+  }
+}
+
 .alert-row-critical-high {
   .icon-cell > div {
     background-image: url("critical_high.png")
@@ -36,14 +46,43 @@
     background-image: url("critical_low.png");
   }
 }
-
 .alert-row-warning-low {
   .icon-cell > div {
     background-image: url("warning_low.png");
   }
 }
 
+/* **** Alerts Editor **************************************************************** */
 
+.alerts-editor-table-header {
+  text-decoration: underline;
+}
+
+.alerts-editor-row-critical-high {
+  padding-left: 20px;
+  background-repeat: no-repeat;
+  background-image: url("critical_high.png")
+}
+
+.alerts-editor-row-critical-low {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("critical_low.png")
+}
+
+.alerts-editor-row-warning-high {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("warning_high.png")
+}
+
+.alerts-editor-row-warning-low {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("warning_low.png")
+}
+
+/* **************************************************************** */
 .alert-summary-critical {
   background-image: url("summary_critical.png");
 }
@@ -85,4 +124,9 @@
 .statusLabel-error {
   color: red;
   background-image: url("status-error.gif")
+}
+
+.mule-tt-head {
+  text-align: center;
+  font-weight: bolder;
 }

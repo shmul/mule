@@ -26,72 +26,117 @@
 /* including package ext-theme-classic */
 /* including package muleview-theme */
 /* line 1, ../../../packages/muleview-theme/sass/etc/all.scss */
+.charts-view-container.x-panel-body-default {
+  background-image: url("bg.png");
+}
+
+/* line 5, ../../../packages/muleview-theme/sass/etc/all.scss */
 .icon-cell > div {
   background-position: center center;
   background-repeat: no-repeat;
 }
 
-/* line 6, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 10, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-critical {
   color: red;
 }
-/* line 8, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 12, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-critical .state-cell > div {
   background-color: red;
   color: white;
 }
 
-/* line 14, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 18, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-warning {
   color: orange;
 }
-/* line 16, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 20, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-warning .state-cell > div {
   background-color: orange;
   color: white;
 }
 
-/* line 23, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 27, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alert-row-normal .state-cell > div {
+  background-color: white;
+}
+
+/* line 33, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-critical-high .icon-cell > div {
   background-image: url("critical_high.png");
 }
 
-/* line 29, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 39, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-warning-high .icon-cell > div {
   background-image: url("warning_high.png");
 }
 
-/* line 35, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 45, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-critical-low .icon-cell > div {
   background-image: url("critical_low.png");
 }
 
-/* line 41, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 50, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-warning-low .icon-cell > div {
   background-image: url("warning_low.png");
 }
 
-/* line 47, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* **** Alerts Editor **************************************************************** */
+/* line 57, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alerts-editor-table-header {
+  text-decoration: underline;
+}
+
+/* line 61, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alerts-editor-row-critical-high {
+  padding-left: 20px;
+  background-repeat: no-repeat;
+  background-image: url("critical_high.png");
+}
+
+/* line 67, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alerts-editor-row-critical-low {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("critical_low.png");
+}
+
+/* line 73, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alerts-editor-row-warning-high {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("warning_high.png");
+}
+
+/* line 79, ../../../packages/muleview-theme/sass/etc/all.scss */
+.alerts-editor-row-warning-low {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("warning_low.png");
+}
+
+/* **************************************************************** */
+/* line 86, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-summary-critical {
   background-image: url("summary_critical.png");
 }
 
-/* line 51, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 90, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-summary-warning {
   background-image: url("summary_warning.png");
 }
 
-/* line 55, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 94, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-summary-normal {
   background-image: url("summary_normal.png");
 }
 
-/* line 59, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 98, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-summary-stale {
   background-image: url("summary_stale.png");
 }
 
-/* line 63, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 102, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel {
   height: 16px;
   background-repeat: no-repeat;
@@ -102,25 +147,31 @@
   overflow: hidden;
 }
 
-/* line 73, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 112, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-normal {
   padding-left: 0px;
 }
 
-/* line 77, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 116, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-progress {
   background-image: url("loading.gif");
 }
 
-/* line 81, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 120, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-success {
   background-image: url("status-ok.png");
 }
 
-/* line 85, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 124, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-error {
   color: red;
   background-image: url("status-error.gif");
+}
+
+/* line 129, ../../../packages/muleview-theme/sass/etc/all.scss */
+.mule-tt-head {
+  text-align: center;
+  font-weight: bolder;
 }
 
 /* including package muleview-theme */

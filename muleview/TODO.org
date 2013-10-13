@@ -1,7 +1,25 @@
 * Issues
+** TODO Masking when opening new graph before receiving retentions
+** TODO Failure function for keys expand
+   This is to prevent the loading circle from stayign there forever
+** TODO Back button issue
+** TODO Going back to no-graphs page
+   When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
+** TODO Misordered responses issue
+   When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
+   We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
+** TODO Refresh timer not reset by reloading graph
 ** DONE Retention names are wrong in combobox (missing "s")
+** DONE Multimode seems to be broken
+   Can't check keys
+** DONE Can't open alerts editor in the same graph different retention
+** DONE Alets - not all are shown
+** DONE "Hide Legend" isn't toggled by default on single graphs
+** DONE Retentions aren't saved when switching between keys
 ** DONE Graphs look awful in Firefox
-** TODO Default alerts
+** DONE Nicer sorting in alerts report
+   There should be a way to sort by critical > warning > normal..
+** DONE Default alerts
 *** DONE Calculation should be based upon period
 *** DONE Period should be bigger
     We should start with bucket * 3
@@ -17,23 +35,13 @@
     According to the current chart data...
 *** DONE Tooltip issue
     The error tooltip is broken
-** TODO failure function for keys expand
-   This is to prevent the loading circle from stayign there forever
 ** DONE Don't pull all retentions per graph
 ** DONE Renovate Alerts Report
    Should be a different window or something
    ----
    I went for the mini dock implementation
-** TODO Back button issue
-** DONE Nicer sorting in alerts report
-   There should be a way to sort by critical > warning > normal..
 ** DONE Nicer formatting of stale/period values in alerts report
 ** DONE Mask when switching retentions in the same graph
-** TODO Going back to no-graphs page
-   When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
-** TODO Misordered responses issue
-   When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
-   We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
 ** DONE Navigation in compare-mode
 ** DONE Status bar doesn't have busy icon
    Also, it should utilize Ext.Ajax.is(something, loading or waiting or something like that)
@@ -42,7 +50,6 @@
 ** DONE Fix statusbar auto fade
 it gets into "ready" even though still waiting for mule events
 ** DONE Coffee 1.6 compatibility
-** TODO Refresh timer not reset by reloading graph
 ** DONE "Loading" mask has double icons
 ** DONE Subkeys pagination
 *** DONE Handle case when no subkeys
@@ -53,10 +60,36 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Times should be shown in UTC
 
 * Features:
-** DONE Fix Tooltip Errors somehow
-** TODO Lexicographic order of keys
+** TODO Add combo box to MuleTimeField
+   Instead of using the regex, have a combo with ["Seconds", "Minutes", ...]
+** TODO Add error handling to request functions
+** TODO Easy way to show only main key (hide all subkeys)
 ** TODO Editable Settings
    There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
+** TODO Nicer about box?
+   perhaps, god forbig, an image or something?
+** TODO Pointer cursor for clickable areas
+** TODO Color alert fieldLabels
+** TODO Configurable refresh
+** TODO Support for timestamp labels - Waiting for Mule API
+   Probably can't implement in Ext Chart :(
+** TODO Something cooler with tooltips?
+** TODO Theme
+*** DONE Favicon
+*** DONE Areas color pallete
+*** DONE Nicer Mule Background
+"The mule picture should at least have the full "l" letter. I think it looks more like a bull than a mule so maybe adding another ear or a face will work."
+
+*** TODO Different color for topKey and areas
+*** DONE Less ugly keysTree icons
+    I simply removed them.
+** TODO Maximize/restore button
+** DONE Fix Tooltip Errors somehow
+** DONE Lexicographic order of keys
+** DONE Add value field to main key tooltip
+** DONE Remove "GMT" from tooltip timestamp
+** DONE Implement "Average Alerts" instead of meaningless alert lines in charts
+** DONE Add automatic retries for requests
 ** DONE Implement children
    In the keys tree - show + sign next to keys which are known to have subkeys.
 ** DONE Loading mask when loading keys
@@ -70,35 +103,18 @@ It should immediately show the full path of the key, and then subsequently load 
 ** DONE The x-axis contains full time stamps which can be too much for the eye. What about showing the day only when they change?
 I hope this fix is suitable (Not trivial to check).
 ** DONE We should add some branding to the status bar. Maybe the project name and a link to github?
-** TODO Nicer about box?
-   perhaps, god forbig, an image or something?
-** TODO Pointer cursor for clickable areas
 ** DONE Alert dashboard - a summary of the alert statuses. Navigating to the faulty graphs would be great.
 ** DONE When presenting single graphs (i.e. not stacked) the lines should be thicker.
 ** DONE Add an option to reset the zoom factor
 ** DONE Toggle Legend
-** TODO Color alert fieldLabels
-** TODO Configurable refresh
 ** DONE Mule/Hinny picture
 ** DONE Something nicer with the status bar
    Added alert status
    Can always add more events to reportin the sb...
-** TODO Support for timestamp labels - Waiting for Mule API
-** TODO Something cooler with tooltips?
-** TODO Theme
-*** DONE Favicon
-*** DONE Areas color pallete
-*** DONE Nicer Mule Background
-"The mule picture should at least have the full "l" letter. I think it looks more like a bull than a mule so maybe adding another ear or a face will work."
-
-*** TODO Different color for topKey and areas
-*** DONE Less ugly keysTree icons
-    I simply removed them.
 ** DONE Redesign display
  - [X] Only relevant small graphs
  - [X] Make small graphs clickable
 ** DONE Url navigation
-** TODO Maximize/restore button
 ** DONE Nicer title(s)
 ** DONE Status Bar
 ** DONE Refresh interval
@@ -125,14 +141,15 @@ aka "Add alerts" button
 *** DONE Nicer tips
 *** DONE Load alerts with graph
 * Optimizations:
+** TODO Try to implement onhashchange event myself
+This is related to histoy controller
 ** DONE Dynamic tree
 ** DONE Utilize numchilds
 ** DONE Don't pull all graph data, only relevant retention
-** TODO Try to implement onhashchange event myself
-This is related to histoy controller
 ** DONE Generate big chart only on demand
 ** DONE Upgrade to Extjs 4.2
 * Misc:
+** TODO Fix rare tootip "surface" error davar
 ** DONE Check data correctness
    --------
    Seems legit AFAIK
@@ -144,7 +161,6 @@ This is related to histoy controller
  Close enough
 ** DONE Get rid of Muleview.Events
 in favor of this.application.whatever
-** TODO Fix rare tootip "surface" error davar
 ** Ideas:
 *** Experiment with union-graph
 One graph to rule them all ( all retentions )

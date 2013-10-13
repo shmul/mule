@@ -56,6 +56,9 @@ Ext.define "Muleview.controller.StatusBar",
     @lastCls = cls
 
   handlers:
+    commandRetry: (command, attempt) ->
+      @status "Command '#{command}' failed. Retrying (#{attempt})...", "error", "ERROR"
+
     alertsRequest: () ->
       @progress "Requested alert status", "alerts"
 
