@@ -116,7 +116,7 @@ Ext.define "Muleview.controller.StatusBar",
       @status
         leftText: "#{point.series.name}: #{valueText}"
         rightText: timeText
-      , false, false
+      , null, false
 
     commandRetry: (command, attempt) ->
       @status "Command '#{command}' failed. Retrying (#{attempt})...", "error", "ERROR"

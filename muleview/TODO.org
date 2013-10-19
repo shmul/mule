@@ -1,16 +1,17 @@
 * Issues
-** TODO Masking when opening new graph before receiving retentions
-** TODO Don't make the zoom interactive
+** TODO Alerts' lines go in the back of surfaces
+** DONE Masking when opening new graph before receiving retentions
+** DONE Don't make the zoom interactive
    Apply it only after mouse up
 ** TODO Critical-up icon missing
    In alerts summary
-** TODO Discrepancy in tooltips/graph
+** DONE Discrepancy in tooltips/graph
    http://v2.mule.trusteer.net/mule/#file_storer.stored.patch_sentry_agg_patch_detected;1h:90d
-** TODO Don't show the future
+** DONE Don't show the future
    Ext charts seem to sometimes show more than the data in the axis (jumps by chunks or something)
    Perhaps setting max to now or something like that
 ** TODO Ignore -1 in stale values
-** TODO HRs in tooltips aren't the same width with long key names
+** DONE HRs in tooltips aren't the same width with long key names
 ** TODO Failure function for keys expand
    This is to prevent the loading circle from stayign there forever
 ** TODO Back button issue
@@ -75,13 +76,13 @@ it gets into "ready" even though still waiting for mule events
    Instead of using the regex, have a combo with ["Seconds", "Minutes", ...]
 ** TODO Bette distinguish main key tooltip and subkey tooltip (and alerts, too?)
 ** TODO Add error handling to request functions
-** TODO Easy way to show only main key (hide all subkeys)
+** DONE Easy way to show only main key (hide all subkeys)
 ** TODO Editable Settings
    There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
 ** TODO Nicer about box?
    perhaps, god forbig, an image or something?
-** TODO Pointer cursor for clickable areas
-** TODO Color alert fieldLabels
+** DONE Pointer cursor for clickable areas
+** DONE Color alert fieldLabels
 ** TODO Configurable refresh
 ** TODO Support for timestamp labels - Waiting for Mule API
    Probably can't implement in Ext Chart :(

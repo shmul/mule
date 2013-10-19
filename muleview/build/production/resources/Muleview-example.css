@@ -148,57 +148,62 @@
 }
 
 /* line 112, ../../../packages/muleview-theme/sass/etc/all.scss */
+#statusRightLabel {
+  padding-left: 1px;
+}
+
+/* line 116, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-normal {
   padding-left: 0px;
 }
 
-/* line 116, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 120, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-progress {
   background-image: url("loading.gif");
 }
 
-/* line 120, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 124, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-success {
   background-image: url("status-ok.png");
 }
 
-/* line 124, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 128, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-error {
   color: red;
   background-image: url("status-error.gif");
 }
 
-/* line 129, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 133, ../../../packages/muleview-theme/sass/etc/all.scss */
 .mule-tt-head {
   text-align: center;
   font-weight: bolder;
   display: inline-block;
 }
 
-/* line 135, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 139, ../../../packages/muleview-theme/sass/etc/all.scss */
 .mule-tt-colorbox {
   width: 12px;
   height: 12px;
   border-radius: 2px;
-  position: relative;
   display: inline-block;
-  float: right;
+  float: left;
   margin-top: 1px;
+  margin-right: 3px;
 }
 
-/* line 145, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 149, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-chart-container {
   position: relative;
   display: inline-block;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* line 151, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 155, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-chart {
   display: inline-block;
 }
 
-/* line 156, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 160, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-legend {
   position: absolute;
   display: block;
@@ -209,12 +214,12 @@
   margin: 0px 0px 0px 10px;
 }
 
-/* line 166, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 170, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-slider {
   display: block;
 }
 
-/* line 170, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 174, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixed-tooltip {
   height: 8px;
   margin: 2px;
@@ -222,7 +227,7 @@
   width: 100%;
 }
 
-/* line 177, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 181, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixedtip-colorbox {
   width: 12px;
   height: 12px;
