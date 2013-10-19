@@ -6,16 +6,13 @@ Ext.define "Muleview.view.MuleLightChart",
 
   initComponent: ->
     @chart = Ext.create "Muleview.view.MuleChart",
+      mainGraph: false
+      slider: false
       data: @data
       store: @store
       topKeys: @topKeys
       legend: false
-      showAreas: false
-      highlight: false
-      timeLabel:
-        renderer: ->
-          ""
-    adjustEnd: false
+
     @items = [@chart]
     @tools = [
       type: "prev"

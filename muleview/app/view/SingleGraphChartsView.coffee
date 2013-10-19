@@ -33,7 +33,6 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       @showLegend = not Ext.isEmpty(@subkeys)
       @legendButton.toggle(@showLegend)
       @renderChart()
-      @setBbar(@store)
 
   renderChart: ->
     @chartContainer.removeAll()

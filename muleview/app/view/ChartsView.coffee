@@ -2,7 +2,6 @@ Ext.define "Muleview.view.ChartsView",
   extend: "Ext.panel.Panel"
   requires: [
     "Ext.form.field.ComboBox"
-    "Muleview.view.ZoomSlider"
     "Muleview.model.Retention"
     "Muleview.view.MuleLightChart"
     "Muleview.view.MuleChart"
@@ -66,26 +65,6 @@ Ext.define "Muleview.view.ChartsView",
     @eachRetention (retention, name) =>
       @lightCharts[name] = @createLightChart(retention, data)
       @rightPanel.add(@lightCharts[name])
-    @rightPanel.add Ext.create "Ext.panel.Panel",
-      title: "Legend"
-      layout: "fit"
-      flex: 1
-      items:
-        xtype: "component"
-        autoEl: "div"
-        id: "rickshaw-legend"
-
-  setBbar: (store) ->
-    return unless store
-    # Remove all old docked items:
-    @zoomSliderContainer.removeAll()
-
-    # Create Slider:
-    @zoomSlider = Ext.create "Muleview.view.ZoomSlider",
-      store: store
-
-    # Add items to the dock:
-    @zoomSliderContainer.add @zoomSlider
 
   items: ->
     [
@@ -97,7 +76,6 @@ Ext.define "Muleview.view.ChartsView",
             type: "vbox"
             align: "stretch"
           tbar: @createChartContainerToolbar()
-          bbar: @createChartContainerZoomSlider()
       ,
         @rightPanel = Ext.create "Ext.panel.Panel",
           title: "Previews"
@@ -110,24 +88,6 @@ Ext.define "Muleview.view.ChartsView",
             type: "vbox"
             align: "stretch"
           items: [] # will be added upone data retrieval
-    ]
-
-  createChartContainerZoomSlider: ->
-    [
-      @zoomSliderContainer = Ext.create("Ext.container.Container",
-        flex: 1
-        layout: "fit"
-        # Slider will be created upon chart render
-      ),
-
-      {
-        xtype: "button"
-        text: "Reset"
-        margin: "0px 0px 0px 3px"
-        dock: "bottom"
-        handler: =>
-          @zoomSlider.reset()
-      }
     ]
 
   createChartContainerToolbar: ->
@@ -202,7 +162,6 @@ Ext.define "Muleview.view.ChartsView",
   createChart: (retName = @currentRetName) ->
     @store = @stores[retName]
     @renderChart()
-    @setBbar(@store)
 
   renderChart: () ->
     @chartContainer.removeAll()
