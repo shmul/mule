@@ -28,6 +28,20 @@ Ext.define "Muleview.view.MuleChart",
     @fireEvent "topkeyclick"
 
   renderChart: () ->
+    if not @hasData
+      @add Ext.create "Ext.container.Container",
+        layout:
+          type: "vbox"
+          pack: "center"
+          align: "center"
+
+        items: [
+          xtype: "label"
+          text: "No Data"
+        ]
+      @setDisabled(true)
+
+      return
 
     # Remove old components and create container:
     @removeAll()
@@ -188,6 +202,7 @@ Ext.define "Muleview.view.MuleChart",
       total = record.get(@topKeys[0])
       for key in keys
         value = record.get(key)
+        @hasData ||= value
         percent = 100 * value / total
         ans[key].push
           x: record.get("timestamp")
@@ -202,6 +217,7 @@ Ext.define "Muleview.view.MuleChart",
     keys = Ext.Array.pluck(@alerts || [], "name")
     keys = keys.concat(@topKeys || [])
     keys = keys.concat(@subKeys || [])
+
     seriesData = @prepareSeriesData(keys)
 
     series = []
@@ -231,7 +247,6 @@ Ext.define "Muleview.view.MuleChart",
         data: seriesData[subKey]
         type: "subkey"
         renderer: "stack"
-
 
     series
 
