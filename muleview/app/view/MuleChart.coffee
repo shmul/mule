@@ -48,6 +48,11 @@ Ext.define "Muleview.view.MuleChart",
     for key, id of @divs
       @divs[key] = document.querySelector("#" + id)
 
+  handleClick: (e) ->
+    point = @lastHoveredPoint
+    if point.series.type == "subkey"
+      Muleview.event "viewChange", point.series.key, null
+
   renderChart: () ->
 
     # Remove old components and create container:
@@ -56,22 +61,27 @@ Ext.define "Muleview.view.MuleChart",
     # Main Graph
     @graph = new Rickshaw.Graph
       element: @divs.chart
-      interpolation: "step"
+      interpolation: "linear"
       width: @graphContainer.getWidth()
-      height: @graphContainer.getHeight() - 30
+      height: @graphContainer.getHeight() - 26
       renderer: "multi"
       series: @series
-    window.g = @graph
+
+    window.g=@graph #TODO: remove
+
+    Ext.fly(@graph.element).on
+      click: @handleClick
+      scope: @
 
     # X Axis:
     new Rickshaw.Graph.Axis.Time
       graph: @graph
-      pixelsPerTick: 100
 
-    # Y Axis:
-    new Rickshaw.Graph.Axis.Y
-      graph: @graph
-      tickFormat: Ext.util.Format.numberRenderer(",0")
+    if @mainGraph
+      # Y Axis:
+      new Rickshaw.Graph.Axis.Y
+        graph: @graph
+        tickFormat: Ext.util.Format.numberRenderer(",0")
 
     @createLegend()
     @graph.render()
@@ -117,12 +127,16 @@ Ext.define "Muleview.view.MuleChart",
 
     muleChart = @
 
-    FixedTooltip =  Rickshaw.Class.create Rickshaw.Graph.HoverDetail,
+    graphElement = @graph.element
 
+    FixedTooltip =  Rickshaw.Class.create Rickshaw.Graph.HoverDetail,
       render: ($super, args) =>
         $super(args)
+
+
         @element ||= document.querySelector("#rickshaw-fixed-tooltip")
         point = (args.points.filter (p) -> p.active).shift()
+        graphElement.style.cursor = if point.series.type == "subkey" then "pointer" else "default"
 
         percent =  point.value.percent
         percentText = Ext.util.Format.number(percent, "0.00")
@@ -136,9 +150,10 @@ Ext.define "Muleview.view.MuleChart",
           valueText: valueText
           color: point.series.color
           timestamp: point.formattedXValue
+        muleChart.lastHoveredPoint = point
         @show()
 
-      SKIP_formatter: (series, x, y) =>
+      formatter: (series, x, y, formattedX, formattedY, point) =>
         tplArr = ["
           <div class=\"mule-tt-head\" style=\"display: inline-block\">
             #{series.name}
@@ -163,6 +178,7 @@ Ext.define "Muleview.view.MuleChart",
         time = Ext.Date.format(dateObj, "H:i:s")
 
         addData("Value", Ext.util.Format.number(y, ",0"))
+        addData("Percent", Ext.util.Format.number(point.value.percent, "0.00%")) if point.series.type == "subkey"
         tplArr.push("<tr><td colspan=2><hr /></td></tr>")
         addData("Day", day)
         addData("Date", date)
@@ -202,10 +218,12 @@ Ext.define "Muleview.view.MuleChart",
         color: palette.color()
         data: @createSeriesData(topKey)
         type: "topkey"
+        key: topKey
         renderer: "line"
 
     for subKey in (@subKeys || [])
       series.push
+        key: subKey
         name: @keyLegendName(subKey)
         color: palette.color()
         data: @createSeriesData(subKey)
