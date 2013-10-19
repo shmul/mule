@@ -11,6 +11,8 @@ Ext.define "Muleview.view.MuleLightChart",
       data: @data
       store: @store
       topKeys: @topKeys
+      formatter: (series, x, y) ->
+        Ext.util.Format.number(y, ",0")
       legend: false
 
     @items = [@chart]

@@ -36,7 +36,9 @@ Ext.define "Muleview.view.SingleGraphChartsView",
 
   renderChart: ->
     @chartContainer.removeAll()
-    @chartContainer.add Ext.create "Muleview.view.MuleChart",
+    sliderContainer = @createSliderContainer()
+    @chartContainer.add(sliderContainer)
+    @chartContainer.insert 0, Ext.create("Muleview.view.MuleChart",
       flex: 1
       showAreas: true
       topKeys: [@key]
@@ -44,3 +46,5 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       alerts: @alerts
       store: @store
       showLegend: @showLegend
+      sliderContainer: sliderContainer
+    )
