@@ -60,8 +60,6 @@ Ext.define "Muleview.view.MuleChart",
       width: @graphContainer.getWidth()
       height: @graphContainer.getHeight()
       renderer: "multi"
-      stroke: 20
-      strokeWidth: 30
       series: @series
 
     window.g=@graph #TODO: remove
@@ -172,10 +170,11 @@ Ext.define "Muleview.view.MuleChart",
 
     addData("Value", Ext.util.Format.number(y, ",0"))
     addData("Percent", Ext.util.Format.number(point.value.percent, "0.00%")) if point.series.type == "subkey"
-    tplArr.push("<tr><td colspan=2><hr /></td></tr>")
-    addData("Day", day)
-    addData("Date", date)
-    addData("Time", time)
+    if point.series.type != "alert"
+      tplArr.push("<tr><td colspan=2><hr /></td></tr>")
+      addData("Day", day)
+      addData("Date", date)
+      addData("Time", time)
 
     tplArr.push("</table>")
     tplArr.join("")

@@ -24,9 +24,7 @@ Ext.define "Muleview.view.SingleGraphChartsView",
 
   createChart: (retName = @currentRetName) ->
     @chartContainer.removeAll()
-    @chartContainer.setLoading(true)
     Muleview.Mule.getGraphData @key, retName, (data) =>
-      @chartContainer.setLoading(false)
       @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@currentRetName}")?.toGraphArray(@currentRetName)
       @store = @createStore(data, @alerts)
       @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
@@ -48,3 +46,4 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       showLegend: @showLegend
       sliderContainer: sliderContainer
     )
+    @chartContainer.setLoading(false)

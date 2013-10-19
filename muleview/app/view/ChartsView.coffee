@@ -15,6 +15,10 @@ Ext.define "Muleview.view.ChartsView",
   alerts: [] #TODO: remove
 
   initComponent: ->
+    @on
+      boxready: =>
+        @setLoading(true)
+
     # Fetch all retentions and their data:
     Muleview.Mule.getKeysData @keys, (keysData) =>
       @fillRetentionsAndLightCharts(keysData)
@@ -158,6 +162,7 @@ Ext.define "Muleview.view.ChartsView",
       lightChart.setVisible(lightChart.retention != retName)
     @currentRetName = retName
     Muleview.event "viewChange", @keys, @currentRetName
+    @setLoading(false)
 
   createChart: (retName = @currentRetName) ->
     @store = @stores[retName]
