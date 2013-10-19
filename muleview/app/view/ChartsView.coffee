@@ -35,6 +35,8 @@ Ext.define "Muleview.view.ChartsView",
     @initRetentionsMenu(data)
     @initStores(data)
     @initLightCharts(data)
+    @setLoading(false)
+    @chartContainer.setLoading(true)
     @showRetention(@defaultRetention)
 
   initRetentionsStore: (data) ->
@@ -156,13 +158,13 @@ Ext.define "Muleview.view.ChartsView",
     return unless !@currentRetName or(retName and retName != @currentRetName)
 
     retName ||= @retentionsStore.getAt(0).get("name")
+    @chartContainer.setLoading(true)
     @createChart(retName)
     @retMenu.selectRetention(retName)
     for own _, lightChart of @lightCharts
       lightChart.setVisible(lightChart.retention != retName)
     @currentRetName = retName
     Muleview.event "viewChange", @keys, @currentRetName
-    @setLoading(false)
 
   createChart: (retName = @currentRetName) ->
     @store = @stores[retName]
@@ -186,6 +188,7 @@ Ext.define "Muleview.view.ChartsView",
       sliderContainer: sliderContainer
       showLegend: @showLegend
     )
+    @chartContainer.setLoading(false)
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],

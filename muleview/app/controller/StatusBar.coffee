@@ -21,14 +21,14 @@ Ext.define "Muleview.controller.StatusBar",
     # Register all handlers:
     Muleview.app.on Ext.merge(@handlers, {scope: @ })
 
-  inProgress: []
+  inProgress: {}
 
   progress: (txt, progressId) ->
-    @inProgress.push(progressId)
+    @inProgress[progressId] = txt
     @status txt, "progress"
 
   success: (txt, progressId) ->
-    Ext.Array.remove(@inProgress, progressId)
+    delete @inProgress[progressId]
     @status txt, "success"
 
   failure: (txt, progressId) ->
@@ -57,7 +57,12 @@ Ext.define "Muleview.controller.StatusBar",
     if Ext.isEmpty(@inProgress)
       @status "Ready.", null, false
     else
-      @status "Pending...", "progress", false
+      firstValue = nil
+      Ext.each @inProgress, (key, value) ->
+        firstValue = value
+        false
+
+      @status firstValue, "progress", false
 
   setIcon: (clsSuffix) ->
     cls = "statusLabel-" + clsSuffix

@@ -21,8 +21,11 @@ Ext.define "Muleview.view.MuleChart",
 
   handleClick: (e) ->
     point = @lastHoveredPoint
+
     if point.series.type == "subkey"
       Muleview.event "viewChange", point.series.key, null
+
+    @fireEvent "topkeyclick"
 
   renderChart: () ->
 
@@ -98,7 +101,6 @@ Ext.define "Muleview.view.MuleChart",
       legend: legend
       disabledColor: -> "rgba(0, 0, 0, 0.2)"
 
-
   createSlider: ->
     return unless @slider
     new Rickshaw.Graph.RangeSlider
@@ -106,22 +108,7 @@ Ext.define "Muleview.view.MuleChart",
       element: @sliderContainer.getEl().dom
 
   createTooltips: ->
-    tpl = new Ext.XTemplate('
-    <table style="width: 100%">
-      <tr>
-        <td style="text-align: left">
-          <span class="rickshaw-fixedtip-colorbox" style="background-color: {color}"></span>
-          <b>{key}</b> - {valueText}
-        </td>
-        <td style="text-align: right">
-          {timestamp}
-        </td>
-      </tr>
-    </table>
-    ')
-
     muleChart = @
-
     graphElement = @graph.element
 
     FixedTooltip =  Rickshaw.Class.create Rickshaw.Graph.HoverDetail,
@@ -137,7 +124,11 @@ Ext.define "Muleview.view.MuleChart",
         point = (args.points.filter (p) -> p.active).shift()
         muleChart.lastHoveredPoint = point
         Muleview.event "chartMouseover", point
-        graphElement.style.cursor = if point.series.type == "subkey" then "pointer" else "default"
+        if muleChart.mainGraph
+          cursor = if point.series.type == "subkey" then "pointer" else "default"
+        else
+          cursor = "pointer"
+        graphElement.style.cursor = cursor
 
       formatter: @formatter
 
@@ -146,18 +137,27 @@ Ext.define "Muleview.view.MuleChart",
 
   formatter: (series, x, y, formattedX, formattedY, point) =>
     tplArr = ["
-      <div class=\"mule-tt-head\" style=\"display: inline-block\">
-        #{series.name}
-      </div>
-      <span class=\"mule-tt-colorbox\" style=\"background-color: #{series.color} \"></span>
-      <hr />
-      <table>"
+      <table style=\"margin: auto\">
+        <tr>
+          <td colspan = 2>
+            <div class=\"mule-tt-head\" style=\"display: inline-table; margin-right: 3px;\">
+              <span class=\"mule-tt-colorbox\" style=\"float: left; background-color: #{series.color} \"></span>
+              #{series.name}
+            </div>
+          </td>
+        </tr>
+        "
     ]
+
+    addHr = () ->
+      tplArr.push("<tr><td colspan=2><hr /></td></tr>")
+
+    addHr()
 
     addData = (td1, td2) ->
       tplArr.push("
         <tr>
-          <td><b>#{td1}:</b></td>
+          <td style=\"width: 55px\" ><b>#{td1}:</b></td>
           <td>#{td2}</td>
         </tr>")
 
@@ -171,7 +171,7 @@ Ext.define "Muleview.view.MuleChart",
     addData("Value", Ext.util.Format.number(y, ",0"))
     addData("Percent", Ext.util.Format.number(point.value.percent, "0.00%")) if point.series.type == "subkey"
     if point.series.type != "alert"
-      tplArr.push("<tr><td colspan=2><hr /></td></tr>")
+      addHr()
       addData("Day", day)
       addData("Date", date)
       addData("Time", time)
