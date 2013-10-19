@@ -129,8 +129,18 @@
 .mule-tt-head {
   text-align: center;
   font-weight: bolder;
+  display: inline-block;
 }
 
+.mule-tt-colorbox {
+  width:  12px;
+  height: 12px;
+  border-radius: 2px;
+  position: relative;
+  display: inline-block;
+  float: right;
+  margin-top: 1px;
+}
 
 .rickshaw-chart-container {
   position: relative;
@@ -140,18 +150,34 @@
 
 .rickshaw-chart {
   display: inline-block;
-  margin-left: 40px
 }
 
-.rickshaw-y-axis {
-  position: absolute;
-  top: 0;
-  bottom: o;
-  width: 40px;
-}
 
 .rickshaw-legend {
-  display: inline-block;
+  position: absolute;
+  display: block;
+  top: 10px;
+  left: 30px;
+  background-color: rgba(64, 64, 64, 0.5);
   vertical-align: top;
   margin: 0px 0px 0px 10px;
+}
+
+.rickshaw-slider {
+  display: block;
+}
+
+.rickshaw-fixed-tooltip {
+  height: 8px;
+  margin: 2px;
+  text-align: center;
+  width: 100%;
+}
+
+.rickshaw-fixedtip-colorbox {
+  width:  12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-top: 1px;
 }

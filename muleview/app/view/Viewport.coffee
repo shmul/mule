@@ -173,6 +173,13 @@ Ext.define "Muleview.view.Viewport",
         ,
           xtype: "container"
           flex: 1
+          layout:
+            type: "hbox"
+            pack: "end"
+          items: [
+            xtype: "label"
+            id: "statusRightLabel"
+          ]
         ,
           icon: "resources/default/images/mule_icon.png"
           handler: ->

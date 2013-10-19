@@ -60,6 +60,8 @@ Ext.define "Muleview.view.MuleChart",
       width: @graphContainer.getWidth()
       height: @graphContainer.getHeight()
       renderer: "multi"
+      stroke: 20
+      strokeWidth: 30
       series: @series
 
     window.g=@graph #TODO: remove
@@ -199,6 +201,14 @@ Ext.define "Muleview.view.MuleChart",
 
     series = []
 
+    for alert in (@alerts || [])
+      series.push
+        name: alert.label
+        color: alert.color
+        renderer: "line"
+        data: @createSeriesData(alert.name)
+        type: "alert"
+
     for topKey in @topKeys
       series.push
         name: @keyLegendName(topKey)
@@ -215,17 +225,8 @@ Ext.define "Muleview.view.MuleChart",
         color: palette.color()
         data: @createSeriesData(subKey)
         type: "subkey"
-        stroke: 0
         renderer: "stack"
 
-    for alert in (@alerts || [])
-      series.push
-        name: alert.label
-        color: alert.color
-        renderer: "line"
-        isAlert: true
-        data: @createSeriesData(alert.name)
-        type: "alert"
 
     series
 
