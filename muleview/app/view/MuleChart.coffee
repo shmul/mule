@@ -179,24 +179,30 @@ Ext.define "Muleview.view.MuleChart",
     tplArr.push("</table>")
     tplArr.join("")
 
-  createSeriesData: (series) ->
-    ans = []
+  prepareSeriesData: (keys) ->
+    ans = {}
+    for key in keys
+      ans[key] = []
+
     @store.each (record) =>
       total = record.get(@topKeys[0])
-      value = record.get(series)
-      percent = 100 * value / total
-      ans.push
-        x: record.get("timestamp")
-        y: value
-        percent: percent
+      for key in keys
+        value = record.get(key)
+        percent = 100 * value / total
+        ans[key].push
+          x: record.get("timestamp")
+          y: value
+          percent: percent
     ans
 
   createSeries: ->
     palette = new Rickshaw.Color.Palette
       scheme: new Muleview.view.Theme().colors
 
-    alertsStart = @store.min("timestamp")
-    alertsEnd = @store.max("timestamp")
+    keys = Ext.Array.pluck(@alerts || [], "name")
+    keys = keys.concat(@topKeys || [])
+    keys = keys.concat(@subKeys || [])
+    seriesData = @prepareSeriesData(keys)
 
     series = []
 
@@ -205,14 +211,14 @@ Ext.define "Muleview.view.MuleChart",
         name: alert.label
         color: alert.color
         renderer: "line"
-        data: @createSeriesData(alert.name)
+        data: seriesData[alert.name]
         type: "alert"
 
     for topKey in @topKeys
       series.push
         name: @keyLegendName(topKey)
         color: palette.color()
-        data: @createSeriesData(topKey)
+        data: seriesData[topKey]
         type: "topkey"
         key: topKey
         renderer: "line"
@@ -222,7 +228,7 @@ Ext.define "Muleview.view.MuleChart",
         key: subKey
         name: @keyLegendName(subKey)
         color: palette.color()
-        data: @createSeriesData(subKey)
+        data: seriesData[subKey]
         type: "subkey"
         renderer: "stack"
 
