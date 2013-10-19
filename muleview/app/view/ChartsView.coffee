@@ -66,6 +66,14 @@ Ext.define "Muleview.view.ChartsView",
     @eachRetention (retention, name) =>
       @lightCharts[name] = @createLightChart(retention, data)
       @rightPanel.add(@lightCharts[name])
+    @rightPanel.add Ext.create "Ext.panel.Panel",
+      title: "Legend"
+      layout: "fit"
+      flex: 1
+      items:
+        xtype: "component"
+        autoEl: "div"
+        id: "rickshaw-legend"
 
   setBbar: (store) ->
     return unless store
@@ -227,6 +235,7 @@ Ext.define "Muleview.view.ChartsView",
       ]
 
     # Convert data to timestamps-based hash:
+    window.d = data
     timestamps = {}
     for own key, keyData of data
       for [count, _, timestamp] in keyData
