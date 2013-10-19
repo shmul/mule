@@ -13,17 +13,23 @@ Ext.define "Muleview.controller.StatusBar",
     ,
       ref: "alertsReport"
       selector: "#alertsReport"
+    ,
+      ref: "pbar"
+      selector: "#statusProgressbar"
   ]
 
   onLaunch: ->
     @sbLabel = @getStatusLabel()
     @sbRightLabel = @getStatusRightLabel()
+    @pbar = @getPbar();
     # Register all handlers:
     Muleview.app.on Ext.merge(@handlers, {scope: @ })
 
+  inProgressMax: 0
   inProgress: {}
 
   progress: (txt, progressId) ->
+    @inProgressMax += 1
     @inProgress[progressId] = txt
     @status txt, "progress"
 
@@ -32,7 +38,7 @@ Ext.define "Muleview.controller.StatusBar",
     @status txt, "success"
 
   failure: (txt, progressId) ->
-    Ext.Array.remove(@inProgress, progressId)
+    delete @inProgress[progressId]
     @status "ERROR - " + txt, "error", "ERORR"
 
   status: (text, iconCls = "normal", logLevel = "INFO") ->
@@ -40,6 +46,15 @@ Ext.define "Muleview.controller.StatusBar",
     if Ext.typeOf(text) == "object"
       rightText = text.rightText
       text = text.leftText
+
+    # Update Progress bar:
+    if @inProgressMax > 0
+      do () =>
+        total = @inProgressMax
+        done = total - Ext.Object.getKeys(@inProgress).length
+        val = (done / total)
+        @pbar.updateProgress(val, Math.round(val * 100) + "%")
+        @pbar.show()
 
     # Set current text and icon:
     @sbLabel.setText text
@@ -49,20 +64,29 @@ Ext.define "Muleview.controller.StatusBar",
     # Reset clearance method:
     clearTimeout(@lastTimeout) if @lastTimeout
     @lastTimeout = setTimeout( Ext.bind(@resetSb, @) , 3000)
+    if @noRequestsPending()
+      Ext.defer =>
+        if @noRequestsPending()
+          @inProgressMax = 0
+          @pbar.hide()
+      , 2000
+
 
     # Log to console:
     console.log logLevel, new Date(), "(#{iconCls})", text if console and logLevel
 
-  resetSb: ->
-    if Ext.isEmpty(@inProgress)
-      @status "Ready.", null, false
-    else
-      firstValue = nil
-      Ext.each @inProgress, (key, value) ->
-        firstValue = value
-        false
+  noRequestsPending: ->
+    Ext.Object.isEmpty(@inProgress)
 
-      @status firstValue, "progress", false
+  resetSb: ->
+    Ext.defer( () =>
+      if @noRequestsPending()
+        @status "Ready.", null, false
+      else
+        firstValue = Ext.Object.getValues(@inProgress)[0]
+        @status firstValue, "progress", false
+    , 1000)
+
 
   setIcon: (clsSuffix) ->
     cls = "statusLabel-" + clsSuffix

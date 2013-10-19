@@ -175,10 +175,16 @@ Ext.define "Muleview.view.Viewport",
           flex: 1
           layout:
             type: "hbox"
-            pack: "end"
           items: [
-            xtype: "label"
-            id: "statusRightLabel"
+              xtype: "label"
+              cls: "statusLabel"
+              id: "statusRightLabel"
+              flex: 1
+            ,
+              xtype: "progressbar"
+              id: "statusProgressbar"
+              animate: true
+              width: 80
           ]
         ,
           icon: "resources/default/images/mule_icon.png"
