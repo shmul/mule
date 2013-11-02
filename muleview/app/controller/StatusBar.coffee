@@ -113,10 +113,7 @@ Ext.define "Muleview.controller.StatusBar",
       time = Ext.Date.format(dateObj, "H:i:s")
       timeText = "#{day}, #{date} #{time}"
 
-      @status
-        leftText: "#{point.series.name}: #{valueText}"
-        rightText: timeText
-      , null, false
+      @status "#{timeText} #{point.series.name}: #{valueText}" , null, false
 
     commandRetry: (command, attempt) ->
       @status "Command '#{command}' failed. Retrying (#{attempt})...", "error", "ERROR"

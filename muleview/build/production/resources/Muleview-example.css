@@ -191,35 +191,65 @@
   margin-right: 3px;
 }
 
-/* line 149, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 151, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-chart-container {
   position: relative;
   display: inline-block;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* line 155, ../../../packages/muleview-theme/sass/etc/all.scss */
-.rickshaw-chart {
-  display: inline-block;
+/* line 157, ../../../packages/muleview-theme/sass/etc/all.scss */
+.mule-chart {
+  padding-right: 10px;
 }
 
 /* line 160, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-chart {
+  display: inline-block;
+  left: 55px;
+  position: relative;
+}
+
+/* line 166, ../../../packages/muleview-theme/sass/etc/all.scss */
+.mule-lightchart .rickshaw-chart {
+  left: 0px;
+}
+
+/* line 170, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-y-axis {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  width: 55px;
+}
+
+/* line 177, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-x-axis {
+  position: relative;
+  left: 55px;
+  height: 40px;
+}
+
+/* line 184, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-legend {
   position: absolute;
   display: block;
   top: 10px;
-  left: 30px;
+  left: 80px;
   background-color: rgba(64, 64, 64, 0.5);
   vertical-align: top;
   margin: 0px 0px 0px 10px;
 }
 
-/* line 170, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 194, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-slider {
+  position: relative;
   display: block;
+  left: 55px;
+  top: 16px;
 }
 
-/* line 174, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 201, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixed-tooltip {
   height: 8px;
   margin: 2px;
@@ -227,13 +257,19 @@
   width: 100%;
 }
 
-/* line 181, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 208, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixedtip-colorbox {
   width: 12px;
   height: 12px;
   border-radius: 2px;
   display: inline-block;
   margin-top: 1px;
+}
+
+/* line 216, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw_graph .x_tick .title {
+  bottom: -16px;
+  margin-left: 0px;
 }
 
 /* including package muleview-theme */

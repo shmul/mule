@@ -3,6 +3,10 @@ Ext.define "Muleview.view.MuleLightChart",
   border: false
   frame: false
   layout: "fit"
+  cls: "mule-chart mule-lightchart"
+
+  yAxisWidth: 0
+  sliderHeight: 0
 
   navigate: () ->
     Muleview.event "viewChange", @topKeys, @retention

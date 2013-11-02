@@ -29,8 +29,8 @@ Ext.application
   autoCreateViewport: true
 
   controllers: [
-    "KeysTree"
     "StatusBar"
+    "KeysTree"
     "History"
     "ChartsController"
     "AlertsReportController"

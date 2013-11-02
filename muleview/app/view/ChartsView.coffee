@@ -170,22 +170,14 @@ Ext.define "Muleview.view.ChartsView",
     @store = @stores[retName]
     @renderChart()
 
-  createSliderContainer: () ->
-    Ext.create "Ext.container.Container",
-      layout: "fit"
-      height: 17
 
   renderChart: () ->
     @chartContainer.removeAll()
-
-    sliderContainer = @createSliderContainer()
-    @chartContainer.add sliderContainer
 
     @chartContainer.insert 0, Ext.create("Muleview.view.MuleChart",
       flex: 1
       topKeys: @keys
       store: @store
-      sliderContainer: sliderContainer
       showLegend: @showLegend
     )
     @chartContainer.setLoading(false)

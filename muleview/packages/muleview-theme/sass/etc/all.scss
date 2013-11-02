@@ -146,14 +146,38 @@
   margin-right: 3px;
 }
 
+$rickshawYAxis: 55px;
+
 .rickshaw-chart-container {
   position: relative;
   display: inline-block;
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.mule-chart {
+  padding-right: 10px;
+}
 .rickshaw-chart {
   display: inline-block;
+  left: $rickshawYAxis;
+  position: relative;
+}
+
+.mule-lightchart .rickshaw-chart {
+  left: 0px;
+}
+
+.rickshaw-y-axis {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  width: $rickshawYAxis;
+}
+
+.rickshaw-x-axis {
+  position: relative;
+  left: $rickshawYAxis;
+  height: 40px;
 }
 
 
@@ -161,14 +185,17 @@
   position: absolute;
   display: block;
   top: 10px;
-  left: 30px;
+  left: 80px;
   background-color: rgba(64, 64, 64, 0.5);
   vertical-align: top;
   margin: 0px 0px 0px 10px;
 }
 
 .rickshaw-slider {
+  position: relative;
   display: block;
+  left: $rickshawYAxis;
+  top: 16px;
 }
 
 .rickshaw-fixed-tooltip {
@@ -184,4 +211,9 @@
   border-radius: 2px;
   display: inline-block;
   margin-top: 1px;
+}
+
+.rickshaw_graph .x_tick .title {
+  bottom: -16px;
+  margin-left: 0px;
 }

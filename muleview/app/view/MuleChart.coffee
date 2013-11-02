@@ -6,8 +6,11 @@ Ext.define "Muleview.view.MuleChart",
 
   layout: "fit"
   slider: true
-  padding: 7
+  margin: 10
+  yAxisWidth: 40
+  sliderHeight: 25
   mainGraph: true
+  cls: "mule-chart"
 
   initComponent: ->
     @series = @createSeries()
@@ -48,12 +51,15 @@ Ext.define "Muleview.view.MuleChart",
 
     # Create new IDs for divs:
     @divs =
+      yAxis: Ext.id()
       chart: Ext.id()
       legend: Ext.id()
+      slider: Ext.id()
 
     # Prepare HTML content with new IDs:
     cmpHtml = '
         <div style="display: block">
+          <div class="rickshaw-y-axis" id="' + @divs.yAxis + '"> </div>
           <div class="rickshaw-chart" id="' + @divs.chart + '"> </div>
           <div class="rickshaw-legend" id="' + @divs.legend + '"> </div>
         </div>
@@ -71,11 +77,11 @@ Ext.define "Muleview.view.MuleChart",
       @divs[key] = document.querySelector("#" + id)
 
     # Create Graph
-    @graph = new Rickshaw.Graph
+    window.g = @graph = new Rickshaw.Graph
       element: @divs.chart
       interpolation: "linear"
-      width: @graphContainer.getWidth()
-      height: @graphContainer.getHeight()
+      width: @graphContainer.getWidth() - @yAxisWidth
+      height: @graphContainer.getHeight() - @sliderHeight
       renderer: "multi"
       series: @series
 
@@ -88,18 +94,27 @@ Ext.define "Muleview.view.MuleChart",
     # X Axis:
     new Rickshaw.Graph.Axis.Time
       graph: @graph
+      orientation: "bottom"
 
     if @mainGraph
       # Y Axis:
       new Rickshaw.Graph.Axis.Y
         graph: @graph
-        tickFormat: Ext.util.Format.numberRenderer(",0")
+        orientation: "left"
+        element: @divs.yAxis
+        tickFormat: Ext.bind(@numberFormatter, @)
 
     @createLegend()
     @graph.render()
     @createTooltips()
     @createSlider()
 
+  basicNumberFormatter: Ext.util.Format.numberRenderer(",0")
+  numberFormatter: (n) ->
+    if n > 1000000 # A million
+      n.toExponential(1)
+    else
+      @basicNumberFormatter(n)
   createLegend: ->
     return unless @showLegend
     legend = new Rickshaw.Graph.Legend
@@ -119,7 +134,7 @@ Ext.define "Muleview.view.MuleChart",
     return unless @slider
     new Rickshaw.Graph.RangeSlider
       graph: @graph
-      element: @sliderContainer.getEl().dom
+      element: @divs.slider
 
   createTooltips: ->
     muleChart = @

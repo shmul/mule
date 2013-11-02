@@ -74,6 +74,9 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Times should be shown in UTC
 
 * Features:
+** DONE Move axis to outside of chart
+** TODO Have a close button on the legend itself
+** DONE Unify two parts of the (mouseover) status
 ** TODO Add combo box to MuleTimeField
    Instead of using the regex, have a combo with ["Seconds", "Minutes", ...]
 ** TODO Bette distinguish main key tooltip and subkey tooltip (and alerts, too?)

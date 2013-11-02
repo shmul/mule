@@ -210,7 +210,7 @@ Ext.define "Muleview.controller.AlertsReportController",
 
     for severity, value of summary
       Ext.getCmp("alertsSummary#{severity}").setText("#{severity}: #{value}")
-    Ext.getCmp("alertsSummaryTotal").setText("Total: #{store.getCount()}")
+    Ext.getCmp("alertsSummaryTotal").setText("Total Alerts: #{store.getCount()}")
     @gridStore.loadData(records)
     @getRefreshButton().setDisabled(false)
     @getRefreshButton().setIcon("resources/default/images/refresh.png")
