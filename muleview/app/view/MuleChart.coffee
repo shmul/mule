@@ -77,15 +77,13 @@ Ext.define "Muleview.view.MuleChart",
       @divs[key] = document.querySelector("#" + id)
 
     # Create Graph
-    window.g = @graph = new Rickshaw.Graph
+    @graph = new Rickshaw.Graph
       element: @divs.chart
       interpolation: "linear"
       width: @graphContainer.getWidth() - @yAxisWidth
       height: @graphContainer.getHeight() - @sliderHeight
       renderer: "multi"
       series: @series
-
-    window.g=@graph #TODO: remove
 
     Ext.fly(@graph.element).on
       click: @handleClick
@@ -115,14 +113,13 @@ Ext.define "Muleview.view.MuleChart",
       n.toExponential(1)
     else
       @basicNumberFormatter(n)
+
   createLegend: ->
     return unless @showLegend
     legend = new Rickshaw.Graph.Legend
       element: @divs.legend
       graph: @graph
     $(@divs.legend).draggable()
-
-
 
     new Rickshaw.Graph.Behavior.Series.Toggle
       graph: @graph
@@ -146,6 +143,8 @@ Ext.define "Muleview.view.MuleChart",
     FixedTooltip =  Rickshaw.Class.create Rickshaw.Graph.HoverDetail,
       initialize:  ($super, args) ->
         $super(args)
+
+        # Make sure all parent nodes allow overflowing so that the tooltip window will be viible:
         node = @element.parentNode
         while node != document.body
           node.style.overflow = "visible"
@@ -164,52 +163,25 @@ Ext.define "Muleview.view.MuleChart",
 
       formatter: @formatter
 
-    hover = new FixedTooltip
+    new FixedTooltip
       graph: @graph
 
   formatter: (series, x, y, formattedX, formattedY, point) =>
-    tplArr = ["
-      <table style=\"margin: auto\">
-        <tr>
-          <td colspan = 2>
-            <div class=\"mule-tt-head\" style=\"display: inline-table; margin-right: 3px;\">
-              <span class=\"mule-tt-colorbox\" style=\"float: left; background-color: #{series.color} \"></span>
-              #{series.name}
-            </div>
-          </td>
-        </tr>
-        "
-    ]
+    ans = []
 
-    addHr = () ->
-      tplArr.push("<tr><td colspan=2><hr /></td></tr>")
+    # Name and value:
+    seriesName = series.name
+    isSubkey = point.series.type == "subkey"
+    value = Ext.util.Format.number(y, ",0")
+    percent = Ext.util.Format.number(point.value.percent, "(0.00%)") if isSubkey
 
-    addHr()
-
-    addData = (td1, td2) ->
-      tplArr.push("
-        <tr>
-          <td style=\"width: 55px\" ><b>#{td1}:</b></td>
-          <td>#{td2}</td>
-        </tr>")
-
-    # Time:
-    utcOffset = new Date().getTimezoneOffset() * 60
-    dateObj = new Date((x + utcOffset) * 1000)
-    date = Ext.Date.format(dateObj, "Y-m-d")
-    day = Ext.Date.format(dateObj, "l")
-    time = Ext.Date.format(dateObj, "H:i:s")
-
-    addData("Value", Ext.util.Format.number(y, ",0"))
-    addData("Percent", Ext.util.Format.number(point.value.percent, "0.00%")) if point.series.type == "subkey"
-    if point.series.type != "alert"
-      addHr()
-      addData("Day", day)
-      addData("Date", date)
-      addData("Time", time)
-
-    tplArr.push("</table>")
-    tplArr.join("")
+    ans.push "<span class=\"mule-tt\">"
+    ans.push "<span class=\"mule-tt-colorbox\" style=\"background-color: #{series.color} \"></span>"
+    ans.push seriesName
+    ans.push percent if isSubkey
+    ans.push value
+    ans.push "</span>"
+    ans.join(" ")
 
   prepareSeriesData: (keys) ->
     ans = {}

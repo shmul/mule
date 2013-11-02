@@ -6,13 +6,12 @@ Ext.define "Muleview.view.ZoomSlider",
 
   changeHandler: () ->
     [@minDate, @maxDate] = @getValues()
-    @store.filterBy (record) =>
-      @minDate <= record.get("timestamp") <= @maxDate
+    @graph.window.xMin = @minDate
+    @graph.window.xMax = @maxDate
 
   initComponent: ->
-    # init slider's values according to given store:
-    @maxValue = @store.max("timestamp")
-    @minValue = @store.min("timestamp")
+    # init slider's values according to given graph:
+    [@min, @max] = @graph.dataDomain()
     @increment = (@maxValue - @minValue) / 100
     @values = [@minValue, @maxValue]
 
