@@ -120,6 +120,9 @@ Ext.define "Muleview.view.MuleChart",
     legend = new Rickshaw.Graph.Legend
       element: @divs.legend
       graph: @graph
+    $(@divs.legend).draggable()
+
+
 
     new Rickshaw.Graph.Behavior.Series.Toggle
       graph: @graph

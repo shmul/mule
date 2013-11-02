@@ -239,9 +239,14 @@
   background-color: rgba(64, 64, 64, 0.5);
   vertical-align: top;
   margin: 0px 0px 0px 10px;
+  box-shadow: 3px 3px 10px -2px black;
+  cursor: move;
+  border-top-width: 8px;
+  border-top-style: solid;
+  border-top-color: rgba(147, 188, 250, 0.66);
 }
 
-/* line 194, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 199, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-slider {
   position: relative;
   display: block;
@@ -249,7 +254,7 @@
   top: 16px;
 }
 
-/* line 201, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 206, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixed-tooltip {
   height: 8px;
   margin: 2px;
@@ -257,7 +262,7 @@
   width: 100%;
 }
 
-/* line 208, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 213, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixedtip-colorbox {
   width: 12px;
   height: 12px;
@@ -266,7 +271,7 @@
   margin-top: 1px;
 }
 
-/* line 216, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 221, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw_graph .x_tick .title {
   bottom: -16px;
   margin-left: 0px;

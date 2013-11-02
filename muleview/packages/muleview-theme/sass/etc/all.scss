@@ -189,6 +189,11 @@ $rickshawYAxis: 55px;
   background-color: rgba(64, 64, 64, 0.5);
   vertical-align: top;
   margin: 0px 0px 0px 10px;
+  box-shadow: 3px 3px 10px -2px black;
+  cursor: move;
+  border-top-width: 8px;
+  border-top-style: solid;
+  border-top-color: rgba(147, 188, 250, 0.66);
 }
 
 .rickshaw-slider {
