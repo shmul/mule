@@ -1,7 +1,5 @@
 * Issues
 ** TODO Alerts' lines go in the back of surfaces
-** TODO Welcome, Rickshaw
-  ** Legend can be toggled via HTML, no need to re-render  graph
 ** DONE Masking when opening new graph before receiving retentions
 ** DONE Don't make the zoom interactive
    Apply it only after mouse up
@@ -159,6 +157,8 @@ aka "Add alerts" button
 *** DONE Nicer tips
 *** DONE Load alerts with graph
 * Optimizations:
+** TODO Welcome, Rickshaw
+  ** Legend can be toggled via HTML, no need to re-render  graph
 ** TODO Try to implement onhashchange event myself
 This is related to histoy controller
 ** DONE Dynamic tree

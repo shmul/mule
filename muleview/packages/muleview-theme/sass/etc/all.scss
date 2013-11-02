@@ -159,7 +159,11 @@ $rickshawYAxis: 55px;
   display: inline-block;
   left: $rickshawYAxis;
   position: relative;
+  .detail .x_label {
+    opacity: 0.9;
+  }
 }
+
 
 .mule-lightchart .rickshaw-chart {
   left: 0px;
