@@ -499,11 +499,15 @@ function mule(db_)
     end
 
     alert._sum = average_sum
+    if alert._critical_low and alert._warning_low and alert._critical_high and alert._warning_high then
     alert._state = (average_sum<alert._critical_low and "CRITICAL LOW") or
       (average_sum<alert._warning_low and "WARNING LOW") or
       (average_sum>alert._critical_high and "CRITICAL HIGH") or
       (average_sum>alert._warning_high and "WARNING HIGH") or
       "NORMAL"
+    else
+     alert._state = "NORMAL"
+    end
     return alert
   end
 
@@ -517,10 +521,11 @@ function mule(db_)
     for _,n in ipairs(names_) do
       local seq = sequence(db_,n)
       local a,msg = alert_check(seq,now)
-      if a then
+      if a  and a._critical_low and a._warning_low and a._warning_high and a._critical_high and a._period then
         col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%s,%d,\"%s\",%d,\"%s\"]",
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
                         a._period,a._stale or "-1",a._sum,a._state,now,msg or ""))
+
       end
     end
     col.tail()
@@ -689,7 +694,7 @@ function mule(db_)
     if not resource_ or #resource_==0 then
       return nil
     end
-    _alerts[resource_] = {
+    local new_alert = {
       _critical_low = tonumber(options_.critical_low),
       _warning_low = tonumber(options_.warning_low),
       _warning_high = tonumber(options_.warning_high),
@@ -700,10 +705,18 @@ function mule(db_)
       _state = ""
     }
 
-    if not _alerts[resource_]._period then
+    if not (new_alert._critical_low and new_alert._warning_low and
+            new_alert._critical_high and new_alert._warning_high) then
+      logw("alert_set threashold ill defined",t2s(options_))
+      return nil
+    end
+
+    if not new_alert._period then
       logw("alert_set no period defined",t2s(options_))
       return nil
     end
+    _alerts[resource_] = new_alert
+
     logi("set alert",resource_,t2s(_alerts[resource_]))
     save()
     return ""
