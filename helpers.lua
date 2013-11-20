@@ -674,8 +674,9 @@ function fork_and_exit(callback_)
   if child~=0 then
     return
   end
+  logi("child forked",child)
   callback_()
-  logi("exiting")
+  logi("exiting",child)
   os.exit()
 end
 
