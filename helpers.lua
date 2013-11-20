@@ -672,11 +672,12 @@ function fork_and_exit(callback_)
 
   local child = posix.fork()
   if child~=0 then
+    logi("fork (parent)",posix.getpid('pid'),child)
     return
   end
-  logi("child forked",child)
+  logi("fork (child)",posix.getpid('pid'))
   callback_()
-  logi("exiting",child)
+  logi("exiting",posix.getpid('pid'))
   os.exit()
 end
 
