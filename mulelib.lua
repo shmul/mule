@@ -706,15 +706,12 @@ function mule(db_)
     }
 
     if not (new_alert._critical_low and new_alert._warning_low and
-            new_alert._critical_high and new_alert._warning_high) then
-      logw("alert_set threashold ill defined",t2s(options_))
+            new_alert._critical_high and new_alert._warning_high and
+            new_alert._period) then
+      logw("alert_set threashold ill defined",t2s(options_).t2s(new_alert))
       return nil
     end
 
-    if not new_alert._period then
-      logw("alert_set no period defined",t2s(options_))
-      return nil
-    end
     _alerts[resource_] = new_alert
 
     logi("set alert",resource_,t2s(_alerts[resource_]))
