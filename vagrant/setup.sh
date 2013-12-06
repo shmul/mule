@@ -10,7 +10,7 @@ sudo apt-get install -y curl python-software-properties python g++ make unzip lu
 
 echo "Installing rocks:"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-sudo luarocks install copas
+sudo luarocks install copas 1.1.6-1
 sudo luarocks install lpack
 sudo luarocks install luaposix
 
@@ -28,7 +28,7 @@ if ! which rvm
 then
   echo "Installing RVM, Ruby:"
   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-  curl -L https://get.rvm.io | bash -s stable --ruby=1.9.3 --verify-downloads 1
+  curl -L https://get.rvm.io | HOME=/home/vagrant bash -ls stable --ruby=1.9.3 --verify-downloads 1
 fi
 
 if ! which sencha
@@ -51,6 +51,6 @@ target_nginx_conf="/etc/nginx/sites-enabled/mule_nginx.conf"
 
 if ! [ -L $target_nginx_conf ]
 then
-  ln -s $source_nginx_conf $target_nginx_conf
+  sudo ln -s $source_nginx_conf $target_nginx_conf
 fi
 sudo service nginx restart

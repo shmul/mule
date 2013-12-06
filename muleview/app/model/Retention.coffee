@@ -44,6 +44,8 @@ Ext.define "Muleview.model.Retention",
       ans.join("")
 
     toShortFormat: (secs) ->
+      secs = parseInt(secs)
+      return "0s" if secs == 0
       for [letter, _, size] in @units by -1
         return "#{secs / size}#{letter}" if secs % size == 0
 
