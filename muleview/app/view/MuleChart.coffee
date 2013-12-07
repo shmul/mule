@@ -116,11 +116,12 @@ Ext.define "Muleview.view.MuleChart",
 
   createLegend: ->
     return unless @showLegend
+    legendDiv = $(@divs.legend)
     legend = new Rickshaw.Graph.Legend
       element: @divs.legend
       graph: @graph
-    $(@divs.legend).draggable()
 
+    legendDiv.draggable()
     new Rickshaw.Graph.Behavior.Series.Toggle
       graph: @graph
       legend: legend
@@ -129,6 +130,19 @@ Ext.define "Muleview.view.MuleChart",
       graph: @graph
       legend: legend
       disabledColor: -> "rgba(0, 0, 0, 0.2)"
+
+    closeButton = $("<div/>",
+      class: "rickshaw-legend-close"
+    )
+    closeButton.click =>
+      @setLegend(false)
+      @fireEvent "closed"
+
+    legendDiv.prepend closeButton
+
+  setLegend: (visible) ->
+    action = if visible then "fadeIn" else "fadeOut"
+    $(@divs.legend)[action](300)
 
   createSlider: ->
     return unless @slider

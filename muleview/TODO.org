@@ -1,4 +1,5 @@
 * Issues
+** TODO Refresh resets legend visibility, position and which series are shown
 ** TODO Alerts' lines go in the back of surfaces
 ** TODO "undefined" keeps on scrolling at the status bar -> 100% progress bar zdoes't go off
 ** DONE Masking when opening new graph before receiving retentions
@@ -11,7 +12,7 @@
 ** DONE Don't show the future
    Ext charts seem to sometimes show more than the data in the axis (jumps by chunks or something)
    Perhaps setting max to now or something like that
-** TODO Ignore -1 in stale values
+** DONE Ignore -1 in stale values
 ** DONE HRs in tooltips aren't the same width with long key names
 ** TODO Failure function for keys expand
    This is to prevent the loading circle from stayign there forever

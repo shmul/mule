@@ -34,7 +34,7 @@ Ext.define "Muleview.view.SingleGraphChartsView",
 
   renderChart: ->
     @chartContainer.removeAll()
-    @chartContainer.insert 0, Ext.create("Muleview.view.MuleChart",
+    @chart = Ext.create "Muleview.view.MuleChart",
       flex: 1
       showAreas: true
       topKeys: [@key]
@@ -42,5 +42,9 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       alerts: @alerts
       store: @store
       showLegend: @showLegend
-    )
+      listeners:
+        closed: =>
+          @legendButton.toggle(false)
+
+    @chartContainer.insert 0, @chart
     @chartContainer.setLoading(false)

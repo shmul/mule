@@ -249,6 +249,17 @@
 }
 
 /* line 201, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-legend-close {
+  margin: -23px -9px 0px 0px;
+  width: 16px;
+  height: 16px;
+  float: right;
+  background-image: url("closeButton.png");
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+/* line 211, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-slider {
   position: relative;
   display: block;
@@ -256,7 +267,7 @@
   top: 16px;
 }
 
-/* line 208, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 218, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixed-tooltip {
   height: 8px;
   margin: 2px;
@@ -264,7 +275,7 @@
   width: 100%;
 }
 
-/* line 215, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 225, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixedtip-colorbox {
   width: 12px;
   height: 12px;
@@ -273,7 +284,7 @@
   margin-top: 1px;
 }
 
-/* line 223, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 233, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw_graph .x_tick .title {
   bottom: -16px;
   margin-left: 0px;

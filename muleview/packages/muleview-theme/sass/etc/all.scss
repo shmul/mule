@@ -127,7 +127,7 @@
 
 .statusLabel-error {
   color: red;
-  background-image: url("status-error.gif")
+  background-image: url("status-error.gif");
 }
 
 .mule-tt {
@@ -196,6 +196,16 @@ $rickshawYAxis: 55px;
   border-top-width: 8px;
   border-top-style: solid;
   border-top-color: rgba(147, 188, 250, 0.66);
+}
+
+.rickshaw-legend-close {
+  margin: -23px -9px 0px 0px;
+  width: 16px;
+  height: 16px;
+  float: right;
+  background-image: url("closeButton.png");
+  background-repeat: no-repeat;
+  cursor: pointer;
 }
 
 .rickshaw-slider {

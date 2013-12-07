@@ -120,7 +120,7 @@ Ext.define "Muleview.view.ChartsView",
           pressed: @showLegend
           toggleHandler: (me, value) =>
             @showLegend = value
-            @renderChart()
+            @chart.setLegend(value)
 
     ]
 
@@ -173,13 +173,16 @@ Ext.define "Muleview.view.ChartsView",
 
   renderChart: () ->
     @chartContainer.removeAll()
-
-    @chartContainer.insert 0, Ext.create("Muleview.view.MuleChart",
+    @chart = Ext.create "Muleview.view.MuleChart",
       flex: 1
       topKeys: @keys
       store: @store
       showLegend: @showLegend
-    )
+      listeners:
+        closed: =>
+          @legendButton.toggle(false)
+
+    @chartContainer.insert 0, @chart
     @chartContainer.setLoading(false)
 
   # Creates a flat store from a hash of {
