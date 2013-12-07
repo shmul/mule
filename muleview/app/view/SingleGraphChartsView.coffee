@@ -42,6 +42,7 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       alerts: @alerts
       store: @store
       showLegend: @showLegend
+      title: "#{@key};#{@currentRetName}"
       listeners:
         closed: =>
           @legendButton.toggle(false)

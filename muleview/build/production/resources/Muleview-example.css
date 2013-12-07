@@ -285,6 +285,21 @@
 }
 
 /* line 233, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-graph-title-container {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+}
+
+/* line 239, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-graph-title {
+  display: inline-block;
+  font-size: 3em;
+  opacity: 0.7;
+  background-color: whitesmoke;
+}
+
+/* line 246, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw_graph .x_tick .title {
   bottom: -16px;
   margin-left: 0px;

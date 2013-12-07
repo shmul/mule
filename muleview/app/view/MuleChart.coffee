@@ -85,6 +85,17 @@ Ext.define "Muleview.view.MuleChart",
       renderer: "multi"
       series: @series
 
+    if @mainGraph
+      titleContainer = $ "<div />",
+        class: "rickshaw-graph-title-container"
+
+      title = $ "<div />",
+        class: "rickshaw-graph-title"
+        html: @title
+
+      titleContainer.append title
+      $(@divs.chart).prepend titleContainer
+
     Ext.fly(@graph.element).on
       click: @handleClick
       scope: @
@@ -115,11 +126,18 @@ Ext.define "Muleview.view.MuleChart",
       @basicNumberFormatter(n)
 
   createLegend: ->
-    return unless @showLegend
     legendDiv = $(@divs.legend)
+    chartDiv = $(@divs.chart)
+
     legend = new Rickshaw.Graph.Legend
       element: @divs.legend
       graph: @graph
+
+    # Locate the legend at the bottom-left corner of the chart:
+    legendDiv.offset
+      top: chartDiv.offset().top + chartDiv.height() - legendDiv.height() - 50
+
+    legendDiv.hide() if not @showLegend
 
     legendDiv.draggable()
     new Rickshaw.Graph.Behavior.Series.Toggle

@@ -77,19 +77,19 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Move axis to outside of chart
 ** TODO Graph auto-refresh should be visible to the user
    Also, it would be nice to have it "togglable".
-** TODO Enable closing the legend without changing which graphs(subkeys) are displayed
+** DONE Enable closing the legend without changing which graphs(subkeys) are displayed
    The legend is used to hide/show the different series in the graph but the users want to both hide some of them and close the legend
-** TODO The name of the currently showed graph should be very visible, including the current retention
+** DONE The name of the currently showed graph should be very visible, including the current retention
    Suggested location is the graph's top-center as background (Its ok if some of it is hidden by graph series)
 ** TODO Add indication to stale graphs
    We should somehow mark graphs that weren't updated for more than twice their period (bucket size)
 ** TODO Scrollbar Zoom?
    Shouldn't be _that_ hard to implemenet
-** TODO Have a close button on the legend itself
+** DONE Have a close button on the legend itself
 ** DONE Unify two parts of the (mouseover) status
 ** TODO Add combo box to MuleTimeField
    Instead of using the regex, have a combo with ["Seconds", "Minutes", ...]
-** TODO Bette distinguish main key tooltip and subkey tooltip (and alerts, too?)
+** TODO Better distinguish main key tooltip and subkey tooltip (and alerts, too?)
 ** TODO Add error handling to request functions
 ** DONE Easy way to show only main key (hide all subkeys)
 ** TODO Editable Settings

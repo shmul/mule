@@ -120,7 +120,7 @@ Ext.define "Muleview.view.ChartsView",
           pressed: @showLegend
           toggleHandler: (me, value) =>
             @showLegend = value
-            @chart.setLegend(value)
+            @chart?.setLegend(value)
 
     ]
 
