@@ -1,19 +1,10 @@
 * Issues
 ** TODO Refresh resets legend visibility, position and which series are shown
+** TODO Resize resets legend position
 ** TODO Alerts' lines go in the back of surfaces
-** TODO "undefined" keeps on scrolling at the status bar -> 100% progress bar zdoes't go off
-** DONE Masking when opening new graph before receiving retentions
-** DONE Don't make the zoom interactive
-   Apply it only after mouse up
+** TODO "undefined" keeps on scrolling at the status bar -> 100% progress bar doesn't go off
 ** TODO Critical-up icon missing
    In alerts summary
-** DONE Discrepancy in tooltips/graph
-   http://v2.mule.trusteer.net/mule/#file_storer.stored.patch_sentry_agg_patch_detected;1h:90d
-** DONE Don't show the future
-   Ext charts seem to sometimes show more than the data in the axis (jumps by chunks or something)
-   Perhaps setting max to now or something like that
-** DONE Ignore -1 in stale values
-** DONE HRs in tooltips aren't the same width with long key names
 ** TODO Failure function for keys expand
    This is to prevent the loading circle from stayign there forever
 ** TODO Back button issue
@@ -23,6 +14,16 @@
    When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
    We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
 ** TODO Refresh timer not reset by reloading graph
+** DONE Masking when opening new graph before receiving retentions
+** DONE Don't make the zoom interactive
+   Apply it only after mouse up
+** DONE Discrepancy in tooltips/graph
+   http://v2.mule.trusteer.net/mule/#file_storer.stored.patch_sentry_agg_patch_detected;1h:90d
+** DONE Don't show the future
+   Ext charts seem to sometimes show more than the data in the axis (jumps by chunks or something)
+   Perhaps setting max to now or something like that
+** DONE Ignore -1 in stale values
+** DONE HRs in tooltips aren't the same width with long key names
 ** DONE Retention names are wrong in combobox (missing "s")
 ** DONE Multimode seems to be broken
    Can't check keys
@@ -74,31 +75,22 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Times should be shown in UTC
 
 * Features:
-** DONE Move axis to outside of chart
 ** TODO Graph auto-refresh should be visible to the user
-   Also, it would be nice to have it "togglable".
-** DONE Enable closing the legend without changing which graphs(subkeys) are displayed
-   The legend is used to hide/show the different series in the graph but the users want to both hide some of them and close the legend
-** DONE The name of the currently showed graph should be very visible, including the current retention
-   Suggested location is the graph's top-center as background (Its ok if some of it is hidden by graph series)
+   Also, it would be nice to have it configurable or at least togglable
 ** TODO Add indication to stale graphs
    We should somehow mark graphs that weren't updated for more than twice their period (bucket size)
 ** TODO Scrollbar Zoom?
    Shouldn't be _that_ hard to implemenet
-** DONE Have a close button on the legend itself
-** DONE Unify two parts of the (mouseover) status
+** TODO Optional / Automatic Log scale?
 ** TODO Add combo box to MuleTimeField
    Instead of using the regex, have a combo with ["Seconds", "Minutes", ...]
 ** TODO Better distinguish main key tooltip and subkey tooltip (and alerts, too?)
 ** TODO Add error handling to request functions
-** DONE Easy way to show only main key (hide all subkeys)
+** TODO Maximize/restore button
 ** TODO Editable Settings
    There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
 ** TODO Nicer about box?
    perhaps, god forbig, an image or something?
-** DONE Pointer cursor for clickable areas
-** DONE Color alert fieldLabels
-** TODO Configurable refresh
 ** TODO Support for timestamp labels - Waiting for Mule API
    Probably can't implement in Ext Chart :(
 ** TODO Something cooler with tooltips?
@@ -111,7 +103,16 @@ it gets into "ready" even though still waiting for mule events
 *** TODO Different color for topKey and areas
 *** DONE Less ugly keysTree icons
     I simply removed them.
-** TODO Maximize/restore button
+** DONE Move axis to outside of chart
+** DONE Enable closing the legend without changing which graphs(subkeys) are displayed
+   The legend is used to hide/show the different series in the graph but the users want to both hide some of them and close the legend
+** DONE The name of the currently showed graph should be very visible, including the current retention
+   Suggested location is the graph's top-center as background (Its ok if some of it is hidden by graph series)
+** DONE Have a close button on the legend itself
+** DONE Unify two parts of the (mouseover) status
+** DONE Easy way to show only main key (hide all subkeys)
+** DONE Pointer cursor for clickable areas
+** DONE Color alert fieldLabels
 ** DONE Fix Tooltip Errors somehow
 ** DONE Lexicographic order of keys
 ** DONE Add value field to main key tooltip
@@ -169,17 +170,18 @@ aka "Add alerts" button
 *** DONE Nicer tips
 *** DONE Load alerts with graph
 * Optimizations:
-** TODO Welcome, Rickshaw
+** DONE Welcome, Rickshaw
   ** Legend can be toggled via HTML, no need to re-render  graph
 ** TODO Try to implement onhashchange event myself
-This is related to histoy controller
+   This is related to histoy controller
 ** DONE Dynamic tree
 ** DONE Utilize numchilds
 ** DONE Don't pull all graph data, only relevant retention
 ** DONE Generate big chart only on demand
 ** DONE Upgrade to Extjs 4.2
 * Misc:
-** TODO Fix rare tootip "surface" error davar
+** DONE Fix rare tootip "surface" error davar
+   Solved by migrating to Rickshaw
 ** DONE Check data correctness
    --------
    Seems legit AFAIK
@@ -202,8 +204,9 @@ Think i'll pass this one
 Instead of having regular tree + tabs, use tree-grid, which will hold 3 (?) buttons for each node, button per graph/retention
 PASS - since I eventually implemented compare mode.
 *** Color tree keys according to what they appear in the legend
-*** Use Google charts instead of Extjs
+*** PASS - Use Google charts instead of Extjs
     It looks nicer
+    I used Rickshaw instead
 *** Slideshow
 Add an option to save and manage a list of graphs and when played, switch between them with an interval
 Now even easier in compare-mode checkboxes
