@@ -132,6 +132,3 @@ Ext.define "Muleview.controller.StatusBar",
         @success "Received request: #{command}", eventId
       else
         @failure "Could not receive request for: #{command}", eventId
-
-    graphsCreated: ->
-      @updateLastRefresh()

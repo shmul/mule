@@ -8,12 +8,11 @@ Ext.define "Muleview.view.SingleGraphChartsView",
   initComponent: ->
     @keys = [@key]
     this.callParent()
-    @toolbar.add Ext.create "Ext.button.Button",
+    @toolbar.insert 3, Ext.create "Ext.button.Button",
       text: "Edit Alerts"
       icon: "resources/default/images/alerts.png"
       handler: =>
         @showAlertsEditor()
-
 
   showAlertsEditor: ->
     ae = Ext.create "Muleview.view.AlertsEditor",

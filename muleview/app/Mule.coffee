@@ -31,7 +31,12 @@ Ext.define "Muleview.Mule",
 
     successFn =  (response) =>
       Muleview.event "commandReceived", command, eventId, true
-      fn(JSON.parse(response.responseText).data)
+      try
+        data =JSON.parse(response.responseText).data
+      catch error
+        console.error "Error while parsing response for Mule command: '#{command}'\n Response was: \n#{response.responseText}"
+        failureFn()
+      fn(data)
 
     Muleview.event "commandSent", command, eventId
     askFn()

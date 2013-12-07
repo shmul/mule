@@ -8,7 +8,6 @@ Ext.application
     "Ext.container.Viewport"
     "Ext.tree.Panel"
     "Muleview.Mule"
-    "Muleview.RefreshTimer"
     "Muleview.view.ToolTip"
   ]
 

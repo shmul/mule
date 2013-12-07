@@ -105,14 +105,7 @@ Ext.define "Muleview.view.ChartsView",
         text: "Loading..."
         icon: "resources/default/images/loading.gif"
         cls: "RetentionsPlaceholder"
-
-      , "-",
-        xtype: "button"
-        text: "Refresh"
-        icon: "resources/default/images/refresh.png"
-        handler: ->
-          Muleview.event "refresh"
-      , "-",
+      ,
         @legendButton = Ext.create "Ext.button.Button",
           text: "Legend"
           icon: "resources/default/images/legend.png"
@@ -121,8 +114,62 @@ Ext.define "Muleview.view.ChartsView",
           toggleHandler: (me, value) =>
             @showLegend = value
             @chart?.setLegend(value)
+      , "->",
+        "Auto-Refresh:"
+      ,
+        xtype: "combobox"
+        width: 90
+        forceSelection: true
+        editable: false
+        icon: "resources/default/images/refresh.png"
+        queryMode: "local"
+        displayField: "text"
+        valueField: "value"
+        listeners:
+          change: Ext.bind(@updateRefreshTimer, @)
+          boxready: (me) ->
+            record = me.getStore().findRecord("value", Muleview.Settings.updateInterval)
+            me.select(record) if record
+        store: Ext.create "Ext.data.Store",
+          fields: ["text", "value"]
+          data: [{text: "Disabled", value: -1}].concat(
+            {
+              text: Muleview.model.Retention.toLongFormat(secs),
+              value: secs
+            } for secs in [
+              1,3,5
+              10
+              30
+              60
+              60 * 5
+              60 * 10
+              60 *15
+              60 * 60
+            ]
+          )
+      ,
+        xtype: "button"
+        text: "Now"
+        icon: "resources/default/images/refresh.png"
+        handler: @refresh
+      , "-"
 
     ]
+  refresh: ->
+    Muleview.event "refresh"
+
+  updateRefreshTimer: (me, seconds) ->
+    Muleview.Settings.updateInterval = seconds
+    window.clearInterval @refreshInterval if @refreshInterval
+    return unless seconds > 0
+    @refreshInterval = window.setInterval ()  =>
+      if not me.getEl() # Hack: Don't refresh if the container has been replaced
+        window.clearInterval @refreshInterval
+        return
+      @refresh()
+    , Muleview.Settings.updateInterval * 1000
+
+
 
   createRetentionsMenu: ->
     clickHandler = (me) =>
