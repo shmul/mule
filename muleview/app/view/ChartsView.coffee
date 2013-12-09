@@ -137,7 +137,6 @@ Ext.define "Muleview.view.ChartsView",
               text: Muleview.model.Retention.toLongFormat(secs),
               value: secs
             } for secs in [
-              1,3,5
               10
               30
               60
