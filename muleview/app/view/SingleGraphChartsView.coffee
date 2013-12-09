@@ -8,12 +8,11 @@ Ext.define "Muleview.view.SingleGraphChartsView",
   initComponent: ->
     @keys = [@key]
     this.callParent()
-    @toolbar.add Ext.create "Ext.button.Button",
+    @toolbar.insert 3, Ext.create "Ext.button.Button",
       text: "Edit Alerts"
       icon: "resources/default/images/alerts.png"
       handler: =>
         @showAlertsEditor()
-
 
   showAlertsEditor: ->
     ae = Ext.create "Muleview.view.AlertsEditor",
@@ -34,7 +33,7 @@ Ext.define "Muleview.view.SingleGraphChartsView",
 
   renderChart: ->
     @chartContainer.removeAll()
-    @chartContainer.insert 0, Ext.create("Muleview.view.MuleChart",
+    @chart = Ext.create "Muleview.view.MuleChart",
       flex: 1
       showAreas: true
       topKeys: [@key]
@@ -42,5 +41,10 @@ Ext.define "Muleview.view.SingleGraphChartsView",
       alerts: @alerts
       store: @store
       showLegend: @showLegend
-    )
+      title: "#{@key};#{@currentRetName}"
+      listeners:
+        closed: =>
+          @legendButton.toggle(false)
+
+    @chartContainer.insert 0, @chart
     @chartContainer.setLoading(false)

@@ -73,7 +73,7 @@ Ext.define "Muleview.controller.StatusBar",
 
 
     # Log to console:
-    console.log logLevel, new Date(), "(#{iconCls})", text if console and logLevel
+    console?.log? logLevel, new Date(), "(#{iconCls})", text if logLevel
 
   noRequestsPending: ->
     Ext.Object.isEmpty(@inProgress)
@@ -132,6 +132,3 @@ Ext.define "Muleview.controller.StatusBar",
         @success "Received request: #{command}", eventId
       else
         @failure "Could not receive request for: #{command}", eventId
-
-    graphsCreated: ->
-      @updateLastRefresh()

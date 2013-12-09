@@ -4,7 +4,7 @@ Ext.define "Muleview.view.MuleTimeField",
   ]
   alias: "widget.muletimefield"
   extend: "Ext.form.field.Text"
-  regex: /^[0-9]+[mhsdy]?$/
+  regex: /^(-1s?)|([0-9]+[mhsdy]?)$/
   toolTipHtml: "
     You can use Mule's time format. <br/>
     <u>Examples:</u><br/>
@@ -22,7 +22,8 @@ Ext.define "Muleview.view.MuleTimeField",
 
   validator: (value) ->
     try
-      return Muleview.model.Retention.getMuleTimeValue(value) > 0 and true
+      seconds = Muleview.model.Retention.getMuleTimeValue(value)
+      return seconds > -1
     catch e
       "Invalid input"
 

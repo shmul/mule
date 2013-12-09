@@ -85,6 +85,17 @@ Ext.define "Muleview.view.MuleChart",
       renderer: "multi"
       series: @series
 
+    if @mainGraph
+      titleContainer = $ "<div />",
+        class: "rickshaw-graph-title-container"
+
+      title = $ "<div />",
+        class: "rickshaw-graph-title"
+        html: @title
+
+      titleContainer.append title
+      $(@divs.chart).prepend titleContainer
+
     Ext.fly(@graph.element).on
       click: @handleClick
       scope: @
@@ -115,12 +126,20 @@ Ext.define "Muleview.view.MuleChart",
       @basicNumberFormatter(n)
 
   createLegend: ->
-    return unless @showLegend
+    legendDiv = $(@divs.legend)
+    chartDiv = $(@divs.chart)
+
     legend = new Rickshaw.Graph.Legend
       element: @divs.legend
       graph: @graph
-    $(@divs.legend).draggable()
 
+    # Locate the legend at the bottom-left corner of the chart:
+    legendDiv.offset
+      top: chartDiv.offset().top + chartDiv.height() - legendDiv.height() - 50
+
+    legendDiv.hide() if not @showLegend
+
+    legendDiv.draggable()
     new Rickshaw.Graph.Behavior.Series.Toggle
       graph: @graph
       legend: legend
@@ -129,6 +148,19 @@ Ext.define "Muleview.view.MuleChart",
       graph: @graph
       legend: legend
       disabledColor: -> "rgba(0, 0, 0, 0.2)"
+
+    closeButton = $("<div/>",
+      class: "rickshaw-legend-close"
+    )
+    closeButton.click =>
+      @setLegend(false)
+      @fireEvent "closed"
+
+    legendDiv.prepend closeButton
+
+  setLegend: (visible) ->
+    action = if visible then "fadeIn" else "fadeOut"
+    $(@divs.legend)[action](300)
 
   createSlider: ->
     return unless @slider

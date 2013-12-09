@@ -5,10 +5,10 @@ Ext.define "Muleview.Settings",
   muleUrlPrefix: "api/" # Base URL to Mule
 
   # Retries
-  muleRequestRetries: 3 # How much retries to do when failing to get response from Mule
+  muleRequestRetries: 5 # How much retries to do when failing to get response from Mule
 
   # Update Intervals:
-  updateInterval: 1000 * 60 * 5 # Graph auto-refresh rate (millis)
+  updateInterval: 60 * 5 # Graph auto-refresh rate (seconds), -1 for disabling.
   alertsReportUpdateInterval: 1000 * 60 * 1 # Alerts Report auto-refresh rate (millis)
 
   # Graph Label Formats:

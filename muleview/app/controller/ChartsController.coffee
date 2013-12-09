@@ -60,7 +60,7 @@ Ext.define "Muleview.controller.ChartsController",
 
     if keys.length == 1
       # Set a nice title to the panel, replacing "." with "/":
-      @chartsViewContainer.setTitle(keys[0].replace(/\./, " / "))
+      @chartsViewContainer.setTitle keys[0]
     else
       @chartsViewContainer.setTitle("Comparison Mode") #FIXME
 
