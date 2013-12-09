@@ -13,18 +13,23 @@ Ext.define "Muleview.Mule",
     eventId = Ext.id()
 
     askFn = () =>
-      Ext.Ajax.request
-        url: @prefix() + command
-        timeout: 10 * 60 * 1000 # 10 minutes
-        success: (response) => successFn(response)
-        failure: => failureFn()
+      try
+        Ext.Ajax.request
+          url: @prefix() + command
+          timeout: 10 * 60 * 1000 # 10 minutes
+          success: (response) => successFn(response)
+          failure: => failureFn()
+      catch error
+        failureFn()
 
     failureFn = () =>
       attempt += 1
       if attempt < Muleview.Settings.muleRequestRetries
-        # try again
-        Muleview.event "commandRetry", command, attempt
-        askFn()
+        # Exponential backoff:
+        setTimeout ->
+          Muleview.event "commandRetry", command, attempt
+          askFn()
+        , Math.pow(2, attempt - 1) * 1000
       else
         # Failed too many times :(
         Muleview.event "commandReceived", command, eventId, false
