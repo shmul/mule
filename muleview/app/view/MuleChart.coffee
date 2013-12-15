@@ -135,11 +135,16 @@ Ext.define "Muleview.view.MuleChart",
 
     # Locate the legend at the bottom-left corner of the chart:
     legendDiv.offset
-      top: chartDiv.offset().top + chartDiv.height() - legendDiv.height() - 50
+      top: Muleview.Settings.legendTop || chartDiv.offset().top + chartDiv.height() - legendDiv.height() - 50
+      left: Muleview.Settings.legendLeft
 
     legendDiv.hide() if not @showLegend
 
-    legendDiv.draggable()
+    legendDiv.draggable
+      drag: (event, data)->
+        Muleview.Settings.legendTop = data.offset.top
+        Muleview.Settings.legendLeft = data.offset.left
+
     new Rickshaw.Graph.Behavior.Series.Toggle
       graph: @graph
       legend: legend
