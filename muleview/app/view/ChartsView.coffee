@@ -9,7 +9,6 @@ Ext.define "Muleview.view.ChartsView",
   ]
   header: false
   layout: "border"
-  showLegend: true
   othersKey: Muleview.Settings.othersSubkeyName # Will be used as the name for the key which will group all hidden subkeys
 
   alerts: [] #TODO: remove
@@ -110,9 +109,9 @@ Ext.define "Muleview.view.ChartsView",
           text: "Legend"
           icon: "resources/default/images/legend.png"
           enableToggle: true
-          pressed: @showLegend
+          pressed: Muleview.Settings.showLegend
           toggleHandler: (me, value) =>
-            @showLegend = value
+            Muleview.Settings.showLegend = value
             @chart?.setLegend(value)
       , "->",
         "Auto-Refresh:"
@@ -223,13 +222,17 @@ Ext.define "Muleview.view.ChartsView",
       flex: 1
       topKeys: @keys
       store: @store
-      showLegend: @showLegend
       listeners:
         closed: =>
-          @legendButton.toggle(false)
+          @legendClosed()
 
     @chartContainer.insert 0, @chart
     @chartContainer.setLoading(false)
+
+
+  legendClosed: ->
+    @legendButton.toggle(false)
+    Muleview.Settings.showLegend = false
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],

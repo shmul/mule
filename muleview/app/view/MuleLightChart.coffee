@@ -20,7 +20,6 @@ Ext.define "Muleview.view.MuleLightChart",
       topKeys: @topKeys
       formatter: (series, x, y) ->
         Ext.util.Format.number(y, ",0")
-      legend: false
     @chart.on
       topkeyclick: @navigate
       scope: @

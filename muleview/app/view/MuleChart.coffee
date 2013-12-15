@@ -126,6 +126,7 @@ Ext.define "Muleview.view.MuleChart",
       @basicNumberFormatter(n)
 
   createLegend: ->
+    return unless @mainGraph
     legendDiv = $(@divs.legend)
     chartDiv = $(@divs.chart)
 
@@ -138,7 +139,7 @@ Ext.define "Muleview.view.MuleChart",
       top: Muleview.Settings.legendTop || chartDiv.offset().top + chartDiv.height() - legendDiv.height() - 50
       left: Muleview.Settings.legendLeft
 
-    legendDiv.hide() if not @showLegend
+    legendDiv.hide() if not Muleview.Settings.showLegend
 
     legendDiv.draggable
       drag: (event, data)->
