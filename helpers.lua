@@ -22,27 +22,36 @@ local logfile = nil
 local logfile_name = nil
 local verbose_logging = false
 local logfile_rotation_day = nil
+local rotation_counter = 0
 
 function verbose_log(on_)
   verbose_logging = on_
 end
 
 local function rotate_log_file(name)
+  rotation_counter = rotation_counter + 1
+  if rotation_counter%10~=0 then
+    return
+  end
+
   local today = os.date("%y%m%d")
   if logfile_rotation_day==today then
     return
   end
 
   if logfile then
+    local rotated_file_name = logfile_name.."-"..logfile_rotation_day
+    if file_exists(rotated_file_name) then
+      return
+    end
     logfile:flush()
     logfile:close()
-    os.rename(logfile_name,logfile_name.."-"..logfile_rotation_day)
+    os.rename(logfile_name,rotated_file_name)
   end
 
   logfile_rotation_day = today
   name = name or logfile_name
   if not name then return nil end
-
 
   local f = io.open(name,"a")
   if not f then
