@@ -70,8 +70,8 @@ end
 
 local function flog(level,...)
   rotate_log_file()
-
-  local sarg = {os.date("%y%m%d:%H:%M:%S"),level," "}
+  local pid = posix and posix.getpid('pid') or "-"
+  local sarg = {pid,os.date("%y%m%d:%H:%M:%S"),level," "}
   table.foreachi({...},function(_,v) table.insert(sarg,tostring(v)) end)
   local msg = table.concat(sarg," ")
   if verbose_logging then
