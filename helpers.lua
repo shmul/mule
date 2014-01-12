@@ -30,7 +30,7 @@ end
 
 local function rotate_log_file(name)
   rotation_counter = rotation_counter + 1
-  if rotation_counter%10~=0 then
+  if rotation_counter%10~=1 then
     return
   end
 
