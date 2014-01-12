@@ -707,7 +707,13 @@ function update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
   return timestamp_,value_+rank_/(2^((timestamp_-rank_timestamp_)/step_)),false
 end
 
+local use_stp = false
 function pcall_wrapper(callback_,...)
   local params = ...
+  -- not using pcall_wrapper as it significantly slows down everything. If you want it set use_stp to true
+  -- following lines
+  if  not use_stp then
+    return pcall(callback_,params)
+  end
   return xpcall(function() return callback_(params) end ,stp and stp.stacktrace or nil)
 end
