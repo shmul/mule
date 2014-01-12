@@ -685,7 +685,7 @@ function fork_and_exit(callback_)
     return
   end
   logi("fork (child)",posix.getpid('pid'))
-  callback_()
+  pcall_wrapper(callback_)
   logi("exiting",posix.getpid('pid'))
   os.exit()
 end
