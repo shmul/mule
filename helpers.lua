@@ -690,6 +690,35 @@ function fork_and_exit(callback_)
   os.exit()
 end
 
+-- based on http://luaposix.github.io/luaposix/docs/examples/lock.lua.html
+function posix_lock(lock_file_,callback_)
+  if not posix then
+    return callback_()
+  end
+
+  -- Set lock on file
+  local fd = p.creat(lock_file_, "rw-r--r--")
+  local lock = {
+    l_type = posix.F_WRLCK;     -- Exclusive lock
+    l_whence = posix.SEEK_SET;  -- Relative to beginning of file
+    l_start = 0;            -- Start from 1st byte
+    l_len = 0;              -- Lock whole file
+  }
+  local result = posix.fcntl(fd, posix.F_SETLK, lock)
+  if result == -1 then
+    loge("locked by another process")
+    return
+  end
+
+  -- Do something with file while it's locked
+  result = pcall_wrapper(callback_)
+
+  -- Release the lock
+  lock.l_type = posix.F_UNLCK
+  posix.fcntl(fd, p.F_SETLK, lock)
+  return result
+end
+
 function noblock_wait_for_children()
   if posix then
     posix.wait(-1,posix.WNOHANG)
