@@ -30,7 +30,7 @@ end
 
 local function rotate_log_file(name)
   rotation_counter = rotation_counter + 1
-  if rotation_counter%10~=0 then
+  if rotation_counter%10~=1 then
     return
   end
 
@@ -690,6 +690,35 @@ function fork_and_exit(callback_)
   os.exit()
 end
 
+-- based on http://luaposix.github.io/luaposix/docs/examples/lock.lua.html
+function posix_lock(lock_file_,callback_)
+  if not posix then
+    return callback_()
+  end
+
+  -- Set lock on file
+  local fd = p.creat(lock_file_, "rw-r--r--")
+  local lock = {
+    l_type = posix.F_WRLCK;     -- Exclusive lock
+    l_whence = posix.SEEK_SET;  -- Relative to beginning of file
+    l_start = 0;            -- Start from 1st byte
+    l_len = 0;              -- Lock whole file
+  }
+  local result = posix.fcntl(fd, posix.F_SETLK, lock)
+  if result == -1 then
+    loge("locked by another process")
+    return
+  end
+
+  -- Do something with file while it's locked
+  result = pcall_wrapper(callback_)
+
+  -- Release the lock
+  lock.l_type = posix.F_UNLCK
+  posix.fcntl(fd, p.F_SETLK, lock)
+  return result
+end
+
 function noblock_wait_for_children()
   if posix then
     posix.wait(-1,posix.WNOHANG)
@@ -707,7 +736,13 @@ function update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
   return timestamp_,value_+rank_/(2^((timestamp_-rank_timestamp_)/step_)),false
 end
 
+local use_stp = false
 function pcall_wrapper(callback_,...)
   local params = ...
+  -- not using pcall_wrapper as it significantly slows down everything. If you want it set use_stp to true
+  -- following lines
+  if  not use_stp then
+    return pcall(callback_,params)
+  end
   return xpcall(function() return callback_(params) end ,stp and stp.stacktrace or nil)
 end

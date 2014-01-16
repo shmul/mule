@@ -180,12 +180,14 @@ function column_db(base_dir_)
 
     end
 
-    logi("save_meta_file",dirty)
-    if not dirty then
-      return
-    end
-    fork_and_exit(helper)
-    dirty = false
+    posix_lock(meta_file..".lock",function()
+                 logi("save_meta_file",dirty)
+                 if not dirty then
+                   return
+                 end
+                 fork_and_exit(helper)
+                 dirty = false
+                end)
   end
 
 
