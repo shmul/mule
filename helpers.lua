@@ -687,7 +687,7 @@ function fork_and_exit(callback_)
   logi("fork (child)",posix.getpid('pid'))
   pcall_wrapper(callback_)
   logi("exiting",posix.getpid('pid'))
-  os.exit()
+  posix._exit(0)
 end
 
 -- based on http://luaposix.github.io/luaposix/docs/examples/lock.lua.html
@@ -697,7 +697,7 @@ function posix_lock(lock_file_,callback_)
   end
 
   -- Set lock on file
-  local fd = p.creat(lock_file_, "rw-r--r--")
+  local fd = posix.creat(lock_file_, "rw-r--r--")
   local lock = {
     l_type = posix.F_WRLCK;     -- Exclusive lock
     l_whence = posix.SEEK_SET;  -- Relative to beginning of file
@@ -715,7 +715,7 @@ function posix_lock(lock_file_,callback_)
 
   -- Release the lock
   lock.l_type = posix.F_UNLCK
-  posix.fcntl(fd, p.F_SETLK, lock)
+  posix.fcntl(fd, posix.F_SETLK, lock)
   return result
 end
 
