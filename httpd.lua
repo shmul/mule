@@ -200,7 +200,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
                      qs,content_)
     end)
 
-  local function response_continuation(rv)
+  local function response_continuation(rv,blocking_)
     logd("send_response - after with_mule")
     if handler_name=="stop" then
       logw("stopping, using: ",qs.token)
@@ -211,25 +211,25 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     end
 
     if not rv or (type(rv)=="string" and #rv==0) then
-      return send_(standard_response(204))
+      return send_(standard_response(204),nil,blocking_)
     elseif type(rv)=="number" then
-      return send_(standard_response(rv))
+      return send_(standard_response(rv),nil,blocking_)
     end
 
     if qs.jsonp then
       rv = string.format("%s(%s)",qs.jsonp,rv)
     end
-    return send_(standard_response(200,rv,{CONTENT_TYPE_JSON}),rv)
+    return send_(standard_response(200,rv,{CONTENT_TYPE_JSON}),rv,blocking_)
   end
 
   if type(handler_result)=="function" then
     fork_and_exit(function()
-                    response_continuation(handler_result())
+                    response_continuation(handler_result(),true)
                   end
                  )
     return
   end
-  response_continuation(handler_result)
+  response_continuation(handler_result,false)
 end
 
 
@@ -239,13 +239,20 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
 
   local function send(socket_)
     return
-      function(headers_,body_)
+      function(headers_,body_,blocking_)
         logd("about to send",headers_ and #headers_ or 0,body_ and #body_ or 0)
-        local s,err = ltn12.pump.all(
-          sr.cat(sr.string(headers_),
-                 sr.string(body_)),
-          socket.sink("close-when-done",socket_))
-        logi("send",s,err)
+        if not blocking_ then
+          local s,err = ltn12.pump.all(
+            sr.cat(sr.string(headers_),
+                   sr.string(body_)),
+            socket.sink("close-when-done",socket_))
+          logi("send, non blocking",s,err)
+        else
+          local all_data = headers_..body_
+          local s,err = copas.send(socket_,all_data)
+          socket.sink("close-when-done",socket_)
+          logi("send, blocking",s,err)
+        end
         return s,err
       end
   end
