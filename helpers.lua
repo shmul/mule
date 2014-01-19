@@ -697,7 +697,7 @@ function posix_lock(lock_file_,callback_)
   end
 
   -- Set lock on file
-  local fd = p.creat(lock_file_, "rw-r--r--")
+  local fd = posix.creat(lock_file_, "rw-r--r--")
   local lock = {
     l_type = posix.F_WRLCK;     -- Exclusive lock
     l_whence = posix.SEEK_SET;  -- Relative to beginning of file
@@ -715,7 +715,7 @@ function posix_lock(lock_file_,callback_)
 
   -- Release the lock
   lock.l_type = posix.F_UNLCK
-  posix.fcntl(fd, p.F_SETLK, lock)
+  posix.fcntl(fd, posix.F_SETLK, lock)
   return result
 end
 
@@ -742,4 +742,9 @@ function pcall_wrapper(callback_)
     return pcall(callback_)
   end
   return xpcall(function() return callback_() end ,stp and stp.stacktrace or nil)
+end
+
+function first_file(glob_pattern_)
+  local files = posix and posix.glob(glob_pattern_)
+  return files and files[1]
 end

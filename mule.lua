@@ -78,6 +78,24 @@ local function backup(db_path_)
   return helper
 end
 
+local function incoming_queue(db_path_,incoming_queue_path_)
+  if not incoming_queue_path_ then
+    return function() end
+  end
+
+  return function()
+    local file = first_file(incoming_queue_path_.."*")
+    if not file then return end
+    with_mule(db_path_,false,
+              function(m)
+                logi("incoming_queue file",file)
+                m.process(file,false,true) -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
+                os.remove(file)
+              end
+             )
+         end
+end
+
 local function fatal(msg_,out_)
   logf(msg_)
   out_.write(msg_)
@@ -85,7 +103,7 @@ end
 
 local function usage()
   return [[
-        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] files....
+        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] [-i <incoming-queue-path>] files....
 
       If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
       Files are processed in order
@@ -177,6 +195,7 @@ function main(opts,out_)
 
     http_loop(opts["t"],function(callback_) return safe_mule_call(m,db,callback_) end,
               backup(opts["d"]),
+              incoming_queue(opts["d"],opts["i"]),
               function(token_)
                 -- this is confusing: when the function is called with param we match
                 -- it against the stop shared secret
@@ -217,7 +236,7 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcnmtxR")
+  opts = getopt(arg,"ldcnmtxRi")
   local rv = main(opts,stdout("\n"))
   logd("done")
   os.exit(rv and 0 or -1)

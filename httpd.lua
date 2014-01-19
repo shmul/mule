@@ -233,7 +233,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
 end
 
 
-function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
+function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_callback_,stop_cond_,root_)
   local address,port = string.match(address_port_,"(%S-):(%d+)")
   local sr = ltn12.source
 
@@ -298,6 +298,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
     with_mule_(function(mule_)
                  mule_.update(UPDATE_AMOUNT)
                end)
+    incoming_queue_callback_()
   end
 end
 

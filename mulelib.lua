@@ -440,10 +440,11 @@ function mule(db_)
   local function dump(resource_,options_)
     local str = options_.to_str and strout("") or stdout("")
     local format = string.format
+    local serialize_opts = {deep=true,skip_empty=true}
 
     each_metric(_db,resource_,nil,
                 function(seq)
-                  seq.serialize({deep=true,skip_empty=true},
+                  seq.serialize(serialize_opts,
                                 function()
                                   str.write(seq.name())
                                 end,
@@ -542,7 +543,7 @@ function mule(db_)
     if rank_*POSITIVE_SPIKE_FACTOR<rk or rank_*NEGATIVE_SPIKE_FACTOR>rk then
       -- TODO, we need to keep it around (in _alerts?)
       -- TODO small values should be shooshed
-      logi("spike detected for",name_,timestamp_,rank_,rk)
+      -- disabled for now logi("spike detected for",name_,timestamp_,rank_,rk)
     end
     return ts,rk
   end
@@ -824,7 +825,7 @@ function mule(db_)
 
 
   local function update_line(metric_,sum_,timestamp_)
-    local replace,sum = string.match(sum_,"(=?)(%d+)")
+    local replace,sum = sum_ and string.match(sum_,"(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
     if not metric_ or not sum_ or not timestamp_ then
@@ -875,7 +876,7 @@ function mule(db_)
     end
   end
 
-  local function process_line(metric_line_)
+  local function process_line(metric_line_,no_commands_)
     local function helper()
       local items,type = parse_input_line(metric_line_)
       if #items==0 then
@@ -884,7 +885,7 @@ function mule(db_)
       end
 
       if type=="command" then
-        return command(items)
+        return not no_commands_ and command(items)
       end
       -- there are 2 line formats:
       -- 1) of the format metric sum timestamp
@@ -954,7 +955,7 @@ function mule(db_)
     logi("update_sequences end",time_now()-now,s,e,#sorted_updated_names)
   end
 
-  local function process(data_,dont_update_)
+  local function process(data_,dont_update_,no_commands_)
     -- strings are handled as file pointers if they exist or as a line
     -- tables as arrays of lines
     -- functions as iterators of lines
@@ -963,7 +964,7 @@ function mule(db_)
         local file_exists = with_file(data_,
                                       function(f)
                                         for l in f:lines() do
-                                          process_line(l)
+                                          process_line(l,no_commands_)
                                         end
                                         return true
                                       end)
