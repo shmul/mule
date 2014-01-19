@@ -113,7 +113,7 @@ local function generic_get_handler(mule_,handler_,req_,resource_,qs_params_,cont
     logw("Only GET can be used")
     return
   end
-  logd("calling",handler_)
+  logd("GET: calling",handler_)
   return function() return mule_[handler_](resource_,qs_params_) end
 end
 
@@ -121,7 +121,7 @@ local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="GET" then
     return generic_get_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   elseif req_.verb=="POST" then
-    logd("calling",handler_)
+    logd("POST: calling",handler_)
     return mule_.process(lines_without_comments(string_lines(content_)),true)
   else
     logw("Only GET/POST can be used")
