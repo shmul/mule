@@ -172,7 +172,9 @@ function sequence(db_,name_)
 
 
     if opts_.deep then
-      _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
+      if not opts_.dont_cache then
+        _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
+      end
       for s in indices(opts_.sorted) do
         if not min_timestamp or min_timestamp<get_timestamp(s) then
           serialize_slot(s,opts_.skip_empty,slot_cb_)
@@ -439,8 +441,7 @@ function mule(db_)
 
   local function dump(resource_,options_)
     local str = options_.to_str and strout("") or stdout("")
-    local format = string.format
-    local serialize_opts = {deep=true,skip_empty=true}
+    local serialize_opts = {deep=true,skip_empty=true,dont_cache=true} -- caching kills us when dumping large DBs
 
     each_metric(_db,resource_,nil,
                 function(seq)
@@ -449,7 +450,7 @@ function mule(db_)
                                   str.write(seq.name())
                                 end,
                                 function(sum,hits,timestamp)
-                  --                str.write(format(" %d %d %d",sum,hits,timestamp))
+                                  str.write(" ",sum," ",hits," ",timestamp)
                                 end)
                   str.write("\n")
                 end)
