@@ -9,9 +9,6 @@ Ext.define "Muleview.view.ChartsView",
   ]
   header: false
   layout: "border"
-  othersKey: Muleview.Settings.othersSubkeyName # Will be used as the name for the key which will group all hidden subkeys
-
-  alerts: [] #TODO: remove
 
   initComponent: ->
     @on

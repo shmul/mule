@@ -3,6 +3,7 @@ Ext.Loader.setPath "Ext.ux", "ux"
 
 Ext.application
   name: "Muleview"
+  autoCreateViewport: true
   requires: [
     "Muleview.Settings"
     "Ext.container.Viewport"
@@ -10,7 +11,13 @@ Ext.application
     "Muleview.Mule"
     "Muleview.view.ToolTip"
   ]
-
+  controllers: [
+    "StatusBar"
+    "KeysTree"
+    "History"
+    "ChartsController"
+    "AlertsReportController"
+  ]
   launch: ->
     Ext.get("initMask").hide()
     Muleview.event = Ext.Function.alias Muleview.app, "fireEvent"
@@ -24,13 +31,3 @@ Ext.application
 
     # Form tooltip fix (http://stackoverflow.com/questions/15834689/extjs-4-2-tooltips-not-wide-enough-to-see-contents)
     delete Ext.tip.Tip.prototype.minWidth
-
-  autoCreateViewport: true
-
-  controllers: [
-    "StatusBar"
-    "KeysTree"
-    "History"
-    "ChartsController"
-    "AlertsReportController"
-  ]

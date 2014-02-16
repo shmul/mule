@@ -1,8 +1,10 @@
 * Issues
+** TODO TopKey should be first in the legend
+** TODO Graph should default to show only Topkey and hide subkey series
 ** TODO Refresh resets legend visibility, position and which series are shown
-** TODO Resize resets legend position
+** DONE Resize resets legend position
 ** TODO Alerts' lines go in the back of surfaces
-** TODO "undefined" keeps on scrolling at the status bar -> 100% progress bar doesn't go off
+** DONE "undefined" keeps on scrolling at the status bar -> 100% progress bar doesn't go off
 ** TODO Critical-up icon missing
    In alerts summary
 ** TODO Failure function for keys expand
@@ -13,7 +15,7 @@
 ** TODO Misordered responses issue
    When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
    We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
-** TODO Refresh timer not reset by reloading graph
+** DONE Refresh timer not reset by reloading graph
 ** DONE Masking when opening new graph before receiving retentions
 ** DONE Don't make the zoom interactive
    Apply it only after mouse up
@@ -172,6 +174,8 @@ aka "Add alerts" button
 * Optimizations:
 ** DONE Welcome, Rickshaw
   ** Legend can be toggled via HTML, no need to re-render  graph
+** TODO Bulk process stuff
+   So that the UI won't freeze.
 ** TODO Try to implement onhashchange event myself
    This is related to histoy controller
 ** DONE Dynamic tree
