@@ -22,27 +22,36 @@ local logfile = nil
 local logfile_name = nil
 local verbose_logging = false
 local logfile_rotation_day = nil
+local rotation_counter = 0
 
 function verbose_log(on_)
   verbose_logging = on_
 end
 
 local function rotate_log_file(name)
+  rotation_counter = rotation_counter + 1
+  if rotation_counter%10~=1 then
+    return
+  end
+
   local today = os.date("%y%m%d")
   if logfile_rotation_day==today then
     return
   end
 
   if logfile then
+    local rotated_file_name = logfile_name.."-"..logfile_rotation_day
+    if file_exists(rotated_file_name) then
+      return
+    end
     logfile:flush()
     logfile:close()
-    os.rename(logfile_name,logfile_name.."-"..logfile_rotation_day)
+    os.rename(logfile_name,rotated_file_name)
   end
 
   logfile_rotation_day = today
   name = name or logfile_name
   if not name then return nil end
-
 
   local f = io.open(name,"a")
   if not f then
@@ -61,8 +70,8 @@ end
 
 local function flog(level,...)
   rotate_log_file()
-
-  local sarg = {os.date("%y%m%d:%H:%M:%S"),level," "}
+  local pid = posix and posix.getpid('pid') or "-"
+  local sarg = {pid,os.date("%y%m%d:%H:%M:%S"),level," "}
   table.foreachi({...},function(_,v) table.insert(sarg,tostring(v)) end)
   local msg = table.concat(sarg," ")
   if verbose_logging then
@@ -676,9 +685,38 @@ function fork_and_exit(callback_)
     return
   end
   logi("fork (child)",posix.getpid('pid'))
-  callback_()
+  pcall_wrapper(callback_)
   logi("exiting",posix.getpid('pid'))
-  os.exit()
+  posix._exit(0)
+end
+
+-- based on http://luaposix.github.io/luaposix/docs/examples/lock.lua.html
+function posix_lock(lock_file_,callback_)
+  if not posix then
+    return callback_()
+  end
+
+  -- Set lock on file
+  local fd = posix.creat(lock_file_, "rw-r--r--")
+  local lock = {
+    l_type = posix.F_WRLCK;     -- Exclusive lock
+    l_whence = posix.SEEK_SET;  -- Relative to beginning of file
+    l_start = 0;            -- Start from 1st byte
+    l_len = 0;              -- Lock whole file
+  }
+  local result = posix.fcntl(fd, posix.F_SETLK, lock)
+  if result == -1 then
+    loge("locked by another process")
+    return
+  end
+
+  -- Do something with file while it's locked
+  result = pcall_wrapper(callback_)
+
+  -- Release the lock
+  lock.l_type = posix.F_UNLCK
+  posix.fcntl(fd, posix.F_SETLK, lock)
+  return result
 end
 
 function noblock_wait_for_children()
@@ -698,7 +736,10 @@ function update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
   return timestamp_,value_+rank_/(2^((timestamp_-rank_timestamp_)/step_)),false
 end
 
-function pcall_wrapper(callback_,...)
-  local params = ...
-  return xpcall(function() return callback_(params) end ,stp and stp.stacktrace or nil)
+local use_stp = true
+function pcall_wrapper(callback_)
+  if not use_stp then
+    return pcall(callback_)
+  end
+  return xpcall(function() return callback_() end ,stp and stp.stacktrace or nil)
 end

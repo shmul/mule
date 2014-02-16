@@ -440,15 +440,16 @@ function mule(db_)
   local function dump(resource_,options_)
     local str = options_.to_str and strout("") or stdout("")
     local format = string.format
+    local serialize_opts = {deep=true,skip_empty=true}
 
     each_metric(_db,resource_,nil,
                 function(seq)
-                  seq.serialize({deep=true,skip_empty=true},
+                  seq.serialize(serialize_opts,
                                 function()
                                   str.write(seq.name())
                                 end,
                                 function(sum,hits,timestamp)
-                                  str.write(format(" %d %d %d",sum,hits,timestamp))
+                  --                str.write(format(" %d %d %d",sum,hits,timestamp))
                                 end)
                   str.write("\n")
                 end)
@@ -542,7 +543,7 @@ function mule(db_)
     if rank_*POSITIVE_SPIKE_FACTOR<rk or rank_*NEGATIVE_SPIKE_FACTOR>rk then
       -- TODO, we need to keep it around (in _alerts?)
       -- TODO small values should be shooshed
-      logi("spike detected for",name_,timestamp_,rank_,rk)
+      -- logi("spike detected for",name_,timestamp_,rank_,rk)
     end
     return ts,rk
   end
@@ -708,7 +709,7 @@ function mule(db_)
     if not (new_alert._critical_low and new_alert._warning_low and
             new_alert._critical_high and new_alert._warning_high and
             new_alert._period) then
-      logw("alert_set threashold ill defined",t2s(options_).t2s(new_alert))
+      logw("alert_set threshold ill defined",t2s(options_),t2s(new_alert))
       return nil
     end
 
@@ -777,7 +778,7 @@ function mule(db_)
         return reset(items_[2])
       end,
       dump = function()
-        return dump(items_[2],{to_str=is_true(items[3])})
+        return dump(items_[2],{to_str=is_true(items_[3])})
       end,
     }
 
