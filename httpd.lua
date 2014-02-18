@@ -288,6 +288,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
                     --socket_:setoption ("linger", {on=true,timeout=7})
                     socket_:settimeout(0)
                     --socket_:setoption ("tcp-nodelay", true)
+                    logi("accepting connection",socket_:getsockname())
                     local skt = copas.wrap(socket_)
                     -- copas wrapping doesn't provide close, but ltn12 needs it.
                     -- we add it and do nothing, letting copas do its thing
