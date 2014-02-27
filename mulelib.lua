@@ -449,7 +449,7 @@ function mule(db_)
                                   str.write(seq.name())
                                 end,
                                 function(sum,hits,timestamp)
-                  --                str.write(format(" %d %d %d",sum,hits,timestamp))
+                                  str.write(format(" %d %d %d",sum,hits,timestamp))
                                 end)
                   str.write("\n")
                 end)
@@ -667,7 +667,7 @@ function mule(db_)
     local level = tonumber(options_.level) or 1
     local deep = is_true(options_.deep)
     col.head()
-
+    logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
       prefix = (prefix=="*" and "") or prefix
       for k in db_.matching_keys(prefix) do
@@ -678,6 +678,7 @@ function mule(db_)
         end
       end
     end
+    logd("key - end traversing")
     col.tail()
     return wrap_json(str)
   end
@@ -825,6 +826,9 @@ function mule(db_)
 
 
   local function update_line(metric_,sum_,timestamp_)
+    if metric_=="tagger.events_types.carbon_copy_submitted" then
+      logd("original data",metric_,sum_,timestamp_)
+    end
     local replace,sum = string.match(sum_,"(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
@@ -835,6 +839,9 @@ function mule(db_)
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
       local adjusted_timestamp,sum = seq.update(timestamp_,sum,1,replace)
+      if m=="tagger.events_types.carbon_copy_submitted" then
+        logd("per sequence",n,sum,adjusted_timestamp)
+      end
       -- it might happen that we try to update a too old timestamp. In such a case
       -- the update function returns null
       if adjusted_timestamp then
