@@ -4,10 +4,11 @@ function in_memory_db()
   local _storage = {}
 
   local function matching_keys(prefix_,level_)
+    local find = string.find
     return coroutine.wrap(
       function()
         for k,_ in pairs(_storage) do
-          if is_prefix(k,prefix_) and bounded_by_level(k,prefix_,level_) then
+          if is_prefix(k,prefix_) and bounded_by_level(k,prefix_,level_) and not find(k,"metadata=",1,true) then
             coroutine.yield(k)
           end
         end

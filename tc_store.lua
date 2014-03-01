@@ -79,13 +79,13 @@ function cabinet_db(db_name_,readonly_)
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_out = generate_functions()
 
   tc_init(db_name_,readonly_)
-  local function matching_keys(prefix_)
+  local function matching_keys(prefix_,level_)
     return coroutine.wrap(
       function()
         local find = string.find
         local keys = tc_fwmkeys(prefix_)
         for _,k in ipairs(keys or {}) do
-          if not find(k,"metadata=",1,true) then
+          if bounded_by_level(k,prefix_,level_) and not find(k,"metadata=",1,true) then
             coroutine.yield(k)
           end
         end

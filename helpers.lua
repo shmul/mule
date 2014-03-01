@@ -639,6 +639,7 @@ end
 
 function bounded_by_level(string_,prefix_,level_)
   if not level_ then return true end
+  if #prefix_==0 then level_ = level_ - 1 end
   local count = 0
   local s = #prefix_-1
   local find = string.find

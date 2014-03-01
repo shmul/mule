@@ -272,7 +272,7 @@ function column_db(base_dir_)
     end
     return coroutine.wrap(
       function()
-        for k,n in index:traverse(prefix_,true,false,level_) do
+        for k,n in index:traverse(prefix_,true,false,level_ and level_+1) do
           if find(k,"metadata=",1,true)~=1 then
             coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
           end
