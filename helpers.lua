@@ -72,7 +72,9 @@ local function flog(level,...)
   rotate_log_file()
   local pid = posix and posix.getpid('pid') or "-"
   local sarg = {pid,os.date("%y%m%d:%H:%M:%S"),level," "}
-  table.foreachi({...},function(_,v) table.insert(sarg,tostring(v)) end)
+  for _,v in ipairs({...}) do
+    table.insert(sarg,tostring(v))
+  end
   local msg = table.concat(sarg," ")
   if verbose_logging then
     io.stderr:write(msg,"\n")
@@ -636,6 +638,8 @@ function insertion_sort(array_)
 end
 
 function bounded_by_level(string_,prefix_,level_)
+  if not level_ then return true end
+  if #prefix_==0 then level_ = level_ - 1 end
   local count = 0
   local s = #prefix_-1
   local find = string.find
@@ -687,7 +691,7 @@ function fork_and_exit(callback_)
   logi("fork (child)",posix.getpid('pid'))
   pcall_wrapper(callback_)
   logi("exiting",posix.getpid('pid'))
-  os.exit()
+  posix._exit(0)
 end
 
 -- based on http://luaposix.github.io/luaposix/docs/examples/lock.lua.html
@@ -742,6 +746,17 @@ function pcall_wrapper(callback_)
     return pcall(callback_)
   end
   return xpcall(function() return callback_() end ,stp and stp.stacktrace or nil)
+end
+
+function weak_hash(string_)
+  -- this is used to tell whether two strings contain the same chars, i.e. compare them regardless of chars positions
+  local c = 0
+  local byte = string.byte
+  string.gsub(string_,"(.)",
+              function (x)
+                c = c + byte(x)
+              end)
+  return c
 end
 
 function first_file(glob_pattern_)

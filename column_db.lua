@@ -264,7 +264,7 @@ function column_db(base_dir_)
     return index:delete(key_)
   end
 
-  local function matching_keys(prefix_)
+  local function matching_keys(prefix_,level_)
     local gsub = string.gsub
     local find = string.find
     local function put_semicolumn(rp)
@@ -272,7 +272,7 @@ function column_db(base_dir_)
     end
     return coroutine.wrap(
       function()
-        for k,n in index:traverse(prefix_,true) do
+        for k,n in index:traverse(prefix_,true,false,level_ and level_+1) do
           if find(k,"metadata=",1,true)~=1 then
             coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
           end
@@ -335,6 +335,7 @@ function column_db(base_dir_)
                                logi("seq_cache is of maximum size. dropping",first_name)
                                seq_cache[first_name] = nil
                                seq_cache_size = seq_cache_size - 1
+                               collectgarbage()
                              end
                              local cached = {}
                              local insert = table.insert

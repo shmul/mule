@@ -172,7 +172,9 @@ function sequence(db_,name_)
 
 
     if opts_.deep then
-      _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
+      if not opts_.dont_cache then
+        _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
+      end
       for s in indices(opts_.sorted) do
         if not min_timestamp or min_timestamp<get_timestamp(s) then
           serialize_slot(s,opts_.skip_empty,slot_cb_)
@@ -266,7 +268,7 @@ function sparse_sequence(name_)
     local slot = find_slot(adjusted_timestamp)
     if replace_ then
       slot._sum = sum_
-      slot._hits = nil -- we'll use this as an indication or replace
+      slot._hits = nil -- we'll use this as an indication for replace
     else
       slot._sum = slot._sum+sum_
       slot._hits = slot._hits+hits_
@@ -303,11 +305,10 @@ function one_level_children(db_,name_)
         rp = ""
       end
       local find = string.find
-      for name in db_.matching_keys(prefix) do
-        if name~=prefix and find(name,rp,1,true) and
-          (#prefix>0 and not find(name,".",#prefix+2,true)) then
-          -- we are intersted only in child metrics of the format
-          -- m.sub-key;ts where sub-key contains no dots
+      local minimal_length = #prefix+#rp+1
+      -- we are intersted only in child metrics of the format m.sub-key;ts (where sub-key contains no dots)
+      for name in db_.matching_keys(prefix,1) do
+        if #name>minimal_length and find(name,rp,1,true) then --and (#prefix>0 and not find(name,".",#prefix+2,true)) then
           coroutine.yield(sequence(db_,name))
         end
       end
@@ -321,10 +322,8 @@ function immediate_metrics(db_,name_)
       if find(name_,";",1,true) then
         coroutine.yield(sequence(db_,name_))
       else
-        for name in db_.matching_keys(name_) do
-          if not find(name,".",#name_+1,true) then
+        for name in db_.matching_keys(name_,1) do
             coroutine.yield(sequence(db_,name))
-          end
         end
       end
     end)
@@ -439,8 +438,7 @@ function mule(db_)
 
   local function dump(resource_,options_)
     local str = options_.to_str and strout("") or stdout("")
-    local format = string.format
-    local serialize_opts = {deep=true,skip_empty=true}
+    local serialize_opts = {deep=true,skip_empty=true,dont_cache=true} -- caching kills us when dumping large DBs
 
     each_metric(_db,resource_,nil,
                 function(seq)
@@ -449,7 +447,7 @@ function mule(db_)
                                   str.write(seq.name())
                                 end,
                                 function(sum,hits,timestamp)
-                                  str.write(format(" %d %d %d",sum,hits,timestamp))
+                                  str.write(" ",sum," ",hits," ",timestamp)
                                 end)
                   str.write("\n")
                 end)
@@ -543,7 +541,7 @@ function mule(db_)
     if rank_*POSITIVE_SPIKE_FACTOR<rk or rank_*NEGATIVE_SPIKE_FACTOR>rk then
       -- TODO, we need to keep it around (in _alerts?)
       -- TODO small values should be shooshed
-      -- disabled for now logi("spike detected for",name_,timestamp_,rank_,rk)
+      -- logi("spike detected for",name_,timestamp_,rank_,rk)
     end
     return ts,rk
   end
@@ -668,16 +666,15 @@ function mule(db_)
     local deep = is_true(options_.deep)
     col.head()
 
+    logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
       prefix = (prefix=="*" and "") or prefix
-      for k in db_.matching_keys(prefix) do
-        if deep or bounded_by_level(k,prefix,level) then
+      for k in db_.matching_keys(prefix,not deep and level+1) do -- we increment the level to adjust for the way we keep the retention pair
           local hash = (_hints[k] and _hints[k]._haschildren and "{\"children\": true}") or "{}"
           col.elem(format("\"%s\": %s",k,hash))
-
-        end
       end
     end
+    logd("key - done traversing")
     col.tail()
     return wrap_json(str)
   end
@@ -778,7 +775,7 @@ function mule(db_)
         return reset(items_[2])
       end,
       dump = function()
-        return dump(items_[2],{to_str=is_true(items[3])})
+        return dump(items_[2],{to_str=is_true(items_[3])})
       end,
     }
 
@@ -825,7 +822,10 @@ function mule(db_)
 
 
   local function update_line(metric_,sum_,timestamp_)
-    local replace,sum = sum_ and string.match(sum_,"(=?)(%d+)")
+    if metric_=="tagger.events_types.carbon_copy_submitted" then
+      logd("original data",metric_,sum_,timestamp_)
+    end
+    local replace,sum = string.match(sum_ or "","(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
     if not metric_ or not sum_ or not timestamp_ then
@@ -835,6 +835,9 @@ function mule(db_)
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
       local adjusted_timestamp,sum = seq.update(timestamp_,sum,1,replace)
+      if m=="tagger.events_types.carbon_copy_submitted" then
+        logd("per sequence",n,sum,adjusted_timestamp)
+      end
       -- it might happen that we try to update a too old timestamp. In such a case
       -- the update function returns null
       if adjusted_timestamp then
@@ -918,20 +921,20 @@ function mule(db_)
     -- we now update the real sequences
     local now = time_now()
     local sorted_updated_names = _db.sort_updated_names(keys(_updated_sequences))
-    local s = 1
-    local e = #sorted_updated_names
-    if e==0 then
+    local st = 1
+    local en = #sorted_updated_names
+    if en==0 then
       --logd("no update required")
       return
     end
     logi("update_sequences start")
     -- why bother with randomness? to avoid starvation
-    if max_ and e>max_ then
-      s = math.random(e-max_)
-      e = s+max_
+    if max_ and en>max_ then
+      st = math.random(en-max_)
+      en = st+max_
     end
 
-    for i =s,e do
+    for i = st,en do
       local n = sorted_updated_names[i]
       local seq = sequence(_db,n)
       local s = _updated_sequences[n]
@@ -952,7 +955,7 @@ function mule(db_)
       end
       _updated_sequences[n] = nil
     end
-    logi("update_sequences end",time_now()-now,s,e,#sorted_updated_names)
+    logi("update_sequences end",time_now()-now,st,en,#sorted_updated_names)
   end
 
   local function process(data_,dont_update_,no_commands_)
