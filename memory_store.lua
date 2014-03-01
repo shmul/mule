@@ -3,11 +3,11 @@ require "sequence_store"
 function in_memory_db()
   local _storage = {}
 
-  local function matching_keys(prefix_)
+  local function matching_keys(prefix_,level_)
     return coroutine.wrap(
       function()
         for k,_ in pairs(_storage) do
-          if is_prefix(k,prefix_) then
+          if is_prefix(k,prefix_) and bounded_by_level(k,prefix_,level_) then
             coroutine.yield(k)
           end
         end

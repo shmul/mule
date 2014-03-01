@@ -745,12 +745,12 @@ function test_key()
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
     -- (cut -d' ' -f 1 tests/fixtures/pale.mule  | sort | uniq | wc -l)
-    local all_keys = string.match(m.key("beer",{deep=true}),"%{(.+)%}")
+    local all_keys = string.match(m.key("beer",{deep=true,level=2}),"%{(.+)%}")
     assert_equal(1+(61+2)*3,#split(all_keys,","))
     all_keys = string.match(m.key("beer",{level=4}),"%{(.+)%}")
     assert_equal(1+(61+2)*3,#split(all_keys,","))
 
-    all_keys = string.match(m.key("beer",{level=2}),"{(.+)}")
+    all_keys = string.match(m.key("beer",{level=1}),"{(.+)}")
     assert_equal(1+(2+2)*3,#split(all_keys,","))
 
   end
@@ -786,7 +786,7 @@ function test_dashes_in_keys()
   m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-  assert(string.find(m.key("Johnston",{deep=true}),"Sweet%-Nuthin"))
+  assert(string.find(m.key("Johnston",{deep=true,level=4}),"Sweet%-Nuthin"))
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
   m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))

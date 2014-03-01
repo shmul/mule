@@ -268,7 +268,7 @@ function sparse_sequence(name_)
     local slot = find_slot(adjusted_timestamp)
     if replace_ then
       slot._sum = sum_
-      slot._hits = nil -- we'll use this as an indication or replace
+      slot._hits = nil -- we'll use this as an indication for replace
     else
       slot._sum = slot._sum+sum_
       slot._hits = slot._hits+hits_
@@ -669,16 +669,17 @@ function mule(db_)
     local deep = is_true(options_.deep)
     col.head()
 
+    logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
       prefix = (prefix=="*" and "") or prefix
-      for k in db_.matching_keys(prefix) do
-        if deep or bounded_by_level(k,prefix,level) then
+      for k in db_.matching_keys(prefix,level+1) do -- we increment the level to adjust for the way we keep the retention pair
+--        if deep or bounded_by_level(k,prefix,level) then
           local hash = (_hints[k] and _hints[k]._haschildren and "{\"children\": true}") or "{}"
           col.elem(format("\"%s\": %s",k,hash))
-
-        end
+--        end
       end
     end
+    logd("key - done traversing")
     col.tail()
     return wrap_json(str)
   end
@@ -826,6 +827,9 @@ function mule(db_)
 
 
   local function update_line(metric_,sum_,timestamp_)
+    if metric_=="tagger.events_types.carbon_copy_submitted" then
+      logd("original data",metric_,sum_,timestamp_)
+    end
     local replace,sum = string.match(sum_,"(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
@@ -836,6 +840,9 @@ function mule(db_)
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
       local adjusted_timestamp,sum = seq.update(timestamp_,sum,1,replace)
+      if m=="tagger.events_types.carbon_copy_submitted" then
+        logd("per sequence",n,sum,adjusted_timestamp)
+      end
       -- it might happen that we try to update a too old timestamp. In such a case
       -- the update function returns null
       if adjusted_timestamp then
@@ -919,20 +926,20 @@ function mule(db_)
     -- we now update the real sequences
     local now = time_now()
     local sorted_updated_names = _db.sort_updated_names(keys(_updated_sequences))
-    local s = 1
-    local e = #sorted_updated_names
-    if e==0 then
+    local st = 1
+    local en = #sorted_updated_names
+    if en==0 then
       --logd("no update required")
       return
     end
     logi("update_sequences start")
     -- why bother with randomness? to avoid starvation
-    if max_ and e>max_ then
-      s = math.random(e-max_)
-      e = s+max_
+    if max_ and en>max_ then
+      st = math.random(en-max_)
+      en = st+max_
     end
 
-    for i =s,e do
+    for i = st,en do
       local n = sorted_updated_names[i]
       local seq = sequence(_db,n)
       local s = _updated_sequences[n]
@@ -953,7 +960,7 @@ function mule(db_)
       end
       _updated_sequences[n] = nil
     end
-    logi("update_sequences end",time_now()-now,s,e,#sorted_updated_names)
+    logi("update_sequences end",time_now()-now,st,en,#sorted_updated_names)
   end
 
   local function process(data_,dont_update_)
