@@ -322,7 +322,7 @@ function immediate_metrics(db_,name_)
       if find(name_,";",1,true) then
         coroutine.yield(sequence(db_,name_))
       else
-        for name in db_.matching_keys(name_,1) do
+        for name in db_.matching_keys(name_,0) do
             coroutine.yield(sequence(db_,name))
         end
       end
