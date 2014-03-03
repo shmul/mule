@@ -1,4 +1,4 @@
-$image-search-path: '/home/vagrant/mule/muleview/build/production/resources';
+$image-search-path: '/Users/dan/dev/mule/muleview/build/production/resources';
 $theme-name:  'muleview-theme' !default;
 $include-ext-abstractcomponent: true;
 $include-ext-abstractmanager: true;
@@ -538,6 +538,7 @@ $include-muleview-view-mulechart: true;
 $include-muleview-view-mulelightchart: true;
 $include-muleview-view-muletimefield: true;
 $include-muleview-view-singlegraphchartsview: true;
+$include-muleview-view-statusbar: true;
 $include-muleview-view-theme: true;
 $include-muleview-view-tooltip: true;
 $include-muleview-view-viewport: true;
