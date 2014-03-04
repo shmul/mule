@@ -166,7 +166,8 @@ function sequence(db_,name_)
     opts_ = opts_ or {}
     metric_cb_(_metric,_step,_period)
 
-    local now,latest_ts = time_now(),latest_timestamp()
+    local now = time_now()
+    local latest_ts = latest_timestamp()
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
 
