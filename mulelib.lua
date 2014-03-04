@@ -166,10 +166,12 @@ function sequence(db_,name_)
     opts_ = opts_ or {}
     metric_cb_(_metric,_step,_period)
 
-    local now,latest_ts = time_now(),latest_timestamp()
+--    local now,latest_ts = time_now(),latest_timestamp()
+    local now = time_now()
+    local latest_ts = latest_timestamp()
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
-
+    logd("serialize",_name,opts_.deep,opts_.filter,now,min_timestamp,min_timestamp==nil)
 
     if opts_.deep then
       if not opts_.dont_cache then
@@ -308,7 +310,8 @@ function one_level_children(db_,name_)
       local minimal_length = #prefix+#rp+1
       -- we are intersted only in child metrics of the format m.sub-key;ts (where sub-key contains no dots)
       for name in db_.matching_keys(prefix,1) do
-        if #name>minimal_length and find(name,rp,1,true) then --and (#prefix>0 and not find(name,".",#prefix+2,true)) then
+        logd("one_level_children",name,minimal_length,rp)
+        if #name>=minimal_length and find(name,rp,1,true) then --and (#prefix>0 and not find(name,".",#prefix+2,true)) then
           coroutine.yield(sequence(db_,name))
         end
       end
@@ -575,6 +578,7 @@ function mule(db_)
           local _,seq_rank = update_rank(
             hint._rank_ts or 0 ,hint._rank or 0,
             normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
+          logd("graph",m,seq.name(),seq_rank)
           insert(ranked_children,{seq,seq_rank})
         end
         table.sort(ranked_children,function(a,b) return a[2]>b[2] end)
