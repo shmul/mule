@@ -678,8 +678,8 @@ function test_metric_one_level_children()
     m.process("beer.ale 132 121")
 
     local tests = {
-      {"beer.ale.brown;1h:30d",1},
-      {"beer.ale;1m:12h",3},
+      {"beer.ale.brown;1h:30d",2},
+      {"beer.ale;1m:12h",4},
       {"beer;1m:12h",1},
       {"beer",2},
       {"",0},

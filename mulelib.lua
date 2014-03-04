@@ -170,7 +170,7 @@ function sequence(db_,name_)
     local latest_ts = latest_timestamp()
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
-
+    logd("serialize",_name,opts_.deep,opts_.filter,now,min_timestamp,min_timestamp==nil)
 
     if opts_.deep then
       if not opts_.dont_cache then
@@ -309,7 +309,8 @@ function one_level_children(db_,name_)
       local minimal_length = #prefix+#rp+1
       -- we are intersted only in child metrics of the format m.sub-key;ts (where sub-key contains no dots)
       for name in db_.matching_keys(prefix,1) do
-        if #name>minimal_length and find(name,rp,1,true) then --and (#prefix>0 and not find(name,".",#prefix+2,true)) then
+        logd("one_level_children",name,minimal_length,rp)
+        if #name>=minimal_length and find(name,rp,1,true) then --and (#prefix>0 and not find(name,".",#prefix+2,true)) then
           coroutine.yield(sequence(db_,name))
         end
       end
@@ -323,7 +324,7 @@ function immediate_metrics(db_,name_)
       if find(name_,";",1,true) then
         coroutine.yield(sequence(db_,name_))
       else
-        for name in db_.matching_keys(name_,1) do
+        for name in db_.matching_keys(name_,0) do
             coroutine.yield(sequence(db_,name))
         end
       end
