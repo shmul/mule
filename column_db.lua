@@ -34,7 +34,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       return nil
     end
     file:seek("set",file_size-1)
-    file:write("%z")
+    file:write("\0")
     file:close()
     file = nil
 
