@@ -186,7 +186,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   if req_.verb=="OPTIONS" then
     return send_(standard_response(200,nil,CORS))
   end
-
+  logi("send_response for",req_.url)
   local handler_result = with_mule_(
     function(mule_)
       table.remove(segments,1)
@@ -201,7 +201,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     end)
 
   local function response_continuation(rv,blocking_)
-    logd("send_response - after with_mule")
+    logd("response_continuation")
     if handler_name=="stop" then
       logw("stopping, using: ",qs.token)
       stop_cond_(qs.token)

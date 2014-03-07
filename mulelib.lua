@@ -96,7 +96,7 @@ function sequence(db_,name_)
     -- or if are way ahead of the previous time the slot was updated
     -- over-write its value
 
-    if not replace_ and adjusted_timestamp==timestamp and hits>0 then
+    if (not replace_) and adjusted_timestamp==timestamp and hits>0 then
       -- no need to worry about the latest here, as we have the same (adjusted) timestamp
       hits,sum = hits+(hits_ or 1), sum+sum_
     else
@@ -463,9 +463,12 @@ function mule(db_)
       return nil
     end
 
-    if alert._stale and seq_.latest_timestamp()+alert._stale<timestamp_ then
-      alert._state = "stale"
-      return true
+    if alert._stale then
+      if seq_.latest_timestamp()+alert._stale<timestamp_ then
+        alert._state = "stale"
+        return true
+      end
+      alert._state = nil
     end
     return false
   end
