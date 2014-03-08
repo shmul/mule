@@ -5,6 +5,7 @@ Ext.define "Muleview.controller.ChartsController",
     "Muleview.model.Retention"
     "Muleview.view.MuleChart"
     "Muleview.view.MuleLightChart"
+    "Muleview.view.AlertsEditor"
   ]
 
   refs: [
@@ -26,6 +27,9 @@ Ext.define "Muleview.controller.ChartsController",
       ref: "subkeysButton"
       selector: "#subkeysButton"
     ,
+      ref: "alertsButton"
+      selector: "#editAlertsButton"
+    ,
       ref: "refreshButton"
       selector: "#refreshButton"
     ,
@@ -44,6 +48,7 @@ Ext.define "Muleview.controller.ChartsController",
     @subkeysButton = @getSubkeysButton()
     @refreshButton = @getRefreshButton()
     @refreshCombobox = @getRefreshCombobox()
+    @alertsButton = @getAlertsButton()
 
     Muleview.app.on
       scope: @
@@ -105,6 +110,11 @@ Ext.define "Muleview.controller.ChartsController",
     currentRefreshInterval = refreshIntervalsStore.findRecord("value", Muleview.Settings.updateInterval)
     @refreshCombobox.select(currentRefreshInterval) if currentRefreshInterval
 
+    @alertsButton.on
+      scope: @
+      click: @editAlerts
+
+
 
   viewChange: (keys, retention, force) ->
     # If given a string for keys, convert it to an array:
@@ -133,6 +143,7 @@ Ext.define "Muleview.controller.ChartsController",
   createKeysView: (keys, retention) ->
     @mainChartContainer.removeAll()
     @lightChartsContainer.removeAll()
+    @alertsButton.setDisabled(true)
 
     # If no keys were selected, don't display anything:
     if keys.length == 0 or keys[0] == ""
@@ -151,22 +162,25 @@ Ext.define "Muleview.controller.ChartsController",
 
       @updateRetentionsStore(data)
       @defaultRetention ||= @retentionsStore.getAt(0).get("name")
-      @initStores(data)
-      @lightChartsContainer.setLoading(false)
-      @initLightCharts(data)
 
       if keys.length == 1
         @key = keys[0]
         @showSubkeys = Muleview.Settings.showSubkeys
         @subkeysButton.setDisabled(false)
+        @alertsButton.setDisabled(false)
         @mainChartContainer.setTitle @key
 
       else
+        @key = null
         @showSubkeys = false
         @subkeysButton.setDisabled(true)
         @mainChartContainer.setTitle keys.join(", ")
 
       @subkeysButton.toggle(@showSubkeys)
+
+      @initStores(data)
+      @lightChartsContainer.setLoading(false)
+      @initLightCharts(data)
 
       @showRetention(@defaultRetention)
 
@@ -179,17 +193,17 @@ Ext.define "Muleview.controller.ChartsController",
     @retentionsStore.each (retention) ->
       cb(retention, retention.get("name"))
 
-  initStores: (data) ->
+  initStores: (data, singleKey) ->
     @stores = {}
     @eachRetention (retention, name) =>
-      @stores[name] = @createStore(data[name])
+      alerts = @getAlerts(key, retention)  if singleKey
+      @stores[name] = @createStore(data[name], alerts)
 
   # Creates a flat store from a hash of {
   #   key1 => [[count, batch, timestamp], ...],
   #   key2 => [[count, batch, timestamp], ...]
   # }
   createStore: (data, alerts = []) ->
-    #TODO: check if alerts is till necessary here
     fields = []
     addField = (name) ->
       fields.push
@@ -199,7 +213,7 @@ Ext.define "Muleview.controller.ChartsController",
     # Create initial store:
     addField "timestamp"
     addField key for key, _ of data
-    addField alert.name for alert in alerts
+    addField alert.name for alert in alerts if alerts
 
     store = Ext.create "Ext.data.ArrayStore",
       fields: fields
@@ -208,7 +222,6 @@ Ext.define "Muleview.controller.ChartsController",
       ]
 
     # Convert data to timestamps-based hash:
-    window.d = data
     timestamps = {}
     for own key, keyData of data
       for [count, _, timestamp] in keyData
@@ -240,8 +253,8 @@ Ext.define "Muleview.controller.ChartsController",
       store: @stores[retName]
 
   showRetention: (retName) ->
-    @store = @stores[retName]
     @currentRetName = retName
+    @store = @stores[retName]
     @renderChart()
 
     @retentionsMenu.select(retName)
@@ -278,8 +291,10 @@ Ext.define "Muleview.controller.ChartsController",
           Muleview.event "legendChange", false
     }
     @mainChartContainer.setLoading(false)
-    @mainChart = (Ext.create "Muleview.view.MuleChart", Ext.apply(common, cfg))
-    @mainChartContainer.insert 0, @mainChart
+    cfg = Ext.apply({}, cfg, common)
+    @mainChart = (Ext.create "Muleview.view.MuleChart", cfg)
+    @mainChartContainer.removeAll()
+    @mainChartContainer.add @mainChart
 
   updateRefreshTimer: (me, seconds) ->
     Muleview.Settings.updateInterval = seconds
@@ -293,3 +308,10 @@ Ext.define "Muleview.controller.ChartsController",
     @refreshInterval = window.setInterval ()  =>
       @refresh()
     , seconds
+
+  editAlerts: ->
+    ae = Ext.create "Muleview.view.AlertsEditor",
+      key: @key
+      retention: @currentRetName
+      store: @store
+    ae.show()

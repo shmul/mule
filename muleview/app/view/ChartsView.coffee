@@ -40,7 +40,7 @@ Ext.define "Muleview.view.ChartsView",
         {
           xtype: "combobox"
           id: "retentionsMenu"
-          width: 275
+          flex: 1
           forceSelection: true
           editable: false
           queryMode: "local"
@@ -51,23 +51,37 @@ Ext.define "Muleview.view.ChartsView",
               '<div class="retention-combobox-item"> <span class="retention-name">{name}</span><span class="retention-title">{title}</span> </div>'
         },
 
+        "->",
+
+        "-",
+
         {
-          text: "Subkeys"
+          text: "Show Subkeys & Alerts"
           id: "subkeysButton"
           icon: "resources/default/images/subkeys.gif"
           enableToggle: true
           pressed: Muleview.Settings.showSubkeys
         },
 
+        "-",
+
         {
-          text: "Legend"
+          text: "Show Legend"
           id: "legendButton"
           icon: "resources/default/images/legend.png"
           enableToggle: true
           pressed: Muleview.Settings.showLegend
         },
 
-        "->",
+        "-",
+
+        {
+          id: "editAlertsButton"
+          text: "Edit Alerts"
+          icon: "resources/default/images/alerts.png"
+        },
+
+        "-",
 
         "Auto-Refresh:",
 
