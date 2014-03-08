@@ -59,6 +59,12 @@ Ext.define "Muleview.controller.ChartsController",
       model: "Muleview.model.Retention"
       sorters: ["sortValue"]
       data: []
+
+    @retentionsMenu.on
+      scope: @
+      change: (combo, newValue) ->
+        @viewChange @keys, newValue
+
     @retentionsMenu.bindStore(@retentionsStore)
 
     @legendButton.on
@@ -235,8 +241,8 @@ Ext.define "Muleview.controller.ChartsController",
 
   showRetention: (retName) ->
     @store = @stores[retName]
-    @renderChart()
     @currentRetName = retName
+    @renderChart()
 
     @retentionsMenu.select(retName)
     for own _, lightChart of @lightCharts
@@ -257,17 +263,16 @@ Ext.define "Muleview.controller.ChartsController",
           topKeys: [@key]
           subKeys: @subkeys
           alerts: @alerts
-          title: "#{@key};#{@currentRetName}"
 
     else
       @addChart
         topKeys: @keys
-        title: @keys.join("<br />")
 
   addChart: (cfg) ->
     common = {
       flex: 1
       store: @store
+      title: ("#{key};#{@currentRetName}" for key in @keys).join("<br />")
       listeners:
         closed: =>
           Muleview.event "legendChange", false

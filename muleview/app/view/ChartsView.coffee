@@ -40,7 +40,7 @@ Ext.define "Muleview.view.ChartsView",
         {
           xtype: "combobox"
           id: "retentionsMenu"
-          width: 250
+          width: 275
           forceSelection: true
           editable: false
           queryMode: "local"

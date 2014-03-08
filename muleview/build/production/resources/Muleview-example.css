@@ -33,16 +33,13 @@
 /* line 7, ../../../packages/muleview-theme/sass/etc/all.scss */
 .retention-combobox-item {
   margin: 3px;
-  border-bottom: 1px solid black;
 }
-/* line 11, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 10, ../../../packages/muleview-theme/sass/etc/all.scss */
 .retention-combobox-item .retention-name {
-  width: 30px;
+  display: inline-block;
+  width: 60px;
+  margin-right: 5px;
   font-weight: bold;
-}
-/* line 16, ../../../packages/muleview-theme/sass/etc/all.scss */
-.retention-combobox-item .retention-title {
-  font-style: italic;
 }
 
 /* line 22, ../../../packages/muleview-theme/sass/etc/all.scss */

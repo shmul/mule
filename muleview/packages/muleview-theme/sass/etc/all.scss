@@ -6,16 +6,15 @@
 
 .retention-combobox-item {
   margin: 3px;
-  border-bottom: 1px solid black;
 
   .retention-name {
-    width: 30px;
+    display: inline-block;
+    width: 60px;
     margin-right: 5px;
     font-weight: bold;
   }
 
   .retention-title {
-    font-style: italic;
   }
 
 }
