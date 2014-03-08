@@ -31,84 +31,99 @@
 }
 
 /* line 7, ../../../packages/muleview-theme/sass/etc/all.scss */
+.retention-combobox-item {
+  margin: 3px;
+  border-bottom: 1px solid black;
+}
+/* line 11, ../../../packages/muleview-theme/sass/etc/all.scss */
+.retention-combobox-item .retention-name {
+  width: 30px;
+  font-weight: bold;
+}
+/* line 16, ../../../packages/muleview-theme/sass/etc/all.scss */
+.retention-combobox-item .retention-title {
+  font-style: italic;
+}
+
+/* line 22, ../../../packages/muleview-theme/sass/etc/all.scss */
 .icon-cell > div {
   background-position: center center;
   background-repeat: no-repeat;
 }
 
-/* line 12, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 27, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-critical {
   color: red;
 }
-/* line 14, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 29, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-critical .state-cell > div {
   background-color: red;
   color: white;
 }
 
-/* line 20, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 35, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-warning {
   color: orange;
 }
-/* line 22, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 37, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-warning .state-cell > div {
   background-color: orange;
   color: white;
 }
 
-/* line 29, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 44, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-normal .state-cell > div {
   background-color: white;
 }
 
-/* line 35, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 50, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-critical-high .icon-cell > div {
   background-image: url("critical_high.png");
 }
 
-/* line 41, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 56, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-warning-high .icon-cell > div {
   background-image: url("warning_high.png");
 }
 
-/* line 47, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 62, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-critical-low .icon-cell > div {
   background-image: url("critical_low.png");
 }
 
-/* line 52, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 67, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-row-warning-low .icon-cell > div {
   background-image: url("warning_low.png");
 }
 
 /* **** Alerts Editor **************************************************************** */
-/* line 59, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 74, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alerts-editor-table-header {
   text-decoration: underline;
 }
 
-/* line 63, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 78, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alerts-editor-row-critical-high {
   padding-left: 20px;
   background-repeat: no-repeat;
   background-image: url("critical_high.png");
 }
 
-/* line 69, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 84, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alerts-editor-row-critical-low {
   background-repeat: no-repeat;
   padding-left: 20px;
   background-image: url("critical_low.png");
 }
 
-/* line 75, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 90, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alerts-editor-row-warning-high {
   background-repeat: no-repeat;
   padding-left: 20px;
   background-image: url("warning_high.png");
 }
 
-/* line 81, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 96, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alerts-editor-row-warning-low {
   background-repeat: no-repeat;
   padding-left: 20px;
@@ -116,27 +131,27 @@
 }
 
 /* **************************************************************** */
-/* line 88, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 103, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-summary-critical {
   background-image: url("summary_critical.png");
 }
 
-/* line 92, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 107, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-summary-warning {
   background-image: url("summary_warning.png");
 }
 
-/* line 96, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 111, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-summary-normal {
   background-image: url("summary_normal.png");
 }
 
-/* line 100, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 115, ../../../packages/muleview-theme/sass/etc/all.scss */
 .alert-summary-stale {
   background-image: url("summary_stale.png");
 }
 
-/* line 104, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 119, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel {
   height: 16px;
   background-repeat: no-repeat;
@@ -147,38 +162,38 @@
   overflow: hidden;
 }
 
-/* line 114, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 129, ../../../packages/muleview-theme/sass/etc/all.scss */
 #statusRightLabel {
   padding-left: 1px;
 }
 
-/* line 118, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 133, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-normal {
   padding-left: 0px;
 }
 
-/* line 122, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 137, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-progress {
   background-image: url("loading.gif");
 }
 
-/* line 126, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 141, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-success {
   background-image: url("status-ok.png");
 }
 
-/* line 130, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 145, ../../../packages/muleview-theme/sass/etc/all.scss */
 .statusLabel-error {
   color: red;
   background-image: url("status-error.gif");
 }
 
-/* line 135, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 150, ../../../packages/muleview-theme/sass/etc/all.scss */
 .mule-tt {
   padding-right: 15px;
 }
 
-/* line 139, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 154, ../../../packages/muleview-theme/sass/etc/all.scss */
 .mule-tt-colorbox {
   width: 12px;
   height: 12px;
@@ -189,35 +204,35 @@
   margin-right: 3px;
 }
 
-/* line 151, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 166, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-chart-container {
   position: relative;
   display: inline-block;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* line 157, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 172, ../../../packages/muleview-theme/sass/etc/all.scss */
 .mule-chart {
   padding-right: 10px;
 }
 
-/* line 160, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 175, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-chart {
   display: inline-block;
   left: 55px;
   position: relative;
 }
-/* line 164, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 179, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-chart .detail .x_label {
   opacity: 0.9;
 }
 
-/* line 170, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 185, ../../../packages/muleview-theme/sass/etc/all.scss */
 .mule-lightchart .rickshaw-chart {
   left: 0px;
 }
 
-/* line 174, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 189, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-y-axis {
   position: absolute;
   top: 0px;
@@ -225,14 +240,14 @@
   width: 55px;
 }
 
-/* line 181, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 196, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-x-axis {
   position: relative;
   left: 55px;
   height: 40px;
 }
 
-/* line 188, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 203, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-legend {
   position: absolute;
   display: block;
@@ -248,7 +263,7 @@
   border-top-color: rgba(147, 188, 250, 0.66);
 }
 
-/* line 203, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 218, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-legend-close {
   margin: -23px -9px 0px 0px;
   width: 16px;
@@ -259,7 +274,7 @@
   cursor: pointer;
 }
 
-/* line 213, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 228, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-slider {
   position: relative;
   display: block;
@@ -267,7 +282,7 @@
   top: 16px;
 }
 
-/* line 220, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 235, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixed-tooltip {
   height: 8px;
   margin: 2px;
@@ -275,7 +290,7 @@
   width: 100%;
 }
 
-/* line 227, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 242, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-fixedtip-colorbox {
   width: 12px;
   height: 12px;
@@ -284,14 +299,14 @@
   margin-top: 1px;
 }
 
-/* line 235, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 250, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-graph-title-container {
   position: absolute;
   width: 100%;
   text-align: center;
 }
 
-/* line 241, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 256, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-graph-title {
   display: inline-block;
   font-size: 3em;
@@ -299,7 +314,7 @@
   background-color: whitesmoke;
 }
 
-/* line 248, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 263, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw_graph .x_tick .title {
   bottom: -16px;
   margin-left: 0px;

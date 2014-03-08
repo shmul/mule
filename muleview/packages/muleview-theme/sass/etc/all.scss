@@ -4,6 +4,22 @@
   }
 }
 
+.retention-combobox-item {
+  margin: 3px;
+  border-bottom: 1px solid black;
+
+  .retention-name {
+    width: 30px;
+    margin-right: 5px;
+    font-weight: bold;
+  }
+
+  .retention-title {
+    font-style: italic;
+  }
+
+}
+
 .icon-cell > div{
   background-position: center center;
   background-repeat: no-repeat;

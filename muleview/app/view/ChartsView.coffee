@@ -46,6 +46,9 @@ Ext.define "Muleview.view.ChartsView",
           queryMode: "local"
           displayField: "combinedTitle"
           valueField: "name"
+          listConfig:
+            getInnerTpl: ->
+              '<div class="retention-combobox-item"> <span class="retention-name">{name}</span><span class="retention-title">{title}</span> </div>'
         },
 
         {
@@ -70,41 +73,20 @@ Ext.define "Muleview.view.ChartsView",
 
         {
           xtype: "combobox"
+          id: "refreshCombobox"
           width: 90
           forceSelection: true
           editable: false
           queryMode: "local"
           displayField: "text"
           valueField: "value"
-          # listeners:
-          #   change: Ext.bind(@updateRefreshTimer, @)
-          #   boxready: (me) ->
-          #     record = me.getStore().findRecord("value", Muleview.Settings.updateInterval)
-          #     me.select(record) if record
-          store:
-            fields: ["text", "value"]
-            data: [{text: "Disabled", value: -1}]
-            # .concat(
-          #     {
-          #       text: secs,
-          #       value: secs
-          #     } for secs in [
-          #       10
-          #       30
-          #       60
-          #       60 * 5
-          #       60 * 10
-          #       60 *15
-          #       60 * 60
-          #     ]
-          #   )
         },
 
         {
           xtype: "button"
+          id: "refreshButton"
           text: "Now"
           icon: "resources/default/images/refresh.png"
-          handler: @refresh
         },
 
         "-"

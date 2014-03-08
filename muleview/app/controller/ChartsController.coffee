@@ -25,6 +25,12 @@ Ext.define "Muleview.controller.ChartsController",
     ,
       ref: "subkeysButton"
       selector: "#subkeysButton"
+    ,
+      ref: "refreshButton"
+      selector: "#refreshButton"
+    ,
+      ref: "refreshCombobox",
+      selector: "#refreshCombobox"
   ]
 
   onLaunch: ->
@@ -36,6 +42,8 @@ Ext.define "Muleview.controller.ChartsController",
     @lightChartsContainer = @getLightChartsContainer()
     @legendButton = @getLegendButton()
     @subkeysButton = @getSubkeysButton()
+    @refreshButton = @getRefreshButton()
+    @refreshCombobox = @getRefreshCombobox()
 
     Muleview.app.on
       scope: @
@@ -63,6 +71,33 @@ Ext.define "Muleview.controller.ChartsController",
       toggle: (subkeysButton, pressed) ->
         Muleview.Settings.showSubkeys = @showSubkeys = pressed
         @renderChart()
+
+    @refreshButton.on
+      scope: @
+      click: @refresh
+
+    possibleRefreshIntervals = [
+      10
+      30
+      60
+      60 * 5
+      60 * 10
+      60 *15
+      60 * 60
+    ]
+    refreshData = [["Disabled", -1]].concat([Muleview.model.Retention.toLongFormat(secs), secs] for secs in possibleRefreshIntervals)
+    refreshIntervalsStore = Ext.create "Ext.data.ArrayStore",
+      fields: [ "text", "value" ]
+      data: refreshData
+
+    @refreshCombobox.bindStore(refreshIntervalsStore)
+    @refreshCombobox.on
+      scope: @
+      change: @updateRefreshTimer
+
+
+    currentRefreshInterval = refreshIntervalsStore.findRecord("value", Muleview.Settings.updateInterval)
+    @refreshCombobox.select(currentRefreshInterval) if currentRefreshInterval
 
 
   viewChange: (keys, retention, force) ->
@@ -202,6 +237,7 @@ Ext.define "Muleview.controller.ChartsController",
     @retentionsMenu.select(retName)
     for own _, lightChart of @lightCharts
       lightChart.setVisible(lightChart.retention != retName)
+    @resetRefreshTimer()
     Muleview.event "viewChange", @keys, @currentRetName
 
   renderChart: () ->
@@ -235,16 +271,15 @@ Ext.define "Muleview.controller.ChartsController",
     @mainChart = (Ext.create "Muleview.view.MuleChart", Ext.apply(common, cfg))
     @mainChartContainer.insert 0, @mainChart
 
-
-  ################################################################
-
   updateRefreshTimer: (me, seconds) ->
     Muleview.Settings.updateInterval = seconds
+    @resetRefreshTimer()
+
+  resetRefreshTimer: ->
     window.clearInterval @refreshInterval if @refreshInterval
+    seconds = Muleview.Settings.updateInterval * 1000
     return unless seconds > 0
+
     @refreshInterval = window.setInterval ()  =>
-      if not me.getEl() # Hack: Don't refresh if the container has been replaced
-        window.clearInterval @refreshInterval
-        return
       @refresh()
-    , Muleview.Settings.updateInterval * 1000
+    , seconds
