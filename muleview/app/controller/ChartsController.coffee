@@ -131,7 +131,12 @@ Ext.define "Muleview.controller.ChartsController",
     # If no keys were selected, don't display anything:
     if keys.length == 0 or keys[0] == ""
       @mainChartContainer.setTitle "No graph key selected"
+      @lightChartsContainer.setLoading(false)
+      @mainChartContainer.setLoading(false)
       return
+
+    @lightChartsContainer.setLoading(true)
+    @mainChartContainer.setLoading(true)
 
     @lastRequestId = currentRequestId = Ext.id()
     Muleview.Mule.getKeysData keys, (data) =>
@@ -141,6 +146,7 @@ Ext.define "Muleview.controller.ChartsController",
       @updateRetentionsStore(data)
       @defaultRetention ||= @retentionsStore.getAt(0).get("name")
       @initStores(data)
+      @lightChartsContainer.setLoading(false)
       @initLightCharts(data)
 
       if keys.length == 1
@@ -157,8 +163,6 @@ Ext.define "Muleview.controller.ChartsController",
       @subkeysButton.toggle(@showSubkeys)
 
       @showRetention(@defaultRetention)
-
-# ================================================================
 
   updateRetentionsStore: (data) ->
     retentions = (new Muleview.model.Retention(retName) for own retName of data)
@@ -243,6 +247,7 @@ Ext.define "Muleview.controller.ChartsController",
   renderChart: () ->
     @mainChartContainer.removeAll()
     if @showSubkeys
+      @mainChartContainer.setLoading(true)
       Muleview.Mule.getGraphData @key, @currentRetName, (data) =>
         @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@currentRetName}")?.toGraphArray(@currentRetName)
         @store = @createStore(data, @alerts)
@@ -267,7 +272,7 @@ Ext.define "Muleview.controller.ChartsController",
         closed: =>
           Muleview.event "legendChange", false
     }
-
+    @mainChartContainer.setLoading(false)
     @mainChart = (Ext.create "Muleview.view.MuleChart", Ext.apply(common, cfg))
     @mainChartContainer.insert 0, @mainChart
 
