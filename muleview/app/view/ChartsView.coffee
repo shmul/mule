@@ -6,10 +6,6 @@ Ext.define "Muleview.view.ChartsView",
 
   requires: [
     "Ext.form.field.ComboBox"
-    "Muleview.model.Retention"
-    "Muleview.view.MuleLightChart"
-    "Muleview.view.MuleChart"
-    "Ext.data.ArrayStore"
   ]
 
   items: [
@@ -54,12 +50,10 @@ Ext.define "Muleview.view.ChartsView",
 
         {
           text: "Legend"
+          id: "legendButton"
           icon: "resources/default/images/legend.png"
           enableToggle: true
-          # pressed: Muleview.Settings.showLegend
-          # toggleHandler: (me, value) =>
-          #   Muleview.Settings.showLegend = value
-          #   @chart?.setLegend(value)
+          pressed: Muleview.Settings.showLegend
         },
 
         "->",

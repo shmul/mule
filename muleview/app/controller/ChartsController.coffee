@@ -19,6 +19,9 @@ Ext.define "Muleview.controller.ChartsController",
     ,
       ref: "lightChartsContainer"
       selector: "#lightChartsContainer"
+    ,
+      ref: "legendButton"
+      selector: "#legendButton"
   ]
 
   onLaunch: ->
@@ -28,18 +31,28 @@ Ext.define "Muleview.controller.ChartsController",
     @mainChartContainer = @getMainChartContainer()
     @retentionsMenu = @getRetentionsMenu()
     @lightChartsContainer = @getLightChartsContainer()
+    @legendButton = @getLegendButton()
 
     Muleview.app.on
       scope: @
-      viewChange: (keys, retName)->
+      viewChange: (keys, retName) ->
         @viewChange(keys, retName)
       refresh: @refresh
+      legendChange: (show) ->
+        Muleview.Settings.showLegend = show
+        @mainChart?.setLegend(show)
+        @legendButton.toggle(show)
 
     @retentionsStore = Ext.create "Ext.data.ArrayStore",
       model: "Muleview.model.Retention"
       sorters: ["sortValue"]
       data: []
     @retentionsMenu.bindStore(@retentionsStore)
+
+    @legendButton.on
+      scope: @
+      toggle: (legendButton, pressed) ->
+        Muleview.event "legendChange", pressed
 
 
   viewChange: (keys, retention, force) ->
@@ -185,15 +198,16 @@ Ext.define "Muleview.controller.ChartsController",
     Muleview.event "viewChange", @keys, @currentRetName
 
   renderChart: () ->
-    @chart = Ext.create "Muleview.view.MuleChart",
+    @mainChart = Ext.create "Muleview.view.MuleChart",
       flex: 1
       topKeys: @keys
       store: @store
       listeners:
         closed: =>
-          @legendClosed()
+          Muleview.event "legendChange", false
 
-    @mainChartContainer.insert 0, @chart
+    @mainChartContainer.insert 0, @mainChart
+
   ################################################################
 
   updateRefreshTimer: (me, seconds) ->
@@ -206,7 +220,3 @@ Ext.define "Muleview.controller.ChartsController",
         return
       @refresh()
     , Muleview.Settings.updateInterval * 1000
-
-  legendClosed: ->
-    @legendButton.toggle(false)
-    Muleview.Settings.showLegend = false
