@@ -332,6 +332,15 @@
   margin-left: 0px;
 }
 
+/* line 285, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-zoom-highlight {
+  position: absolute;
+  bottom: 0px;
+  display: none;
+  background-color: rgba(255, 224, 0, 0.3);
+  height: 100%;
+}
+
 /* including package muleview-theme */
 /* including package ext-theme-classic */
 /* including package ext-theme-neutral */

@@ -281,3 +281,11 @@ $rickshawYAxis: 55px;
   bottom: -16px;
   margin-left: 0px;
 }
+
+.rickshaw-zoom-highlight {
+  position: absolute;
+  bottom: 0px;
+  display: none;
+  background-color: rgba(255, 224, 0, 0.3);
+  height: 100%;
+}

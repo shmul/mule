@@ -56,10 +56,12 @@ Ext.define "Muleview.view.MuleChart",
       chart: Ext.id()
       legend: Ext.id()
       slider: Ext.id()
+      zoomHighlight: Ext.id()
 
     # Prepare HTML content with new IDs:
     cmpHtml = '
         <div style="display: block">
+          <div class="rickshaw-zoom-highlight" id="' + @divs.zoomHighlight + '"> </div>
           <div class="rickshaw-y-axis" id="' + @divs.yAxis + '"> </div>
           <div class="rickshaw-chart" id="' + @divs.chart + '"> </div>
           <div class="rickshaw-legend" id="' + @divs.legend + '"> </div>
@@ -118,6 +120,16 @@ Ext.define "Muleview.view.MuleChart",
     @graph.render()
     @createTooltips()
     @createSlider()
+
+  setZoomHighlight: (toggle, min, max) ->
+    zh = @divs.zoomHighlight
+    if toggle
+      zh.style.left = "" + @graph.x(min) + "px"
+      zh.style.width = (@graph.x(max) - @graph.x(min)) + "px"
+      zh.style.display = "block"
+    else
+      zh.style.display = "none"
+
 
   basicNumberFormatter: Ext.util.Format.numberRenderer(",0")
   numberFormatter: (n) ->
