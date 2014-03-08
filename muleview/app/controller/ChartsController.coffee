@@ -139,7 +139,7 @@ Ext.define "Muleview.controller.ChartsController",
 
   refresh: ->
     # Run the view change with the power of the force:
-    @viewChange(@keys, @retention, true)
+    @viewChange(@keys, @currentRetName, true)
 
   createKeysView: (keys, retention) ->
     @mainChartContainer.removeAll()
@@ -162,7 +162,7 @@ Ext.define "Muleview.controller.ChartsController",
       return unless @lastRequestId == currentRequestId
 
       @updateRetentionsStore(data)
-      @defaultRetention ||= @retentionsStore.getAt(0).get("name")
+      @defaultRetention = @currentRetName || @retentionsStore.getAt(0).get("name")
 
       if keys.length == 1
         @key = keys[0]
