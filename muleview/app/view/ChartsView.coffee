@@ -49,6 +49,14 @@ Ext.define "Muleview.view.ChartsView",
         },
 
         {
+          text: "Subkeys"
+          id: "subkeysButton"
+          icon: "resources/default/images/subkeys.gif"
+          enableToggle: true
+          pressed: Muleview.Settings.showSubkeys
+        },
+
+        {
           text: "Legend"
           id: "legendButton"
           icon: "resources/default/images/legend.png"

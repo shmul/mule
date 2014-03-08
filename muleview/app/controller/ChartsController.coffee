@@ -22,6 +22,9 @@ Ext.define "Muleview.controller.ChartsController",
     ,
       ref: "legendButton"
       selector: "#legendButton"
+    ,
+      ref: "subkeysButton"
+      selector: "#subkeysButton"
   ]
 
   onLaunch: ->
@@ -32,6 +35,7 @@ Ext.define "Muleview.controller.ChartsController",
     @retentionsMenu = @getRetentionsMenu()
     @lightChartsContainer = @getLightChartsContainer()
     @legendButton = @getLegendButton()
+    @subkeysButton = @getSubkeysButton()
 
     Muleview.app.on
       scope: @
@@ -54,14 +58,20 @@ Ext.define "Muleview.controller.ChartsController",
       toggle: (legendButton, pressed) ->
         Muleview.event "legendChange", pressed
 
+    @subkeysButton.on
+      scope: @
+      toggle: (subkeysButton, pressed) ->
+        Muleview.Settings.showSubkeys = @showSubkeys = pressed
+        @renderChart()
+
 
   viewChange: (keys, retention, force) ->
     # If given a string for keys, convert it to an array:
     keys = keys.split(",") if Ext.isString(keys)
 
     # Check if any keys were changed from the previous rendering:
-    difference = @keys.length != keys.length || Ext.Array.difference(@keys, keys).length != 0
 
+    difference = @keys.length != keys.length || Ext.Array.difference(@keys, keys).length != 0
     # Create or update the ChartsView object:
     if difference or force
       @keys = Ext.clone(keys)  # Must clone due to mysterious bug causing multiple keys to reduce to the just the first one.
@@ -74,10 +84,6 @@ Ext.define "Muleview.controller.ChartsController",
       # If only the retention was changed, we ask the ChartsView to show the new one:
       @retention = retention
       @showRetention(retention)
-
-  showRetention: (ret) ->
-    console.log('ChartsController.coffee\\ 43: ret:', ret);
-    #TODO...
 
   refresh: ->
     # Run the view change with the power of the force:
@@ -93,33 +99,34 @@ Ext.define "Muleview.controller.ChartsController",
       return
 
     @lastRequestId = currentRequestId = Ext.id()
-    Muleview.Mule.getKeysData keys, (keysData) =>
+    Muleview.Mule.getKeysData keys, (data) =>
       # Prevent latency mess:
       return unless @lastRequestId == currentRequestId
 
-      @fillRetentionsAndLightCharts(keysData)
+      @updateRetentionsStore(data)
+      @defaultRetention ||= @retentionsStore.getAt(0).get("name")
+      @initStores(data)
+      @initLightCharts(data)
 
       if keys.length == 1
-        key = keys[0]
-        @mainChartContainer.setTitle key
+        @key = keys[0]
+        @showSubkeys = Muleview.Settings.showSubkeys
+        @subkeysButton.setDisabled(false)
+        @mainChartContainer.setTitle @key
 
       else
+        @showSubkeys = false
+        @subkeysButton.setDisabled(true)
         @mainChartContainer.setTitle keys.join(", ")
 
-  noKeys: () ->
+      @subkeysButton.toggle(@showSubkeys)
+
+      @showRetention(@defaultRetention)
 
 # ================================================================
 
-  fillRetentionsAndLightCharts: (data) ->
-    @updateRetentionsStore(data)
-    @defaultRetention ||= @retentionsStore.getAt(0).get("name")
-    @initStores(data)
-    @initLightCharts(data)
-    @showRetention(@defaultRetention)
-
   updateRetentionsStore: (data) ->
     retentions = (new Muleview.model.Retention(retName) for own retName of data)
-    console.log('ChartsController.coffee\\ 105: retentions:', retentions);
     @retentionsStore.removeAll()
     @retentionsStore.loadData(retentions)
 
@@ -190,23 +197,44 @@ Ext.define "Muleview.controller.ChartsController",
   showRetention: (retName) ->
     @store = @stores[retName]
     @renderChart()
+    @currentRetName = retName
 
     @retentionsMenu.select(retName)
     for own _, lightChart of @lightCharts
       lightChart.setVisible(lightChart.retention != retName)
-    @currentRetName = retName
     Muleview.event "viewChange", @keys, @currentRetName
 
   renderChart: () ->
-    @mainChart = Ext.create "Muleview.view.MuleChart",
+    @mainChartContainer.removeAll()
+    if @showSubkeys
+      Muleview.Mule.getGraphData @key, @currentRetName, (data) =>
+        @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@currentRetName}")?.toGraphArray(@currentRetName)
+        @store = @createStore(data, @alerts)
+        @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
+        @addChart
+          showAreas: true
+          topKeys: [@key]
+          subKeys: @subkeys
+          alerts: @alerts
+          title: "#{@key};#{@currentRetName}"
+
+    else
+      @addChart
+        topKeys: @keys
+        title: @keys.join("<br />")
+
+  addChart: (cfg) ->
+    common = {
       flex: 1
-      topKeys: @keys
       store: @store
       listeners:
         closed: =>
           Muleview.event "legendChange", false
+    }
 
+    @mainChart = (Ext.create "Muleview.view.MuleChart", Ext.apply(common, cfg))
     @mainChartContainer.insert 0, @mainChart
+
 
   ################################################################
 
