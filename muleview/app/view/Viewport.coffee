@@ -42,12 +42,9 @@ Ext.define "Muleview.view.Viewport",
             ]
         ]
       ,
-        id: "chartsViewContainer"
-        xtype: "panel"
-        title: "Chart"
-        bodyCls: "charts-view-container"
+        id: "chartsView"
+        xtype: "MuleChartsView"
         region: "center"
-        layout: "fit"
       ,
 
         id: "alertsReport"
@@ -64,7 +61,7 @@ Ext.define "Muleview.view.Viewport",
             width: 20
             sortable: false
             renderer: (value, meta, record) ->
-              # This cell gets its icon from the row alert-state-specific  class, see viewConfig blow
+              # This cell gets its icon from the row alert-state-specific class, see viewConfig blow
               meta.tdCls = "icon-cell"
               meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
               ""

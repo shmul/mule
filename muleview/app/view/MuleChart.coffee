@@ -31,6 +31,7 @@ Ext.define "Muleview.view.MuleChart",
     @fireEvent "topkeyclick"
 
   renderChart: () ->
+    # If there's no data - show an empty "No Data" pane:
     if not @hasData
       @add Ext.create "Ext.container.Container",
         layout:

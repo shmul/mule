@@ -1,7 +1,6 @@
 Ext.define "Muleview.view.SingleGraphChartsView",
   extend: "Muleview.view.ChartsView"
   requires: [
-    "Muleview.view.MuleChart"
     "Muleview.view.AlertsEditor"
   ]
 

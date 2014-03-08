@@ -1,5 +1,7 @@
-.charts-view-container.x-panel-body-default {
-  background-image: url("bg.png");
+.mule-bg {
+  div {
+    background-image: url("bg.png") !important;
+  }
 }
 
 .icon-cell > div{

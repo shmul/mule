@@ -44,6 +44,7 @@ Ext.define "Muleview.controller.ChartsController",
     @viewChange(@keys, @retention, true)
 
   createKeysView: (keys, retention) ->
+    return
     # Remove old view
     @chartsViewContainer.removeAll()
 
