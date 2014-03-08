@@ -335,6 +335,7 @@ function column_db(base_dir_)
                                logi("seq_cache is of maximum size. dropping",first_name)
                                seq_cache[first_name] = nil
                                seq_cache_size = seq_cache_size - 1
+                               collectgarbage()
                              end
                              local cached = {}
                              local insert = table.insert
