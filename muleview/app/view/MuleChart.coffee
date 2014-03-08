@@ -175,6 +175,23 @@ Ext.define "Muleview.view.MuleChart",
       graph: @graph
       element: @divs.slider
 
+    @graph.updateCallbacks.unshift =>
+      @fireZoomChange()
+    Ext.defer =>
+      @fireZoomChange()
+    , 100
+
+  fireZoomChange: () ->
+    domain = @graph.dataDomain()
+
+    min = @graph.window.xMin
+    max = @graph.window.xMax
+
+    min = domain[0] unless min?
+    max = domain[1] unless max?
+
+    Muleview.event "mainChartZoomChange", min, max
+
   createTooltips: ->
     muleChart = @
     graphElement = @graph.element

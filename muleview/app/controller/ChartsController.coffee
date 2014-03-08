@@ -59,6 +59,7 @@ Ext.define "Muleview.controller.ChartsController",
         Muleview.Settings.showLegend = show
         @mainChart?.setLegend(show)
         @legendButton.toggle(show)
+      mainChartZoomChange: @updateZoomStats
 
     @retentionsStore = Ext.create "Ext.data.ArrayStore",
       model: "Muleview.model.Retention"
@@ -315,3 +316,32 @@ Ext.define "Muleview.controller.ChartsController",
       retention: @currentRetName
       store: @store
     ae.show()
+
+  updateZoomStats: (timestampMin, timestampMax) ->
+    min = null
+    max = null
+    last = null
+    sum = 0
+    count = 0
+
+    @store.each (record, ind, total) =>
+      if (timestampMin <= record.get("timestamp") <= timestampMax)
+
+        count += 1
+        value = 0
+        for key in @keys
+          value += record.get(key)
+
+        min ||= value
+        max ||= value
+        sum += value
+        min = Math.min(min, value)
+        max = Math.max(min, value)
+        last = value
+    stats =
+      min: min
+      max: max
+      average: sum / count
+      last: last
+
+    Muleview.event "statsChange", stats

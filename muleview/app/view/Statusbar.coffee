@@ -4,7 +4,6 @@ Ext.define "Muleview.view.Statusbar",
   height: 25
   margin: 0
   border: false
-  autoClear: 3000
   defaultText: "Ready"
   items: [
       id: "statusLabel"
@@ -13,7 +12,7 @@ Ext.define "Muleview.view.Statusbar",
       cls: "statusLabel" # needed to reduce CSS headache
       frame: true
       border: true
-      value: "Hello world"
+      value: "Hello world..."
       enable: false
     ,
       "-"
@@ -71,16 +70,19 @@ Ext.define "Muleview.view.Statusbar",
       flex: 1
       layout:
         type: "hbox"
+        align: "middle"
       items: [
-          xtype: "label"
-          cls: "statusLabel"
-          id: "statusRightLabel"
+          xtype: "component"
+          style: "margin-left: 25px"
+          tpl: "Stats: " + ("<span class=statName>#{name}:</span> <span class=statValue>{#{value}}</span>" for value, name of {min: "Min", max: "Max", average: "Average", last: "Last Value"}).join(" ")
+          id: "statusStats"
           flex: 1
         ,
           xtype: "progressbar"
           id: "statusProgressbar"
           animate: true
-          width: 80
+          height: 20
+          width: 120
       ]
     ,
       icon: "resources/default/images/mule_icon.png"

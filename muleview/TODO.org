@@ -1,12 +1,14 @@
 * Issues
 ** TODO TopKey should be first in the legend
-** TODO Graph should default to show only Topkey and hide subkey series
+** DONE Graph should default to show only Topkey and hide subkey series
 ** TODO Refresh resets legend visibility, position and which series are shown
 ** DONE Resize resets legend position
 ** TODO Alerts' lines go in the back of surfaces
 ** DONE "undefined" keeps on scrolling at the status bar -> 100% progress bar doesn't go off
-** TODO Critical-up icon missing
+** DONE Critical-up icon missing
    In alerts summary
+   ------
+   Could not reproduce
 ** TODO Failure function for keys expand
    This is to prevent the loading circle from stayign there forever
 ** TODO Back button issue

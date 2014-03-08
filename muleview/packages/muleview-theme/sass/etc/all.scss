@@ -116,6 +116,9 @@
   background-image: url("summary_stale.png");
 }
 
+#statusProgressbar {
+
+}
 .statusLabel {
   height: 16px;
   background-repeat: no-repeat;
@@ -124,10 +127,6 @@
   padding-left: 18px;
   white-space: nowrap;
   overflow: hidden;
-}
-
-#statusRightLabel {
-  padding-left: 1px;
 }
 
 .statusLabel-normal {
@@ -145,6 +144,24 @@
 .statusLabel-error {
   color: red;
   background-image: url("status-error.gif");
+}
+
+#statusStats {
+  top: -1px;
+  white-space: nowrap;
+  margin-left: 25;
+  .statName {
+    font-style: italic;
+    margin-right: 2px;
+    margin-left: 5px;
+
+  }
+  .statValue {
+    border-right: 1px solid silver;
+    padding-left: 5px;
+    padding-right: 5px;
+    font-weight: bold;
+  }
 }
 
 .mule-tt {
