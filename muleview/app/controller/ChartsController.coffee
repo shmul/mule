@@ -3,6 +3,7 @@ Ext.define "Muleview.controller.ChartsController",
 
   requires: [
     "Muleview.model.Retention"
+    "Muleview.view.MuleChart"
     "Muleview.view.MuleLightChart"
   ]
 
@@ -70,34 +71,34 @@ Ext.define "Muleview.controller.ChartsController",
     @viewChange(@keys, @retention, true)
 
   createKeysView: (keys, retention) ->
+    @mainChartContainer.removeAll()
     @lightChartsContainer.removeAll()
 
     # If no keys were selected, don't display anything:
     if keys.length == 0 or keys[0] == ""
-      @noKeys()
-    else if keys.length == 1
-      @singleKey(keys[0], retention)
-    else
-      @multipleKeys(keys, retention)
+      @mainChartContainer.setTitle "No graph key selected"
+      return
 
-  noKeys: () ->
-    @mainChartContainer.setTitle "No graph key selected"
+    @lastRequestId = currentRequestId = Ext.id()
+    Muleview.Mule.getKeysData keys, (keysData) =>
+      # Prevent latency mess:
+      return unless @lastRequestId == currentRequestId
 
-  singleKey: (key, retention) ->
-    @mainChartContainer.setTitle key
-    Muleview.Mule.getKeysData [key], (keysData) =>
       @fillRetentionsAndLightCharts(keysData)
 
+      if keys.length == 1
+        key = keys[0]
+        @mainChartContainer.setTitle key
 
-  multipleKeys: (keys, retention) ->
-    @mainChartContainer.setTitle keys.join(", ")
+      else
+        @mainChartContainer.setTitle keys.join(", ")
+
+  noKeys: () ->
 
 # ================================================================
 
   fillRetentionsAndLightCharts: (data) ->
-    console.log('ChartsController.coffee\\ 91: data:', data);
     @updateRetentionsStore(data)
-    console.log("ChartsController.coffee\\ 93: <HERE>");
     @defaultRetention ||= @retentionsStore.getAt(0).get("name")
     @initStores(data)
     @initLightCharts(data)
@@ -174,18 +175,25 @@ Ext.define "Muleview.controller.ChartsController",
       store: @stores[retName]
 
   showRetention: (retName) ->
-    # Be oh-so-idempotent:
-    return unless !@currentRetName or(retName and retName != @currentRetName)
+    @store = @stores[retName]
+    @renderChart()
 
-    retName ||= @retentionsStore.getAt(0).get("name")
-    # @chartContainer.setLoading(true)
-    # @createChart(retName)
     @retentionsMenu.select(retName)
     for own _, lightChart of @lightCharts
       lightChart.setVisible(lightChart.retention != retName)
     @currentRetName = retName
     Muleview.event "viewChange", @keys, @currentRetName
 
+  renderChart: () ->
+    @chart = Ext.create "Muleview.view.MuleChart",
+      flex: 1
+      topKeys: @keys
+      store: @store
+      listeners:
+        closed: =>
+          @legendClosed()
+
+    @mainChartContainer.insert 0, @chart
   ################################################################
 
   updateRefreshTimer: (me, seconds) ->
@@ -198,55 +206,6 @@ Ext.define "Muleview.controller.ChartsController",
         return
       @refresh()
     , Muleview.Settings.updateInterval * 1000
-
-  createRetentionsMenu: ->
-    clickHandler = (me) =>
-      # We make sure the retention checkbox is checked before raising an event,
-      # because Extjs causes previously-checked buttons to invoke their own click event upon "implicitly" getting unchecked
-      # (as a result of a different checkbox getting checked)
-      Muleview.event "viewChange", @keys, me.retention.get("name") if me.checked
-
-    items = []
-    @retentionsStore.each (ret) =>
-      return unless ret
-      item = Ext.create "Ext.menu.CheckItem",
-        text: ret.get("title")
-        retention: ret
-        group: "retention"
-        checkHandler: clickHandler
-        showCheckbox: false
-
-      ret.menuItem = item
-      items.push item
-
-    Ext.create "Ext.button.Button",
-      selectRetention: (retName) ->
-        for item in items
-          selected = item.retention.get("name") == retName
-          item.setChecked(selected, true) # true to suppress events
-          @setText(item.retention.get("title")) if selected
-      menu:
-        items: items
-
-
-  createChart: (retName = @currentRetName) ->
-    @store = @stores[retName]
-    @renderChart()
-
-
-  renderChart: () ->
-    @chartContainer.removeAll()
-    @chart = Ext.create "Muleview.view.MuleChart",
-      flex: 1
-      topKeys: @keys
-      store: @store
-      listeners:
-        closed: =>
-          @legendClosed()
-
-    @chartContainer.insert 0, @chart
-    @chartContainer.setLoading(false)
-
 
   legendClosed: ->
     @legendButton.toggle(false)

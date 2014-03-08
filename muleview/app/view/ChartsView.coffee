@@ -17,7 +17,7 @@ Ext.define "Muleview.view.ChartsView",
       title: "Previews"
       header: true
       id: "lightChartsContainer"
-      bodyCls: "mule-bg"
+      # bodyCls: "mule-bg"
       region: "east"
       split: true
       width: "20%"
@@ -29,7 +29,7 @@ Ext.define "Muleview.view.ChartsView",
     ,
       xtype: "panel"
       id: "mainChartContainer"
-      bodyCls: "mule-bg"
+      # bodyCls: "mule-bg"
       region: "center"
       header: true
       title: "Graph"
