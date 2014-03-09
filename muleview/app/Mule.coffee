@@ -64,6 +64,11 @@ Ext.define "Muleview.Mule",
         [keyName, retention] = name.split(";")
         throw "Invalid key received: '#{keyName}'" unless key == keyName
         retentions[retention] = data
+
+      #TODO: something else:
+      for ret, data of retentions
+        Ext.Array.sort data, (a, b ) ->
+          a.x - b.x
       callback(retentions)
 
   # For a list of keys, returns data per retention per key

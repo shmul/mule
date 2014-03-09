@@ -16,7 +16,6 @@ Ext.define "Muleview.view.MuleLightChart",
       mainGraph: false
       slider: false
       data: @data
-      store: @store
       topKeys: @topKeys
       formatter: (series, x, y) ->
         Ext.util.Format.number(y, ",0")

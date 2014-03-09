@@ -142,9 +142,13 @@ Ext.define "Muleview.controller.ChartsController",
     @viewChange(@keys, @currentRetName, true)
 
   createKeysView: (keys, retention) ->
+    # Remove old charts:
     @mainChartContainer.removeAll()
     @lightChartsContainer.removeAll()
+
+    # Disable buttons:
     @alertsButton.setDisabled(true)
+    @subkeysButton.setDisabled(true)
 
     # If no keys were selected, don't display anything:
     if keys.length == 0 or keys[0] == ""
@@ -153,40 +157,41 @@ Ext.define "Muleview.controller.ChartsController",
       @mainChartContainer.setLoading(false)
       return
 
+    # We're going to ask for information, let's set a load mask:
     @lightChartsContainer.setLoading(true)
     @mainChartContainer.setLoading(true)
+
+    # Set things according to whether we're in multiple or single mode:
+    singleKey = keys.length == 1
+    @key = singleKey &&  keys[0]
+    @mainChartContainer.setTitle keys.join(", ")
 
     @lastRequestId = currentRequestId = Ext.id()
     Muleview.Mule.getKeysData keys, (data) =>
       # Prevent latency mess:
       return unless @lastRequestId == currentRequestId
 
-      @updateRetentionsStore(data)
+      # Enable buttons:
+      @showSubkeys = singleKey && Muleview.Settings.showSubkeys
+      @subkeysButton.setDisabled(!@showSubkeys)
+      @subkeysButton.toggle(@showSubkeys)
+      @alertsButton.setDisabled(!singleKey)
+
+
+      # Save data - it should be retention => key => array of {x: ###, y: ###}
+      @data = data
+
+      @updateRetentionsStore()
       @defaultRetention = @currentRetName || @retentionsStore.getAt(0).get("name")
 
-      if keys.length == 1
-        @key = keys[0]
-        @showSubkeys = Muleview.Settings.showSubkeys
-        @subkeysButton.setDisabled(false)
-        @alertsButton.setDisabled(false)
-        @mainChartContainer.setTitle @key
-
-      else
-        @key = null
-        @showSubkeys = false
-        @subkeysButton.setDisabled(true)
-        @mainChartContainer.setTitle keys.join(", ")
-
-      @subkeysButton.toggle(@showSubkeys)
-
-      @initStores(data)
+      @initLightCharts()
       @lightChartsContainer.setLoading(false)
-      @initLightCharts(data)
 
+      return
       @showRetention(@defaultRetention)
 
-  updateRetentionsStore: (data) ->
-    retentions = (new Muleview.model.Retention(retName) for own retName of data)
+  updateRetentionsStore: () ->
+    retentions = (new Muleview.model.Retention(retName) for own retName of @data)
     @retentionsStore.removeAll()
     @retentionsStore.loadData(retentions)
 
@@ -194,63 +199,20 @@ Ext.define "Muleview.controller.ChartsController",
     @retentionsStore.each (retention) ->
       cb(retention, retention.get("name"))
 
-  initStores: (data, singleKey) ->
-    @stores = {}
-    @eachRetention (retention, name) =>
-      alerts = @getAlerts(key, retention)  if singleKey
-      @stores[name] = @createStore(data[name], alerts)
-
-  # Creates a flat store from a hash of {
-  #   key1 => [[count, batch, timestamp], ...],
-  #   key2 => [[count, batch, timestamp], ...]
-  # }
-  createStore: (data, alerts = []) ->
-    fields = []
-    addField = (name) ->
-      fields.push
-        name: name
-        type: "integer"
-
-    # Create initial store:
-    addField "timestamp"
-    addField key for key, _ of data
-    addField alert.name for alert in alerts if alerts
-
-    store = Ext.create "Ext.data.ArrayStore",
-      fields: fields
-      sorters: [
-          property: "timestamp"
-      ]
-
-    # Convert data to timestamps-based hash:
-    timestamps = {}
-    for own key, keyData of data
-      for [count, _, timestamp] in keyData
-        unless timestamps[timestamp]
-          timestamps[timestamp] = {
-            timestamp: timestamp
-          }
-          timestamps[timestamp][alert.name] = alert.value for alert in alerts if alerts
-        timestamps[timestamp][key] = count
-
-    # Add the data:
-    store.add(Ext.Object.getValues(timestamps))
-    store
-
-  initLightCharts: (data) ->
+  initLightCharts: () ->
     @lightCharts = {}
     @eachRetention (retention, name) =>
-      @lightCharts[name] = @createLightChart(retention, data)
+      @lightCharts[name] = @createLightChart(retention)
       @lightChartsContainer.add(@lightCharts[name])
 
-  createLightChart: (retention, data) ->
+  createLightChart: (retention) ->
     retName = retention.get("name")
     Ext.create "Muleview.view.MuleLightChart",
       title: retention.get("title")
       flex: 1
       topKeys: @keys
       retention: retName
-      store: @stores[retName]
+      data: @data[retName]
 
   showRetention: (retName) ->
     @currentRetName = retName

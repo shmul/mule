@@ -276,8 +276,7 @@ Ext.define "Muleview.view.MuleChart",
     keys = keys.concat(@topKeys || [])
     keys = keys.concat(@subKeys || [])
 
-    seriesData = @prepareSeriesData(keys)
-
+    seriesData = @data
     series = []
 
     for alert in (@alerts || [])
@@ -289,6 +288,7 @@ Ext.define "Muleview.view.MuleChart",
         type: "alert"
 
     for topKey in @topKeys
+      @hasData ||= seriesData[topKey].length > 0
       series.push
         name: @keyLegendName(topKey)
         color: palette.color()
@@ -305,7 +305,7 @@ Ext.define "Muleview.view.MuleChart",
         data: seriesData[subKey]
         type: "subkey"
         renderer: "stack"
-
+    console.log('MuleChart.coffee\\ 307: series:', series);
     series
 
   keyLegendName: (key) ->
