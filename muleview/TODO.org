@@ -1,4 +1,8 @@
 * Issues
+** TODO dan-simplified-processing
+*** TODO Fix Alerts and AlertsEditor
+*** TODO Fix Subkey Click
+*** TODO Make updates graceful
 ** TODO TopKey should be first in the legend
 ** DONE Graph should default to show only Topkey and hide subkey series
 ** TODO Refresh resets legend visibility, position and which series are shown
