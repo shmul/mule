@@ -5,7 +5,6 @@ Ext.define "Muleview.view.MuleLightChart",
   layout: "fit"
   cls: "mule-chart mule-lightchart"
 
-  yAxisWidth: 0
   sliderHeight: 0
 
   navigate: () ->
@@ -13,6 +12,7 @@ Ext.define "Muleview.view.MuleLightChart",
 
   initComponent: ->
     @chart = Ext.create "Muleview.view.MuleChart",
+      yAxisWidth: 0
       mainGraph: false
       slider: false
       data: @data

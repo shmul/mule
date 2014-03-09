@@ -1,5 +1,5 @@
-SEED = 2 # Random seed
-MAX_KIDS = 7 # Misc rands: Max number of child-nodes per node
+SEED = 0 # Random seed
+MAX_KIDS = 3 # Misc rands: Max number of child-nodes per node
 MAX_DEPTH = 4 # max graph depth
 MAX_HITS = 100 # Max number per key per timestamp
 KEYS_FILE = "tmp/keys.data"
@@ -7,7 +7,7 @@ TIMESTAMP_FILE = "tmp/input"
 APPENDED_TIMESTAMP_FILE = "tmp/agg_input"
 CONF_FILE = "tmp/conf"
 CURL = "curl localhost:3000/graph -X POST -T #{TIMESTAMP_FILE}"
-RETENTION = "1s:1m 5m:48h 1h:30d 1d:3y"
+RETENTION = "5s:1d 5m:48h 1h:30d 1d:3y"
 
 @names = File.read("names_list.txt").split(/\s/) # Names list file
 @root = false # Will contain root key

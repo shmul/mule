@@ -65,6 +65,7 @@ Ext.define "Muleview.controller.StatusBar",
         if @noRequestsPending()
           @inProgressMax = 0
           @pbar.hide()
+          @pbar.updateProgress(0)
       , 2000
 
 
