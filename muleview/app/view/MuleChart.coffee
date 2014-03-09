@@ -279,13 +279,13 @@ Ext.define "Muleview.view.MuleChart",
     seriesData = @data
     series = []
 
-    for alert in (@alerts || [])
-      series.push
-        name: alert.label
-        color: alert.color
-        renderer: "line"
-        data: seriesData[alert.name]
-        type: "alert"
+    # for alert in (@alerts || [])
+    #   series.push
+    #     name: alert.label
+    #     color: alert.color
+    #     renderer: "line"
+    #     data: seriesData[alert.name]
+    #     type: "alert"
 
     for topKey in @topKeys
       @hasData ||= seriesData[topKey].length > 0

@@ -173,7 +173,7 @@ Ext.define "Muleview.controller.ChartsController",
 
       # Enable buttons:
       @showSubkeys = singleKey && Muleview.Settings.showSubkeys
-      @subkeysButton.setDisabled(!@showSubkeys)
+      @subkeysButton.setDisabled(!singleKey)
       @subkeysButton.toggle(@showSubkeys)
       @alertsButton.setDisabled(!singleKey)
 
@@ -187,7 +187,6 @@ Ext.define "Muleview.controller.ChartsController",
       @initLightCharts()
       @lightChartsContainer.setLoading(false)
 
-      return
       @showRetention(@defaultRetention)
 
   updateRetentionsStore: () ->
@@ -216,7 +215,6 @@ Ext.define "Muleview.controller.ChartsController",
 
   showRetention: (retName) ->
     @currentRetName = retName
-    @store = @stores[retName]
     @renderChart()
 
     @retentionsMenu.select(retName)
@@ -233,22 +231,22 @@ Ext.define "Muleview.controller.ChartsController",
       @mainChartContainer.setLoading(true)
       Muleview.Mule.getGraphData @key, @currentRetName, (data) =>
         @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@currentRetName}")?.toGraphArray(@currentRetName)
-        @store = @createStore(data, @alerts)
         @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
         @addChart
           showAreas: true
           topKeys: [@key]
           subKeys: @subkeys
           alerts: @alerts
+          data: data
 
     else
       @addChart
         topKeys: @keys
+        data: @data[@currentRetName]
 
   addChart: (cfg) ->
     common = {
       flex: 1
-      store: @store
       title: ("#{key};#{@currentRetName}" for key in @keys).join("<br />")
       listeners:
         closed: =>
@@ -277,7 +275,7 @@ Ext.define "Muleview.controller.ChartsController",
     ae = Ext.create "Muleview.view.AlertsEditor",
       key: @key
       retention: @currentRetName
-      store: @store
+      data: @data[@curretRetName] #TODO: FIX ME
     ae.show()
 
   updateZoomStatsAndHighlight: (timestampMin, timestampMax) ->
@@ -291,24 +289,37 @@ Ext.define "Muleview.controller.ChartsController",
     sum = 0
     count = 0
 
-    @store.each (record, ind, total) =>
-      if (timestampMin <= record.get("timestamp") <= timestampMax)
+    data = @data[@currentRetName]
+    firstKey = data[@keys[0]]
 
-        count += 1
-        value = 0
-        for key in @keys
-          value += record.get(key)
+    # I'm assuming all keys have the same x values
+    index = 0
+    timestamp = firstKey[0].x
 
-        min ||= value
-        max ||= value
-        sum += value
-        min = Math.min(min, value)
-        max = Math.max(min, value)
-        last = value
+    until timestamp  >= timestampMin or index == firstKey.length
+      index += 1
+      timestamp = firstKey[index].x
+
+    while timestamp <= timestampMax and index < firstKey.length
+      count += 1
+      value = 0
+      for key in @keys
+        value += data[key][index].y
+
+      min ||= value
+      max ||= value
+
+      sum += value
+      min = Math.min(min, value)
+      max = Math.max(min, value)
+      last = value
+
+      index += 1
+      timestamp = firstKey[index].x if index < firstKey.length
+
     stats =
       min: min
       max: max
       average: sum / count
       last: last
-
     Muleview.event "statsChange", stats

@@ -65,10 +65,8 @@ Ext.define "Muleview.Mule",
         throw "Invalid key received: '#{keyName}'" unless key == keyName
         retentions[retention] = data
 
-      #TODO: something else:
       for ret, data of retentions
-        Ext.Array.sort data, (a, b ) ->
-          a.x - b.x
+        @sortData(data)
       callback(retentions)
 
   # For a list of keys, returns data per retention per key
@@ -97,5 +95,11 @@ Ext.define "Muleview.Mule",
       for name, data of response
         [key, ret] = name.split(";")
         throw "Invalid retention received: #{ret}" unless ret = retention
+        @sortData(data)
         ans[key] = data
       callback(ans)
+
+  sortData: (dataArr) ->
+    #TODO: something else:
+    Ext.Array.sort dataArr, (a, b ) ->
+      a.x - b.x
