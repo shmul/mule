@@ -175,11 +175,11 @@ Ext.define "Muleview.view.AlertsEditor",
     min = 9007199254740992 # That's quite a lot, isn't it
 
     # Find min/max values:
-    iterations = Math.max(0, (@store.getCount() - defaultPeriodCount - 1))
+    iterations = Math.max(0, (@data.length - defaultPeriodCount - 1))
     for i in [0..iterations]
       sum = 0
       for j in [i...i + defaultPeriodCount]
-        sum += @store.getAt(j).get(@key) if j < @store.getCount()
+        sum += @data[j].y if j < @data.length
       max = Math.max(max, sum)
       min = Math.min(min, sum)
 

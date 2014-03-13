@@ -23,7 +23,6 @@ Ext.define "Muleview.view.MuleChart",
     @callParent()
 
   handleClick: (e) ->
-    return
     point = @lastHoveredPoint
 
     if point?.series.type == "subkey"
@@ -271,20 +270,16 @@ Ext.define "Muleview.view.MuleChart",
     palette = new Rickshaw.Color.Palette
       scheme: new Muleview.view.Theme().colors
 
-    keys = Ext.Array.pluck(@alerts || [], "name")
-    keys = keys.concat(@topKeys || [])
-    keys = keys.concat(@subKeys || [])
-
     seriesData = @data
     series = []
 
-    # for alert in (@alerts || [])
-    #   series.push
-    #     name: alert.label
-    #     color: alert.color
-    #     renderer: "line"
-    #     data: seriesData[alert.name]
-    #     type: "alert"
+    for alert in (@alerts || [])
+      series.push
+        name: alert.label
+        color: alert.color
+        renderer: "line"
+        data: seriesData[alert.name]
+        type: "alert"
 
     for subKey in (@subKeys || [])
       series.push

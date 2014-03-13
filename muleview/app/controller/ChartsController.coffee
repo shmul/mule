@@ -308,7 +308,7 @@ Ext.define "Muleview.controller.ChartsController",
     ae = Ext.create "Muleview.view.AlertsEditor",
       key: @key
       retention: @currentRetName
-      data: @data[@curretRetName] #TODO: FIX ME
+      data: @data[@currentRetName][@key]
     ae.show()
 
   updateZoomStatsAndHighlight: (timestampMin, timestampMax) ->
