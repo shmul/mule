@@ -59,7 +59,7 @@ Ext.define "Muleview.controller.StatusBar",
 
     # Reset clearance method:
     clearTimeout(@lastTimeout) if @lastTimeout
-    @lastTimeout = setTimeout( Ext.bind(@resetSb, @) , 3000)
+    # @lastTimeout = setTimeout( Ext.bind(@resetSb, @) , 3000)
     if @noRequestsPending()
       Ext.defer =>
         if @noRequestsPending()
@@ -95,7 +95,7 @@ Ext.define "Muleview.controller.StatusBar",
 
     statsChange: (stats) ->
       stats.average = Ext.util.Format.number(stats.average, "0.00")
-      for stat in ["min", "max", "last"]
+      for stat in ["min", "max", "last", "count", "size"]
         stats[stat] = Ext.util.Format.number(stats[stat], "0,000")
       @getStats().update(stats)
 

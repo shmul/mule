@@ -8,7 +8,7 @@ Ext.define "Muleview.view.MuleChart",
   slider: true
   margin: 10
   yAxisWidth: 40
-  sliderHeight: 25
+  sliderHeight: 90
   mainGraph: true
   cls: "mule-chart"
 
@@ -23,9 +23,10 @@ Ext.define "Muleview.view.MuleChart",
     @callParent()
 
   handleClick: (e) ->
+    return
     point = @lastHoveredPoint
 
-    if point.series.type == "subkey"
+    if point?.series.type == "subkey"
       Muleview.event "viewChange", point.series.key, null
 
     @fireEvent "topkeyclick"
@@ -122,6 +123,7 @@ Ext.define "Muleview.view.MuleChart",
     @createSlider()
 
   setZoomHighlight: (toggle, min, max) ->
+    return unless @divs?.zoomHighlight # incase the chart wasn't yet rendered
     zh = @divs.zoomHighlight
     if toggle
       zh.style.left = "" + @graph.x(min) + "px"
@@ -183,7 +185,8 @@ Ext.define "Muleview.view.MuleChart",
 
   createSlider: ->
     return unless @slider
-    new Rickshaw.Graph.RangeSlider
+    new Rickshaw.Graph.RangeSlider.Preview
+      height: 80
       graph: @graph
       element: @divs.slider
 
@@ -208,7 +211,7 @@ Ext.define "Muleview.view.MuleChart",
     muleChart = @
     graphElement = @graph.element
 
-    FixedTooltip =  Rickshaw.Class.create Rickshaw.Graph.HoverDetail,
+    FixedTooltip = Rickshaw.Class.create Rickshaw.Graph.HoverDetail,
       initialize:  ($super, args) ->
         $super(args)
 
@@ -222,34 +225,31 @@ Ext.define "Muleview.view.MuleChart",
         $super(args)
         point = (args.points.filter (p) -> p.active).shift()
         muleChart.lastHoveredPoint = point
-        Muleview.event "chartMouseover", point
-        if muleChart.mainGraph
-          cursor = if point.series.type == "subkey" then "pointer" else "default"
-        else
-          cursor = "pointer"
+        # Muleview.event "chartMouseover", point
+        cursor = point.series.type == "subkey" && muleChart.mainGraph && "pointer" || "default"
         graphElement.style.cursor = cursor
 
-      formatter: @formatter
+      formatter: (series, x, y, formattedX, formattedY, point) ->
+        ans = muleChart.tooltipTpl.apply
+          seriesName: series.name
+          isSubkey: point.series.type == "subkey"
+          value: Ext.util.Format.number(y, ",0")
+          percent: "" # Ext.util.Format.number(point.value.percent, "(0.00%)") if isSubkey
+          seriesColor: series.color
+        console.log('MuleChart.coffee\\ 238: ans:', ans);
+        ans
 
     new FixedTooltip
       graph: @graph
 
-  formatter: (series, x, y, formattedX, formattedY, point) =>
-    ans = []
+  tooltipTpl: new Ext.XTemplate('
+    <span class="mule-tt">
+      {seriesName}
+      <tpl if="isSubkey">{percent}</tpl>
+      {value}
+      <span class="mule-tt-colorbox" style="background-color: {seriesColor}"></span>
+  </span>')
 
-    # Name and value:
-    seriesName = series.name
-    isSubkey = point.series.type == "subkey"
-    value = Ext.util.Format.number(y, ",0")
-    percent = Ext.util.Format.number(point.value.percent, "(0.00%)") if isSubkey
-
-    ans.push "<span class=\"mule-tt\">"
-    ans.push "<span class=\"mule-tt-colorbox\" style=\"background-color: #{series.color} \"></span>"
-    ans.push seriesName
-    ans.push percent if isSubkey
-    ans.push value
-    ans.push "</span>"
-    ans.join(" ")
 
   prepareSeriesData: (keys) ->
     ans = {}
@@ -305,7 +305,6 @@ Ext.define "Muleview.view.MuleChart",
         data: seriesData[subKey]
         type: "subkey"
         renderer: "stack"
-    console.log('MuleChart.coffee\\ 307: series:', series);
     series
 
   keyLegendName: (key) ->

@@ -74,7 +74,7 @@ Ext.define "Muleview.view.Statusbar",
       items: [
           xtype: "component"
           style: "margin-left: 25px"
-          tpl: "Stats: " + ("<span class=statName>#{name}:</span> <span class=statValue>{#{value}}</span>" for value, name of {min: "Min", max: "Max", average: "Average", last: "Last Value"}).join(" ")
+          tpl: "Stats: " + ("<span class=statName>#{name}:</span> <span class=statValue>#{value}</span>" for value, name of {"{min}": "Min", "{max}": "Max", "{average}": "Average", "{last}": "Last Value", "{count}/{size}": "Showing"}).join(" ")
           id: "statusStats"
           flex: 1
         ,

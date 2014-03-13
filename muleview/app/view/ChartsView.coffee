@@ -17,7 +17,7 @@ Ext.define "Muleview.view.ChartsView",
       region: "east"
       split: true
       width: "20%"
-      collapsible: false
+      collapsible: true
       layout:
         type: "vbox"
         align: "stretch"
@@ -51,7 +51,7 @@ Ext.define "Muleview.view.ChartsView",
               '<div class="retention-combobox-item"> <span class="retention-name">{name}</span><span class="retention-title">{title}</span> </div>'
         },
 
-        "->",
+        "-",
 
         "-",
 

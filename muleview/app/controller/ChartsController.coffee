@@ -158,8 +158,8 @@ Ext.define "Muleview.controller.ChartsController",
       return
 
     # We're going to ask for information, let's set a load mask:
-    @lightChartsContainer.setLoading(true)
-    @mainChartContainer.setLoading(true)
+    @lightChartsContainer.setLoading("Fetching...")
+    @mainChartContainer.setLoading("Fetching...")
 
     # Set things according to whether we're in multiple or single mode:
     singleKey = keys.length == 1
@@ -171,6 +171,10 @@ Ext.define "Muleview.controller.ChartsController",
       # Prevent latency mess:
       return unless @lastRequestId == currentRequestId
 
+      @lightChartsContainer.setLoading("Processing...")
+      @mainChartContainer.setLoading("Processing...")
+
+
       # Enable buttons:
       @showSubkeys = singleKey && Muleview.Settings.showSubkeys
       @subkeysButton.setDisabled(!singleKey)
@@ -180,14 +184,15 @@ Ext.define "Muleview.controller.ChartsController",
 
       # Save data - it should be retention => key => array of {x: ###, y: ###}
       @data = data
+      Ext.defer =>
+        @updateRetentionsStore()
+        @defaultRetention = @currentRetName || @retentionsStore.getAt(0).get("name")
 
-      @updateRetentionsStore()
-      @defaultRetention = @currentRetName || @retentionsStore.getAt(0).get("name")
+        @initLightCharts()
+        @lightChartsContainer.setLoading(false)
 
-      @initLightCharts()
-      @lightChartsContainer.setLoading(false)
-
-      @showRetention(@defaultRetention)
+        @showRetention(@defaultRetention)
+      , 100
 
   updateRetentionsStore: () ->
     retentions = (new Muleview.model.Retention(retName) for own retName of @data)
@@ -220,16 +225,44 @@ Ext.define "Muleview.controller.ChartsController",
     @retentionsMenu.select(retName)
     for own _, lightChart of @lightCharts
       lightChart.chart.setZoomHighlight(false)
-      @currentLightChart = lightChart if lightChart.retention == retName
+      if lightChart.retention == retName
+        @currentLightChart = lightChart
+        lightChart.hide()
+      else
+        lightChart.show()
 
     @resetRefreshTimer()
     Muleview.event "viewChange", @keys, @currentRetName
+
+  fixDuplicateAndMissingTimestamps: (data) ->
+    recordsByTimestamp = {}
+
+    for key, keyData of data
+      records = recordsByTimestamp[key] = {}
+      for record in keyData
+        records[record.x] ||= []
+        records[record.x].push(record)
+
+      data[key] = []
+
+    for key of data
+      for timestamp, timestampRecords of recordsByTimestamp[key]
+        timestampExistsInAllKeys = Ext.Array.every(Ext.Object.getKeys(data), (otherKey) -> recordsByTimestamp[otherKey][timestamp])
+        if timestampExistsInAllKeys
+          sum = Ext.Array.sum(Ext.Array.pluck(timestampRecords, "y"))
+          average = sum / timestampRecords.length
+          data[key].push {
+            x: parseInt(timestamp),
+            y: average
+          }
+
 
   renderChart: () ->
     @mainChartContainer.removeAll()
     if @showSubkeys
       @mainChartContainer.setLoading(true)
       Muleview.Mule.getGraphData @key, @currentRetName, (data) =>
+        @fixDuplicateAndMissingTimestamps(data)
         @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@currentRetName}")?.toGraphArray(@currentRetName)
         @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
         @addChart
@@ -297,8 +330,8 @@ Ext.define "Muleview.controller.ChartsController",
     timestamp = firstKey[0].x
 
     until timestamp  >= timestampMin or index == firstKey.length
-      index += 1
       timestamp = firstKey[index].x
+      index += 1
 
     while timestamp <= timestampMax and index < firstKey.length
       count += 1
@@ -322,4 +355,6 @@ Ext.define "Muleview.controller.ChartsController",
       max: max
       average: sum / count
       last: last
+      count: count
+      size: firstKey.length
     Muleview.event "statsChange", stats
