@@ -120,7 +120,7 @@ Ext.define "Muleview.view.MuleChart",
     @createLegend()
     @graph.render()
     @createTooltips()
-    @createSlider()
+    @createSlider() if @slider
 
   setZoomHighlight: (toggle, min, max) ->
     return unless @divs?.zoomHighlight # incase the chart wasn't yet rendered
@@ -184,7 +184,6 @@ Ext.define "Muleview.view.MuleChart",
     $(@divs.legend)[action](300)
 
   createSlider: ->
-    return unless @slider
     new Rickshaw.Graph.RangeSlider.Preview
       height: 80
       graph: @graph
@@ -287,6 +286,15 @@ Ext.define "Muleview.view.MuleChart",
     #     data: seriesData[alert.name]
     #     type: "alert"
 
+    for subKey in (@subKeys || [])
+      series.push
+        key: subKey
+        name: @keyLegendName(subKey)
+        color: palette.color()
+        data: seriesData[subKey]
+        type: "subkey"
+        renderer: "stack"
+
     for topKey in @topKeys
       @hasData ||= seriesData[topKey].length > 0
       series.push
@@ -297,14 +305,6 @@ Ext.define "Muleview.view.MuleChart",
         key: topKey
         renderer: "line"
 
-    for subKey in (@subKeys || [])
-      series.push
-        key: subKey
-        name: @keyLegendName(subKey)
-        color: palette.color()
-        data: seriesData[subKey]
-        type: "subkey"
-        renderer: "stack"
     series
 
   keyLegendName: (key) ->
