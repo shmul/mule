@@ -171,8 +171,8 @@ Ext.define "Muleview.controller.ChartsController",
       # Prevent latency mess:
       return unless @lastRequestId == currentRequestId
 
-      @lightChartsContainer.setLoading("Processing...")
-      @mainChartContainer.setLoading("Processing...")
+      @lightChartsContainer.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
+      @mainChartContainer.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
 
 
       # Enable buttons:
@@ -186,7 +186,7 @@ Ext.define "Muleview.controller.ChartsController",
       @data = data
       Ext.defer =>
         @updateRetentionsStore()
-        @defaultRetention = @currentRetName || @retentionsStore.getAt(0).get("name")
+        @defaultRetention = @retention || @retentionsStore.getAt(0).get("name")
 
         @initLightCharts()
         @lightChartsContainer.setLoading(false)
@@ -219,7 +219,7 @@ Ext.define "Muleview.controller.ChartsController",
       data: @data[retName]
 
   showRetention: (retName) ->
-    @currentRetName = retName
+    @retention = retName
     @renderChart()
 
     @retentionsMenu.select(retName)
@@ -232,7 +232,7 @@ Ext.define "Muleview.controller.ChartsController",
         lightChart.show()
 
     @resetRefreshTimer()
-    Muleview.event "viewChange", @keys, @currentRetName
+    Muleview.event "viewChange", @keys, @retention
 
   fixDuplicateAndMissingTimestamps: (data) ->
     recordsByTimestamp = {}
@@ -261,9 +261,9 @@ Ext.define "Muleview.controller.ChartsController",
     @mainChartContainer.removeAll()
     if @showSubkeys
       @mainChartContainer.setLoading(true)
-      Muleview.Mule.getGraphData @key, @currentRetName, (data) =>
+      Muleview.Mule.getGraphData @key, @retention, (data) =>
         @fixDuplicateAndMissingTimestamps(data)
-        @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@currentRetName}")?.toGraphArray(@currentRetName)
+        @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@retention}")?.toGraphArray(@retention)
         @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
         @addChart
           showAreas: true
@@ -275,12 +275,12 @@ Ext.define "Muleview.controller.ChartsController",
     else
       @addChart
         topKeys: @keys
-        data: @data[@currentRetName]
+        data: @data[@retention]
 
   addChart: (cfg) ->
     common = {
       flex: 1
-      title: ("#{key};#{@currentRetName}" for key in @keys).join("<br />")
+      title: ("#{key};#{@retention}" for key in @keys).join("<br />")
       listeners:
         closed: =>
           Muleview.event "legendChange", false
@@ -307,8 +307,8 @@ Ext.define "Muleview.controller.ChartsController",
   editAlerts: ->
     ae = Ext.create "Muleview.view.AlertsEditor",
       key: @key
-      retention: @currentRetName
-      data: @data[@currentRetName][@key]
+      retention: @retention
+      data: @data[@retention][@key]
     ae.show()
 
   updateZoomStatsAndHighlight: (timestampMin, timestampMax) ->
@@ -322,7 +322,7 @@ Ext.define "Muleview.controller.ChartsController",
     sum = 0
     count = 0
 
-    data = @data[@currentRetName]
+    data = @data[@retention]
     firstKey = data[@keys[0]]
 
     # I'm assuming all keys have the same x values
