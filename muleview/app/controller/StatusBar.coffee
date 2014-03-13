@@ -59,7 +59,7 @@ Ext.define "Muleview.controller.StatusBar",
 
     # Reset clearance method:
     clearTimeout(@lastTimeout) if @lastTimeout
-    # @lastTimeout = setTimeout( Ext.bind(@resetSb, @) , 3000)
+    @lastTimeout = setTimeout( Ext.bind(@resetSb, @) , 3000)
     if @noRequestsPending()
       Ext.defer =>
         if @noRequestsPending()

@@ -120,6 +120,16 @@ Ext.define "Muleview.view.MuleChart",
     @graph.render()
     @createTooltips()
     @createSlider() if @slider
+    @createAlerts() if @alerts
+
+  createAlerts: () ->
+    for alert in @alerts
+      div = document.createElement("div")
+      div.tytle = alert.name
+      div.className = "rickshaw-alert alert-" + alert.name
+      div.style.top = "" + @graph.y(alert.value) + "px"
+      div.style["border-color"] = alert.color
+      @graph.element.appendChild(div)
 
   setZoomHighlight: (toggle, min, max) ->
     return unless @divs?.zoomHighlight # incase the chart wasn't yet rendered
@@ -234,7 +244,6 @@ Ext.define "Muleview.view.MuleChart",
           value: Ext.util.Format.number(y, ",0")
           percent: "" # Ext.util.Format.number(point.value.percent, "(0.00%)") if isSubkey
           seriesColor: series.color
-        console.log('MuleChart.coffee\\ 238: ans:', ans);
         ans
 
     new FixedTooltip
@@ -272,14 +281,6 @@ Ext.define "Muleview.view.MuleChart",
 
     seriesData = @data
     series = []
-
-    for alert in (@alerts || [])
-      series.push
-        name: alert.label
-        color: alert.color
-        renderer: "line"
-        data: seriesData[alert.name]
-        type: "alert"
 
     for subKey in (@subKeys || [])
       series.push

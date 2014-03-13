@@ -4,6 +4,13 @@
   }
 }
 
+.load-mask-no-image {
+  > div {
+    background-image: none;
+    padding: 5px;
+  }
+}
+
 .retention-combobox-item {
   margin: 3px;
 
@@ -198,7 +205,13 @@ $rickshawYAxis: 55px;
   }
 }
 
-
+.rickshaw-alert {
+  width: 100%;
+  height: 2px;
+  position: absolute;
+  border-style: dotted;
+  border-width: 1px;
+}
 .mule-lightchart .rickshaw-chart {
   left: 0px;
 }
