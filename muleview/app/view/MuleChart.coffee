@@ -5,10 +5,8 @@ Ext.define "Muleview.view.MuleChart",
   ]
 
   layout: "fit"
-  slider: true
   margin: 10
   yAxisWidth: 40
-  sliderHeight: 90
   mainGraph: true
   cls: "mule-chart"
 
@@ -55,7 +53,6 @@ Ext.define "Muleview.view.MuleChart",
       yAxis: Ext.id()
       chart: Ext.id()
       legend: Ext.id()
-      slider: Ext.id()
       zoomHighlight: Ext.id()
 
     # Prepare HTML content with new IDs:
@@ -66,7 +63,6 @@ Ext.define "Muleview.view.MuleChart",
           <div class="rickshaw-chart" id="' + @divs.chart + '"> </div>
           <div class="rickshaw-legend" id="' + @divs.legend + '"> </div>
         </div>
-        <div class="rickshaw-slider" id="' + @divs.slider + '" > </div>
       '
     cmpHtml += '<div id="rickshaw-fixed-tooltip"> </div>' if @mainGraph
 
@@ -84,7 +80,7 @@ Ext.define "Muleview.view.MuleChart",
       element: @divs.chart
       interpolation: "linear"
       width: @graphContainer.getWidth() - @yAxisWidth
-      height: @graphContainer.getHeight() - @sliderHeight
+      height: @graphContainer.getHeight() - 10
       renderer: "multi"
       series: @series
 
@@ -118,16 +114,51 @@ Ext.define "Muleview.view.MuleChart",
 
     @createLegend()
 
+
+    @createSmoother()
     @graph.render()
     @createTooltips()
-    @createSlider() if @slider
     @createAlerts() if @alerts
+
+  createSmoother: () ->
+    @graph.stackData.hooks.data.push
+      name: 'smoother'
+      orderPosition: 50,
+      f: (data) =>
+        data = Ext.clone(data)
+        number_of_points = data[Ext.Object.getKeys(data)[0]].length
+        max_points = Muleview.Settings.maxNumberOfChartPoints || 1000
+        points_to_remove = @get_points_to_remove(number_of_points, max_points)
+        for series in data
+          for index in points_to_remove by -1
+            agg = series[index + 1]
+            if not agg.is_agg
+              agg = {
+                is_agg: true,
+                points: [series[index + 1]]
+              }
+              series[index + 1] = agg
+            agg.points.push series.splice(index, 1)[0]
+
+          for index in [0...series.length]
+            if series[index].is_agg
+              series[index] = {
+                x: Ext.Array.mean(Ext.Array.pluck(series[index].points, "x"))
+                y: Ext.Array.mean(Ext.Array.pluck(series[index].points, "y"))
+              }
+        data
+
+
+  get_points_to_remove: (number_of_points, max_points) ->
+    ans = []
+    number_of_points_to_remove = Math.abs(Math.min(0,  max_points - number_of_points))
+    ratio = number_of_points / number_of_points_to_remove
+    ans.push Math.floor(index * ratio) for index in [0...number_of_points_to_remove]
+    ans
 
   updateData: (data) ->
     for series in @graph.series
       series.data = data[series.key] if data[series.key]
-    # I do two updates to workaround an unfortunate Rickshaw RangePreview rendering bug
-    @graph.update()
     @graph.update()
 
 
@@ -207,29 +238,6 @@ Ext.define "Muleview.view.MuleChart",
   setLegend: (visible) ->
     action = if visible then "fadeIn" else "fadeOut"
     $(@divs.legend)[action](300)
-
-  createSlider: ->
-    new Rickshaw.Graph.RangeSlider.Preview
-      height: 80
-      graph: @graph
-      element: @divs.slider
-
-    @graph.updateCallbacks.unshift =>
-      @fireZoomChange()
-    Ext.defer =>
-      @fireZoomChange()
-    , 100
-
-  fireZoomChange: () ->
-    domain = @graph.dataDomain()
-
-    min = @graph.window.xMin
-    max = @graph.window.xMax
-
-    min = domain[0] unless min?
-    max = domain[1] unless max?
-
-    Muleview.event "mainChartZoomChange", min, max
 
   createTooltips: ->
     muleChart = @

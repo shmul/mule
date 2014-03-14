@@ -33,8 +33,11 @@ Ext.define "Muleview.controller.ChartsController",
       ref: "refreshButton"
       selector: "#refreshButton"
     ,
-      ref: "refreshCombobox",
+      ref: "refreshCombobox"
       selector: "#refreshCombobox"
+    ,
+      ref: "previewContainer"
+      selector: "#chartPreviewContainer"
   ]
 
   onLaunch: ->
@@ -49,6 +52,7 @@ Ext.define "Muleview.controller.ChartsController",
     @refreshButton = @getRefreshButton()
     @refreshCombobox = @getRefreshCombobox()
     @alertsButton = @getAlertsButton()
+    @previewContainer = @getPreviewContainer()
 
     Muleview.app.on
       scope: @
@@ -200,7 +204,7 @@ Ext.define "Muleview.controller.ChartsController",
         return unless @lastRequestId == currentRequestId
         @updateRetentionsStore()
         @defaultRetention = @retention || @retentionsStore.getAt(0).get("name")
-
+        @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of @data
         @initLightCharts()
         @lightChartsContainer.setLoading(false)
 
@@ -305,6 +309,13 @@ Ext.define "Muleview.controller.ChartsController",
     @mainChart = (Ext.create "Muleview.view.MuleChart", cfg)
     @mainChartContainer.removeAll()
     @mainChartContainer.add @mainChart
+    @previewContainer.removeAll()
+    preview = Ext.create "Muleview.view.Preview",
+      previewGraph: @lightCharts[@retention].chart.graph
+      zoomGraph: @mainChart.graph
+    @previewContainer.add preview
+
+
 
   updateRefreshTimer: (me, seconds) ->
     Muleview.Settings.updateInterval = seconds

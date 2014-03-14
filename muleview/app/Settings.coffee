@@ -20,3 +20,6 @@ Ext.define "Muleview.Settings",
 
   # Show subkeys by default:
   showSubkeys: false
+
+  # Maximum number of timestamp points to show in a chart:
+  maxNumberOfChartPoints: 300

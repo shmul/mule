@@ -11,6 +11,7 @@ Ext.define "Muleview.view.ChartsView",
   items: [
       xtype: "panel"
       title: "Previews"
+      weight: 2
       header: true
       id: "lightChartsContainer"
       # bodyCls: "mule-bg"
@@ -105,4 +106,16 @@ Ext.define "Muleview.view.ChartsView",
 
         "-"
       ]
+    ,
+      xtype: "panel"
+      id: "chartPreviewContainer"
+      region: "south"
+      height: 70
+      collapsible: true
+      split: true
+      collapseMode: "mini"
+      header: false
+      weight: 1
+      layout: "fit"
+      items: []
   ]

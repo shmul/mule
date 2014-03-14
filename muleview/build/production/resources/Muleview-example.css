@@ -251,7 +251,7 @@
   height: 2px;
   position: absolute;
   border-style: dotted;
-  border-width: 1px;
+  border-width: 2px;
 }
 
 /* line 215, ../../../packages/muleview-theme/sass/etc/all.scss */
@@ -302,11 +302,11 @@
 }
 
 /* line 258, ../../../packages/muleview-theme/sass/etc/all.scss */
-.rickshaw-slider {
+.rickshaw-preview {
   position: relative;
   display: block;
   left: 55px;
-  top: 0px;
+  top: 16px;
 }
 
 /* line 265, ../../../packages/muleview-theme/sass/etc/all.scss */

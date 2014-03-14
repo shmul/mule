@@ -5,8 +5,6 @@ Ext.define "Muleview.view.MuleLightChart",
   layout: "fit"
   cls: "mule-chart mule-lightchart"
 
-  sliderHeight: 0
-
   navigate: () ->
     Muleview.event "viewChange", @topKeys, @retention
 
@@ -14,7 +12,6 @@ Ext.define "Muleview.view.MuleLightChart",
     @chart = Ext.create "Muleview.view.MuleChart",
       yAxisWidth: 0
       mainGraph: false
-      slider: false
       data: @data
       topKeys: @topKeys
       formatter: (series, x, y) ->
