@@ -100,6 +100,6 @@ Ext.define "Muleview.Mule",
       callback(ans)
 
   sortData: (dataArr) ->
-    #TODO: something else:
+    #TODO: something else?
     Ext.Array.sort dataArr, (a, b ) ->
       a.x - b.x

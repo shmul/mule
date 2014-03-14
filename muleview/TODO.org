@@ -1,7 +1,7 @@
 * Issues
 ** TODO dan-simplified-processing
-*** TODO Fix Alerts and AlertsEditor
-*** TODO Fix Subkey Click
+*** DONE Fix Alerts and AlertsEditor
+*** DONE Fix Subkey Click
 *** TODO Make updates graceful
 *** DONE Workaround Mule bug
 ** TODO TopKey should be first in the legend

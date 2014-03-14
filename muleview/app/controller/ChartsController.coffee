@@ -170,17 +170,14 @@ Ext.define "Muleview.controller.ChartsController",
     Muleview.Mule.getKeysData keys, (data) =>
       # Prevent latency mess:
       return unless @lastRequestId == currentRequestId
-
-      @lightChartsContainer.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
-      @mainChartContainer.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
-
+      for panel in [@lightChartsContainer, @mainChartContainer]
+        panel.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
 
       # Enable buttons:
       @showSubkeys = singleKey && Muleview.Settings.showSubkeys
       @subkeysButton.setDisabled(!singleKey)
-      @subkeysButton.toggle(@showSubkeys)
+      @subkeysButton.toggle(@showSubkeys, true)
       @alertsButton.setDisabled(!singleKey)
-
 
       # Save data - it should be retention => key => array of {x: ###, y: ###}
       @data = data
