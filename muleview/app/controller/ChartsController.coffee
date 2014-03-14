@@ -138,8 +138,17 @@ Ext.define "Muleview.controller.ChartsController",
       @showRetention(retention)
 
   refresh: ->
-    # Run the view change with the power of the force:
-    @viewChange(@keys, @currentRetName, true)
+    Muleview.Mule.getKeysData @keys, (data) =>
+      @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of data
+      for retention, lightChart of @lightCharts
+        lightChart.chart.updateData(data[retention])
+      @mainChart.updateData(data[@retention]) if not @showSubkeys
+
+    if @showSubkeys
+      Muleview.Mule.getGraphData @key, @retention, (data) =>
+        @fixDuplicateAndMissingTimestamps(data)
+        @mainChart.updateData(data)
+        @mainChart.updateAlerts(@getAlerts())
 
   createKeysView: (keys, retention) ->
     # Remove old charts:
@@ -253,13 +262,15 @@ Ext.define "Muleview.controller.ChartsController",
             y: average
           }
 
+  getAlerts: () ->
+    Ext.StoreManager.get("alertsStore").getById("#{@key};#{@retention}")?.toGraphArray(@retention)
 
   renderChart: () ->
     @mainChartContainer.removeAll()
     if @showSubkeys
       @mainChartContainer.setLoading(true)
       Muleview.Mule.getGraphData @key, @retention, (data) =>
-        @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@retention}")?.toGraphArray(@retention)
+        @alerts = @getAlerts()
         @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
         @addChart
           showAreas: true

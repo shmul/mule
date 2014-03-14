@@ -117,18 +117,32 @@ Ext.define "Muleview.view.MuleChart",
         tickFormat: Ext.bind(@numberFormatter, @)
 
     @createLegend()
+
     @graph.render()
     @createTooltips()
     @createSlider() if @slider
     @createAlerts() if @alerts
 
+  updateData: (data) ->
+    for series in @graph.series
+      series.data = data[series.key]
+    @graph.update()
+
+
+  updateAlerts: (newAlerts) ->
+    @alerts = newAlerts
+    alertDiv.parentNode.removeChild(alertDiv) while alertDiv = @alertDivs.shift()
+    @createAlerts()
+
   createAlerts: () ->
+    @alertDivs ||= []
     for alert in @alerts
       div = document.createElement("div")
       div.tytle = alert.name
       div.className = "rickshaw-alert alert-" + alert.name
       div.style.top = "" + @graph.y(alert.value) + "px"
       div.style["border-color"] = alert.color
+      @alertDivs.push(div)
       @graph.element.appendChild(div)
 
   setZoomHighlight: (toggle, min, max) ->
