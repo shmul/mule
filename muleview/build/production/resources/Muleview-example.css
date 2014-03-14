@@ -328,12 +328,13 @@
 
 /* line 280, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-graph-title-container {
+  font-family: helvetica, arial, sans-serif;
   position: absolute;
   width: 100%;
   text-align: center;
 }
 
-/* line 286, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 287, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-graph-title {
   display: inline-block;
   font-size: 3em;
@@ -341,13 +342,13 @@
   background-color: whitesmoke;
 }
 
-/* line 293, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 294, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw_graph .x_tick .title {
   bottom: -16px;
   margin-left: 0px;
 }
 
-/* line 298, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 299, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-zoom-highlight {
   position: absolute;
   bottom: 0px;

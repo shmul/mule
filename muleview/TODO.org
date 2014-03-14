@@ -1,14 +1,14 @@
 * Issues
-** TODO dan-simplified-processing
+** DONE dan-simplified-processing
 *** DONE Fix Alerts and AlertsEditor
 *** DONE Fix Subkey Click
-*** TODO Make updates graceful
+*** DONE Make updates graceful
 *** DONE Workaround Mule bug
-** TODO TopKey should be first in the legend
+** DONE TopKey should be first in the legend
 ** DONE Graph should default to show only Topkey and hide subkey series
-** TODO Refresh resets legend visibility, position and which series are shown
+** DONE Refresh resets legend visibility, position and which series are shown
 ** DONE Resize resets legend position
-** TODO Alerts' lines go in the back of surfaces
+** DONE Alerts' lines go in the back of surfaces
 ** DONE "undefined" keeps on scrolling at the status bar -> 100% progress bar doesn't go off
 ** DONE Critical-up icon missing
    In alerts summary
@@ -84,7 +84,7 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Times should be shown in UTC
 
 * Features:
-** TODO Graph auto-refresh should be visible to the user
+** DONE Graph auto-refresh should be visible to the user
    Also, it would be nice to have it configurable or at least togglable
 ** TODO Add indication to stale graphs
    We should somehow mark graphs that weren't updated for more than twice their period (bucket size)

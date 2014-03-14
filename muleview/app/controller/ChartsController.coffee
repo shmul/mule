@@ -164,6 +164,7 @@ Ext.define "Muleview.controller.ChartsController",
     # Remove old charts:
     @mainChartContainer.removeAll()
     @lightChartsContainer.removeAll()
+    @previewContainer.removeAll()
 
     # Disable buttons:
     @alertsButton.setDisabled(true)
@@ -174,11 +175,11 @@ Ext.define "Muleview.controller.ChartsController",
       @mainChartContainer.setTitle "No graph key selected"
       @lightChartsContainer.setLoading(false)
       @mainChartContainer.setLoading(false)
+      @chartsView.setLoading(false)
       return
 
     # We're going to ask for information, let's set a load mask:
-    @lightChartsContainer.setLoading("Fetching...")
-    @mainChartContainer.setLoading("Fetching...")
+    @chartsView.setLoading("Fetching...")
 
     # Set things according to whether we're in multiple or single mode:
     singleKey = keys.length == 1
@@ -189,8 +190,7 @@ Ext.define "Muleview.controller.ChartsController",
     Muleview.Mule.getKeysData keys, (data) =>
       # Prevent latency mess:
       return unless @lastRequestId == currentRequestId
-      for panel in [@lightChartsContainer, @mainChartContainer]
-        panel.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
+      @chartsView.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
 
       # Enable buttons:
       @showSubkeys = singleKey && Muleview.Settings.showSubkeys
@@ -206,7 +206,7 @@ Ext.define "Muleview.controller.ChartsController",
         @defaultRetention = @retention || @retentionsStore.getAt(0).get("name")
         @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of @data
         @initLightCharts()
-        @lightChartsContainer.setLoading(false)
+        @chartsView.setLoading(false)
 
         @showRetention(@defaultRetention)
       , 100
@@ -277,8 +277,10 @@ Ext.define "Muleview.controller.ChartsController",
 
   renderChart: () ->
     @mainChartContainer.removeAll()
+    @previewContainer.removeAll()
     if @showSubkeys
-      @mainChartContainer.setLoading(true)
+      @mainChartContainer.setLoading({msg: "Fetching..."})
+      @previewContainer.mask()
       Muleview.Mule.getGraphData @key, @retention, (data) =>
         @alerts = @getAlerts()
         @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
@@ -304,6 +306,8 @@ Ext.define "Muleview.controller.ChartsController",
           Muleview.event "legendChange", false
     }
     @mainChartContainer.setLoading(false)
+    @previewContainer.unmask()
+
     cfg = Ext.apply({}, cfg, common)
     @mainChart = (Ext.create "Muleview.view.MuleChart", cfg)
     @mainChartContainer.removeAll()

@@ -19,7 +19,7 @@ Ext.define "Muleview.view.Preview",
   attach: ->
     @previewGraph = @lightChart.chart.graph
     @zoomGraph = @mainChart.graph
-    @previewGraph.updateCallbacks.unshift =>
+    @previewGraph?.updateCallbacks.unshift =>
       @fireZoomChange()
     @renderPreview() if @getEl()
 

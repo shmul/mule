@@ -245,7 +245,7 @@ Ext.define "Muleview.view.MuleChart",
         $super(args)
         point = (args.points.filter (p) -> p.active).shift()
         muleChart.lastHoveredPoint = point
-        # Muleview.event "chartMouseover", point
+        Muleview.event "chartMouseover", point
         cursor = point.series.type == "subkey" && muleChart.mainGraph && "pointer" || "default"
         graphElement.style.cursor = cursor
 

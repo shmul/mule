@@ -210,7 +210,7 @@ $rickshawYAxis: 55px;
   height: 2px;
   position: absolute;
   border-style: dotted;
-  border-width: 1px;
+  border-width: 2px;
 }
 .mule-lightchart .rickshaw-chart {
   left: 0px;
@@ -255,11 +255,11 @@ $rickshawYAxis: 55px;
   cursor: pointer;
 }
 
-.rickshaw-slider {
+.rickshaw-preview {
   position: relative;
   display: block;
   left: $rickshawYAxis;
-  top: 0px;
+  top: 16px;
 }
 
 .rickshaw-fixed-tooltip {
@@ -285,6 +285,7 @@ $rickshawYAxis: 55px;
 
 .rickshaw-graph-title {
   display: inline-block;
+  font-family: helvetica, arial, sans-serif;
   font-size: 3em;
   opacity: 0.7;
   background-color: whitesmoke;
