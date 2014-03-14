@@ -89,6 +89,8 @@ Ext.define "Muleview.controller.ChartsController",
       click: @refresh
 
     possibleRefreshIntervals = [
+      1
+      5
       10
       30
       60
@@ -138,7 +140,9 @@ Ext.define "Muleview.controller.ChartsController",
       @showRetention(retention)
 
   refresh: ->
+    currentRequestId = @lastRequestId
     Muleview.Mule.getKeysData @keys, (data) =>
+      return unless currentRequestId == @lastRequestId
       @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of data
       for retention, lightChart of @lightCharts
         lightChart.chart.updateData(data[retention])
@@ -146,6 +150,7 @@ Ext.define "Muleview.controller.ChartsController",
 
     if @showSubkeys
       Muleview.Mule.getGraphData @key, @retention, (data) =>
+        return unless currentRequestId == @lastRequestId
         @fixDuplicateAndMissingTimestamps(data)
         @mainChart.updateData(data)
         @mainChart.updateAlerts(@getAlerts())
@@ -191,6 +196,7 @@ Ext.define "Muleview.controller.ChartsController",
       # Save data - it should be retention => key => array of {x: ###, y: ###}
       @data = data
       Ext.defer =>
+        return unless @lastRequestId == currentRequestId
         @updateRetentionsStore()
         @defaultRetention = @retention || @retentionsStore.getAt(0).get("name")
 

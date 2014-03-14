@@ -125,18 +125,20 @@ Ext.define "Muleview.view.MuleChart",
 
   updateData: (data) ->
     for series in @graph.series
-      series.data = data[series.key]
+      series.data = data[series.key] if data[series.key]
+    # I do two updates to workaround an unfortunate Rickshaw RangePreview rendering bug
+    @graph.update()
     @graph.update()
 
 
   updateAlerts: (newAlerts) ->
     @alerts = newAlerts
-    alertDiv.parentNode.removeChild(alertDiv) while alertDiv = @alertDivs.shift()
+    alertDiv?.parentNode.removeChild(alertDiv) while alertDiv = @alertDivs?.shift()
     @createAlerts()
 
   createAlerts: () ->
     @alertDivs ||= []
-    for alert in @alerts
+    for alert in @alerts || []
       div = document.createElement("div")
       div.tytle = alert.name
       div.className = "rickshaw-alert alert-" + alert.name
