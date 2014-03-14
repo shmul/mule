@@ -63,7 +63,7 @@ Ext.define "Muleview.controller.ChartsController",
         Muleview.Settings.showLegend = show
         @mainChart?.setLegend(show)
         @legendButton.toggle(show)
-      mainChartZoomChange: @updateZoomStatsAndHighlight
+      mainChartZoomChange: @updateZoomStats
 
     @retentionsStore = Ext.create "Ext.data.ArrayStore",
       model: "Muleview.model.Retention"
@@ -241,7 +241,6 @@ Ext.define "Muleview.controller.ChartsController",
 
     @retentionsMenu.select(retName)
     for own _, lightChart of @lightCharts
-      lightChart.chart.setZoomHighlight(false)
       if lightChart.retention == retName
         @currentLightChart = lightChart
         lightChart.hide()
@@ -310,10 +309,9 @@ Ext.define "Muleview.controller.ChartsController",
     @mainChartContainer.removeAll()
     @mainChartContainer.add @mainChart
     @previewContainer.removeAll()
-    preview = Ext.create "Muleview.view.Preview",
-      previewGraph: @lightCharts[@retention].chart.graph
-      zoomGraph: @mainChart.graph
-    @previewContainer.add preview
+    @previewContainer.add(Ext.create("Muleview.view.Preview",
+      mainChart: @mainChart
+      lightChart: @lightCharts[@retention]))
 
 
 
@@ -337,10 +335,7 @@ Ext.define "Muleview.controller.ChartsController",
       data: @data[@retention][@key]
     ae.show()
 
-  updateZoomStatsAndHighlight: (timestampMin, timestampMax) ->
-    #Highlight:
-    @currentLightChart.chart.setZoomHighlight(true, timestampMin, timestampMax)
-
+  updateZoomStats: (timestampMin, timestampMax) ->
     # Stats:
     min = null
     max = null

@@ -53,12 +53,10 @@ Ext.define "Muleview.view.MuleChart",
       yAxis: Ext.id()
       chart: Ext.id()
       legend: Ext.id()
-      zoomHighlight: Ext.id()
 
     # Prepare HTML content with new IDs:
     cmpHtml = '
         <div style="display: block">
-          <div class="rickshaw-zoom-highlight" id="' + @divs.zoomHighlight + '"> </div>
           <div class="rickshaw-y-axis" id="' + @divs.yAxis + '"> </div>
           <div class="rickshaw-chart" id="' + @divs.chart + '"> </div>
           <div class="rickshaw-legend" id="' + @divs.legend + '"> </div>
@@ -119,6 +117,7 @@ Ext.define "Muleview.view.MuleChart",
     @graph.render()
     @createTooltips()
     @createAlerts() if @alerts
+    @fireEvent("graphchanged")
 
   createSmoother: () ->
     @graph.stackData.hooks.data.push
@@ -177,17 +176,6 @@ Ext.define "Muleview.view.MuleChart",
       div.style["border-color"] = alert.color
       @alertDivs.push(div)
       @graph.element.appendChild(div)
-
-  setZoomHighlight: (toggle, min, max) ->
-    return unless @divs?.zoomHighlight # incase the chart wasn't yet rendered
-    zh = @divs.zoomHighlight
-    if toggle
-      zh.style.left = "" + @graph.x(min) + "px"
-      zh.style.width = (@graph.x(max) - @graph.x(min)) + "px"
-      zh.style.display = "block"
-    else
-      zh.style.display = "none"
-
 
   basicNumberFormatter: Ext.util.Format.numberRenderer(",0")
   numberFormatter: (n) ->
