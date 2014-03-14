@@ -259,7 +259,6 @@ Ext.define "Muleview.controller.ChartsController",
     if @showSubkeys
       @mainChartContainer.setLoading(true)
       Muleview.Mule.getGraphData @key, @retention, (data) =>
-        @fixDuplicateAndMissingTimestamps(data)
         @alerts = Ext.StoreManager.get("alertsStore").getById("#{@key};#{@retention}")?.toGraphArray(@retention)
         @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
         @addChart
@@ -275,6 +274,7 @@ Ext.define "Muleview.controller.ChartsController",
         data: @data[@retention]
 
   addChart: (cfg) ->
+    @fixDuplicateAndMissingTimestamps(cfg.data)
     common = {
       flex: 1
       title: ("#{key};#{@retention}" for key in @keys).join("<br />")
