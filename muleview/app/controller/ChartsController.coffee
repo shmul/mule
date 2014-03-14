@@ -146,14 +146,15 @@ Ext.define "Muleview.controller.ChartsController",
       @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of data
       for retention, lightChart of @lightCharts
         lightChart.chart.updateData(data[retention])
-      @mainChart.updateData(data[@retention]) if not @showSubkeys
+      if @showSubkeys
+        Muleview.Mule.getGraphData @key, @retention, (data) =>
+          return unless currentRequestId == @lastRequestId
+          @fixDuplicateAndMissingTimestamps(data)
+          @mainChart.updateData(data)
+          @mainChart.updateAlerts(@getAlerts())
+      else
+        @mainChart.updateData(data[@retention])
 
-    if @showSubkeys
-      Muleview.Mule.getGraphData @key, @retention, (data) =>
-        return unless currentRequestId == @lastRequestId
-        @fixDuplicateAndMissingTimestamps(data)
-        @mainChart.updateData(data)
-        @mainChart.updateAlerts(@getAlerts())
 
   createKeysView: (keys, retention) ->
     # Remove old charts:
