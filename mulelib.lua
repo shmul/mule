@@ -1000,6 +1000,7 @@ function mule(db_)
           logd("process progress",count)
         end
       end
+      logd("processed",count)
       return rv
     end
 
