@@ -709,6 +709,7 @@ function posix_lock(lock_file_,callback_)
     l_len = 0;              -- Lock whole file
   }
   local result = posix.fcntl(fd, posix.F_SETLK, lock)
+  logi("posix_lock acquire",lock_file_,result)
   if result == -1 then
     loge("locked by another process")
     return
@@ -720,6 +721,7 @@ function posix_lock(lock_file_,callback_)
   -- Release the lock
   lock.l_type = posix.F_UNLCK
   posix.fcntl(fd, posix.F_SETLK, lock)
+  logi("posix_lock released",lock_file_,result)
   return result
 end
 
