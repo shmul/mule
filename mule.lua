@@ -84,18 +84,17 @@ local function incoming_queue(db_path_,incoming_queue_path_)
   end
 
   local executing = false
-  local function helper()
+  local function helper(m)
     if executing then return end
     local file = first_file(incoming_queue_path_.."*")
     if not file then return end
     executing = true
-    with_mule(db_path_,false,
-              function(m)
-                logi("incoming_queue file",file)
-                m.process(file,false,true) -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
-                os.remove(file)
-              end
-             )
+    pcall(function()
+            logi("incoming_queue file",file)
+            m.process(file,false,true) -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
+            os.remove(file)
+            logi("incoming_queue file removed",file)
+          end)
     executing = false
   end
   return helper
