@@ -231,11 +231,9 @@ Ext.define "Muleview.controller.AlertsReportController",
     Muleview.event "viewChange", key, retention
 
   refresh: ->
-    @getRefreshButton().setDisabled(true)
-    @getRefreshButton().setIcon("resources/default/images/loading.gif")
+    @getRefreshButton().setProgress(true)
     Muleview.event "alertsRequest"
     @store.load
       scope: @
       callback: ->
-        @getRefreshButton().setDisabled(false)
-        @getRefreshButton().setIcon("resources/default/images/refresh.png")
+        @getRefreshButton().setProgress(false)

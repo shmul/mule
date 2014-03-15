@@ -182,6 +182,7 @@ Ext.define "Muleview.controller.ChartsController",
       cb.apply(@, arguments) if @currentViewId == viewId
 
   refresh: ->
+    @refreshButton.setProgress(true)
     Muleview.Mule.getKeysData @keys, @safeCallback((data) =>
       @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of data
       for retention, lightChart of @lightCharts
@@ -193,9 +194,11 @@ Ext.define "Muleview.controller.ChartsController",
           @fixDuplicateAndMissingTimestamps(data)
           @mainChart.updateData(data)
           @mainChart.updateAlerts(@getAlerts())
+          @refreshButton.setProgress(false)
         )
       else
         @mainChart.updateData(data[@retention])
+        @refreshButton.setProgress(false)
     )
 
   showNoData: () ->

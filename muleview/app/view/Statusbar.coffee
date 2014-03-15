@@ -1,5 +1,10 @@
 Ext.define "Muleview.view.Statusbar",
   extend: "Ext.toolbar.Toolbar"
+
+  requires: [
+    "Muleview.view.RefreshButton"
+  ]
+
   alias: "widget.MuleStatusbar"
   height: 25
   margin: 0
@@ -56,10 +61,9 @@ Ext.define "Muleview.view.Statusbar",
     ,
       "-"
     ,
-      xtype: "button"
+      xtype: "muleRefreshButton"
       id: "alertsSummaryRefresh"
       text: ""
-      icon: "resources/default/images/refresh.png"
       tooltip: "Refresh Alerts Now"
       handler: ->
         Muleview.event "alertsChanged"

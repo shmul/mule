@@ -5,6 +5,7 @@ Ext.define "Muleview.view.ChartsView",
   layout: "border"
 
   requires: [
+    "Muleview.view.RefreshButton"
     "Ext.form.field.ComboBox"
   ]
 
@@ -110,10 +111,9 @@ Ext.define "Muleview.view.ChartsView",
         },
 
         {
-          xtype: "button"
+          xtype: "muleRefreshButton"
           id: "refreshButton"
           text: "Now"
-          icon: "resources/default/images/refresh.png"
         },
 
         "-"
