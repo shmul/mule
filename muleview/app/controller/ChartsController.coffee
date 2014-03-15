@@ -53,6 +53,7 @@ Ext.define "Muleview.controller.ChartsController",
     @refreshCombobox = @getRefreshCombobox()
     @alertsButton = @getAlertsButton()
     @previewContainer = @getPreviewContainer()
+    @toolbar = @mainChartContainer.getDockedComponent(1)
 
     Muleview.app.on
       scope: @
@@ -86,7 +87,7 @@ Ext.define "Muleview.controller.ChartsController",
       scope: @
       toggle: (subkeysButton, pressed) ->
         Muleview.Settings.showSubkeys = @showSubkeys = pressed
-        @renderChart()
+        @showRetention(@retention)
 
     @refreshButton.on
       scope: @
@@ -121,27 +122,30 @@ Ext.define "Muleview.controller.ChartsController",
       scope: @
       click: @editAlerts
 
+    @showNoData()
 
-
-  viewChange: (keys, retention, force) ->
-    # If given a string for keys, convert it to an array:
+  viewChange: (keys, retention, forceUpdate) ->
     keys = keys.split(",") if Ext.isString(keys)
+    keysWereChanged = @keys.length != keys.length || Ext.Array.difference(@keys, keys).length != 0
+    retentionWasChanged = @retention != retention
 
-    # Check if any keys were changed from the previous rendering:
-
-    difference = @keys.length != keys.length || Ext.Array.difference(@keys, keys).length != 0
-    # Create or update the ChartsView object:
-    if difference or force
+    if keysWereChanged or forceUpdate
       @keys = Ext.clone(keys)  # Must clone due to mysterious bug causing multiple keys to reduce to the just the first one.
       @retention = retention if retention
+      @currentViewId = Ext.id()
+      @createKeysView()
 
-      # If we have new keys, we completely replace the current ChartsView with a new one:
-      @createKeysView(keys, retention || @retention)
-
-    else if @retention != retention
-      # If only the retention was changed, we ask the ChartsView to show the new one:
+    else if retentionWasChanged
       @retention = retention
+      @currentViewId = Ext.id()
       @showRetention(retention)
+
+  safeCallback: (cb) ->
+    # Return a callback that will not execute if the current view
+      # (either keys or retention) has changed)
+    viewId = @currentViewId
+    () =>
+      cb.apply(@, arguments) if @currentViewId == viewId
 
   refresh: ->
     currentRequestId = @lastRequestId
@@ -159,38 +163,42 @@ Ext.define "Muleview.controller.ChartsController",
       else
         @mainChart.updateData(data[@retention])
 
+  showNoData: () ->
+      @mainChartContainer.setTitle "No Key Selected"
+      @toolbar.setDisabled(true)
+      panel.setLoading(false) for panel in [@lightChartsContainer, @mainChartContainer, @previewContainer]
+      @previewContainer.hide()
 
-  createKeysView: (keys, retention) ->
-    # Remove old charts:
+  createKeysView: () ->
     @mainChartContainer.removeAll()
     @lightChartsContainer.removeAll()
     @previewContainer.removeAll()
 
-    # Disable buttons:
     @alertsButton.setDisabled(true)
     @subkeysButton.setDisabled(true)
 
+    @previewContainer.hide()
+
     # If no keys were selected, don't display anything:
-    if keys.length == 0 or keys[0] == ""
-      @mainChartContainer.setTitle "No graph key selected"
-      @lightChartsContainer.setLoading(false)
-      @mainChartContainer.setLoading(false)
-      @chartsView.setLoading(false)
+    if @keys.length == 0 or @keys[0] == ""
+      @showNoData()
       return
 
-    # We're going to ask for information, let's set a load mask:
-    @chartsView.setLoading("Fetching...")
+    # Masking
+    @lightChartsContainer.setLoading("Fetching...")
+    @mainChartContainer.setLoading("Fetching...")
+    @toolbar.setDisabled(false)
 
-    # Set things according to whether we're in multiple or single mode:
-    singleKey = keys.length == 1
-    @key = singleKey &&  keys[0]
-    @mainChartContainer.setTitle keys.join(", ")
+    # Multi or single mode?
+    singleKey = @keys.length == 1
+    @key = singleKey &&  @keys[0]
+    @mainChartContainer.setTitle @keys.join(", ")
 
-    @lastRequestId = currentRequestId = Ext.id()
-    Muleview.Mule.getKeysData keys, (data) =>
-      # Prevent latency mess:
-      return unless @lastRequestId == currentRequestId
-      @chartsView.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
+    viewId = @currentViewId
+    Muleview.Mule.getKeysData @keys, @safeCallback((data) =>
+      # data should be retention => key => array of {x: ###, y: ###}
+      @data = data
+
 
       # Enable buttons:
       @showSubkeys = singleKey && Muleview.Settings.showSubkeys
@@ -198,18 +206,20 @@ Ext.define "Muleview.controller.ChartsController",
       @subkeysButton.toggle(@showSubkeys, true)
       @alertsButton.setDisabled(!singleKey)
 
-      # Save data - it should be retention => key => array of {x: ###, y: ###}
-      @data = data
-      Ext.defer =>
-        return unless @lastRequestId == currentRequestId
+      @lightChartsContainer.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
+      @mainChartContainer.setLoading({msg: "Processing...", msgCls: "load-mask-no-image"})
+
+      # Defer the processing to have the masking properly displayed:
+      Ext.defer @safeCallback( =>
         @updateRetentionsStore()
         @defaultRetention = @retention || @retentionsStore.getAt(0).get("name")
         @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of @data
         @initLightCharts()
-        @chartsView.setLoading(false)
+        @lightChartsContainer.setLoading(false)
 
         @showRetention(@defaultRetention)
-      , 100
+      ), 100
+    )
 
   updateRetentionsStore: () ->
     retentions = (new Muleview.model.Retention(retName) for own retName of @data)
@@ -237,7 +247,10 @@ Ext.define "Muleview.controller.ChartsController",
 
   showRetention: (retName) ->
     @retention = retName
-    @renderChart()
+
+    @mainChartContainer.removeAll()
+    @previewContainer.hide()
+    @previewContainer.removeAll()
 
     @retentionsMenu.select(retName)
     for own _, lightChart of @lightCharts
@@ -249,6 +262,23 @@ Ext.define "Muleview.controller.ChartsController",
 
     @resetRefreshTimer()
     Muleview.event "viewChange", @keys, @retention
+
+    if @showSubkeys
+      @mainChartContainer.setLoading({msg: "Fetching Subkeys..."})
+      Muleview.Mule.getGraphData @key, @retention, (data) =>
+        @alerts = @getAlerts()
+        @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
+        @addChart
+          showAreas: true
+          topKeys: [@key]
+          subKeys: @subkeys
+          alerts: @alerts
+          data: data
+
+    else
+      @addChart
+        topKeys: @keys
+        data: @data[@retention]
 
   fixDuplicateAndMissingTimestamps: (data) ->
     recordsByTimestamp = {}
@@ -275,27 +305,6 @@ Ext.define "Muleview.controller.ChartsController",
   getAlerts: () ->
     Ext.StoreManager.get("alertsStore").getById("#{@key};#{@retention}")?.toGraphArray(@retention)
 
-  renderChart: () ->
-    @mainChartContainer.removeAll()
-    @previewContainer.removeAll()
-    if @showSubkeys
-      @mainChartContainer.setLoading({msg: "Fetching..."})
-      @previewContainer.mask()
-      Muleview.Mule.getGraphData @key, @retention, (data) =>
-        @alerts = @getAlerts()
-        @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
-        @addChart
-          showAreas: true
-          topKeys: [@key]
-          subKeys: @subkeys
-          alerts: @alerts
-          data: data
-
-    else
-      @addChart
-        topKeys: @keys
-        data: @data[@retention]
-
   addChart: (cfg) ->
     @fixDuplicateAndMissingTimestamps(cfg.data)
     common = {
@@ -316,6 +325,7 @@ Ext.define "Muleview.controller.ChartsController",
     @previewContainer.add(Ext.create("Muleview.view.Preview",
       mainChart: @mainChart
       lightChart: @lightCharts[@retention]))
+    @previewContainer.show()
 
 
 

@@ -35,10 +35,12 @@ Ext.define "Muleview.view.Viewport",
             bbar: [
                 id: "btnSwitchToMultiple"
                 text: "Switch to Multiple-Mode"
+                flex: 1
               ,
                 id: "btnSwitchToNormal"
                 text: "Switch to Normal-Mode"
                 hidden: true
+                flex: 1
             ]
         ]
       ,
