@@ -38,6 +38,12 @@ Ext.define "Muleview.controller.ChartsController",
     ,
       ref: "previewContainer"
       selector: "#chartPreviewContainer"
+    ,
+      ref: "restoreButton"
+      selector: "#mainChartToolRestore"
+    ,
+      ref: "maximizeButton"
+      selector: "#mainChartToolMaximize"
   ]
 
   onLaunch: ->
@@ -54,6 +60,15 @@ Ext.define "Muleview.controller.ChartsController",
     @alertsButton = @getAlertsButton()
     @previewContainer = @getPreviewContainer()
     @toolbar = @mainChartContainer.getDockedComponent(1)
+    @restoreButton = @getRestoreButton()
+    @maximizeButton = @getMaximizeButton()
+    @statePanels = [
+        panel: Ext.getCmp("leftPanel"),
+      ,
+        panel: Ext.getCmp("alertsReport")
+      ,
+        panel:@lightChartsContainer
+    ]
 
     Muleview.app.on
       scope: @
@@ -65,6 +80,17 @@ Ext.define "Muleview.controller.ChartsController",
         @mainChart?.setLegend(show)
         @legendButton.toggle(show)
       mainChartZoomChange: @updateZoomStats
+
+    @mainChartContainer.getHeader().on
+      scope: @
+      dblclick: @togglePanelState
+
+
+    for panel in @statePanels
+      panel.panel.on
+        scope: @
+        expand: @updateStateButtons
+        collapse: @updateStateButtons
 
     @retentionsStore = Ext.create "Ext.data.ArrayStore",
       model: "Muleview.model.Retention"
@@ -122,6 +148,14 @@ Ext.define "Muleview.controller.ChartsController",
       scope: @
       click: @editAlerts
 
+    @maximizeButton.on
+      scope: @
+      click: @maximizeMainChartPanel
+
+    @restoreButton.on
+      scope: @
+      click: @restoreMainChartPanel
+    @updateStateButtons()
     @showNoData()
 
   viewChange: (keys, retention, forceUpdate) ->
@@ -390,3 +424,37 @@ Ext.define "Muleview.controller.ChartsController",
       count: count
       size: firstKey.length
     Muleview.event "statsChange", stats
+
+  togglePanelState: () ->
+    doRestore = true
+    for panel in @statePanels
+      doRestore &&= panel.panel.getCollapsed()
+    if doRestore then @restoreMainChartPanel() else @maximizeMainChartPanel()
+
+
+  updateStateButtons: () ->
+    buttonToShow = "restore"
+    for panel in @statePanels
+      buttonToShow = "maximize" if !panel.panel.getCollapsed()
+    @showStateButtons(buttonToShow)
+
+  showStateButtons: (buttonToShow) ->
+    if buttonToShow == "restore"
+      @restoreButton.show()
+      @maximizeButton.hide()
+    else if buttonToShow == "maximize"
+      @restoreButton.hide()
+      @maximizeButton.show()
+    else
+      throw "Invalid state button to show: #{buttonToShow}"
+
+  maximizeMainChartPanel: ()->
+    for panel in @statePanels
+      panel.expand = ! panel.panel.getCollapsed()
+      panel.panel.collapse()
+    @showStateButtons("restore")
+
+  restoreMainChartPanel: ()->
+    for panel in @statePanels
+      panel.panel.expand() if panel.expand
+    @showStateButtons("maximize")

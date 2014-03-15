@@ -27,6 +27,18 @@ Ext.define "Muleview.view.ChartsView",
       xtype: "panel"
       id: "mainChartContainer"
       # bodyCls: "mule-bg"
+      tools: [
+          type: 'maximize'
+          id: "mainChartToolMaximize"
+          callback: ->
+            Muleview.event "maximize"
+        ,
+          type: 'restore'
+          hidden: true
+          id: "mainChartToolRestore"
+          callback: ->
+            Muleview.event "restore"
+      ]
       region: "center"
       header: true
       title: "Graph"
