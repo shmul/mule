@@ -66,6 +66,7 @@ local function with_mule(db_path_,readonly_,callback_)
 end
 
 local function backup(db_path_)
+  -- TODO for mdb use the internal backup option
   function helper()
     local db_path = strip_slash(db_path_)
     local bak = string.format("%s.bak.%s",db_path,os.date("%y%m%d-%H%M%S"))
