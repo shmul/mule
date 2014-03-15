@@ -94,7 +94,7 @@ Ext.define "Muleview.controller.StatusBar",
   handlers:
 
     statsChange: (stats) ->
-      stats.average = Ext.util.Format.number(stats.average, "0.00")
+      stats.average = Ext.util.Format.number(stats.average, "0,0.00")
       for stat in ["min", "max", "last", "count", "size"]
         stats[stat] = Ext.util.Format.number(stats[stat], "0,000")
       @getStats().update(stats)

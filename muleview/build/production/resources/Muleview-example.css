@@ -328,15 +328,15 @@
 
 /* line 280, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-graph-title-container {
-  font-family: helvetica, arial, sans-serif;
   position: absolute;
   width: 100%;
   text-align: center;
 }
 
-/* line 287, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 286, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-graph-title {
   display: inline-block;
+  font-family: helvetica, arial, sans-serif;
   font-size: 3em;
   opacity: 0.7;
   background-color: whitesmoke;
