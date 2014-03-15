@@ -148,20 +148,21 @@ Ext.define "Muleview.controller.ChartsController",
       cb.apply(@, arguments) if @currentViewId == viewId
 
   refresh: ->
-    currentRequestId = @lastRequestId
-    Muleview.Mule.getKeysData @keys, (data) =>
-      return unless currentRequestId == @lastRequestId
+    Muleview.Mule.getKeysData @keys, @safeCallback((data) =>
       @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of data
       for retention, lightChart of @lightCharts
         lightChart.chart.updateData(data[retention])
       if @showSubkeys
-        Muleview.Mule.getGraphData @key, @retention, (data) =>
-          return unless currentRequestId == @lastRequestId
+        # I'm doing the 2nd async request after the 1st one's response
+          # because of some funky Mule behaviour
+        Muleview.Mule.getGraphData @key, @retention, @safeCallback((data) =>
           @fixDuplicateAndMissingTimestamps(data)
           @mainChart.updateData(data)
           @mainChart.updateAlerts(@getAlerts())
+        )
       else
         @mainChart.updateData(data[@retention])
+    )
 
   showNoData: () ->
       @mainChartContainer.setTitle "No Key Selected"
@@ -226,13 +227,10 @@ Ext.define "Muleview.controller.ChartsController",
     @retentionsStore.removeAll()
     @retentionsStore.loadData(retentions)
 
-  eachRetention: (cb) ->
-    @retentionsStore.each (retention) ->
-      cb(retention, retention.get("name"))
-
   initLightCharts: () ->
     @lightCharts = {}
-    @eachRetention (retention, name) =>
+    @retentionsStore.each (retention) =>
+      name = retention.get("name")
       @lightCharts[name] = @createLightChart(retention)
       @lightChartsContainer.add(@lightCharts[name])
 
@@ -260,12 +258,9 @@ Ext.define "Muleview.controller.ChartsController",
       else
         lightChart.show()
 
-    @resetRefreshTimer()
-    Muleview.event "viewChange", @keys, @retention
-
     if @showSubkeys
       @mainChartContainer.setLoading({msg: "Fetching Subkeys..."})
-      Muleview.Mule.getGraphData @key, @retention, (data) =>
+      Muleview.Mule.getGraphData @key, @retention, @safeCallback((data) =>
         @alerts = @getAlerts()
         @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
         @addChart
@@ -274,6 +269,7 @@ Ext.define "Muleview.controller.ChartsController",
           subKeys: @subkeys
           alerts: @alerts
           data: data
+      )
 
     else
       @addChart
@@ -314,20 +310,21 @@ Ext.define "Muleview.controller.ChartsController",
         closed: =>
           Muleview.event "legendChange", false
     }
-    @mainChartContainer.setLoading(false)
-    @previewContainer.unmask()
-
     cfg = Ext.apply({}, cfg, common)
     @mainChart = (Ext.create "Muleview.view.MuleChart", cfg)
     @mainChartContainer.removeAll()
     @mainChartContainer.add @mainChart
+
+    @mainChartContainer.setLoading(false)
+
     @previewContainer.removeAll()
     @previewContainer.add(Ext.create("Muleview.view.Preview",
       mainChart: @mainChart
-      lightChart: @lightCharts[@retention]))
+      lightChart: @lightCharts[@retention])
+    )
     @previewContainer.show()
-
-
+    @resetRefreshTimer()
+    Muleview.event "viewChange", @keys, @retention
 
   updateRefreshTimer: (me, seconds) ->
     Muleview.Settings.updateInterval = seconds
