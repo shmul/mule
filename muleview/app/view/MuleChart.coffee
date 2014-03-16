@@ -114,9 +114,10 @@ Ext.define "Muleview.view.MuleChart",
 
 
     @createSmoother()
+    @graph.updateCallbacks.push () =>
+      @drawAlerts()
     @graph.render()
     @createTooltips()
-    @createAlerts() if @alerts
     @fireEvent("graphchanged")
 
   createSmoother: () ->
@@ -163,10 +164,10 @@ Ext.define "Muleview.view.MuleChart",
 
   updateAlerts: (newAlerts) ->
     @alerts = newAlerts
-    alertDiv?.parentNode.removeChild(alertDiv) while alertDiv = @alertDivs?.shift()
-    @createAlerts()
+    @drawAlerts()
 
-  createAlerts: () ->
+  drawAlerts: () ->
+    alertDiv?.parentNode.removeChild(alertDiv) while alertDiv = @alertDivs?.shift()
     @alertDivs ||= []
     for alert in @alerts || []
       div = document.createElement("div")

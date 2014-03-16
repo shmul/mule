@@ -70,7 +70,7 @@ Ext.define "Muleview.view.ChartsView",
         "-",
 
         {
-          text: "Show Subkeys & Alerts"
+          text: "Show Subkeys"
           id: "subkeysButton"
           icon: "resources/default/images/subkeys.gif"
           enableToggle: true

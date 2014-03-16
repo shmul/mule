@@ -602,7 +602,7 @@ function mule(db_)
                         col1.head()
                       end,
                       function(sum,hits,timestamp)
-                        col1.elem(format('{"y": %d, "hits": %d, "x": %d}',sum,hits,timestamp))
+                        col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
                       end)
         col1.tail()
       end

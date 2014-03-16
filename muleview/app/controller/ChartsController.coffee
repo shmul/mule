@@ -193,7 +193,6 @@ Ext.define "Muleview.controller.ChartsController",
         Muleview.Mule.getGraphData @key, @retention, @safeCallback((data) =>
           @fixDuplicateAndMissingTimestamps(data)
           @mainChart.updateData(data)
-          @mainChart.updateAlerts(@getAlerts())
           @refreshButton.setProgress(false)
         )
       else
@@ -298,13 +297,11 @@ Ext.define "Muleview.controller.ChartsController",
     if @showSubkeys
       @mainChartContainer.setLoading({msg: "Fetching Subkeys..."})
       Muleview.Mule.getGraphData @key, @retention, @safeCallback((data) =>
-        @alerts = @getAlerts()
         @subkeys = Ext.Array.difference(Ext.Object.getKeys(data), [@key])
         @addChart
           showAreas: true
           topKeys: [@key]
           subKeys: @subkeys
-          alerts: @alerts
           data: data
       )
 
@@ -342,6 +339,7 @@ Ext.define "Muleview.controller.ChartsController",
     @fixDuplicateAndMissingTimestamps(cfg.data)
     common = {
       flex: 1
+      alerts: @getAlerts()
       title: ("#{key};#{@retention}" for key in @keys).join("<br />")
       listeners:
         closed: =>

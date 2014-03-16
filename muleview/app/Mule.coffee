@@ -46,6 +46,15 @@ Ext.define "Muleview.Mule",
     Muleview.event "commandSent", command, eventId
     askFn()
 
+  prepareData: (arr) ->
+    Ext.Array.map arr, (record) ->
+      {
+        x: record[2]
+        y: record[0]
+        hits: record[1]
+      }
+
+
   # Returns a hash of all child keys for the given parent and a flag specifying if they have subkeys
   getSubKeys: (parent, depth, callback) ->
     @askMule "key/#{parent}?level=#{depth}", (retentions)->
@@ -63,7 +72,7 @@ Ext.define "Muleview.Mule",
       for own name, data of response
         [keyName, retention] = name.split(";")
         throw "Invalid key received: '#{keyName}'" unless key == keyName
-        retentions[retention] = data
+        retentions[retention] = @prepareData(data)
 
       for ret, data of retentions
         @sortData(data)
@@ -95,6 +104,7 @@ Ext.define "Muleview.Mule",
       for name, data of response
         [key, ret] = name.split(";")
         throw "Invalid retention received: #{ret}" unless ret = retention
+        data = @prepareData(data)
         @sortData(data)
         ans[key] = data
       callback(ans)
