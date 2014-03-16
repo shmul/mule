@@ -170,7 +170,6 @@ function sequence(db_,name_)
     local latest_ts = latest_timestamp()
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
-    logd("serialize",_name,opts_.deep,opts_.filter,now,min_timestamp,min_timestamp==nil)
 
     if opts_.deep then
       if not opts_.dont_cache then
@@ -594,7 +593,6 @@ function mule(db_)
       end
 
       for seq in depth(db_,m) do
-        logd("graph - processing",seq.name())
         if alerts then
           names[#names+1] = seq.name()
         end
