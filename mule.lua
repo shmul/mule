@@ -3,6 +3,7 @@ require "mulelib"
 require "tc_store"
 local c = require "column_db"
 require "httpd"
+local posix_exists,posix = pcall(require,'posix')
 
 pcall(require, "profiler")
 
@@ -84,17 +85,26 @@ local function incoming_queue(db_path_,incoming_queue_path_)
   end
 
   local executing = false
+  local minute_dir = nil
+  local processed = string.gsub(incoming_queue_path_,"_incoming","_processed")
+
   local function helper(m)
     if executing then return end
     local file = first_file(incoming_queue_path_.."*")
     if not file then return end
     executing = true
-    pcall(function()
-            logi("incoming_queue file",file)
-            m.process(file,false,true) -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
-            os.remove(file)
-            logi("incoming_queue file removed",file)
-          end)
+    pcall_wrapper(function()
+                    logi("incoming_queue file",file)
+                    m.process(file,false,true) -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
+                    local cm = os.date("%y/%m/%d/%H/%M")
+                    if minute_dir~=cm then
+                      minute_dir = cm
+                      os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
+                    end
+                    new_name = string.format("%s/%s/%s",processed,minute_dir,posix.basename(file))
+                    os.rename(file,new_name)
+                    logi("incoming_queue file processed",new_name)
+                  end)
     executing = false
   end
   return helper
