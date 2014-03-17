@@ -751,7 +751,7 @@ function test_key()
     assert_equal(1+(61+2)*3,#split(all_keys,","))
 
     all_keys = string.match(m.key("beer",{level=1}),"{(.+)}")
-    assert_equal(1+(2+2)*3,#split(all_keys,","))
+    assert_equal(1+2*3,#split(all_keys,","))
 
   end
 

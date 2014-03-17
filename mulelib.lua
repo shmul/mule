@@ -308,7 +308,7 @@ function one_level_children(db_,name_)
       local minimal_length = #prefix+#rp+1
       -- we are intersted only in child metrics of the format m.sub-key;ts (where sub-key contains no dots)
       for name in db_.matching_keys(prefix,1) do
-        logd("one_level_children",name,minimal_length,rp)
+        --logd("one_level_children",name,minimal_length,rp)
         if #name>=minimal_length and find(name,rp,1,true) then --and (#prefix>0 and not find(name,".",#prefix+2,true)) then
           coroutine.yield(sequence(db_,name))
         end
@@ -672,7 +672,7 @@ function mule(db_)
     logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
       prefix = (prefix=="*" and "") or prefix
-      for k in db_.matching_keys(prefix,not deep and level+1) do -- we increment the level to adjust for the way we keep the retention pair
+      for k in db_.matching_keys(prefix,not deep and level) do -- we increment the level to adjust for the way we keep the retention pair
           local hash = (_hints[k] and _hints[k]._haschildren and "{\"children\": true}") or "{}"
           col.elem(format("\"%s\": %s",k,hash))
       end
@@ -832,7 +832,7 @@ function mule(db_)
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
     if not metric_ or not sum_ or not timestamp_ then
-      logw("update_line - missing params")
+      logw("update_line - missing params",metric_,sum_,timestamp_)
       return
     end
     for n,m in get_sequences(metric_) do
@@ -1005,7 +1005,7 @@ function mule(db_)
 
     local rv = helper()
     if not dont_update_ then
-      update_sequences()
+      update_sequences(UPDATE_AMOUNT)
     end
     return rv
   end

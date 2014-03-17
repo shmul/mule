@@ -95,6 +95,13 @@ local function incoming_queue(db_path_,incoming_queue_path_)
     executing = true
     pcall_wrapper(function()
                     logi("incoming_queue file",file)
+--[[
+                    if posix.stat(file,"size")==0 then
+                      logi("empty file",file)
+                      os.remove(file)
+                      return
+                    end
+                    --]]
                     m.process(file,false,true) -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
                     local cm = os.date("%y/%m/%d/%H/%M")
                     if minute_dir~=cm then
