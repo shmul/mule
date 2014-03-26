@@ -209,12 +209,6 @@ function column_db(base_dir_)
     local metric,step,period,id = extract_from_name(name_)
     local cdb = cell_store_cache[name_]
 
-    -- save all the files every SAVE_PERIOD
-    if not last_save or time_now()>last_save+SAVE_PERIOD then
-      last_save = time_now()
-      save_all()
-    end
-
     if cdb then
       return cdb,id % SEQUENCES_PER_FILE
     end
