@@ -372,12 +372,7 @@ function column_db(base_dir_)
     cache = function(name_) return cache(name_) end,
     sort_updated_names = function(names_)
       -- TODO - is it worth it?
-      table.sort(names_,
-                 function(a_,b_)
-                   local _,_,_,a = extract_from_name(a_)
-                   local _,_,_,b = extract_from_name(b_)
-                   return a<b
-                 end)
+      table.sort(names_)
       return names_
     end
   }
