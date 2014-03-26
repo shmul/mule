@@ -41,12 +41,11 @@ local function rotate_log_file(name)
 
   if logfile then
     local rotated_file_name = logfile_name.."-"..logfile_rotation_day
-    if file_exists(rotated_file_name) then
-      return
-    end
     logfile:flush()
     logfile:close()
-    os.rename(logfile_name,rotated_file_name)
+    if not file_exists(rotated_file_name) then
+      os.rename(logfile_name,rotated_file_name)
+    end
   end
 
   logfile_rotation_day = today
