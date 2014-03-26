@@ -94,9 +94,10 @@ local function incoming_queue(db_path_,incoming_queue_path_)
     if not file then return end
     executing = true
     pcall_wrapper(function()
-                    logi("incoming_queue file",file)
+                    local sz = posix.stat(file,"size")
+                    logi("incoming_queue file",file,sz)
 --[[
-                    if posix.stat(file,"size")==0 then
+                    if sz==0 then
                       logi("empty file",file)
                       os.remove(file)
                       return
