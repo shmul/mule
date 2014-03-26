@@ -314,6 +314,12 @@ function column_db(base_dir_)
                           else
                             cdb_.write(sid_,idx_,u..v..w)
                           end
+
+                          -- save all the files every SAVE_PERIOD
+                          if not last_save or time_now()>last_save+SAVE_PERIOD then
+                            last_save = time_now()
+                            save_all()
+                          end
                         end
                        )
   end
