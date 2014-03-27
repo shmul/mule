@@ -11,6 +11,21 @@ local function strip_slash(path_)
   return string.match(path_,"^(.-)/?$")
 end
 
+-- this should be in helpers but actually collides with helpers disabling posix for lunit's sake
+function first_files(path_,pattern_,max_)
+  local num = 0
+  return coroutine.wrap(
+    function()
+      for f in posix.files(path_) do
+        if num==max_ then return end
+        if string.match(f,pattern_) then
+          num = num+1
+          coroutine.yield(f)
+        end
+      end
+    end)
+end
+
 local function guess_db(db_path_,readonly_)
   logd("guess_db",db_path_)
   -- strip a trailing / if it exists
@@ -90,30 +105,29 @@ local function incoming_queue(db_path_,incoming_queue_path_)
 
   local function helper(m)
     if executing then return end
-    local file = first_file(incoming_queue_path_.."*")
-    if not file then return end
-    executing = true
-    pcall_wrapper(function()
-                    local sz = posix.stat(file,"size")
-                    logi("incoming_queue file",file,sz)
---[[
-                    if sz==0 then
-                      logi("empty file",file)
-                      os.remove(file)
-                      return
-                    end
-                    --]]
-                    m.process(file,false,true) -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
-                    local cm = os.date("%y/%m/%d/%H/%M")
-                    if minute_dir~=cm then
-                      minute_dir = cm
-                      os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
-                    end
-                    new_name = string.format("%s/%s/%s",processed,minute_dir,posix.basename(file))
-                    os.rename(file,new_name)
-                    logi("incoming_queue file processed",new_name)
+    for file in first_files(incoming_queue_path_,"%.mule$",10) do
+      executing = true
+      pcall_wrapper(function()
+                      local sz = posix.stat(file,"size")
+                      logi("incoming_queue file",file,sz)
+                      if sz==0 then
+                        logi("empty file",file)
+                        os.remove(file)
+                        return
+                      end
+                      -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
+                      m.process(file,false,true)
+                      local cm = os.date("%y/%m/%d/%H/%M")
+                      if minute_dir~=cm then
+                        minute_dir = cm
+                        os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
+                      end
+                      new_name = string.format("%s/%s/%s",processed,minute_dir,posix.basename(file))
+                      os.rename(file,new_name)
+                      logi("incoming_queue file processed",new_name)
                   end)
-    executing = false
+      executing = false
+    end
   end
   return helper
 end
