@@ -56,7 +56,7 @@ function sequence(db_,name_)
   end
 
   local function latest(idx_)
-    local pos = (_period/_step)
+    local pos = math.floor(_period/_step)
     if not idx_ then
       return at(pos,0)
     end
@@ -89,12 +89,18 @@ function sequence(db_,name_)
     -- we discard it
     local timestamp,hits,sum = at(idx)
 
-    if adjusted_timestamp<timestamp then
-      return
-    end
     -- we need to check whether we should update the current slot
     -- or if are way ahead of the previous time the slot was updated
     -- over-write its value
+    if adjusted_timestamp<timestamp then
+      return
+    end
+
+    -- chasing a bug {
+    if timestamp~=0 and ((adjusted_timestamp-timestamp) % _period)~=0 then
+      logw("update - seems like the wrong idx was calculated",name_,_period,idx,adjusted_timestamp,timestamp,timestamp_)
+    end
+    -- }
 
     if (not replace_) and adjusted_timestamp==timestamp and hits>0 then
       -- no need to worry about the latest here, as we have the same (adjusted) timestamp
@@ -103,8 +109,8 @@ function sequence(db_,name_)
       hits,sum = hits_ or 1,sum_
     end
     set_slot(idx,adjusted_timestamp,hits,sum)
-
-    if adjusted_timestamp>latest_timestamp() then
+    local lt =  latest_timestamp()
+    if adjusted_timestamp>lt then
       latest(idx)
     end
 
