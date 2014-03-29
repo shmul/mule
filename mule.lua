@@ -20,7 +20,7 @@ function first_files(path_,pattern_,max_)
         if num==max_ then return end
         if string.match(f,pattern_) then
           num = num+1
-          coroutine.yield(f)
+          coroutine.yield(path_.."/"..f)
         end
       end
     end)
