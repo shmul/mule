@@ -98,7 +98,10 @@ function sequence(db_,name_)
 
     -- chasing a bug {
     if timestamp~=0 and ((adjusted_timestamp-timestamp) % _period)~=0 then
-      logw("update - seems like the wrong idx was calculated",name_,_period,idx,adjusted_timestamp,timestamp,timestamp_)
+      logw("update - seems like the wrong idx was calculated",name_,_period,idx,adjusted_timestamp,timestamp,hits,sum,timestamp_,sum_,hits_,replace_)
+      -- to override the faulty value
+      hits = 0
+      sum = 0
     end
     -- }
 
