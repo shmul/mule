@@ -26,7 +26,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
   local dirty = false
 
   local function reset()
-    local file_size = num_sequences_*PACK_FACTOR*math.ceil(slots_per_sequence_/PACK_FACTOR)*slot_size_
+    local file_size = num_sequences_*PACK_FACTOR*(math.ceil(slots_per_sequence_/PACK_FACTOR))*slot_size_
     logi("creating file",file_,file_size)
 
     file = io.open(file_,"r+b") or io.open(file_,"w+b")
@@ -34,7 +34,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       return nil
     end
     file:seek("set",file_size-1)
-    file:write("%z")
+    file:write("\0")
     file:close()
     file = nil
 
@@ -88,6 +88,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
     if seek(sid_,idx_) then
       return file:read(slot_size_)
     end
+    loge("read_cell failure")
   end
 
   local function write_cell(sid_,idx_,slot_)
@@ -95,6 +96,7 @@ function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       dirty = true
       return file:write(string.sub(slot_,1,slot_size_))
     end
+    loge("write_cell failure")
   end
 
   if not file_exists(file_) then
@@ -147,6 +149,10 @@ function column_db(base_dir_)
     if not node then
       loge("no such node",name_)
       return
+    end
+    if not node.latest then
+      logw("no latest value")
+      node.latest = 0
     end
     if idx_ then
       node.latest = idx_
@@ -209,12 +215,6 @@ function column_db(base_dir_)
     local metric,step,period,id = extract_from_name(name_)
     local cdb = cell_store_cache[name_]
 
-    -- save all the files every SAVE_PERIOD
-    if not last_save or time_now()>last_save+SAVE_PERIOD then
-      last_save = time_now()
-      save_all()
-    end
-
     if cdb then
       return cdb,id % SEQUENCES_PER_FILE
     end
@@ -264,7 +264,7 @@ function column_db(base_dir_)
     return index:delete(key_)
   end
 
-  local function matching_keys(prefix_)
+  local function matching_keys(prefix_,level_)
     local gsub = string.gsub
     local find = string.find
     local function put_semicolumn(rp)
@@ -272,8 +272,9 @@ function column_db(base_dir_)
     end
     return coroutine.wrap(
       function()
-        for k,n in index:traverse(prefix_,true) do
-          if find(k,"metadata=",1,true)~=1 then
+        for k,n in index:traverse(prefix_,true,false,level_ and level_+1) do
+          -- the 20140226 exclusion is to overcome a data corruption bug that Ops had. TODO - remove this
+          if find(k,"metadata=",1,true)~=1 and not find(k,"201402",1,true) then
             coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
           end
         end
@@ -285,13 +286,15 @@ function column_db(base_dir_)
                         function(cdb_,sid_)
                           -- trying to access one past the cdb size is interpreted as
                           -- getting the latest index
+                          if idx_==cdb_.size() then
+                            return latest(name_)
+                          end
                           local cached = seq_cache[name_]
                           if cached then
-                            return unpack(cached[idx_+1])
-                          end
-
-                          if cdb_.size()==idx_ then
-                            return latest(name_)
+                            if not offset_ then
+                              return unpack(cached[idx_+1])
+                            end
+                            return cached[idx_+1][offset_+1]
                           end
 
                           local slot = cdb_.read(sid_,idx_)
@@ -305,12 +308,13 @@ function column_db(base_dir_)
                         function(cdb_,sid_)
                           -- trying to access one past the cdb size is interpreted as
                           -- setting the latest index
+                          if idx_==cdb_.size() then
+                            return latest(name_,a)
+                          end
+
                           local cached = seq_cache[name_]
                           if cached then
                             cached[idx_+1] = {a,b,c}
-                          end
-                          if cdb_.size()==idx_ then
-                            return latest(name_,a)
                           end
 
                           local t,u,v,w,x = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
@@ -318,6 +322,12 @@ function column_db(base_dir_)
                             cdb_.write(sid_,idx_,t..u..v)
                           else
                             cdb_.write(sid_,idx_,u..v..w)
+                          end
+
+                          -- save all the files every SAVE_PERIOD
+                          if not last_save or time_now()>last_save+SAVE_PERIOD then
+                            last_save = time_now()
+                            save_all()
                           end
                         end
                        )
@@ -339,7 +349,7 @@ function column_db(base_dir_)
                              end
                              local cached = {}
                              local insert = table.insert
-                             for idx=0,cdb_.size() do
+                             for idx=0,cdb_.size()-1 do
                                local slot = cdb_.read(sid_,idx)
                                local a,b,c = get_slot(slot,0)
                                insert(cached,{a,b,c})
@@ -371,12 +381,7 @@ function column_db(base_dir_)
     cache = function(name_) return cache(name_) end,
     sort_updated_names = function(names_)
       -- TODO - is it worth it?
-      table.sort(names_,
-                 function(a_,b_)
-                   local _,_,_,a = extract_from_name(a_)
-                   local _,_,_,b = extract_from_name(b_)
-                   return a<b
-                 end)
+      table.sort(names_)
       return names_
     end
   }

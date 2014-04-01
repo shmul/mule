@@ -121,7 +121,7 @@ local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="GET" then
     return generic_get_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   elseif req_.verb=="POST" then
-    logd("POST: calling",handler_)
+    logd("POST: calling",handler_,#content_)
     return mule_.process(lines_without_comments(string_lines(content_)),true)
   else
     logw("Only GET/POST can be used")
@@ -186,7 +186,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   if req_.verb=="OPTIONS" then
     return send_(standard_response(200,nil,CORS))
   end
-
+  logi("send_response for",req_.url)
   local handler_result = with_mule_(
     function(mule_)
       table.remove(segments,1)
@@ -201,7 +201,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     end)
 
   local function response_continuation(rv,blocking_)
-    logd("send_response - after with_mule")
+    logd("response_continuation")
     if handler_name=="stop" then
       logw("stopping, using: ",qs.token)
       stop_cond_(qs.token)
@@ -233,7 +233,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
 end
 
 
-function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
+function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_callback_,stop_cond_,root_)
   local address,port = string.match(address_port_,"(%S-):(%d+)")
   local sr = ltn12.source
 
@@ -288,7 +288,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
                     --socket_:setoption ("linger", {on=true,timeout=7})
                     socket_:settimeout(0)
                     --socket_:setoption ("tcp-nodelay", true)
-                    logi("accepting connection",socket_:getsockname())
+                    logi("accepting connection",socket_:getpeername(),socket_:getsockname())
                     local skt = copas.wrap(socket_)
                     -- copas wrapping doesn't provide close, but ltn12 needs it.
                     -- we add it and do nothing, letting copas do its thing
@@ -305,6 +305,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,stop_cond_,root_)
     noblock_wait_for_children()
     with_mule_(function(mule_)
                  mule_.update(UPDATE_AMOUNT)
+                 incoming_queue_callback_(mule_)
                end)
   end
 end

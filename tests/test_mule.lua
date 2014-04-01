@@ -29,7 +29,7 @@ function test_create()
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest = {".key beer.ale"}},str)
-  assert_equal('{"version": 3,\n"data": {"beer.ale;1d:3y": {"children": true},"beer.ale.pale;1h:30d": {},"beer.ale.pale;1d:3y": {},"beer.ale.pale;5m:2d": {},"beer.ale;1h:30d": {"children": true},"beer.ale;5m:2d": {"children": true}}\n}',str.get_string())
+  assert_equal(weak_hash('{"version": 3,\n"data": {"beer.ale;1d:3y": {"children": true},"beer.ale.pale;1h:30d": {},"beer.ale.pale;1d:3y": {},"beer.ale.pale;5m:2d": {},"beer.ale;1h:30d": {"children": true},"beer.ale;5m:2d": {"children": true}}\n}'),weak_hash(str.get_string()))
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest={"./tests/fixtures/input2.mule"}})
@@ -47,6 +47,35 @@ function test_create()
   local slot2,adj2 = calculate_idx(1293837096,parse_time_unit("5m"),parse_time_unit("2d"))
   assert(string.find(str.get_string(),string.format("%d,1,%d",2,adj1),1,true),adj1)
   assert(string.find(str.get_string(),string.format("%d,1,%d",1,adj2),1,true),adj2)
+end
+
+function test_first_files()
+  os.execute("rm -rf tests/temp/first_files")
+  os.execute("mkdir -p tests/temp/first_files")
+  for i=0,9 do
+    os.execute("touch tests/temp/first_files/"..i..".foo")
+    os.execute("touch tests/temp/first_files/"..i..".bar")
+  end
+  local count = 0
+  for f in first_files("tests/temp/first_files","%.foo$",4) do
+    count = count + 1
+    assert(string.find(f,"%.foo$"))
+  end
+  assert_equal(4,count)
+
+  count = 0
+  for f in first_files("tests/temp/first_files","%.bar",40) do
+    count = count + 1
+    assert(string.find(f,"%.bar"))
+  end
+  assert_equal(10,count)
+
+  count = 0
+  for f in first_files("tests/temp/first_files","%.snark",1) do
+    count = count + 1
+  end
+  assert_equal(0,count)
+
 end
 
 --verbose_log(true)

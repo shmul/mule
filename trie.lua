@@ -60,22 +60,24 @@ local function delete(self,string_,prefix_)
   end
 end
 
-local function traverse(self,path_,prefix_,sorted_)
+local function traverse(self,path_,prefix_,sorted_,level_)
   local format = string.format
 
-  function helper(n,p_)
+  function helper(n,p_,l_)
     if n._eos then
       coroutine.yield(p_,n)
     end
+    if l_ and l_<=0 then return end
+
     if not sorted_ then
       for k,v in pairs(n._children or {}) do
         local path = (p_ and #p_>0 and format("%s.%s",p_,k)) or k
-        helper(v,path)
+        helper(v,path,l_ and l_-1)
       end
     else
       for _,k in ipairs(table.sort(keys(n._children or {}))) do
         local path = (p_ and #p_>0 and format("%s.%s",p_,k)) or k
-        helper(n._children[k],path)
+        helper(n._children[k],path,l_ and l_-1)
       end
     end
   end
@@ -85,7 +87,7 @@ local function traverse(self,path_,prefix_,sorted_)
       local root = self
       if path_ and #path_>0 then root = self:find(path_,true,prefix_) end
 
-      if root then helper(root,path_) end
+      if root then helper(root,path_,level_) end
     end)
 end
 

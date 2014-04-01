@@ -41,12 +41,11 @@ local function rotate_log_file(name)
 
   if logfile then
     local rotated_file_name = logfile_name.."-"..logfile_rotation_day
-    if file_exists(rotated_file_name) then
-      return
-    end
     logfile:flush()
     logfile:close()
-    os.rename(logfile_name,rotated_file_name)
+    if not file_exists(rotated_file_name) then
+      os.rename(logfile_name,rotated_file_name)
+    end
   end
 
   logfile_rotation_day = today
@@ -72,7 +71,9 @@ local function flog(level,...)
   rotate_log_file()
   local pid = posix and posix.getpid('pid') or "-"
   local sarg = {pid,os.date("%y%m%d:%H:%M:%S"),level," "}
-  table.foreachi({...},function(_,v) table.insert(sarg,tostring(v)) end)
+  for _,v in ipairs({...}) do
+    table.insert(sarg,tostring(v))
+  end
   local msg = table.concat(sarg," ")
   if verbose_logging then
     io.stderr:write(msg,"\n")
@@ -636,6 +637,8 @@ function insertion_sort(array_)
 end
 
 function bounded_by_level(string_,prefix_,level_)
+  if not level_ then return true end
+  if #prefix_==0 then level_ = level_ - 1 end
   local count = 0
   local s = #prefix_-1
   local find = string.find
@@ -705,6 +708,7 @@ function posix_lock(lock_file_,callback_)
     l_len = 0;              -- Lock whole file
   }
   local result = posix.fcntl(fd, posix.F_SETLK, lock)
+  logi("posix_lock acquire",lock_file_,result)
   if result == -1 then
     loge("locked by another process")
     return
@@ -716,6 +720,7 @@ function posix_lock(lock_file_,callback_)
   -- Release the lock
   lock.l_type = posix.F_UNLCK
   posix.fcntl(fd, posix.F_SETLK, lock)
+  logi("posix_lock released",lock_file_,result)
   return result
 end
 
@@ -742,4 +747,20 @@ function pcall_wrapper(callback_)
     return pcall(callback_)
   end
   return xpcall(function() return callback_() end ,stp and stp.stacktrace or nil)
+end
+
+function weak_hash(string_)
+  -- this is used to tell whether two strings contain the same chars, i.e. compare them regardless of chars positions
+  local c = 0
+  local byte = string.byte
+  string.gsub(string_,"(.)",
+              function (x)
+                c = c + byte(x)
+              end)
+  return c
+end
+
+function first_file(glob_pattern_)
+  local files = posix and posix.glob(glob_pattern_)
+  return files and files[1]
 end

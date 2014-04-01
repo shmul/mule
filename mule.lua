@@ -3,11 +3,27 @@ require "mulelib"
 require "tc_store"
 local c = require "column_db"
 require "httpd"
+local posix_exists,posix = pcall(require,'posix')
 
 pcall(require, "profiler")
 
 local function strip_slash(path_)
   return string.match(path_,"^(.-)/?$")
+end
+
+-- this should be in helpers but actually collides with helpers disabling posix for lunit's sake
+function first_files(path_,pattern_,max_)
+  local num = 0
+  return coroutine.wrap(
+    function()
+      for f in posix.files(path_) do
+        if num==max_ then return end
+        if string.match(f,pattern_) then
+          num = num+1
+          coroutine.yield(path_.."/"..f)
+        end
+      end
+    end)
 end
 
 local function guess_db(db_path_,readonly_)
@@ -78,6 +94,44 @@ local function backup(db_path_)
   return helper
 end
 
+local function incoming_queue(db_path_,incoming_queue_path_)
+  if not incoming_queue_path_ then
+    return function() end
+  end
+
+  local executing = false
+  local minute_dir = nil
+  local processed = string.gsub(incoming_queue_path_,"_incoming","_processed")
+
+  local function helper(m)
+    if executing then return end
+    for file in first_files(incoming_queue_path_,"%.mule$",10) do
+      executing = true
+      pcall_wrapper(function()
+                      local sz = posix.stat(file,"size")
+                      logi("incoming_queue file",file,sz)
+                      if sz==0 then
+                        logi("empty file",file)
+                        os.remove(file)
+                        return
+                      end
+                      -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
+                      m.process(file,false,true)
+                      local cm = os.date("%y/%m/%d/%H/%M")
+                      if minute_dir~=cm then
+                        minute_dir = cm
+                        os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
+                      end
+                      new_name = string.format("%s/%s/%s",processed,minute_dir,posix.basename(file))
+                      os.rename(file,new_name)
+                      logi("incoming_queue file processed",new_name)
+                  end)
+      executing = false
+    end
+  end
+  return helper
+end
+
 local function fatal(msg_,out_)
   logf(msg_)
   out_.write(msg_)
@@ -85,7 +139,7 @@ end
 
 local function usage()
   return [[
-        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] files....
+        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] [-i <incoming-queue-path>] files....
 
       If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
       Files are processed in order
@@ -177,6 +231,7 @@ function main(opts,out_)
 
     http_loop(opts["t"],function(callback_) return safe_mule_call(m,db,callback_) end,
               backup(opts["d"]),
+              incoming_queue(opts["d"],opts["i"]),
               function(token_)
                 -- this is confusing: when the function is called with param we match
                 -- it against the stop shared secret
@@ -217,7 +272,7 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcnmtxR")
+  opts = getopt(arg,"ldcnmtxRi")
   local rv = main(opts,stdout("\n"))
   logd("done")
   os.exit(rv and 0 or -1)
