@@ -32,7 +32,7 @@ Ext.define "Muleview.view.Viewport",
             useArrows: true
             rootVisible: false
             lines: true
-            bbar: [
+            tbar: [
                 id: "btnSwitchToMultiple"
                 text: "Switch to Multiple-Mode"
                 flex: 1
@@ -42,6 +42,13 @@ Ext.define "Muleview.view.Viewport",
                 hidden: true
                 flex: 1
             ]
+          ,
+            id: "keysTreePbar"
+            xtype: "progressbar"
+            value: 1
+            text: ""
+            region: "south"
+            hidden: true
         ]
       ,
         id: "chartsView"

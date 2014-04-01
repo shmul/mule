@@ -71,8 +71,8 @@ Ext.define "Muleview.Mule",
       retentions = {}
       for own name, data of response
         [keyName, retention] = name.split(";")
-        throw "Invalid key received: '#{keyName}'" unless key == keyName
-        retentions[retention] = @prepareData(data)
+        retentions[retention] = @prepareData(data) if key == keyName
+        #TODO: perhaps throw a warning if an invalid key was given, too
 
       for ret, data of retentions
         @sortData(data)

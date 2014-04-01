@@ -1,4 +1,9 @@
 * Issues
+** TODO Alleged race-condition in stacked mode
+http://v2.mule.trusteer.net/test/#expressway.device_id;1h:90d
+** TODO keystree Pbar inconsistent
+   Needs both refactoring and not to disappear after less than 3
+   seconds and stuff
 ** DONE dan-simplified-processing
 *** DONE Fix Alerts and AlertsEditor
 *** DONE Fix Subkey Click
@@ -14,12 +19,15 @@
    In alerts summary
    ------
    Could not reproduce
-** TODO Failure function for keys expand
+** TODO keys performance
+*** TODO Loading new keys takes time
+*** TODO Switching to multiple mode with a lot of keys takes forever
+** CHALLENGED Failure function for keys expand
    This is to prevent the loading circle from stayign there forever
 ** TODO Back button issue
-** TODO Going back to no-graphs page
+** CHALLENGED Going back to no-graphs page
    When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
-** TODO Misordered responses issue
+** CHALLENGED Misordered responses issue
    When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
    We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
 ** DONE Refresh timer not reset by reloading graph

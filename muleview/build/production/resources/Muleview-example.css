@@ -337,18 +337,19 @@
 .rickshaw-graph-title {
   display: inline-block;
   font-family: helvetica, arial, sans-serif;
-  font-size: 3em;
+  font-size: 3.2em;
+  font-weight: bolder;
   opacity: 0.7;
   background-color: whitesmoke;
 }
 
-/* line 294, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 295, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw_graph .x_tick .title {
   bottom: -16px;
   margin-left: 0px;
 }
 
-/* line 299, ../../../packages/muleview-theme/sass/etc/all.scss */
+/* line 300, ../../../packages/muleview-theme/sass/etc/all.scss */
 .rickshaw-zoom-highlight {
   position: absolute;
   bottom: 0px;

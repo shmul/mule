@@ -2,7 +2,7 @@ Ext.define "Muleview.Settings",
   singleton: true
 
   # Mule Prefix:
-  muleUrlPrefix: "mule/api/" # "/" # Base URL to Mule
+  muleUrlPrefix: "api/" # Base URL to Mule
 
   # Retries
   muleRequestRetries: 5 # How much retries to do when failing to get response from Mule
