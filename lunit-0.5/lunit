@@ -33,13 +33,14 @@ if test $# = 0 ; then
   exit 1
 fi
 
-if [ `uname` = "Darwin" ]; then 
+if [ `uname` = "Darwin" ]; then
   scriptname="$(readlink -n "$0")"
 else
   scriptname="$(readlink -n -f "$0")"
 fi
 interpreter="lua"
 options=""
+pause=""
 
 while true ; do
   case "$1" in
@@ -60,6 +61,7 @@ Options:
   -t, --test PATTERN          Which tests to run, may contain * or ? wildcards.
       --loadonly              Only load the tests.
       --dontforce             Do not force to load $scriptname*.lua.
+      --pause                 Prints the PID, and waits for "enter". Useful for debugging
   -h, --help                  Print this help screen.
       --version               Print lunit version.
 
@@ -97,6 +99,10 @@ EOT
       options="$options $1 $2"
       shift 2 ;;
 
+    --pause)
+      pause=1
+      shift 1 ;;
+
     --)
       break ;;
 
@@ -109,8 +115,13 @@ EOT
   esac
 done
 
+if [[ ! -z $pause ]]; then
+  printf "PID: $$; \nHit enter to continue (now would be a good time to attach a debugger)"
+ read
+fi
 
-exec "$interpreter" - "$scriptname" $options "$@" <<EOT
+exec "$interpreter" - "$scriptname" $options "$@" <&0 <<EOT
+
   local scriptname = ...
   local argv = { select(2,...) }
   if scriptname ~= "" then
@@ -120,7 +131,6 @@ exec "$interpreter" - "$scriptname" $options "$@" <<EOT
     force( scriptname..".lua" )
     force( scriptname.."-console.lua" )
   end
-
   package.path = package.path..";`dirname $0`/?.lua"
   require "lunit"
   local stats = lunit.main(argv)
