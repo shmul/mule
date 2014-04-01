@@ -4,38 +4,6 @@ require "helpers"
 
 local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 
-function chained_db(dbs_,generate_new_db_)
-
-  local function get(k)
-    for _,d in ipairs(dbs_) do
-      local v = d:get(k)
-      if v then return v end
-    end
-    return nil
-  end
-
-  local function out(k)
-    for _,d in ipairs(dbs_) do
-      if d:out(k) then return true end
-    end
-    return nil
-  end
-
-  local self = {
-    get = get,
-    put = put,
-    out = out,
-    matching_keys = matching_keys,
-    close = close,
-  }
-
-  self.sequence_storage = function(name_,numslots_)
-    return sequence_storage(self,name_,numslots_)
-  end
-
-  return self
-end
-
 local NUM_PAGES = 25600
 
 function lightning_mdb(base_dir_,read_only_,num_pages_)
@@ -44,19 +12,20 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
 
   local function txn(env_,func_)
     local t = env_:txn_begin(nil,0)
-    local rv = func_(t)
-    if not rv then
+    local rv,err = func_(t)
+    if err then
+      loge("txn failed",err)
       t:abort()
-      return nil
+      return nil,err
     end
     t:commit()
-    return rv
+    return rv,err
   end
 
   local function new_env_factory(name_)
     local e = lightningmdb.env_create()
     local full_path = base_dir_.."/"..name_
-    e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
+    local r,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
     os.execute("mkdir -p "..full_path)
     e:open(full_path,read_only_ and lightningmdb.MDB_RDONLY or 0,420)
     logi("new_env_factory",full_path)
@@ -91,14 +60,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     if string.find(k,"metadata=",1,true) then
       return txn(_meta,function(t) return t:put(_meta_db,k,v,0) end)
     end
-
     return txn(_envs[#_envs][1],
-      function(t)
-        local rv = t:put(_envs[#_envs][2],k,v)
-        if rv then return rv end
-        add_env()
-        return put(k,v)
-      end)
+               function(t)
+                 local rv,err = t:put(_envs[#_envs][2],k,v,0)
+                 if not err then return true end
+                 add_env()
+                 return put(k,v)
+               end)
   end
 
   local function get(k)
@@ -107,10 +75,9 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     end
 
     for _,ed in ipairs(_envs) do
-      local rv = txn(ed[1],function(t) return t:get(ed[2],k) end)
-      if rv then return rv end
+      local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
+      if not err then return rv end
     end
-
   end
 
 
@@ -120,36 +87,50 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     end
 
     for _,ed in ipairs(_envs) do
-      txn(ed[1],function(t) return t:del(ed[2],k,nil) end)
+      local rv,err = txn(ed[1],function(t) return t:del(ed[2],k,nil) end)
+    end
+  end
+
+  local function search(prefix_)
+    for _,ed in ipairs(_envs) do
+      local t = ed[1]:txn_begin(nil,lightningmdb.MDB_RDONLY)
+      local cur = t:cursor_open(ed[2])
+      local k,v = cur:get(prefix_,lightningmdb.MDB_SET_RANGE)
+      cur:close()
+      t:commit()
+      if k then
+        return k,v
+      end
     end
   end
 
   local function matching_keys(prefix_,level_,meta_)
 
-    local function helper(db)
-      return function(t)
-        local cur = t:cursor_open(db)
-        local k,v = prefix_,nil
-        repeat
-          k,v = cur:get(k,lightningmdb.MDB_NEXT)
-          if k and bounded_by_level(k,prefix_,level_ or 1) then
-            coroutine.yield(k,v)
-          end
-        until not k
-        cur:close()
-             end
-    end
-
-    if meta_ then
-      return coroutine.wrap(function() txn(_meta,helper(_meta_db)) end)
-    end
-
-    return coroutine.wrap(
-      function()
-        for _,ed in ipairs(_envs) do
-          txn(ed[1],helper(ed[2]))
+    -- we can't use coroutines due to the dreaded "attempt to yield across metamethod/C-call boundary" error
+    local function helper(env,db)
+      local t = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
+      local cur = t:cursor_open(db)
+      local find = string.find
+      local k,v = cur:get(prefix_,lightningmdb.MDB_SET_RANGE)
+      repeat
+        if k and find(k,prefix_,1,true) and bounded_by_level(k,prefix_,level_ or 1) then
+          coroutine.yield(k,v)
         end
-      end)
+        k,v = cur:get(k,lightningmdb.MDB_NEXT)
+      until not k
+      cur:close()
+      t:commit()
+    end
+
+    return coroutine.wrap(function()
+                            if meta_ then
+                              helper(_meta,_meta_db)
+                              return
+                            end
+                            for _,ed in ipairs(_envs) do
+                              helper(ed[1],ed[2])
+                            end
+                          end)
   end
 
 
@@ -168,6 +149,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     get = get,
     put = put,
     out = out,
+    search = search,
     matching_keys = matching_keys,
     close = close,
     backup = backup,
