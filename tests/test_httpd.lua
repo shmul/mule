@@ -101,10 +101,10 @@ function test_alerts()
 
   assert_nil(string.find(res.headers,'Access-Control-Allow-Origin: *',1,true))
 
-  res = request("GET","graph/beer?deep=true&alerts=true")
+  res = request("GET","graph/beer?level=1&alerts=true")
   assert(string.find(res.body,'"alerts": {"beer.stout;1d:14d": [34,100,800,900,86400,172800,0,"stale"',1,true))
 
-  res = request("OPTIONS","graph/beer?deep=true&alerts=true")
+  res = request("OPTIONS","graph/beer?alerts=true")
   assert(string.find(res.headers,'Access-Control-Allow-Origin: *',1,true))
 
   -- todo add alert for a graph that has holes in it (i.e. slots that weren't updated recently)

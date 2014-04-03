@@ -181,7 +181,7 @@ function sequence(db_,name_)
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
 
-    if opts_.deep then
+    if opts_.all_slots then
       if not opts_.dont_cache then
         _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
       end
@@ -452,7 +452,7 @@ function mule(db_)
 
   local function dump(resource_,options_)
     local str = options_.to_str and strout("") or stdout("")
-    local serialize_opts = {deep=true,skip_empty=true,dont_cache=true} -- caching kills us when dumping large DBs
+    local serialize_opts = {all_slots=true,skip_empty=true,dont_cache=true} -- caching kills us when dumping large DBs
 
     each_metric(_db,resource_,nil,
                 function(seq)
@@ -569,23 +569,25 @@ function mule(db_)
     local timestamps = options_.timestamp and split(options_.timestamp,',') or nil
     local format = string.format
     local col = collectionout(str,"{","}")
-    local opts = { deep=not timestamps,
+    local opts = { all_slots=not timestamps,
                    filter=options_.filter,
                    timestamps=timestamps,
                    sorted=false,
                    skip_empty=true}
-    local depth = immediate_metrics
+    local sequences_generator = immediate_metrics
     local alerts = is_true(options_.alerts)
     local names = {}
+    local level = options_.level and tonumber(options_.level)
 
     col.head()
     for m in split_helper(resource_,"/") do
       if m=="*" then m = "" end
-      if is_true(options_.deep) then
+      if level then
         local ranked_children = {}
         local insert = table.insert
         local now = time_now()
-        for seq in one_level_children(db_,m) do
+        for name in db_.matching_keys(m,level) do
+          local seq = sequence(db_,name)
           -- we call update_rank to get adjusted ranks (in case the previous update was
           -- long ago). This is a readonly operation
           local hint = _hints[seq.name()] or {}
@@ -595,7 +597,7 @@ function mule(db_)
           insert(ranked_children,{seq,seq_rank})
         end
         table.sort(ranked_children,function(a,b) return a[2]>b[2] end)
-        depth = function()
+        sequences_generator = function()
           return coroutine.wrap(
             function()
               for i=1,(math.min(#ranked_children,options_.count or DEFAULT_COUNT)) do
@@ -605,7 +607,7 @@ function mule(db_)
         end
       end
 
-      for seq in depth(db_,m) do
+      for seq in sequences_generator(db_,m) do
         if alerts then
           names[#names+1] = seq.name()
         end
@@ -632,15 +634,7 @@ function mule(db_)
 
 
 
-  local function piechart(resource_,options_)
-    local opts = options_ or {}
-    opts.deep = true
-    return graph(resource_,opts)
-  end
-
-
-
-  local function slot(resource_,options_)
+    local function slot(resource_,options_)
     local str = strout("")
     local format = string.format
     local opts = { timestamps={options_ and options_.timestamp} }
@@ -679,13 +673,12 @@ function mule(db_)
     local find = string.find
     local col = collectionout(str,"{","}")
     local level = tonumber(options_.level) or 1
-    local deep = is_true(options_.deep)
     col.head()
 
     logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
       prefix = (prefix=="*" and "") or prefix
-      for k in db_.matching_keys(prefix,not deep and level) do
+      for k in db_.matching_keys(prefix,level) do
         local hash = (_hints[k] and _hints[k]._haschildren and "{\"children\": true}") or "{}"
         col.elem(format("\"%s\": %s",k,hash))
       end
@@ -755,9 +748,6 @@ function mule(db_)
     local dispatch = {
       graph = function()
         return graph(items_[2],{timestamp=items_[3]})
-      end,
-      piechart = function()
-        return piechart(items_[2],{timestamp=items_[3]})
       end,
       key = function()
         return key(items_[2],{timestamp=items_[3]})
@@ -1040,7 +1030,6 @@ function mule(db_)
     dump = dump,
     graph = graph,
     key = key,
-    piechart = piechart,
     gc = gc,
     latest = latest,
     slot = slot,

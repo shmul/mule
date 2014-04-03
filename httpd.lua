@@ -153,7 +153,6 @@ end
 
 local handlers = { key = generic_get_handler,
                    graph = graph_handler,
-                   piechart = generic_get_handler,
                    latest = generic_get_handler,
                    slot = generic_get_handler,
                    update = graph_handler,
