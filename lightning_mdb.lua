@@ -5,6 +5,8 @@ require "helpers"
 local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 
 local NUM_PAGES = 25600
+local MAX_SLOTS_IN_SPARSE_SEQ = 10
+local SLOTS_PER_PAGE = 16
 
 function lightning_mdb(base_dir_,read_only_,num_pages_)
   local _meta,_meta_db
@@ -104,6 +106,85 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     end
   end
 
+  local function page_key(name_,idx_)
+    -- no sparse seq? then we should find the page
+    local p = math.floor(idx_/SLOTS_PER_PAGE)
+    local q = idx_%SLOTS_PER_PAGE
+    return string.format("%04d|%s",p,name_),p,q
+  end
+
+  local function internal_get_slot(name_,idx_,offset_)
+    -- the name is used as a key for the metadata
+    local node = p.unpack(get(name_))
+    if not node then return nil end
+
+    -- trying to access one past the cdb size is interpreted as
+    -- getting the latest index
+    if node._size==idx_ then
+      return node._latest
+    end
+
+    if node._seq then
+      local slot = node._seq.find_by_index(idx_)
+      if slot then
+        if not offset then
+          return slot._timestamp,slot._hits,slot._sum
+        end
+        return (offset==0 and slot._timestamp) or (offset==1 and slot._hits) or (offset==2 and slot._sum)
+      end
+    end
+
+    local key,p,q = page_key(name_,idx_)
+    local page_data = p.unpack(get(key))
+    return get_slot(page_data,q,offset_)
+  end
+
+  local function internal_set_slot(name_,idx_,offset_,timestamp_,hits_,sum_)
+
+    -- the name is used as a key for the metadata
+    local node = p.unpack(get(name_))
+
+    if not node then
+      -- a new node keeps a sparse_sequence instead of allocating actual pages for the slots
+      local metric,step,period = split_name(name_)
+      node = { _latest = 0, _seq = sparse_sequence(name_), _size = period/step }
+    end
+
+    node._latest = math.max(node._latest,timestamp_)
+
+    if node._seq then
+      node._seq.update(timestamp_,sum_,hits_)
+      if #node._seq.slots()==MAX_SLOTS_IN_SPARSE_SEQ then
+        -- time to create actual pages
+        local slots = node._seq.slots()
+
+        local _,step,period = string.match(name_,"^(.+);(%w+):(%w+)$")
+        for _,s in ipairs(node._seq.slots()) do
+          local i,_ = calculate_idx(s._timestamp,step,period)
+          local key,p,q = page_key(name_,i)
+          local page_data = p.unpack(get(key)) or string.rep("%z",p.PNS*3*SLOTS_PER_PAGE)
+          page_data = table.concat(set_slot(page_data,q,s._timestamp,s._hits,s._sum))
+          put(key,p.pack(page_data))
+        end
+        node._seq = nil
+      end
+      put(name_,p.pack(node))
+      return
+    end
+
+    local key,p,q = page_key(name_,idx_)
+    local page_data = p.unpack(get(key))
+
+    put(name_,p.pack(node))
+    if not page_data then
+      loge("unable to find page_data",key,timestamp_)
+      return
+    end
+    page_data = table.concat(set_slot(page_data,q,timestamp_,hits_,sum_))
+    put(key,p.pack(page_data))
+  end
+
+
   local function matching_keys(prefix_,level_,meta_)
 
     -- we can't use coroutines due to the dreaded "attempt to yield across metamethod/C-call boundary" error
@@ -150,6 +231,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     put = put,
     out = out,
     search = search,
+    set_slot = internal_set_slot,
+    get_slot = internal_get_slot,
     matching_keys = matching_keys,
     close = close,
     backup = backup,

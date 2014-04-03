@@ -83,7 +83,7 @@ function sequence(db_,name_)
   _seq_storage = db_.sequence_storage(name_,_period/_step)
 
 
-  local function update(timestamp_,sum_,hits_,replace_)
+  local function update(timestamp_,hits_,sum_,replace_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
     -- if this value is way back (but still fits in this slot)
     -- we discard it
@@ -243,45 +243,6 @@ function sequence(db_,name_)
          }
 end
 
--- sparse sequences are expected to have very few (usually one) non empty slots, so we use
--- a plain (non sorted) array
-
-function sparse_sequence(name_)
-  local _metric,_step,_period
-  local _slots = {}
-
-  _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
-  _step = parse_time_unit(_step)
-  _period = parse_time_unit(_period)
-
-  local function find_slot(timestamp_)
-    for i,s in ipairs(_slots) do
-      if s._timestamp==timestamp_ then return s end
-    end
-    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
-    return _slots[#_slots]
-  end
-
-  local function update(timestamp_,sum_,hits_,replace_)
-    local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
-    -- here, unlike the regular sequence, we keep all the timestamps. The real sequence
-    -- will discard stale ones
-    local slot = find_slot(adjusted_timestamp)
-    if replace_ then
-      slot._sum = sum_
-      slot._hits = nil -- we'll use this as an indication for replace
-    else
-      slot._sum = slot._sum+sum_
-      slot._hits = slot._hits+hits_
-    end
-    return adjusted_timestamp,slot._sum
-  end
-
-  return {
-    update = update,
-    slots = function() return _slots end
-         }
-end
 
 local function sequences_for_prefix(db_,prefix_,retention_pair_)
   return coroutine.wrap(
@@ -839,7 +800,7 @@ function mule(db_)
     end
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
-      local adjusted_timestamp,sum = seq.update(timestamp_,sum,1,replace)
+      local adjusted_timestamp,sum = seq.update(timestamp_,1,sum,replace)
       if m=="tagger.events_types.carbon_copy_submitted" then
         logd("per sequence",n,sum,adjusted_timestamp)
       end
@@ -944,7 +905,7 @@ function mule(db_)
       local seq = sequence(_db,n)
       local s = _updated_sequences[n]
       for j,sl in ipairs(s.slots()) do
-        local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._sum,sl._hits or 1,
+        local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
                                                   sl._hits==nil)
         if adjusted_timestamp and sum then
           _hints[n] = _hints[n] or {}

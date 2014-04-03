@@ -763,3 +763,55 @@ function first_file(glob_pattern_)
   local files = posix and posix.glob(glob_pattern_)
   return files and files[1]
 end
+
+-- sparse sequences are expected to have very few (usually one) non empty slots, so we use
+-- a plain (non sorted) array
+
+function sparse_sequence(name_)
+  local _metric,_step,_period
+  local _slots = {}
+
+  _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
+  _step = parse_time_unit(_step)
+  _period = parse_time_unit(_period)
+
+  local function find_slot(timestamp_)
+    for i,s in ipairs(_slots) do
+      if s._timestamp==timestamp_ then return s end
+    end
+    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
+    return _slots[#_slots]
+  end
+
+  local function find_by_index(idx_)
+    -- there is only one timestamp that fits the index
+    for i,s in ipairs(_slots) do
+      local i,_ = calculate_idx(s._timestamp,s._step,s._period)
+      if i==idx_ then
+        return s
+      end
+    end
+    return nil
+  end
+
+  local function update(timestamp_,hits_,sum_,replace_)
+    local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
+    -- here, unlike the regular sequence, we keep all the timestamps. The real sequence
+    -- will discard stale ones
+    local slot = find_slot(adjusted_timestamp)
+    if replace_ then
+      slot._sum = sum_
+      slot._hits = nil -- we'll use this as an indication for replace
+    else
+      slot._sum = slot._sum+sum_
+      slot._hits = slot._hits+hits_
+    end
+    return adjusted_timestamp,slot._sum
+  end
+
+  return {
+    update = update,
+    find_by_index = find_by_index,
+    slots = function() return _slots end
+         }
+end
