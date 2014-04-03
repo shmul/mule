@@ -5,10 +5,8 @@ Ext.define "Muleview.view.MuleChart",
   ]
 
   layout: "fit"
-  slider: true
   margin: 10
   yAxisWidth: 40
-  sliderHeight: 25
   mainGraph: true
   cls: "mule-chart"
 
@@ -25,12 +23,13 @@ Ext.define "Muleview.view.MuleChart",
   handleClick: (e) ->
     point = @lastHoveredPoint
 
-    if point.series.type == "subkey"
+    if point?.series.type == "subkey"
       Muleview.event "viewChange", point.series.key, null
 
     @fireEvent "topkeyclick"
 
   renderChart: () ->
+    # If there's no data - show an empty "No Data" pane:
     if not @hasData
       @add Ext.create "Ext.container.Container",
         layout:
@@ -54,7 +53,6 @@ Ext.define "Muleview.view.MuleChart",
       yAxis: Ext.id()
       chart: Ext.id()
       legend: Ext.id()
-      slider: Ext.id()
 
     # Prepare HTML content with new IDs:
     cmpHtml = '
@@ -63,7 +61,6 @@ Ext.define "Muleview.view.MuleChart",
           <div class="rickshaw-chart" id="' + @divs.chart + '"> </div>
           <div class="rickshaw-legend" id="' + @divs.legend + '"> </div>
         </div>
-        <div class="rickshaw-slider" id="' + @divs.slider + '" > </div>
       '
     cmpHtml += '<div id="rickshaw-fixed-tooltip"> </div>' if @mainGraph
 
@@ -81,7 +78,7 @@ Ext.define "Muleview.view.MuleChart",
       element: @divs.chart
       interpolation: "linear"
       width: @graphContainer.getWidth() - @yAxisWidth
-      height: @graphContainer.getHeight() - @sliderHeight
+      height: @graphContainer.getHeight() - 10
       renderer: "multi"
       series: @series
 
@@ -114,9 +111,72 @@ Ext.define "Muleview.view.MuleChart",
         tickFormat: Ext.bind(@numberFormatter, @)
 
     @createLegend()
+
+
+    @createSmoother()
+    @graph.updateCallbacks.push () =>
+      @drawAlerts()
     @graph.render()
     @createTooltips()
-    @createSlider()
+    @fireEvent("graphchanged")
+
+  createSmoother: () ->
+    @graph.stackData.hooks.data.push
+      name: 'smoother'
+      orderPosition: 50,
+      f: (data) =>
+        data = Ext.clone(data)
+        number_of_points = data[Ext.Object.getKeys(data)[0]].length
+        max_points = Muleview.Settings.maxNumberOfChartPoints || 1000
+        points_to_remove = @get_points_to_remove(number_of_points, max_points)
+        for series in data
+          for index in points_to_remove by -1
+            agg = series[index + 1]
+            if not agg.is_agg
+              agg = {
+                is_agg: true,
+                points: [series[index + 1]]
+              }
+              series[index + 1] = agg
+            agg.points.push series.splice(index, 1)[0]
+
+          for index in [0...series.length]
+            if series[index].is_agg
+              series[index] = {
+                x: Ext.Array.mean(Ext.Array.pluck(series[index].points, "x"))
+                y: Ext.Array.mean(Ext.Array.pluck(series[index].points, "y"))
+              }
+        data
+
+
+  get_points_to_remove: (number_of_points, max_points) ->
+    ans = []
+    number_of_points_to_remove = Math.abs(Math.min(0,  max_points - number_of_points))
+    ratio = number_of_points / number_of_points_to_remove
+    ans.push Math.floor(index * ratio) for index in [0...number_of_points_to_remove]
+    ans
+
+  updateData: (data) ->
+    for series in @graph.series
+      series.data = data[series.key] if data[series.key]
+    @graph.update()
+
+
+  updateAlerts: (newAlerts) ->
+    @alerts = newAlerts
+    @drawAlerts()
+
+  drawAlerts: () ->
+    alertDiv?.parentNode.removeChild(alertDiv) while alertDiv = @alertDivs?.shift()
+    @alertDivs ||= []
+    for alert in @alerts || []
+      div = document.createElement("div")
+      div.tytle = alert.name
+      div.className = "rickshaw-alert alert-" + alert.name
+      div.style.top = "" + @graph.y(alert.value) + "px"
+      div.style["border-color"] = alert.color
+      @alertDivs.push(div)
+      @graph.element.appendChild(div)
 
   basicNumberFormatter: Ext.util.Format.numberRenderer(",0")
   numberFormatter: (n) ->
@@ -126,6 +186,7 @@ Ext.define "Muleview.view.MuleChart",
       @basicNumberFormatter(n)
 
   createLegend: ->
+    return unless @mainGraph
     legendDiv = $(@divs.legend)
     chartDiv = $(@divs.chart)
 
@@ -135,11 +196,16 @@ Ext.define "Muleview.view.MuleChart",
 
     # Locate the legend at the bottom-left corner of the chart:
     legendDiv.offset
-      top: chartDiv.offset().top + chartDiv.height() - legendDiv.height() - 50
+      top: Muleview.Settings.legendTop || chartDiv.offset().top + chartDiv.height() - legendDiv.height() - 50
+      left: Muleview.Settings.legendLeft
 
-    legendDiv.hide() if not @showLegend
+    legendDiv.hide() if not Muleview.Settings.showLegend
 
-    legendDiv.draggable()
+    legendDiv.draggable
+      drag: (event, data)->
+        Muleview.Settings.legendTop = data.offset.top
+        Muleview.Settings.legendLeft = data.offset.left
+
     new Rickshaw.Graph.Behavior.Series.Toggle
       graph: @graph
       legend: legend
@@ -162,17 +228,11 @@ Ext.define "Muleview.view.MuleChart",
     action = if visible then "fadeIn" else "fadeOut"
     $(@divs.legend)[action](300)
 
-  createSlider: ->
-    return unless @slider
-    new Rickshaw.Graph.RangeSlider
-      graph: @graph
-      element: @divs.slider
-
   createTooltips: ->
     muleChart = @
     graphElement = @graph.element
 
-    FixedTooltip =  Rickshaw.Class.create Rickshaw.Graph.HoverDetail,
+    FixedTooltip = Rickshaw.Class.create Rickshaw.Graph.HoverDetail,
       initialize:  ($super, args) ->
         $super(args)
 
@@ -187,33 +247,29 @@ Ext.define "Muleview.view.MuleChart",
         point = (args.points.filter (p) -> p.active).shift()
         muleChart.lastHoveredPoint = point
         Muleview.event "chartMouseover", point
-        if muleChart.mainGraph
-          cursor = if point.series.type == "subkey" then "pointer" else "default"
-        else
-          cursor = "pointer"
+        cursor = point.series.type == "subkey" && muleChart.mainGraph && "pointer" || "default"
         graphElement.style.cursor = cursor
 
-      formatter: @formatter
+      formatter: (series, x, y, formattedX, formattedY, point) ->
+        ans = muleChart.tooltipTpl.apply
+          seriesName: series.name
+          isSubkey: point.series.type == "subkey"
+          value: Ext.util.Format.number(y, ",0")
+          percent: "" # Ext.util.Format.number(point.value.percent, "(0.00%)") if isSubkey
+          seriesColor: series.color
+        ans
 
     new FixedTooltip
       graph: @graph
 
-  formatter: (series, x, y, formattedX, formattedY, point) =>
-    ans = []
+  tooltipTpl: new Ext.XTemplate('
+    <span class="mule-tt">
+      {seriesName}
+      <tpl if="isSubkey">{percent}</tpl>
+      {value}
+      <span class="mule-tt-colorbox" style="background-color: {seriesColor}"></span>
+  </span>')
 
-    # Name and value:
-    seriesName = series.name
-    isSubkey = point.series.type == "subkey"
-    value = Ext.util.Format.number(y, ",0")
-    percent = Ext.util.Format.number(point.value.percent, "(0.00%)") if isSubkey
-
-    ans.push "<span class=\"mule-tt\">"
-    ans.push "<span class=\"mule-tt-colorbox\" style=\"background-color: #{series.color} \"></span>"
-    ans.push seriesName
-    ans.push percent if isSubkey
-    ans.push value
-    ans.push "</span>"
-    ans.join(" ")
 
   prepareSeriesData: (keys) ->
     ans = {}
@@ -236,30 +292,8 @@ Ext.define "Muleview.view.MuleChart",
     palette = new Rickshaw.Color.Palette
       scheme: new Muleview.view.Theme().colors
 
-    keys = Ext.Array.pluck(@alerts || [], "name")
-    keys = keys.concat(@topKeys || [])
-    keys = keys.concat(@subKeys || [])
-
-    seriesData = @prepareSeriesData(keys)
-
+    seriesData = @data
     series = []
-
-    for alert in (@alerts || [])
-      series.push
-        name: alert.label
-        color: alert.color
-        renderer: "line"
-        data: seriesData[alert.name]
-        type: "alert"
-
-    for topKey in @topKeys
-      series.push
-        name: @keyLegendName(topKey)
-        color: palette.color()
-        data: seriesData[topKey]
-        type: "topkey"
-        key: topKey
-        renderer: "line"
 
     for subKey in (@subKeys || [])
       series.push
@@ -269,6 +303,16 @@ Ext.define "Muleview.view.MuleChart",
         data: seriesData[subKey]
         type: "subkey"
         renderer: "stack"
+
+    for topKey in @topKeys
+      @hasData ||= seriesData[topKey].length > 0
+      series.push
+        name: @keyLegendName(topKey)
+        color: palette.color()
+        data: seriesData[topKey]
+        type: "topkey"
+        key: topKey
+        renderer: "line"
 
     series
 

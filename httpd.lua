@@ -121,7 +121,7 @@ local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="GET" then
     return generic_get_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   elseif req_.verb=="POST" then
-    logd("POST: calling",handler_)
+    logd("POST: calling",handler_,#content_)
     return mule_.process(lines_without_comments(string_lines(content_)),true)
   else
     logw("Only GET/POST can be used")
@@ -153,7 +153,6 @@ end
 
 local handlers = { key = generic_get_handler,
                    graph = graph_handler,
-                   piechart = generic_get_handler,
                    latest = generic_get_handler,
                    slot = generic_get_handler,
                    update = graph_handler,
@@ -288,7 +287,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
                     --socket_:setoption ("linger", {on=true,timeout=7})
                     socket_:settimeout(0)
                     --socket_:setoption ("tcp-nodelay", true)
-                    logi("accepting connection",socket_:getsockname())
+                    logi("accepting connection",socket_:getpeername(),socket_:getsockname())
                     local skt = copas.wrap(socket_)
                     -- copas wrapping doesn't provide close, but ltn12 needs it.
                     -- we add it and do nothing, letting copas do its thing
@@ -305,8 +304,8 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
     noblock_wait_for_children()
     with_mule_(function(mule_)
                  mule_.update(UPDATE_AMOUNT)
+                 incoming_queue_callback_(mule_)
                end)
-    incoming_queue_callback_()
   end
 end
 

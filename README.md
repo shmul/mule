@@ -64,7 +64,7 @@ or
 e.g.
 
     beer.stout.irish 20 74857843
-impling 20 orders of `beer.stout.irish` in the given timestamp. The value (i.e. 20) is usually added to the number already calculated for this timestamp, but if an equal sign `=` precends the value then it replaces the number rather than adding to it.
+impling 20 orders of `beer.stout.irish` in the given timestamp (measured in seconds - aka unix time). The value (i.e. 20) is usually added to the number already calculated for this timestamp, but if an equal sign `=` precends the value then it replaces the number rather than adding to it.
 e.g.
 
     beer.stout.irish =32 74858041
@@ -78,7 +78,6 @@ runs the garabge-collection command for any metric with the prefix `beer.stout` 
 ### Commands
 * `key <metric>` - retrieve all the metrics for which the given parameter is a prefix. Metric can be an exact sequence name
 * `graph <metric> [<timestamp>]` - retrieve all the sequences for which the given parameter is a prefix. Metric can be an exact sequence name. `<timestamp>` can be used to limit the output to a range. In fact `<timestamp>` can be an array (comma separated) of timestamps. Additionally, `l` (latest) and `n` (now) can be used as well as simple arithmatic operations. For example `<timestamp>` can be `l-10..l,n,n-100..l+50` .
-* `piechart <metric-or-name>` - retrieves the graphs of the metric's immediate children.
 * `latest <metric-or-name>` - retrieves the latest updated slot.
 * `slot <metric-or-name> <timestamp>` - retrieves the slots specified by the timestamp(s).
 * `gc <metric> <timestamp> [<force>]` - erase all metrics that weren't updated since timestamp. Must pass `true` for `<force>` in order to actually modify the DB.
@@ -109,7 +108,7 @@ Use a GET request
   * `deep` - if set to true (which can be `true,yes,1`) then the graphs data for the metric children (one level deep) will also be returned. This may be compbined with timestamps. Defaults to `false`. As this option is popular, a syntactic sugar for it exists in the form of a url
   * `filter` - can be set to `now` or `latest`. If `now`, only results in the time period of `now-period`..`now` will be returned. Similarly with `latest` which filters according to the latest time at which the sequence was updated.
 
-    http://muleserver/piechart/<metric-or-name>?<timestamps>
+    http://muleserver/graph/<metric-or-name>?<timestamps>
 
 
 An output example. Each tuple is <value,hits,timestamp>

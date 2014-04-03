@@ -1,13 +1,16 @@
 module("purepack",package.seeall)
 local bit32_found,bit32 = pcall(require,"bit32")
+local bit_found,bit = pcall(require,"bit")
 local lpack,_ = pcall(require,"pack")
 
 PNS = 4 -- Packed Number Size
 
-if bit32_found then
+local bits_lib = (bit32_found and bit32) or (bit_found and bit)
+
+if bits_lib then
   function to_binary(int_)
-    local sh = bit32.rshift
-    local an = bit32.band
+    local sh = bits_lib.rshift
+    local an = bits_lib.band
     local i = sh(int_,16)
     return string.char(an(sh(i,8),255),
                        an(i,255),
@@ -18,7 +21,7 @@ if bit32_found then
   function from_binary(str_,s)
     s = s or 1
     local a,b,c,d = string.byte(str_,s,s+3)
-    local sh = bit32.lshift
+    local sh = bits_lib.lshift
     return (d or 0) +
       (c and sh(c,8) or 0) +
       (b and sh(b,16) or 0) +

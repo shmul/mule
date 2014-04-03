@@ -14,7 +14,7 @@ function test_literals()
   assert_equal(1,upp(1))
   assert_equal(1,upp(1))
   assert_equal(301298,upp(301298))
-  assert_equal(2^31,upp(2^31))
+  assert_equal(math.abs(2^31),math.abs(upp(2^31)))
 --  assert_equal(2^32,upp(2^32))
 --  assert_equal(2^33,upp(2^33))
 --  assert_equal(2^35,upp(2^35))
@@ -73,7 +73,7 @@ function test_table_of_arrays()
 end
 
 function test_binary()
-  local tests = {0, 10, 8, 256, 65536, 16777216,math.pow(2,32)-1}--,math.pow(2,48)-1}
+  local tests = {0, 10, 8, 256, 65536, 16777216,math.pow(2,31)-1}--,math.pow(2,48)-1}
   for i,v in ipairs(tests) do
     assert_equal(v,p.from_binary(p.to_binary(v)),i)
   end

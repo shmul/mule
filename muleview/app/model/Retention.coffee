@@ -9,6 +9,9 @@ Ext.define "Muleview.model.Retention",
     ,
       name: "title"
       type: "string"
+    ,
+      name: "combinedTitle"
+      type: "string"
   ]
 
   idProperty: "name"
@@ -80,6 +83,7 @@ Ext.define "Muleview.model.Retention",
       name: ret
       title: @title
       sortValue: @value
+      combinedTitle: "(" + ret + ") " + @title
     @
 
   # Returns a tab title for a graph,

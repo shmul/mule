@@ -49,5 +49,34 @@ function test_create()
   assert(string.find(str.get_string(),string.format("%d,1,%d",1,adj2),1,true),adj2)
 end
 
+function test_first_files()
+  os.execute("rm -rf tests/temp/first_files")
+  os.execute("mkdir -p tests/temp/first_files")
+  for i=0,9 do
+    os.execute("touch tests/temp/first_files/"..i..".foo")
+    os.execute("touch tests/temp/first_files/"..i..".bar")
+  end
+  local count = 0
+  for f in first_files("tests/temp/first_files","%.foo$",4) do
+    count = count + 1
+    assert(string.find(f,"%.foo$"))
+  end
+  assert_equal(4,count)
+
+  count = 0
+  for f in first_files("tests/temp/first_files","%.bar",40) do
+    count = count + 1
+    assert(string.find(f,"%.bar"))
+  end
+  assert_equal(10,count)
+
+  count = 0
+  for f in first_files("tests/temp/first_files","%.snark",1) do
+    count = count + 1
+  end
+  assert_equal(0,count)
+
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")

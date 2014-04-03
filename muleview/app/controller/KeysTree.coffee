@@ -18,11 +18,16 @@ Ext.define "Muleview.controller.KeysTree",
     ,
       ref: "multiModeBtn"
       selector: "#btnSwitchToMultiple"
+    ,
+      ref: "pbar"
+      selector: "#keysTreePbar"
   ]
 
   onLaunch: ->
     @tree = @getTree()
     @store = @tree.getStore()
+    @pbar = @getPbar()
+    @keysToLoad = 0
 
     @tree.on
       selectionchange: @handleSelectionChange
@@ -102,22 +107,21 @@ Ext.define "Muleview.controller.KeysTree",
     # causing @onItemExpand() to reveal its true status
     keysHash = {}
     keysHash[key] = true for key in keysArr
-    @addKeys(keysHash)
+    @addKeys keysHash , =>
+      @setMultiMode(@isMulti or keysArr.length > 1)
 
-    @setMultiMode(@isMulti or keysArr.length > 1)
+      if @isMulti
+        @tree.getSelectionModel().deselectAll()
+        @forAllNodes (node) =>
+          checked = Ext.Array.contains(keysArr, node.get("fullname"))
+          node.set("checked", checked)
+          @expandKey(node) if checked
 
-    if @isMulti
-      @tree.getSelectionModel().deselectAll()
-      @forAllNodes (node) =>
-        checked = Ext.Array.contains(keysArr, node.get("fullname"))
-        node.set("checked", checked)
-        @expandKey(node) if checked
-
-    else
-      chosenNode = @store.getById(keysArr[0])
-      if chosenNode
-        @tree.getSelectionModel().select(chosenNode, false, true) # Don't keep existing selection, suppress events
-        @expandKey(chosenNode)
+      else
+        chosenNode = @store.getById(keysArr[0])
+        if chosenNode
+          @tree.getSelectionModel().select(chosenNode, false, true) # Don't keep existing selection, suppress events
+          @expandKey(chosenNode)
 
   onItemExpand: (node) ->
     # We set the node as "loading" to reflect that an asynch request is being sent to request deeper-level keys
@@ -143,12 +147,40 @@ Ext.define "Muleview.controller.KeysTree",
 
   fetchKeys: (parent, callback) ->
     Muleview.Mule.getSubKeys parent, 1, (keys) =>
-      @addKeys keys
-      callback?(keys)
+      @addKeys keys, ->
+        callback?(keys)
 
-  addKeys: (newKeys) ->
-    @addKey(key, hasKids) for key, hasKids of newKeys
-    @store.sort ["name"]
+  addKeys: (newKeys, callback) ->
+    buffer = []
+    for key, hasKids of newKeys
+      buffer.push([key, hasKids])
+
+    @keysToLoad ||= 0
+    @keysLoaded ||= 0
+    @keysToLoad += buffer.length
+
+    Ext.Array.sort buffer, (a, b) ->
+      aLevel = ("." + a[0]).match(/\./g).length
+      bLevel = ("." + b[0]).match(/\./g).length
+      bLevel - aLevel
+
+    fn = () =>
+      if not Ext.isEmpty(buffer)
+        [key, hasKids] = buffer.pop()
+        Ext.defer(fn, 10)
+        @addKey(key, hasKids)
+        @keysLoaded += 1
+        @pbar.updateProgress(@keysLoaded / @keysToLoad)
+        @pbar.updateText(Ext.util.Format.number(@keysLoaded, ",") + " / " + Ext.util.Format.number(@keysToLoad, ",") + " Keys")
+        @pbar.show()
+
+      else
+        Ext.defer =>
+          @pbar.hide() if @keysLoaded == @keysToLoad
+        , 3000
+        @store.sort ["name"]
+        callback()
+    fn()
 
   addKey: (key, hasKids) ->
     # Don't add already existing keys:
@@ -161,7 +193,6 @@ Ext.define "Muleview.controller.KeysTree",
     # Make sure the parent exists:
     parentName = key.substring(0, key.lastIndexOf("."))
     parent = @addKey(parentName, true)
-
     # Create the new node:
     newNode = @getMuleKeyModel().create
       name: key.substring(key.lastIndexOf(".") + 1)

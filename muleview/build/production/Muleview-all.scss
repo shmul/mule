@@ -537,12 +537,12 @@ $include-muleview-view-chartsview: true;
 $include-muleview-view-mulechart: true;
 $include-muleview-view-mulelightchart: true;
 $include-muleview-view-muletimefield: true;
-$include-muleview-view-singlegraphchartsview: true;
-$include-muleview-view-statusbar: false;
+$include-muleview-view-preview: true;
+$include-muleview-view-refreshbutton: true;
+$include-muleview-view-statusbar: true;
 $include-muleview-view-theme: true;
 $include-muleview-view-tooltip: true;
 $include-muleview-view-viewport: true;
-$include-muleview-view-zoomslider: false;
 /* including package ext-theme-base */
 @import '../../packages/ext-theme-base/sass/etc/all';
 /* including package ext-theme-classic */

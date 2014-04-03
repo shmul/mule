@@ -1,19 +1,36 @@
 * Issues
-** TODO Refresh resets legend visibility, position and which series are shown
-** TODO Resize resets legend position
-** TODO Alerts' lines go in the back of surfaces
-** TODO "undefined" keeps on scrolling at the status bar -> 100% progress bar doesn't go off
-** TODO Critical-up icon missing
+** TODO Alleged race-condition in stacked mode
+http://v2.mule.trusteer.net/test/#expressway.device_id;1h:90d
+** TODO keystree Pbar inconsistent
+   Needs both refactoring and not to disappear after less than 3
+   seconds and stuff
+** DONE dan-simplified-processing
+*** DONE Fix Alerts and AlertsEditor
+*** DONE Fix Subkey Click
+*** DONE Make updates graceful
+*** DONE Workaround Mule bug
+** DONE TopKey should be first in the legend
+** DONE Graph should default to show only Topkey and hide subkey series
+** DONE Refresh resets legend visibility, position and which series are shown
+** DONE Resize resets legend position
+** DONE Alerts' lines go in the back of surfaces
+** DONE "undefined" keeps on scrolling at the status bar -> 100% progress bar doesn't go off
+** DONE Critical-up icon missing
    In alerts summary
-** TODO Failure function for keys expand
+   ------
+   Could not reproduce
+** TODO keys performance
+*** TODO Loading new keys takes time
+*** TODO Switching to multiple mode with a lot of keys takes forever
+** CHALLENGED Failure function for keys expand
    This is to prevent the loading circle from stayign there forever
 ** TODO Back button issue
-** TODO Going back to no-graphs page
+** CHALLENGED Going back to no-graphs page
    When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
-** TODO Misordered responses issue
+** CHALLENGED Misordered responses issue
    When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
    We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
-** TODO Refresh timer not reset by reloading graph
+** DONE Refresh timer not reset by reloading graph
 ** DONE Masking when opening new graph before receiving retentions
 ** DONE Don't make the zoom interactive
    Apply it only after mouse up
@@ -75,7 +92,7 @@ it gets into "ready" even though still waiting for mule events
 ** DONE Times should be shown in UTC
 
 * Features:
-** TODO Graph auto-refresh should be visible to the user
+** DONE Graph auto-refresh should be visible to the user
    Also, it would be nice to have it configurable or at least togglable
 ** TODO Add indication to stale graphs
    We should somehow mark graphs that weren't updated for more than twice their period (bucket size)
@@ -172,6 +189,8 @@ aka "Add alerts" button
 * Optimizations:
 ** DONE Welcome, Rickshaw
   ** Legend can be toggled via HTML, no need to re-render  graph
+** TODO Bulk process stuff
+   So that the UI won't freeze.
 ** TODO Try to implement onhashchange event myself
    This is related to histoy controller
 ** DONE Dynamic tree

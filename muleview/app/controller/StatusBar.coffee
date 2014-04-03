@@ -16,11 +16,13 @@ Ext.define "Muleview.controller.StatusBar",
     ,
       ref: "pbar"
       selector: "#statusProgressbar"
+    ,
+      ref: "stats"
+      selector: "#statusStats"
   ]
 
   onLaunch: ->
     @sbLabel = @getStatusLabel()
-    @sbRightLabel = @getStatusRightLabel()
     @pbar = @getPbar();
     # Register all handlers:
     Muleview.app.on Ext.merge(@handlers, {scope: @ })
@@ -42,11 +44,6 @@ Ext.define "Muleview.controller.StatusBar",
     @status "ERROR - " + txt, "error", "ERORR"
 
   status: (text, iconCls = "normal", logLevel = "INFO") ->
-    rightText = ""
-    if Ext.typeOf(text) == "object"
-      rightText = text.rightText
-      text = text.leftText
-
     # Update Progress bar:
     if @inProgressMax > 0
       do () =>
@@ -58,7 +55,6 @@ Ext.define "Muleview.controller.StatusBar",
 
     # Set current text and icon:
     @sbLabel.setText text
-    @sbRightLabel.setText rightText
     @setIcon iconCls
 
     # Reset clearance method:
@@ -69,6 +65,7 @@ Ext.define "Muleview.controller.StatusBar",
         if @noRequestsPending()
           @inProgressMax = 0
           @pbar.hide()
+          @pbar.updateProgress(0)
       , 2000
 
 
@@ -95,6 +92,13 @@ Ext.define "Muleview.controller.StatusBar",
     @lastCls = cls
 
   handlers:
+
+    statsChange: (stats) ->
+      stats.average = Ext.util.Format.number(stats.average, "0,0.00")
+      for stat in ["min", "max", "last", "count", "size"]
+        stats[stat] = Ext.util.Format.number(stats[stat], "0,000")
+      @getStats().update(stats)
+
     chartMouseover: (point) ->
       # Value:
       value = point.value.y

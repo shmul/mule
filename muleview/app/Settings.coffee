@@ -14,3 +14,12 @@ Ext.define "Muleview.Settings",
   # Graph Label Formats:
   labelTimeFormat: "H:i" # Graph label time format, see http://docs.sencha.com/ext-js/4-2/#!/api/Ext.Date for formatting options
   labelDateFormat: "d/m/y" # Graph label date format, see above
+
+  # Show chart legend by default:
+  showLegend: true
+
+  # Show subkeys by default:
+  showSubkeys: false
+
+  # Maximum number of timestamp points to show in a chart:
+  maxNumberOfChartPoints: 300

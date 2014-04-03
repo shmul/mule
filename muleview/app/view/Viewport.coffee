@@ -8,6 +8,7 @@ Ext.define "Muleview.view.Viewport",
     "Ext.tab.Panel"
     "Ext.ux.statusbar.StatusBar"
     "Ext.form.Label"
+    "Muleview.view.Statusbar"
   ]
 
   items: [
@@ -31,22 +32,28 @@ Ext.define "Muleview.view.Viewport",
             useArrows: true
             rootVisible: false
             lines: true
-            bbar: [
+            tbar: [
                 id: "btnSwitchToMultiple"
                 text: "Switch to Multiple-Mode"
+                flex: 1
               ,
                 id: "btnSwitchToNormal"
                 text: "Switch to Normal-Mode"
                 hidden: true
+                flex: 1
             ]
+          ,
+            id: "keysTreePbar"
+            xtype: "progressbar"
+            value: 1
+            text: ""
+            region: "south"
+            hidden: true
         ]
       ,
-        id: "chartsViewContainer"
-        xtype: "panel"
-        title: "Chart"
-        bodyCls: "charts-view-container"
+        id: "chartsView"
+        xtype: "MuleChartsView"
         region: "center"
-        layout: "fit"
       ,
 
         id: "alertsReport"
@@ -63,7 +70,7 @@ Ext.define "Muleview.view.Viewport",
             width: 20
             sortable: false
             renderer: (value, meta, record) ->
-              # This cell gets its icon from the row alert-state-specific  class, see viewConfig blow
+              # This cell gets its icon from the row alert-state-specific class, see viewConfig blow
               meta.tdCls = "icon-cell"
               meta.tdAttr = 'data-qtip="' + record.get("state") + '"'
               ""
@@ -98,96 +105,7 @@ Ext.define "Muleview.view.Viewport",
             "alert-row-#{record.get("severityClass").toLowerCase()} alert-row-#{record.get("stateClass")}"
       ]
     ,
-      xtype: "toolbar"
+      xtype: "MuleStatusbar"
       id: "statusBar"
-      height: 25
       region: "south"
-      margin: 0
-      border: false
-      autoClear: 3000
-      defaultText: "Ready"
-      items: [
-          id: "statusLabel"
-          xtype: "label"
-          flex: 1
-          cls: "statusLabel" # needed to reduce CSS headache
-          frame: true
-          border: true
-          value: "Hello world"
-          enable: false
-        ,
-          "-"
-        ,
-          id: "alertsSummaryTotal"
-          alertState: "total"
-          text: "Total Alerts: ?"
-          toggleGroup: "alersSummaryStates"
-        ,
-          "-"
-        ,
-          id: "alertsSummaryCritical"
-          alertState: "critical"
-          iconCls: "alert-summary-critical"
-          text: "Critical: ?"
-          toggleGroup: "alersSummaryStates"
-        ,
-          "-"
-        ,
-          id: "alertsSummaryWarning"
-          alertState: "warning"
-          iconCls: "alert-summary-warning"
-          text: "Warning: ?"
-          toggleGroup: "alersSummaryStates"
-        ,
-          "-"
-        ,
-          id: "alertsSummaryNormal"
-          alertState: "normal"
-          iconCls: "alert-summary-normal"
-          text: "Normal: ?"
-          toggleGroup: "alersSummaryStates"
-        ,
-          "-"
-        ,
-          id: "alertsSummaryStale"
-          alertState: "stale"
-          iconCls: "alert-summary-stale"
-          text: "Stale: ?"
-          toggleGroup: "alersSummaryStates"
-        ,
-          "-"
-        ,
-          xtype: "button"
-          id: "alertsSummaryRefresh"
-          text: ""
-          icon: "resources/default/images/refresh.png"
-          tooltip: "Refresh Alerts Now"
-          handler: ->
-            Muleview.event "alertsChanged"
-        ,
-          "-"
-        ,
-          xtype: "container"
-          flex: 1
-          layout:
-            type: "hbox"
-          items: [
-              xtype: "label"
-              cls: "statusLabel"
-              id: "statusRightLabel"
-              flex: 1
-            ,
-              xtype: "progressbar"
-              id: "statusProgressbar"
-              animate: true
-              width: 80
-          ]
-        ,
-          icon: "resources/default/images/mule_icon.png"
-          handler: ->
-            Ext.MessageBox.show
-              title: "About Mule"
-              msg: "<p style=\"text-align:center\"><b>Mule</b> is an <a href=http://github.com/trusteer/mule>open-source</a> project written by <a href=mailto:shmul@trusteer.com>Shmulik Regev</a> & <a href=mailto:dan@carmon.org.il>Dan Carmon</a><br /></p>"
-              buttons: Ext.Msg.OK
-      ]
   ]

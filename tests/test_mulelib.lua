@@ -138,7 +138,7 @@ function helper_time_sequence(db_)
 
   --seq.serialize(stdout(", "))
   local tbl = {}
-  seq.serialize({deep=true},insert_all_args(tbl),insert_all_args(tbl))
+  seq.serialize({all_slots=true},insert_all_args(tbl),insert_all_args(tbl))
   assert_equal("seq",tbl[1])
   assert_equal(60,tbl[2]) --
   assert_equal(3600,tbl[3]) -- period
@@ -166,7 +166,7 @@ function helper_time_sequence(db_)
   assert_equal("seq",seq1.deserialize(in_memory_db,true,read_3_values,read_3_values))
   --]]
   local tbl1 = {}
-  seq.serialize({deep=true},insert_all_args(tbl1),insert_all_args(tbl1))
+  seq.serialize({all_slots=true},insert_all_args(tbl1),insert_all_args(tbl1))
   for i,v in ipairs(tbl) do
 	assert_equal(v,tbl1[i],i)
   end
@@ -180,7 +180,7 @@ function helper_time_sequence(db_)
   assert_equal(1,seq.slot(0)._hits)
 
   tbl = {}
-  seq.serialize({sorted=true,deep=true},insert_all_args(tbl),insert_all_args(tbl))
+  seq.serialize({sorted=true,all_slots=true},insert_all_args(tbl),insert_all_args(tbl))
 
   assert_equal("seq",tbl[1])
   assert_equal(60,tbl[2])
@@ -302,7 +302,7 @@ end
 local function sequence_any(seq_,callback_)
   local out = {}
 
-  seq_.serialize({deep=true},insert_all_args(out),insert_all_args(out))
+  seq_.serialize({all_slots=true},insert_all_args(out),insert_all_args(out))
   local count = 1
   for i,v in ipairs(out) do
 	if i>6 then -- first 3 slots are the header
@@ -741,13 +741,24 @@ function test_key()
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
     -- (cut -d' ' -f 1 tests/fixtures/pale.mule  | sort | uniq | wc -l)
-    local all_keys = string.match(m.key("beer",{deep=true,level=2}),"%{(.+)%}")
+    local tests = {
+      {0,1*3}, -- beer
+      {1,2*3}, -- beer.ale
+      {2,4*3}, -- beer.ale.{pale,brown}
+      {3,(2+61)*3} -- beer, beer.ale and then the other keys
+    }
+    for i,t in ipairs(tests) do
+      local g = m.graph("beer",{level=t[1],count=1000})
+      assert_equal(t[2]+1,#split(g,";"),i)
+    end
+
+    local all_keys = string.match(m.key("beer",{level=4}),"%{(.+)%}")
     assert_equal(1+(61+2)*3,#split(all_keys,","))
     all_keys = string.match(m.key("beer",{level=4}),"%{(.+)%}")
     assert_equal(1+(61+2)*3,#split(all_keys,","))
 
     all_keys = string.match(m.key("beer",{level=1}),"{(.+)}")
-    assert_equal(1+(2+2)*3,#split(all_keys,","))
+    assert_equal(1+2*3,#split(all_keys,","))
 
   end
 
@@ -782,7 +793,7 @@ function test_dashes_in_keys()
   m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-  assert(string.find(m.key("Johnston",{deep=true,level=4}),"Sweet%-Nuthin"))
+  assert(string.find(m.key("Johnston",{level=4}),"Sweet%-Nuthin"))
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
   m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
@@ -795,9 +806,10 @@ function test_rank_output()
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{deep=true,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{deep=true,count=2}))
+               m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{level=2,count=1}))
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[5,1,0]]\n}\n}',m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
 end
 
 
@@ -826,24 +838,24 @@ function test_caching()
   m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-  m.graph("Johnston.Morfin.Jamal.Marcela",{deep=true,count=1})
+  m.graph("Johnston.Morfin.Jamal.Marcela",{level=1,count=1})
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{deep=true,count=1}))
+               m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{deep=true,count=2}))
+               m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{deep=true,count=1}))
+               m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[10,2,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{deep=true,count=2}))
+               m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
   MAX_CACHE_SIZE = 1
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{deep=true,count=1}))
+               m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[15,3,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{deep=true,count=2}))
+               m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
 end
 
 

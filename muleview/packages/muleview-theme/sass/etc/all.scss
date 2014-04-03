@@ -1,5 +1,29 @@
-.charts-view-container.x-panel-body-default {
-  background-image: url("bg.png");
+.mule-bg {
+  div {
+    background-image: url("bg.png") !important;
+  }
+}
+
+.load-mask-no-image {
+  > div {
+    background-image: none;
+    padding: 5px;
+  }
+}
+
+.retention-combobox-item {
+  margin: 3px;
+
+  .retention-name {
+    display: inline-block;
+    width: 60px;
+    margin-right: 5px;
+    font-weight: bold;
+  }
+
+  .retention-title {
+  }
+
 }
 
 .icon-cell > div{
@@ -99,6 +123,9 @@
   background-image: url("summary_stale.png");
 }
 
+#statusProgressbar {
+
+}
 .statusLabel {
   height: 16px;
   background-repeat: no-repeat;
@@ -107,10 +134,6 @@
   padding-left: 18px;
   white-space: nowrap;
   overflow: hidden;
-}
-
-#statusRightLabel {
-  padding-left: 1px;
 }
 
 .statusLabel-normal {
@@ -128,6 +151,24 @@
 .statusLabel-error {
   color: red;
   background-image: url("status-error.gif");
+}
+
+#statusStats {
+  top: -1px;
+  white-space: nowrap;
+  margin-left: 25;
+  .statName {
+    font-style: italic;
+    margin-right: 2px;
+    margin-left: 5px;
+
+  }
+  .statValue {
+    border-right: 1px solid silver;
+    padding-left: 5px;
+    padding-right: 5px;
+    font-weight: bold;
+  }
 }
 
 .mule-tt {
@@ -164,7 +205,13 @@ $rickshawYAxis: 55px;
   }
 }
 
-
+.rickshaw-alert {
+  width: 100%;
+  height: 2px;
+  position: absolute;
+  border-style: dotted;
+  border-width: 2px;
+}
 .mule-lightchart .rickshaw-chart {
   left: 0px;
 }
@@ -208,7 +255,7 @@ $rickshawYAxis: 55px;
   cursor: pointer;
 }
 
-.rickshaw-slider {
+.rickshaw-preview {
   position: relative;
   display: block;
   left: $rickshawYAxis;
@@ -238,7 +285,9 @@ $rickshawYAxis: 55px;
 
 .rickshaw-graph-title {
   display: inline-block;
-  font-size: 3em;
+  font-family: helvetica, arial, sans-serif;
+  font-size: 3.2em;
+  font-weight: bolder;
   opacity: 0.7;
   background-color: whitesmoke;
 }
@@ -246,4 +295,13 @@ $rickshawYAxis: 55px;
 .rickshaw_graph .x_tick .title {
   bottom: -16px;
   margin-left: 0px;
+}
+
+.rickshaw-zoom-highlight {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  display: none;
+  background-color: rgba(255, 224, 0, 0.3);
+  height: 100%;
 }
