@@ -745,6 +745,17 @@ function test_key()
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
     -- (cut -d' ' -f 1 tests/fixtures/pale.mule  | sort | uniq | wc -l)
+    local tests = {
+      {0,1*3}, -- beer
+      {1,2*3}, -- beer.ale
+      {2,4*3}, -- beer.ale.{pale,brown}
+      {3,(2+61)*3} -- beer, beer.ale and then the other keys
+    }
+    for i,t in ipairs(tests) do
+      local g = m.graph("beer",{level=t[1],count=1000})
+      assert_equal(t[2]+1,#split(g,";"),i)
+    end
+
     local all_keys = string.match(m.key("beer",{level=4}),"%{(.+)%}")
     assert_equal(1+(61+2)*3,#split(all_keys,","))
     all_keys = string.match(m.key("beer",{level=4}),"%{(.+)%}")
