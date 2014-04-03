@@ -67,7 +67,7 @@ local function traverse(self,path_,prefix_,sorted_,level_)
     if n._eos then
       coroutine.yield(p_,n)
     end
-    if l_ and l_<0 then return end
+    if l_ and l_<=0 then return end
 
     if not sorted_ then
       for k,v in pairs(n._children or {}) do

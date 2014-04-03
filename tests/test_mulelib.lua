@@ -40,6 +40,10 @@ local function insert_all_args(tbl_)
          end
 end
 
+local function print_all_args(...)
+  print(...)
+end
+
 function test_parse_time_unit()
   local tests = {
 	{0,""},
