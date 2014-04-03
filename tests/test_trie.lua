@@ -67,13 +67,13 @@ function test_traverse()
   for k,_ in t:traverse("hello",nil,nil,0) do
     count = count + 1
   end
-  assert_equal(0,count)
+  assert_equal(1,count)
 
   count = 0
   for k,_ in t:traverse("hello",nil,nil,1) do
     count = count + 1
   end
-  assert_equal(1,count)
+  assert_equal(3,count)
 
   count = 0
   for k,_ in t:traverse("hello.cruel") do
@@ -97,7 +97,7 @@ function test_traverse()
   for k,_ in t:traverse("hello.cruel",nil,nil,0) do
     count = count + 1
   end
-  assert_equal(0,count)
+  assert_equal(1,count)
 
   count = 0
   for k,_ in t:traverse("hola") do
