@@ -117,21 +117,21 @@ function helper_time_sequence(db_)
   assert_equal(5,seq.slot_index(359))
   assert_equal(6,seq.slot_index(360))
 
-  seq.update(0,10)
+  seq.update(0,1,10)
   assert_equal(10,seq.slot(0)._sum)
   assert_equal(10,seq.slot(seq.latest())._sum)
-  seq.update(1,17,1)
+  seq.update(1,1,17)
   assert_equal(27,seq.slot(0)._sum)
   assert_equal(2,seq.slot(0)._hits)
   assert_equal(27,seq.slot(seq.latest())._sum)
-  seq.update(3660,3,1)
+  seq.update(3660,1,3)
   assert_equal(3,seq.slot(1)._sum)
   assert_equal(3,seq.slot(seq.latest())._sum)
-  seq.update(60,7,1) -- this is in the past and should be discarded
+  seq.update(60,1,7) -- this is in the past and should be discarded
   assert_equal(3,seq.slot(1)._sum)
   assert_equal(1,seq.slot(1)._hits)
   assert_equal(3,seq.slot(seq.latest())._sum)
-  seq.update(7260,89,1)
+  seq.update(7260,1,89)
   assert_equal(89,seq.slot(1)._sum)
   assert_equal(1,seq.slot(1)._hits)
   assert_equal(89,seq.slot(seq.latest())._sum)
@@ -171,11 +171,11 @@ function helper_time_sequence(db_)
 	assert_equal(v,tbl1[i],i)
   end
 
-  seq.update(10799,43,1)
+  seq.update(10799,1,43)
   assert_equal(43,seq.slot(59)._sum)
   assert_equal(1,seq.slot(59)._hits)
 
-  seq.update(10800,99,1)
+  seq.update(10800,1,99)
   assert_equal(99,seq.slot(0)._sum)
   assert_equal(1,seq.slot(0)._hits)
 
@@ -674,9 +674,8 @@ function test_metric_one_level_children()
     m.process("beer.ale 132 121")
 
     local tests = {
-      {"beer.ale.brown;1h:30d",2},
-      {"beer.ale;1m:12h",4},
-      {"beer;1m:12h",1},
+      {"beer.ale.brown",4},
+      {"beer.ale",8},
       {"beer",2},
       {"",0},
       {"foo",0},
@@ -684,7 +683,7 @@ function test_metric_one_level_children()
 
     for j,t in ipairs(tests) do
       local children = 0
-      for i in one_level_children(db,t[1]) do
+      for i in db.matching_keys(t[1],1) do
         children = children + 1
       end
       assert_equal(t[2],children,j)

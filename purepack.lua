@@ -166,7 +166,6 @@ function pack_helper(obj_,visited_,id_,out)
 end
 
 function pack(obj_)
-  if not obj_ then return nil end
   local out = {}
   pack_helper(obj_,{},0,out)
   return table.concat(out,"")

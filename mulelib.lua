@@ -129,7 +129,7 @@ function sequence(db_,name_)
       local sum,hits,timestamp = slots_[j],tonumber(slots_[j+1]),tonumber(slots_[j+2])
       j = j + 3
       local replace,s = match(sum,"(=?)(%d+)")
-      update(timestamp,s,hits,replace)
+      update(timestamp,hits,s,replace)
     end
 
     _seq_storage.save(_name)
@@ -262,27 +262,6 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_)
       for name in db_.matching_keys(prefix_) do
         if not retention_pair_ or find(name,retention_pair_,1,true) then
           yield(sequence(db_,name))
-        end
-      end
-    end)
-end
-
-function one_level_children(db_,name_)
-  -- we are intersted only in
-  -- 1) m;ts
-  -- 2) child metrics of the format m.sub-key;ts (where sub-key contains no dots)
-  return coroutine.wrap(
-    function()
-      local prefix,rp = string.match(name_,"(.-);(.+)")
-      if not prefix or not rp then
-        prefix = name_
-        rp = ""
-      end
-      local find = string.find
-      local minimal_length = #prefix+#rp+1
-      for name in db_.matching_keys(prefix,1) do
-        if #name>=minimal_length and find(name,rp,1,true) then
-          coroutine.yield(sequence(db_,name))
         end
       end
     end)
