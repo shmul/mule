@@ -3,9 +3,9 @@ local pp = require("purepack")
 require "conf"
 
 local function name(metric_,step_,period_)
-      return string.format("%s;%s:%s",metric_,
-                           secs_to_time_unit(step_),
-                           secs_to_time_unit(period_))
+  return string.format("%s;%s:%s",metric_,
+                       secs_to_time_unit(step_),
+                       secs_to_time_unit(period_))
 end
 
 local nop = function() end
@@ -13,19 +13,19 @@ local return_0 = function() return 0 end
 
 local NOP_SEQUENCE = {
   slots = function() return {} end,
-    name = function() return "" end,
-    metric = return_0,
-    step = return_0,
-    period = return_0,
-    slot = nop,
-    slot_index = return_0,
-    update = nop,
-    update_batch = nop,
-    latest = nop,
-    latest_timestamp = return_0,
-    reset = nop,
-    serialize = nop,
-         }
+  name = function() return "" end,
+  metric = return_0,
+  step = return_0,
+  period = return_0,
+  slot = nop,
+  slot_index = return_0,
+  update = nop,
+  update_batch = nop,
+  latest = nop,
+  latest_timestamp = return_0,
+  reset = nop,
+  serialize = nop,
+}
 
 function sequence(db_,name_)
   local _metric,_step,_period,_name,_seq_storage
@@ -164,9 +164,10 @@ function sequence(db_,name_)
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
-        -- due to some bug we may have sum~timestamp, in such case we return 0
-        if sum>=1380000000 then
+        -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
+        if sum>=1380000000 or hits>=1380000000 then
           sum = 0
+          hits = 0
         end
         slot_cb_(sum,hits,timestamp)
       end
@@ -180,7 +181,7 @@ function sequence(db_,name_)
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
 
-    if opts_.deep then
+    if opts_.all_slots then
       if not opts_.dont_cache then
         _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
       end
@@ -306,6 +307,9 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_)
 end
 
 function one_level_children(db_,name_)
+  -- we are intersted only in
+  -- 1) m;ts
+  -- 2) child metrics of the format m.sub-key;ts (where sub-key contains no dots)
   return coroutine.wrap(
     function()
       local prefix,rp = string.match(name_,"(.-);(.+)")
@@ -315,10 +319,8 @@ function one_level_children(db_,name_)
       end
       local find = string.find
       local minimal_length = #prefix+#rp+1
-      -- we are intersted only in child metrics of the format m.sub-key;ts (where sub-key contains no dots)
       for name in db_.matching_keys(prefix,1) do
-        --logd("one_level_children",name,minimal_length,rp)
-        if #name>=minimal_length and find(name,rp,1,true) then --and (#prefix>0 and not find(name,".",#prefix+2,true)) then
+        if #name>=minimal_length and find(name,rp,1,true) then
           coroutine.yield(sequence(db_,name))
         end
       end
@@ -326,6 +328,8 @@ function one_level_children(db_,name_)
 end
 
 function immediate_metrics(db_,name_)
+  -- if the name_ has th retention pair in it, we just return it
+  -- otherwise we provide all the retention pairs
   return coroutine.wrap(
     function()
       local find = string.find
@@ -333,7 +337,7 @@ function immediate_metrics(db_,name_)
         coroutine.yield(sequence(db_,name_))
       else
         for name in db_.matching_keys(name_,0) do
-            coroutine.yield(sequence(db_,name))
+          coroutine.yield(sequence(db_,name))
         end
       end
     end)
@@ -448,7 +452,7 @@ function mule(db_)
 
   local function dump(resource_,options_)
     local str = options_.to_str and strout("") or stdout("")
-    local serialize_opts = {deep=true,skip_empty=true,dont_cache=true} -- caching kills us when dumping large DBs
+    local serialize_opts = {all_slots=true,skip_empty=true,dont_cache=true} -- caching kills us when dumping large DBs
 
     each_metric(_db,resource_,nil,
                 function(seq)
@@ -499,7 +503,7 @@ function mule(db_)
     for ts = start,timestamp_,step do
       local idx,normalized_ts = calculate_idx(ts,step,period)
       local slot = sequence_.slot(idx)
---      logd("alert_check",name,ts,start,slot._timestamp,slot._sum,step,average_sum)
+      --      logd("alert_check",name,ts,start,slot._timestamp,slot._sum,step,average_sum)
       if normalized_ts==slot._timestamp and slot._hits>0 then
         if ts==start then
           -- we need to take only the proportionate part of the first slot
@@ -512,13 +516,13 @@ function mule(db_)
 
     alert._sum = average_sum
     if alert._critical_low and alert._warning_low and alert._critical_high and alert._warning_high then
-    alert._state = (average_sum<alert._critical_low and "CRITICAL LOW") or
-      (average_sum<alert._warning_low and "WARNING LOW") or
-      (average_sum>alert._critical_high and "CRITICAL HIGH") or
-      (average_sum>alert._warning_high and "WARNING HIGH") or
-      "NORMAL"
+      alert._state = (average_sum<alert._critical_low and "CRITICAL LOW") or
+        (average_sum<alert._warning_low and "WARNING LOW") or
+        (average_sum>alert._critical_high and "CRITICAL HIGH") or
+        (average_sum>alert._warning_high and "WARNING HIGH") or
+        "NORMAL"
     else
-     alert._state = "NORMAL"
+      alert._state = "NORMAL"
     end
     return alert
   end
@@ -565,23 +569,25 @@ function mule(db_)
     local timestamps = options_.timestamp and split(options_.timestamp,',') or nil
     local format = string.format
     local col = collectionout(str,"{","}")
-    local opts = { deep=not timestamps,
+    local opts = { all_slots=not timestamps,
                    filter=options_.filter,
                    timestamps=timestamps,
                    sorted=false,
                    skip_empty=true}
-    local depth = immediate_metrics
+    local sequences_generator = immediate_metrics
     local alerts = is_true(options_.alerts)
     local names = {}
+    local level = options_.level and tonumber(options_.level)
 
     col.head()
     for m in split_helper(resource_,"/") do
       if m=="*" then m = "" end
-      if is_true(options_.deep) then
+      if level then
         local ranked_children = {}
         local insert = table.insert
         local now = time_now()
-        for seq in one_level_children(db_,m) do
+        for name in db_.matching_keys(m,level) do
+          local seq = sequence(db_,name)
           -- we call update_rank to get adjusted ranks (in case the previous update was
           -- long ago). This is a readonly operation
           local hint = _hints[seq.name()] or {}
@@ -591,7 +597,7 @@ function mule(db_)
           insert(ranked_children,{seq,seq_rank})
         end
         table.sort(ranked_children,function(a,b) return a[2]>b[2] end)
-        depth = function()
+        sequences_generator = function()
           return coroutine.wrap(
             function()
               for i=1,(math.min(#ranked_children,options_.count or DEFAULT_COUNT)) do
@@ -601,7 +607,7 @@ function mule(db_)
         end
       end
 
-      for seq in depth(db_,m) do
+      for seq in sequences_generator(db_,m) do
         if alerts then
           names[#names+1] = seq.name()
         end
@@ -628,15 +634,7 @@ function mule(db_)
 
 
 
-  local function piechart(resource_,options_)
-    local opts = options_ or {}
-    opts.deep = true
-    return graph(resource_,opts)
-  end
-
-
-
-  local function slot(resource_,options_)
+    local function slot(resource_,options_)
     local str = strout("")
     local format = string.format
     local opts = { timestamps={options_ and options_.timestamp} }
@@ -675,15 +673,14 @@ function mule(db_)
     local find = string.find
     local col = collectionout(str,"{","}")
     local level = tonumber(options_.level) or 1
-    local deep = is_true(options_.deep)
     col.head()
 
     logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
       prefix = (prefix=="*" and "") or prefix
-      for k in db_.matching_keys(prefix,not deep and level) do -- we increment the level to adjust for the way we keep the retention pair
-          local hash = (_hints[k] and _hints[k]._haschildren and "{\"children\": true}") or "{}"
-          col.elem(format("\"%s\": %s",k,hash))
+      for k in db_.matching_keys(prefix,level) do
+        local hash = (_hints[k] and _hints[k]._haschildren and "{\"children\": true}") or "{}"
+        col.elem(format("\"%s\": %s",k,hash))
       end
     end
     logd("key - done traversing")
@@ -751,9 +748,6 @@ function mule(db_)
     local dispatch = {
       graph = function()
         return graph(items_[2],{timestamp=items_[3]})
-      end,
-      piechart = function()
-        return piechart(items_[2],{timestamp=items_[3]})
       end,
       key = function()
         return key(items_[2],{timestamp=items_[3]})
@@ -1036,7 +1030,6 @@ function mule(db_)
     dump = dump,
     graph = graph,
     key = key,
-    piechart = piechart,
     gc = gc,
     latest = latest,
     slot = slot,
@@ -1048,7 +1041,7 @@ function mule(db_)
     alert_set = alert_set,
     alert_remove = alert_remove,
     alert = alert
-  }
+         }
 end
 
 --verbose_log(true)
