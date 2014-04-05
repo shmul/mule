@@ -2,6 +2,7 @@ require "helpers"
 require "mulelib"
 require "tc_store"
 local c = require "column_db"
+local l = require "lightning_mdb"
 require "httpd"
 local posix_exists,posix = pcall(require,'posix')
 
@@ -30,7 +31,9 @@ local function guess_db(db_path_,readonly_)
   logd("guess_db",db_path_)
   -- strip a trailing / if it exists
   db_path_ = strip_slash(db_path_)
-  if string.find(db_path_,"_cdb$") then
+  if string.find(db_path_,"_mdb") then
+    return l.lightning_mdb(db_path_,readonly_)
+  elseif string.find(db_path_,"_cdb$") then
     return c.column_db(db_path_,readonly_)
   elseif string.find(db_path_,cabinet.suffix.."$") then
     return cabinet_db(db_path_,readonly_)

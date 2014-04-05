@@ -61,7 +61,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
 
   local function put(k,v)
     if string.find(k,"metadata=",1,true) then
-      return txn(_meta,function(t) return t:put(_meta_db,k,v,0) end)
+      return _meta and txn(_meta,function(t) return t:put(_meta_db,k,v,0) end)
     end
     return txn(_envs[#_envs][1],
                function(t)
@@ -268,8 +268,20 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
 
 
   local function close()
-    _e:close()
-    _e = nil
+    logi("lightning_mdb close")
+
+    if _meta then
+      _meta:close()
+      _meta = nil
+      _meta_db = nil
+    end
+
+    if _envs then
+      for _,ed in ipairs(_envs) do
+        ed[1]:close()
+      end
+      _envs = nil
+    end
   end
 
   local function backup(backup_path_)

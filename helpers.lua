@@ -743,10 +743,10 @@ end
 
 local use_stp = true
 function pcall_wrapper(callback_)
-  if not use_stp then
+  if not use_stp or not stp then
     return pcall(callback_)
   end
-  return xpcall(function() return callback_() end ,stp and stp.stacktrace or nil)
+  return xpcall(function() return callback_() end ,use_stp and stp.stacktrace or nil)
 end
 
 function weak_hash(string_)

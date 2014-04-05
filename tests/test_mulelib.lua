@@ -30,6 +30,7 @@ end
 local function for_each_db(name_,func_,no_mule_)
   local dbs = {in_memory_db(),
                lightning_db_factory(name_),
+               --cabinet_db_factory(name_),
                column_db_factory(name_)}
   if cabinet then
     table.insert(dbs,cabinet_db_factory(name_))
