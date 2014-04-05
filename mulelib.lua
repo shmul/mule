@@ -112,7 +112,7 @@ function sequence(db_,name_)
       hits,sum = hits_ or 1,sum_
     end
     set_slot(idx,adjusted_timestamp,hits,sum)
-    local lt =  latest_timestamp()
+    local lt = latest_timestamp()
     if adjusted_timestamp>lt then
       latest(idx)
     end
@@ -126,10 +126,10 @@ function sequence(db_,name_)
     local j = 1
     local match = string.match
     while j<#slots_ do
-      local sum,hits,timestamp = slots_[j],tonumber(slots_[j+1]),tonumber(slots_[j+2])
+      local sum,hits,timestamp = tonumber(slots_[j]),tonumber(slots_[j+1]),tonumber(slots_[j+2])
       j = j + 3
       local replace,s = match(sum,"(=?)(%d+)")
-      update(timestamp,hits,s,replace)
+      update(timestamp,hits,tonumber(s),replace)
     end
 
     _seq_storage.save(_name)
@@ -164,11 +164,6 @@ function sequence(db_,name_)
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
-        -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
-        if sum>=1380000000 or hits>=1380000000 then
-          sum = 0
-          hits = 0
-        end
         slot_cb_(sum,hits,timestamp)
       end
     end
@@ -180,7 +175,6 @@ function sequence(db_,name_)
     local latest_ts = latest_timestamp()
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
-
     if opts_.all_slots then
       if not opts_.dont_cache then
         _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
@@ -197,7 +191,7 @@ function sequence(db_,name_)
       for _,t in ipairs(opts_.timestamps) do
         if t=="*" then
           for s in indices(opts_.sorted) do
-            serialize_slot(s,nil,slot_cb_)
+            serialize_slot(s,true,slot_cb_)
           end
         else
           local ts = to_timestamp(t,now,latest_ts)
@@ -209,7 +203,7 @@ function sequence(db_,name_)
               local idx,_ = calculate_idx(t,_step,_period)
               local its = get_timestamp(idx)
               if t-its<_period and (not min_timestamp or min_timestamp<its) then
-                serialize_slot(idx,nil,slot_cb_)
+                serialize_slot(idx,true,slot_cb_)
               end
             end
           end
@@ -774,6 +768,7 @@ function mule(db_)
     local replace,sum = string.match(sum_ or "","(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
+    sum = tonumber(sum)
     if not metric_ or not sum_ or not timestamp_ then
       logw("update_line - missing params",metric_,sum_,timestamp_)
       return

@@ -768,31 +768,44 @@ end
 -- sparse sequences are expected to have very few (usually one) non empty slots, so we use
 -- a plain (non sorted) array
 
-function sparse_sequence(name_)
+function sparse_sequence(name_,slots_)
   local _metric,_step,_period
-  local _slots = {}
+  local _slots = slots_ or {}
 
   _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
   _step = parse_time_unit(_step)
   _period = parse_time_unit(_period)
 
+  local function add_slot(timestamp_)
+    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
+    return _slots[#_slots]
+  end
+
   local function find_slot(timestamp_)
     for i,s in ipairs(_slots) do
       if s._timestamp==timestamp_ then return s end
     end
-    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
-    return _slots[#_slots]
+    return add_slot(timestamp_)
   end
 
   local function find_by_index(idx_)
     -- there is only one timestamp that fits the index
     for i,s in ipairs(_slots) do
-      local i,_ = calculate_idx(s._timestamp,s._step,s._period)
+      local i,_ = calculate_idx(s._timestamp,_step,_period)
       if i==idx_ then
         return s
       end
     end
     return nil
+  end
+
+  local function set(timestamp_,hits_,sum_)
+    local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
+    local slot = find_by_index(idx) or add_slot(timestamp_)
+    slot._sum = sum_
+    slot._hits = hits_
+    slot._timestamp = adjusted_timestamp
+    return adjusted_timestamp,slot._sum
   end
 
   local function update(timestamp_,hits_,sum_,replace_)
@@ -811,6 +824,7 @@ function sparse_sequence(name_)
   end
 
   return {
+    set = set,
     update = update,
     find_by_index = find_by_index,
     slots = function() return _slots end

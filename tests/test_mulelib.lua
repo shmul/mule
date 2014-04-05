@@ -5,6 +5,7 @@ require "lunit"
 require "tc_store"
 require "memory_store"
 local cdb = require "column_db"
+local mdb = require "lightning_mdb"
 
 module( "test_mulelib", lunit.testcase,package.seeall )
 
@@ -20,8 +21,15 @@ local function column_db_factory(name_)
   return cdb.column_db(name_.."_cdb")
 end
 
+local function lightning_db_factory(name_)
+  os.execute("rm -rf "..name_.."_mdb")
+  os.execute("mkdir -p "..name_.."_mdb")
+  return mdb.lightning_mdb(name_.."_mdb")
+end
+
 local function for_each_db(name_,func_,no_mule_)
   local dbs = {in_memory_db(),
+               lightning_db_factory(name_),
                column_db_factory(name_)}
   if cabinet then
     table.insert(dbs,cabinet_db_factory(name_))
@@ -412,7 +420,7 @@ function test_top_level_factories()
 	assert_equal(nil,factories["beer.ale.brown.newcastle"])
 
 
-    m.process({"beer.ale.mild 20 74857843","beer.ale.mild.bitter 20 74857843","beer.ale.mild.sweet 30 74857843"})
+  m.process({"beer.ale.mild 20 74857843","beer.ale.mild.bitter 20 74857843","beer.ale.mild.sweet 30 74857843"})
 
 	assert(empty_metrics(m.matching_sequences("beer.stout")))
 
@@ -420,7 +428,7 @@ function test_top_level_factories()
 	assert(non_empty_metrics(m.matching_sequences("beer")))
 	assert(non_empty_metrics(m.matching_sequences("beer.ale")))
 	assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
-	assert(string.find(m.latest("beer"),"20,1,74857800"))
+	assert(string.find(m.latest("beer"),"70,3,74857800"))
 
 	m.process("beer.ale.brown.newcastle 98 74857954")
 	assert(m.matching_sequences("beer.ale.brown.newcastle"))
@@ -591,11 +599,11 @@ function test_latest()
 
     m.process("beer.ale.pale 2 3601")
     assert(string.find(m.latest("beer.ale.brown;1m:12h"),"3,1,0"))
-    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamp="latest-90"}),"0,0,0"))
+    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamp="latest-90"}),'"beer.ale.brown;1m:12h": []',1,true))
     assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="3604"}),"2,1,3600"))
     assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10s"}),"2,1,3600"))
     assert_nil(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10m,now"}),"2,1,3600"))
-    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10m"}),"0,0,0"))
+    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10m"}),'"beer.ale.pale;1m:12h": []',1,true))
     assert(string.find(m.latest("beer.ale;1h:30d"),"2,1,3600"))
 
     m.process("beer.ale.pale 7 4")
@@ -611,7 +619,7 @@ function test_latest()
     assert(string.find(g,"[[2,1,3600],[7,1,0]]"))
     m.process("beer.ale.pale 9 64")
     g = m.graph("beer.ale.pale;1m:12h",{timestamp="latest..0"})
-    assert(string.find(g,"[[2,1,3600],[9,1,60],[7,1,0]]"))
+    assert(string.find(g,"[[2,1,3600],[9,1,60],[7,1,0]]",1,true))
 
     m.process("beer.ale.brown 90 4400")
     assert(string.find(m.latest("beer.ale;1h:30d"),"92,2,3600"))
@@ -627,10 +635,11 @@ end
 
 function test_update_only_relevant()
   local function helper(m)
-    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
+    m.configure(table_itr({"beer.ale 60s:12h","beer.stout 3m:1h","beer.wheat 10m:1y"}))
 
     m.process("beer.ale.pale 7 4")
     m.process("beer.ale.brown 6 54")
+
     assert(string.find(m.latest("beer.ale;1m:12h"),"13,2,0"))
 
 
@@ -778,7 +787,6 @@ function test_duplicate_timestamps()
   local m = mule(db)
   m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
   m.process(n_lines(109,io.lines("./tests/fixtures/d_input.mule")))
-  --print(m.dump("Johnston.Morfin",{to_str=true}).get_string())
   for l in string_lines(m.dump("Johnston.Morfin",{to_str=true}).get_string()) do
     if #l>0 then
       assert_equal(4,#split(l," "),l)

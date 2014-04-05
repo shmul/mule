@@ -1,6 +1,8 @@
 module("lightning_mdb",package.seeall)
-local lightningmdb_lib=require "lightningmdb"
+local lightningmdb_lib= require("lightningmdb")
+local pp = require("purepack")
 require "helpers"
+
 
 local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 
@@ -16,7 +18,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     local t = env_:txn_begin(nil,0)
     local rv,err = func_(t)
     if err then
-      loge("txn failed",err)
       t:abort()
       return nil,err
     end
@@ -79,11 +80,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     for _,ed in ipairs(_envs) do
       local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
       if not err then return rv end
+      logw("get",err)
     end
   end
 
 
-  local function out(k)
+  local function del(k)
     if string.find(k,"metadata=",1,true) then
       return txn(_meta,function(t) return t:del(_meta_db,k,nil) end)
     end
@@ -113,10 +115,41 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     return string.format("%04d|%s",p,name_),p,q
   end
 
+  local function pack_node(node_)
+    local seq = node_._seq
+    if seq then
+      node_._slots = seq.slots()
+      node_._seq = nil
+    end
+    local packed = pp.pack(node_)
+    node_._seq = seq
+    node_._slots = nil
+    return packed
+  end
+
+  local function unpack_node(name_,data_)
+    local node = pp.unpack(data_)
+    if not node then
+      return nil
+    end
+    if node._slots then
+      local seq = sparse_sequence(name_,node._slots)
+      node._slots = nil
+      node._seq = seq
+    end
+    return node
+  end
+
   local function internal_get_slot(name_,idx_,offset_)
+    local function no_data()
+      if offset_ then return 0 end
+      return 0,0,0
+    end
     -- the name is used as a key for the metadata
-    local node = p.unpack(get(name_))
-    if not node then return nil end
+    local node = unpack_node(name_,get(name_))
+    if not node then
+      return no_data()
+    end
 
     -- trying to access one past the cdb size is interpreted as
     -- getting the latest index
@@ -126,75 +159,93 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
 
     if node._seq then
       local slot = node._seq.find_by_index(idx_)
-      if slot then
-        if not offset then
-          return slot._timestamp,slot._hits,slot._sum
-        end
-        return (offset==0 and slot._timestamp) or (offset==1 and slot._hits) or (offset==2 and slot._sum)
+      if not slot then
+        return no_data()
       end
+      if not offset_ then
+        return slot._timestamp,slot._hits,slot._sum
+      end
+      return (offset_==0 and slot._timestamp) or (offset_==1 and slot._hits) or (offset_==2 and slot._sum)
     end
 
     local key,p,q = page_key(name_,idx_)
-    local page_data = p.unpack(get(key))
-    return get_slot(page_data,q,offset_)
+    local page_data = pp.unpack(get(key))
+    if page_data then
+      return get_slot(page_data,q,offset_)
+    end
+    return no_data()
   end
 
   local function internal_set_slot(name_,idx_,offset_,timestamp_,hits_,sum_)
+    local function new_page_data()
+      return string.rep(string.char(0),pp.PNS*3*SLOTS_PER_PAGE)
+    end
 
     -- the name is used as a key for the metadata
-    local node = p.unpack(get(name_))
-
+    local node = unpack_node(name_,get(name_))
     if not node then
       -- a new node keeps a sparse_sequence instead of allocating actual pages for the slots
-      local metric,step,period = split_name(name_)
+      local _,step,period = split_name(name_)
       node = { _latest = 0, _seq = sparse_sequence(name_), _size = period/step }
     end
 
-    node._latest = math.max(node._latest,timestamp_)
+    -- trying to access one past the cdb size is interpreted as
+    -- getting the latest index
+    if node._size==idx_ then
+      node._latest = timestamp_ -- this is actually the index of the latest slots
+      put(name_,pack_node(node))
+      return
+    end
 
     if node._seq then
-      node._seq.update(timestamp_,sum_,hits_)
+      node._seq.set(timestamp_,hits_,sum_)
       if #node._seq.slots()==MAX_SLOTS_IN_SPARSE_SEQ then
         -- time to create actual pages
         local slots = node._seq.slots()
-
-        local _,step,period = string.match(name_,"^(.+);(%w+):(%w+)$")
-        for _,s in ipairs(node._seq.slots()) do
+        logi("lightningmdb creating pages",name_)
+        local _,step,period = split_name(name_)
+        node._seq = nil
+        for _,s in ipairs(slots) do
           local i,_ = calculate_idx(s._timestamp,step,period)
           local key,p,q = page_key(name_,i)
-          local page_data = p.unpack(get(key)) or string.rep("%z",p.PNS*3*SLOTS_PER_PAGE)
-          page_data = table.concat(set_slot(page_data,q,s._timestamp,s._hits,s._sum))
-          put(key,p.pack(page_data))
+          local page_data = pp.unpack(get(key)) or new_page_data()
+          local t,u,v,w,x = set_slot(page_data,q,offset_,s._timestamp,s._hits,s._sum)
+          put(key,pp.pack(table.concat({t,u,v,w,x})))
         end
-        node._seq = nil
       end
-      put(name_,p.pack(node))
+      put(name_,pack_node(node))
       return
     end
 
     local key,p,q = page_key(name_,idx_)
-    local page_data = p.unpack(get(key))
+    local page_data = pp.unpack(get(key)) or new_page_data()
 
-    put(name_,p.pack(node))
-    if not page_data then
-      loge("unable to find page_data",key,timestamp_)
-      return
-    end
-    page_data = table.concat(set_slot(page_data,q,timestamp_,hits_,sum_))
-    put(key,p.pack(page_data))
+    local t,u,v,w,x = set_slot(page_data,q,offset_,timestamp_,hits_,sum_)
+    page_data = table.concat({t,u,v,w,x},"")
+    put(key,pp.pack(page_data))
   end
 
+  local function internal_out_slot(name_)
+    local node = unpack_node(name_,get(name_))
+    if node then
+      logi("internal_out_slot - deleting pages",name_)
+      for idx=0,node._size-1 do
+        local key,p,q = page_key(name_,idx)
+        del(key)
+      end
+    end
+    logi("internal_out_slot - deleting node",name_)
+    del(name_)
+  end
 
   local function matching_keys(prefix_,level_,meta_)
-
-    -- we can't use coroutines due to the dreaded "attempt to yield across metamethod/C-call boundary" error
     local function helper(env,db)
-      local t = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
+      local t,err = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
       local cur = t:cursor_open(db)
       local find = string.find
       local k,v = cur:get(prefix_,lightningmdb.MDB_SET_RANGE)
       repeat
-        if k and find(k,prefix_,1,true) and bounded_by_level(k,prefix_,level_ or 1) then
+        if k and find(k,prefix_,1,true) and bounded_by_level(k,prefix_,level_) then
           coroutine.yield(k,v)
         end
         k,v = cur:get(k,lightningmdb.MDB_NEXT)
@@ -229,10 +280,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
   local self = {
     get = get,
     put = put,
-    out = out,
+    del = del,
     search = search,
     set_slot = internal_set_slot,
     get_slot = internal_get_slot,
+    out = internal_out_slot,
     matching_keys = matching_keys,
     close = close,
     backup = backup,
@@ -242,6 +294,21 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
       return names_
     end
   }
+
+  self.sequence_storage = function(name_,numslots_)
+    return {
+      get_slot = function(idx_,offset_)
+        return self.get_slot(name_,idx_,offset_)
+      end,
+      set_slot = function(idx_,offset_,a,b,c)
+        return self.set_slot(name_,idx_,offset_,a,b,c)
+      end,
+      save = function() -- nop
+      end,
+      cache = function(name_) return self.cache(name_) end,
+      reset = function()  end,
+           }
+  end
 
   return self
 end

@@ -219,5 +219,5 @@ local function unpack_helper(str_,i,visited_)
 end
 
 function unpack(str_)
-  return unpack_helper(str_,1,{})
+  return str_ and unpack_helper(str_,1,{})
 end
