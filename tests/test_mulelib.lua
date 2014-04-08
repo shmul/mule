@@ -5,6 +5,7 @@ require "lunit"
 require "tc_store"
 require "memory_store"
 local cdb = require "column_db"
+local mdb = require "lightning_mdb"
 
 module( "test_mulelib", lunit.testcase,package.seeall )
 
@@ -20,8 +21,16 @@ local function column_db_factory(name_)
   return cdb.column_db(name_.."_cdb")
 end
 
+local function lightning_db_factory(name_)
+  os.execute("rm -rf "..name_.."_mdb")
+  os.execute("mkdir -p "..name_.."_mdb")
+  return mdb.lightning_mdb(name_.."_mdb")
+end
+
 local function for_each_db(name_,func_,no_mule_)
   local dbs = {in_memory_db(),
+               lightning_db_factory(name_),
+               --cabinet_db_factory(name_),
                column_db_factory(name_)}
   if cabinet then
     table.insert(dbs,cabinet_db_factory(name_))
@@ -38,10 +47,6 @@ local function insert_all_args(tbl_)
       table.insert(tbl_,v)
     end
          end
-end
-
-local function print_all_args(...)
-  print(...)
 end
 
 function test_parse_time_unit()
@@ -121,21 +126,21 @@ function helper_time_sequence(db_)
   assert_equal(5,seq.slot_index(359))
   assert_equal(6,seq.slot_index(360))
 
-  seq.update(0,10)
+  seq.update(0,1,10)
   assert_equal(10,seq.slot(0)._sum)
   assert_equal(10,seq.slot(seq.latest())._sum)
-  seq.update(1,17,1)
+  seq.update(1,1,17)
   assert_equal(27,seq.slot(0)._sum)
   assert_equal(2,seq.slot(0)._hits)
   assert_equal(27,seq.slot(seq.latest())._sum)
-  seq.update(3660,3,1)
+  seq.update(3660,1,3)
   assert_equal(3,seq.slot(1)._sum)
   assert_equal(3,seq.slot(seq.latest())._sum)
-  seq.update(60,7,1) -- this is in the past and should be discarded
+  seq.update(60,1,7) -- this is in the past and should be discarded
   assert_equal(3,seq.slot(1)._sum)
   assert_equal(1,seq.slot(1)._hits)
   assert_equal(3,seq.slot(seq.latest())._sum)
-  seq.update(7260,89,1)
+  seq.update(7260,1,89)
   assert_equal(89,seq.slot(1)._sum)
   assert_equal(1,seq.slot(1)._hits)
   assert_equal(89,seq.slot(seq.latest())._sum)
@@ -175,11 +180,11 @@ function helper_time_sequence(db_)
 	assert_equal(v,tbl1[i],i)
   end
 
-  seq.update(10799,43,1)
+  seq.update(10799,1,43)
   assert_equal(43,seq.slot(59)._sum)
   assert_equal(1,seq.slot(59)._hits)
 
-  seq.update(10800,99,1)
+  seq.update(10800,1,99)
   assert_equal(99,seq.slot(0)._sum)
   assert_equal(1,seq.slot(0)._hits)
 
@@ -416,7 +421,7 @@ function test_top_level_factories()
 	assert_equal(nil,factories["beer.ale.brown.newcastle"])
 
 
-    m.process({"beer.ale.mild 20 74857843","beer.ale.mild.bitter 20 74857843","beer.ale.mild.sweet 30 74857843"})
+  m.process({"beer.ale.mild 20 74857843","beer.ale.mild.bitter 20 74857843","beer.ale.mild.sweet 30 74857843"})
 
 	assert(empty_metrics(m.matching_sequences("beer.stout")))
 
@@ -424,7 +429,7 @@ function test_top_level_factories()
 	assert(non_empty_metrics(m.matching_sequences("beer")))
 	assert(non_empty_metrics(m.matching_sequences("beer.ale")))
 	assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
-	assert(string.find(m.latest("beer"),"20,1,74857800"))
+	assert(string.find(m.latest("beer"),"70,3,74857800"))
 
 	m.process("beer.ale.brown.newcastle 98 74857954")
 	assert(m.matching_sequences("beer.ale.brown.newcastle"))
@@ -581,10 +586,10 @@ function test_latest()
 
     m.process("beer.ale.brown 3 3")
     assert(string.find(m.latest("beer.ale.brown;1m:12h"),"3,1,0"))
-    assert(string.find(m.graph("beer.ale.brown;1m:12h","latest"),"3,1,0"))
+    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamp="latest"}),"3,1,0"))
     assert(string.find(m.slot("beer.ale.brown;1m:12h",{timestamp="1"}),"3,1,0"))
     assert(string.find(m.latest("beer.ale.pale;1m:12h"),'"data": {}'))
-    assert(string.find(m.graph("beer.ale.pale;1m:12h","latest"),'"data": {"beer.ale.pale;1m:12h": []',1,true))
+    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest"}),'"data": {}',1,true))
     assert(string.find(m.latest("beer.ale.pale;1h:30d"),'"data": {}'))
 
 
@@ -595,11 +600,11 @@ function test_latest()
 
     m.process("beer.ale.pale 2 3601")
     assert(string.find(m.latest("beer.ale.brown;1m:12h"),"3,1,0"))
-    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamp="latest-90"}),"0,0,0"))
+    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamp="latest-90"}),'"beer.ale.brown;1m:12h": []',1,true))
     assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="3604"}),"2,1,3600"))
     assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10s"}),"2,1,3600"))
     assert_nil(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10m,now"}),"2,1,3600"))
-    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10m"}),"0,0,0"))
+    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10m"}),'"beer.ale.pale;1m:12h": []',1,true))
     assert(string.find(m.latest("beer.ale;1h:30d"),"2,1,3600"))
 
     m.process("beer.ale.pale 7 4")
@@ -615,7 +620,7 @@ function test_latest()
     assert(string.find(g,"[[2,1,3600],[7,1,0]]"))
     m.process("beer.ale.pale 9 64")
     g = m.graph("beer.ale.pale;1m:12h",{timestamp="latest..0"})
-    assert(string.find(g,"[[2,1,3600],[9,1,60],[7,1,0]]"))
+    assert(string.find(g,"[[2,1,3600],[9,1,60],[7,1,0]]",1,true))
 
     m.process("beer.ale.brown 90 4400")
     assert(string.find(m.latest("beer.ale;1h:30d"),"92,2,3600"))
@@ -631,10 +636,11 @@ end
 
 function test_update_only_relevant()
   local function helper(m)
-    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
+    m.configure(table_itr({"beer.ale 60s:12h","beer.stout 3m:1h","beer.wheat 10m:1y"}))
 
     m.process("beer.ale.pale 7 4")
     m.process("beer.ale.brown 6 54")
+
     assert(string.find(m.latest("beer.ale;1m:12h"),"13,2,0"))
 
 
@@ -678,9 +684,8 @@ function test_metric_one_level_children()
     m.process("beer.ale 132 121")
 
     local tests = {
-      {"beer.ale.brown;1h:30d",2},
-      {"beer.ale;1m:12h",4},
-      {"beer;1m:12h",1},
+      {"beer.ale.brown",4},
+      {"beer.ale",8},
       {"beer",2},
       {"",0},
       {"foo",0},
@@ -688,7 +693,7 @@ function test_metric_one_level_children()
 
     for j,t in ipairs(tests) do
       local children = 0
-      for i in one_level_children(db,t[1]) do
+      for i in db.matching_keys(t[1],1) do
         children = children + 1
       end
       assert_equal(t[2],children,j)
@@ -783,7 +788,6 @@ function test_duplicate_timestamps()
   local m = mule(db)
   m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
   m.process(n_lines(109,io.lines("./tests/fixtures/d_input.mule")))
-  --print(m.dump("Johnston.Morfin",{to_str=true}).get_string())
   for l in string_lines(m.dump("Johnston.Morfin",{to_str=true}).get_string()) do
     if #l>0 then
       assert_equal(4,#split(l," "),l)
@@ -801,6 +805,36 @@ function test_dashes_in_keys()
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
   m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
+end
+
+function test_stacked()
+  local db = column_db_factory("temp/rank_output")
+  local m = mule(db)
+  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+
+  local level2 = m.graph("Johnston.Morfin",{level=2})
+  local level1 = m.graph("Johnston.Morfin",{level=1})
+  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+  assert(string.find(level2,"Johnston.Morfin.Jamal;1s:1m",1,true))
+  assert_nil(string.find(level1,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+  assert(string.find(level1,"Johnston.Morfin.Jamal;1s:1m",1,true))
+  assert(string.find(level1,"Johnston.Morfin.Jamal;1m:1h",1,true))
+
+  level2 = m.graph("Johnston.Morfin;1m:1h",{level=2})
+  level1 = m.graph("Johnston.Morfin;1m:1h",{level=1})
+
+  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
+  assert(string.find(level2,"Johnston.Morfin.Jamal;1m:1h",1,true))
+  assert_nil(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
+  assert(string.find(level1,"Johnston.Morfin.Jamal;1m:1h",1,true))
+  assert_nil(string.find(level1,"Johnston.Morfin.Jamal;1h:12h",1,true))
+
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{level=2,count=1}))
+
 end
 
 function test_rank_output()

@@ -83,7 +83,7 @@ function sequence(db_,name_)
   _seq_storage = db_.sequence_storage(name_,_period/_step)
 
 
-  local function update(timestamp_,sum_,hits_,replace_)
+  local function update(timestamp_,hits_,sum_,replace_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
     -- if this value is way back (but still fits in this slot)
     -- we discard it
@@ -112,7 +112,7 @@ function sequence(db_,name_)
       hits,sum = hits_ or 1,sum_
     end
     set_slot(idx,adjusted_timestamp,hits,sum)
-    local lt =  latest_timestamp()
+    local lt = latest_timestamp()
     if adjusted_timestamp>lt then
       latest(idx)
     end
@@ -126,10 +126,10 @@ function sequence(db_,name_)
     local j = 1
     local match = string.match
     while j<#slots_ do
-      local sum,hits,timestamp = slots_[j],tonumber(slots_[j+1]),tonumber(slots_[j+2])
+      local sum,hits,timestamp = tonumber(slots_[j]),tonumber(slots_[j+1]),tonumber(slots_[j+2])
       j = j + 3
       local replace,s = match(sum,"(=?)(%d+)")
-      update(timestamp,s,hits,replace)
+      update(timestamp,hits,tonumber(s),replace)
     end
 
     _seq_storage.save(_name)
@@ -164,11 +164,6 @@ function sequence(db_,name_)
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
-        -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
-        if sum>=1380000000 or hits>=1380000000 then
-          sum = 0
-          hits = 0
-        end
         slot_cb_(sum,hits,timestamp)
       end
     end
@@ -180,7 +175,6 @@ function sequence(db_,name_)
     local latest_ts = latest_timestamp()
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
-
     if opts_.all_slots then
       if not opts_.dont_cache then
         _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
@@ -197,7 +191,7 @@ function sequence(db_,name_)
       for _,t in ipairs(opts_.timestamps) do
         if t=="*" then
           for s in indices(opts_.sorted) do
-            serialize_slot(s,nil,slot_cb_)
+            serialize_slot(s,true,slot_cb_)
           end
         else
           local ts = to_timestamp(t,now,latest_ts)
@@ -209,7 +203,7 @@ function sequence(db_,name_)
               local idx,_ = calculate_idx(t,_step,_period)
               local its = get_timestamp(idx)
               if t-its<_period and (not min_timestamp or min_timestamp<its) then
-                serialize_slot(idx,nil,slot_cb_)
+                serialize_slot(idx,true,slot_cb_)
               end
             end
           end
@@ -252,45 +246,6 @@ function sequence(db_,name_)
          }
 end
 
--- sparse sequences are expected to have very few (usually one) non empty slots, so we use
--- a plain (non sorted) array
-
-function sparse_sequence(name_)
-  local _metric,_step,_period
-  local _slots = {}
-
-  _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
-  _step = parse_time_unit(_step)
-  _period = parse_time_unit(_period)
-
-  local function find_slot(timestamp_)
-    for i,s in ipairs(_slots) do
-      if s._timestamp==timestamp_ then return s end
-    end
-    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
-    return _slots[#_slots]
-  end
-
-  local function update(timestamp_,sum_,hits_,replace_)
-    local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
-    -- here, unlike the regular sequence, we keep all the timestamps. The real sequence
-    -- will discard stale ones
-    local slot = find_slot(adjusted_timestamp)
-    if replace_ then
-      slot._sum = sum_
-      slot._hits = nil -- we'll use this as an indication for replace
-    else
-      slot._sum = slot._sum+sum_
-      slot._hits = slot._hits+hits_
-    end
-    return adjusted_timestamp,slot._sum
-  end
-
-  return {
-    update = update,
-    slots = function() return _slots end
-         }
-end
 
 local function sequences_for_prefix(db_,prefix_,retention_pair_)
   return coroutine.wrap(
@@ -306,39 +261,13 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_)
     end)
 end
 
-function one_level_children(db_,name_)
-  -- we are intersted only in
-  -- 1) m;ts
-  -- 2) child metrics of the format m.sub-key;ts (where sub-key contains no dots)
-  return coroutine.wrap(
-    function()
-      local prefix,rp = string.match(name_,"(.-);(.+)")
-      if not prefix or not rp then
-        prefix = name_
-        rp = ""
-      end
-      local find = string.find
-      local minimal_length = #prefix+#rp+1
-      for name in db_.matching_keys(prefix,1) do
-        if #name>=minimal_length and find(name,rp,1,true) then
-          coroutine.yield(sequence(db_,name))
-        end
-      end
-    end)
-end
-
-function immediate_metrics(db_,name_)
+function immediate_metrics(db_,name_,level_)
   -- if the name_ has th retention pair in it, we just return it
   -- otherwise we provide all the retention pairs
   return coroutine.wrap(
     function()
-      local find = string.find
-      if find(name_,";",1,true) then
-        coroutine.yield(sequence(db_,name_))
-      else
-        for name in db_.matching_keys(name_,0) do
-          coroutine.yield(sequence(db_,name))
-        end
+      for name in db_.matching_keys(name_,0) do
+        coroutine.yield(sequence(db_,name))
       end
     end)
 end
@@ -578,23 +507,27 @@ function mule(db_)
     local alerts = is_true(options_.alerts)
     local names = {}
     local level = options_.level and tonumber(options_.level)
+    local insert = table.insert
+    local now = time_now()
+    local find = string.find
 
     col.head()
     for m in split_helper(resource_,"/") do
       if m=="*" then m = "" end
       if level then
         local ranked_children = {}
-        local insert = table.insert
-        local now = time_now()
-        for name in db_.matching_keys(m,level) do
-          local seq = sequence(db_,name)
-          -- we call update_rank to get adjusted ranks (in case the previous update was
-          -- long ago). This is a readonly operation
-          local hint = _hints[seq.name()] or {}
-          local _,seq_rank = update_rank(
-            hint._rank_ts or 0 ,hint._rank or 0,
-            normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
-          insert(ranked_children,{seq,seq_rank})
+        local metric,rp = string.match(m,"^([^;]+)(;%w+:%w+)$")
+        for name in db_.matching_keys(metric or m,level) do
+          if not rp or find(name,rp,1,true) then
+            local seq = sequence(db_,name)
+            -- we call update_rank to get adjusted ranks (in case the previous update was
+            -- long ago). This is a readonly operation
+            local hint = _hints[seq.name()] or {}
+            local _,seq_rank = update_rank(
+              hint._rank_ts or 0 ,hint._rank or 0,
+              normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
+            insert(ranked_children,{seq,seq_rank})
+          end
         end
         table.sort(ranked_children,function(a,b) return a[2]>b[2] end)
         sequences_generator = function()
@@ -607,7 +540,7 @@ function mule(db_)
         end
       end
 
-      for seq in sequences_generator(db_,m) do
+      for seq in sequences_generator(db_,m,level) do
         if alerts then
           names[#names+1] = seq.name()
         end
@@ -834,13 +767,14 @@ function mule(db_)
     local replace,sum = string.match(sum_ or "","(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
+    sum = tonumber(sum)
     if not metric_ or not sum_ or not timestamp_ then
       logw("update_line - missing params",metric_,sum_,timestamp_)
       return
     end
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
-      local adjusted_timestamp,sum = seq.update(timestamp_,sum,1,replace)
+      local adjusted_timestamp,sum = seq.update(timestamp_,1,sum,replace)
       if m=="tagger.events_types.carbon_copy_submitted" then
         logd("per sequence",n,sum,adjusted_timestamp)
       end
@@ -945,7 +879,7 @@ function mule(db_)
       local seq = sequence(_db,n)
       local s = _updated_sequences[n]
       for j,sl in ipairs(s.slots()) do
-        local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._sum,sl._hits or 1,
+        local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
                                                   sl._hits==nil)
         if adjusted_timestamp and sum then
           _hints[n] = _hints[n] or {}
