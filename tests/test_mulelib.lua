@@ -372,6 +372,15 @@ function test_metric_hierarchy()
   assert_equal(nil,ms())
 end
 
+function test_export_configuration()
+  local db = in_memory_db()
+  local m = mule(db)
+  m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
+
+  assert(string.find(m.export_configuration(),'"beer.ale": ["1m:12h" ,"1h:30d" ]',1,true))
+  assert(string.find(m.export_configuration(),'"beer.wheat": ["10m:1y" ]',1,true))
+end
+
 function test_process_in_memory()
   local db = in_memory_db()
   local m = mule(db)

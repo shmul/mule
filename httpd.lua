@@ -133,6 +133,9 @@ local function config_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="POST" then
     logd("calling",handler_)
     return mule_.configure(lines_without_comments(string_lines(content_)))
+  elseif req_.verb=="GET" then
+    logd("calling",handler_)
+    return mule_.export_configuration()
   end
   return 405
 end

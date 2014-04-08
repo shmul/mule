@@ -740,6 +740,26 @@ function mule(db_)
     return table_size(_factories)
   end
 
+  local function export_configuration()
+    local str = strout("")
+    local format = string.format
+    local col = collectionout(str,"{","}")
+
+    col.head()
+    for fm,rps in pairs(_factories) do
+      local col1 = collectionout(str,"[","]\n")
+      col.elem(format("\"%s\": ",fm))
+      col1.head()
+      for _,v in ipairs(rps) do
+        col1.elem(format("\"%s:%s\" ",secs_to_time_unit(v[1]),secs_to_time_unit(v[2])))
+      end
+      col1.tail()
+    end
+    col.tail()
+    logi("export_configuration",table_size(_factories))
+    return wrap_json(str)
+  end
+
 
 
   local function load()
@@ -958,6 +978,7 @@ function mule(db_)
 
   return {
     configure = configure,
+    export_configuration = export_configuration,
     matching_sequences = matching_sequences,
     get_factories = function() return _factories end,
     reset = reset,

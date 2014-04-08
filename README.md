@@ -93,6 +93,9 @@ To update mule's configuration POST a configuration file to
 
     http://muleserver/config
 
+To read (export) the configuration GET
+
+    http://muleserver/config
 
 #### Graphs
 
