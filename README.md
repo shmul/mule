@@ -99,13 +99,13 @@ To update mule's configuration POST a configuration file to
 ##### Retrieve graph data
 Use a GET request
 
-    http://muleserver/graph/<metric-or-name>?<timestamps>|<deep>|<alerts>
+    http://muleserver/graph/<metric-or-name>?<timestamps>|<level>|<alerts>
 
 * metric-or-name is a metric or a name (i.e. including the retention data). If the metric is used then all the graphs for the metric will be returned, i.e. the graphs for all the names for which the metric is a prefix.
 * query string parameters are
   * `timestamps` - the graph data will be restricted to the given timestamps. Timestamps can be a comma separated list of seconds or simple arithmetic expressions using the predefined variables `now` (or `n`) and `latest` (or `l`), like `l-10s`, `now-20d` .
   * `alerts` - if set to true, the alerts status will be added to the names for which alerts are defined.
-  * `deep` - if set to true (which can be `true,yes,1`) then the graphs data for the metric children (one level deep) will also be returned. This may be compbined with timestamps. Defaults to `false`. As this option is popular, a syntactic sugar for it exists in the form of a url
+  * `level` - an optional number of sub key levels to retrieve. Each dot counts for one level. Default level is 1. If no retention pair is provided all the sub keys and their retention pairs are returned. If a retention pair is provided, then only the sub keys with the same retention pairs are returned.
   * `filter` - can be set to `now` or `latest`. If `now`, only results in the time period of `now-period`..`now` will be returned. Similarly with `latest` which filters according to the latest time at which the sequence was updated.
 
     http://muleserver/graph/<metric-or-name>?<timestamps>
@@ -145,13 +145,12 @@ The contents of the file are lines in the format described in the *input* sectio
 #### Metrics hierarchy
 The metrics and names create a hierarchy which can be retrieved by sending a GET request to
 
-    http://muleserver/key/<metric>?<deep>
+    http://muleserver/key/<metric>?<level>
 
 * `metric` - Returns all the names for which metric is a prefix.
-* `deep` - if set to true (which can be `true,yes,1`) then all the names which are prefixe by `metric` will be returned. Otherwise only the immediate children are returned. Defaults to `false` .
-* `level` - an optional number of sub key levels to retrieve. Each dot counts for one level. Default level is 1
+* `level` - an optional number of sub key levels to retrieve. Each dot counts for one level. Default level is 1. If no retention pair is provided all the sub keys and their retention pairs are returned. If a retention pair is provided, then only the sub keys with the same retention pairs are returned.
 
-Example output (`deep=true`)
+Example output (`level=1`)
 
 ```json
 mule_keys({"version": 3,

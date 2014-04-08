@@ -586,10 +586,10 @@ function test_latest()
 
     m.process("beer.ale.brown 3 3")
     assert(string.find(m.latest("beer.ale.brown;1m:12h"),"3,1,0"))
-    assert(string.find(m.graph("beer.ale.brown;1m:12h","latest"),"3,1,0"))
+    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamp="latest"}),"3,1,0"))
     assert(string.find(m.slot("beer.ale.brown;1m:12h",{timestamp="1"}),"3,1,0"))
     assert(string.find(m.latest("beer.ale.pale;1m:12h"),'"data": {}'))
-    assert(string.find(m.graph("beer.ale.pale;1m:12h","latest"),'"data": {"beer.ale.pale;1m:12h": []',1,true))
+    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest"}),'"data": {}',1,true))
     assert(string.find(m.latest("beer.ale.pale;1h:30d"),'"data": {}'))
 
 
@@ -805,6 +805,36 @@ function test_dashes_in_keys()
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
   m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
   assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
+end
+
+function test_stacked()
+  local db = column_db_factory("temp/rank_output")
+  local m = mule(db)
+  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+
+  local level2 = m.graph("Johnston.Morfin",{level=2})
+  local level1 = m.graph("Johnston.Morfin",{level=1})
+  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+  assert(string.find(level2,"Johnston.Morfin.Jamal;1s:1m",1,true))
+  assert_nil(string.find(level1,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+  assert(string.find(level1,"Johnston.Morfin.Jamal;1s:1m",1,true))
+  assert(string.find(level1,"Johnston.Morfin.Jamal;1m:1h",1,true))
+
+  level2 = m.graph("Johnston.Morfin;1m:1h",{level=2})
+  level1 = m.graph("Johnston.Morfin;1m:1h",{level=1})
+
+  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
+  assert(string.find(level2,"Johnston.Morfin.Jamal;1m:1h",1,true))
+  assert_nil(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
+  assert(string.find(level1,"Johnston.Morfin.Jamal;1m:1h",1,true))
+  assert_nil(string.find(level1,"Johnston.Morfin.Jamal;1h:12h",1,true))
+
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
+               m.graph("Johnston.Morfin.Jamal",{level=2,count=1}))
+
 end
 
 function test_rank_output()

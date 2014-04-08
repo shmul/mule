@@ -261,18 +261,13 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_)
     end)
 end
 
-function immediate_metrics(db_,name_)
+function immediate_metrics(db_,name_,level_)
   -- if the name_ has th retention pair in it, we just return it
   -- otherwise we provide all the retention pairs
   return coroutine.wrap(
     function()
-      local find = string.find
-      if find(name_,";",1,true) then
-        coroutine.yield(sequence(db_,name_))
-      else
-        for name in db_.matching_keys(name_,0) do
-          coroutine.yield(sequence(db_,name))
-        end
+      for name in db_.matching_keys(name_,0) do
+        coroutine.yield(sequence(db_,name))
       end
     end)
 end
@@ -512,23 +507,27 @@ function mule(db_)
     local alerts = is_true(options_.alerts)
     local names = {}
     local level = options_.level and tonumber(options_.level)
+    local insert = table.insert
+    local now = time_now()
+    local find = string.find
 
     col.head()
     for m in split_helper(resource_,"/") do
       if m=="*" then m = "" end
       if level then
         local ranked_children = {}
-        local insert = table.insert
-        local now = time_now()
-        for name in db_.matching_keys(m,level) do
-          local seq = sequence(db_,name)
-          -- we call update_rank to get adjusted ranks (in case the previous update was
-          -- long ago). This is a readonly operation
-          local hint = _hints[seq.name()] or {}
-          local _,seq_rank = update_rank(
-            hint._rank_ts or 0 ,hint._rank or 0,
-            normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
-          insert(ranked_children,{seq,seq_rank})
+        local metric,rp = string.match(m,"^([^;]+)(;%w+:%w+)$")
+        for name in db_.matching_keys(metric or m,level) do
+          if not rp or find(name,rp,1,true) then
+            local seq = sequence(db_,name)
+            -- we call update_rank to get adjusted ranks (in case the previous update was
+            -- long ago). This is a readonly operation
+            local hint = _hints[seq.name()] or {}
+            local _,seq_rank = update_rank(
+              hint._rank_ts or 0 ,hint._rank or 0,
+              normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
+            insert(ranked_children,{seq,seq_rank})
+          end
         end
         table.sort(ranked_children,function(a,b) return a[2]>b[2] end)
         sequences_generator = function()
@@ -541,7 +540,7 @@ function mule(db_)
         end
       end
 
-      for seq in sequences_generator(db_,m) do
+      for seq in sequences_generator(db_,m,level) do
         if alerts then
           names[#names+1] = seq.name()
         end
