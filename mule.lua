@@ -2,7 +2,7 @@ require "helpers"
 require "mulelib"
 require "tc_store"
 local c = require "column_db"
-local l = require "lightning_mdb"
+local _,l = pcall(require,"lightning_mdb")
 require "httpd"
 local posix_exists,posix = pcall(require,'posix')
 
