@@ -163,6 +163,12 @@ function sequence(db_,name_)
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
+        -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
+        if sum>=1380000000 or hits>=1380000000 then
+          sum = 0
+          hits = 0
+        end
+
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
         slot_cb_(sum,hits,timestamp)
       end
