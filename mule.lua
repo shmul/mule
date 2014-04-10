@@ -126,7 +126,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
                         minute_dir = cm
                         os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
                       end
-                      new_name = string.format("%s/%s/%s",processed,minute_dir,posix.basename(file))
+                      new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix.basename(file)),"//","/")
                       os.rename(file,new_name)
                       logi("incoming_queue file processed",new_name)
                   end)
