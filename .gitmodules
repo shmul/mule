@@ -4,3 +4,6 @@
 [submodule "muleview/d3"]
 	path = muleview/d3
 	url = https://github.com/mbostock/d3.git
+[submodule "profi"]
+	path = profi
+	url = https://gist.github.com/2838755.git
