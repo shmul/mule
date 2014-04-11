@@ -165,6 +165,7 @@ function sequence(db_,name_)
       local timestamp,hits,sum = at(idx_)
         -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
         if sum>=1380000000 or hits>=1380000000 then
+          loge("serialize_slot - out of band values",_name,timestamp,hits,sum)
           sum = 0
           hits = 0
         end
