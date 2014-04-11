@@ -5,6 +5,7 @@ local c = require "column_db"
 local _,l = pcall(require,"lightning_mdb")
 require "httpd"
 local posix_exists,posix = pcall(require,'posix')
+local p = require "purepack"
 
 pcall(require, "profiler")
 
@@ -31,11 +32,14 @@ local function guess_db(db_path_,readonly_)
   logd("guess_db",db_path_)
   -- strip a trailing / if it exists
   db_path_ = strip_slash(db_path_)
-  if string.find(db_path_,"_mdb") then
+  if string.find(db_path_,"_mdb$") then
+    p.set_pack_lib("lpack")
     return l.lightning_mdb(db_path_,readonly_)
   elseif string.find(db_path_,"_cdb$") then
+    p.set_pack_lib("bits")
     return c.column_db(db_path_,readonly_)
   elseif string.find(db_path_,cabinet.suffix.."$") then
+    p.set_pack_lib("bits")
     return cabinet_db(db_path_,readonly_)
   end
   loge("can't guess db",db_path_)

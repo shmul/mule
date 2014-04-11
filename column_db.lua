@@ -317,11 +317,11 @@ local tr = require("trie")
                                  cached[idx_+1] = {a,b,c}
                                end
 
-                               local t,u,v,w,x = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
+                               local t,u,v = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
                                if offset_ then
                                  cdb_.write(sid_,idx_,t..u..v)
                                else
-                                 cdb_.write(sid_,idx_,u..v..w)
+                                 cdb_.write(sid_,idx_,t..u..v)
                                end
 
                                -- save all the files every SAVE_PERIOD

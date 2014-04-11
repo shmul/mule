@@ -6,22 +6,27 @@ require "tc_store"
 require "memory_store"
 local cdb = require "column_db"
 local mdb = require "lightning_mdb"
+local p = require "purepack"
 
 module( "test_mulelib", lunit.testcase,package.seeall )
 
 
 local function cabinet_db_factory(name_)
+  p.set_pack_lib("bits")
+
   os.remove(name_..cabinet.suffix)
   return cabinet_db(name_..cabinet.suffix)
 end
 
 local function column_db_factory(name_)
+  p.set_pack_lib("bits")
   os.execute("rm -rf "..name_.."_cdb")
   os.execute("mkdir -p "..name_.."_cdb")
   return cdb.column_db(name_.."_cdb")
 end
 
 local function lightning_db_factory(name_)
+  p.set_pack_lib("lpack")
   os.execute("rm -rf "..name_.."_mdb")
   os.execute("mkdir -p "..name_.."_mdb")
   return mdb.lightning_mdb(name_.."_mdb")

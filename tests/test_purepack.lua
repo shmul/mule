@@ -3,6 +3,7 @@ require "tests.strict"
 require "helpers"
 
 module( "test_purepack", lunit.testcase,package.seeall )
+p.set_pack_lib("purepack")
 
 local function upp(obj_)
   return p.unpack(p.pack(obj_))
@@ -76,6 +77,16 @@ function test_binary()
   local tests = {0, 10, 8, 256, 65536, 16777216,math.pow(2,31)-1}--,math.pow(2,48)-1}
   for i,v in ipairs(tests) do
     assert_equal(v,p.from_binary(p.to_binary(v)),i)
+  end
+end
+
+function test_binary3()
+  local tests = {{0, 10, 8}, {256, 65536, 16777216}}
+  for i,v in ipairs(tests) do
+    local a,b,c = p.from_binary3(p.to_binary3(unpack(v)))
+    assert_equal(v[1],a,i)
+    assert_equal(v[2],b,i)
+    assert_equal(v[3],c,i)
   end
 end
 

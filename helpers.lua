@@ -591,7 +591,8 @@ function get_slot(data_,idx_,offset_)
     return fromb(data_,i)
   end
   local i = 1+(idx_*size*3)
-  return fromb(data_,i),fromb(data_,i+size),fromb(data_,i+size*2)
+  return pp.from_binary3(data_,i)
+--  return fromb(data_,i),fromb(data_,i+size),fromb(data_,i+size*2)
 end
 
 
@@ -604,7 +605,7 @@ function set_slot(data_,idx_,offset_,a,b,c)
     return sub(data_,1,i-1),tob(a),sub(data_,i+size)
   end
   local i = 1+(idx_*size*3)
-  return sub(data_,1,i-1),tob(a),tob(b),tob(c),sub(data_,i+size*3)
+  return sub(data_,1,i-1),pp.to_binary3(a,b,c),sub(data_,i+size*3)
 end
 
 function printf(format_,...)
