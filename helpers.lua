@@ -830,3 +830,9 @@ function sparse_sequence(name_,slots_)
     slots = function() return _slots end
          }
 end
+
+function count_dots(string_)
+  local dots = 0
+  string.gsub(string_,"%.",function() dots = dots + 1 end)
+  return dots
+end

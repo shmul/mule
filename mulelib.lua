@@ -526,6 +526,7 @@ function mule(db_)
         local metric,rp = string.match(m,"^([^;]+)(;%w+:%w+)$")
         for name in db_.matching_keys(metric or m,level) do
           if not rp or find(name,rp,1,true) then
+            local name_level = count_dots(name)
             local seq = sequence(db_,name)
             -- we call update_rank to get adjusted ranks (in case the previous update was
             -- long ago). This is a readonly operation
@@ -533,10 +534,10 @@ function mule(db_)
             local _,seq_rank = update_rank(
               hint._rank_ts or 0 ,hint._rank or 0,
               normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
-            insert(ranked_children,{seq,seq_rank})
+            insert(ranked_children,{seq,seq_rank,name_level})
           end
         end
-        table.sort(ranked_children,function(a,b) return a[2]>b[2] end)
+        table.sort(ranked_children,function(a,b) return a[3]<b[3] or (a[3]==b[3] and a[2]>b[2]) end)
         sequences_generator = function()
           return coroutine.wrap(
             function()

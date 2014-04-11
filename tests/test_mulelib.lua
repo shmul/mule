@@ -834,6 +834,7 @@ function test_stacked()
   level2 = m.graph("Johnston.Morfin;1m:1h",{level=2})
   level1 = m.graph("Johnston.Morfin;1m:1h",{level=1})
 
+
   assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
   assert(string.find(level2,"Johnston.Morfin.Jamal;1m:1h",1,true))
   assert_nil(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
@@ -844,6 +845,15 @@ function test_stacked()
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
                m.graph("Johnston.Morfin.Jamal",{level=2,count=1}))
 
+  local level0 = m.graph("Johnston.Morfin.Jamal;1m:1h",{level=0})
+  assert(string.find(level0,"Johnston.Morfin.Jamal;1m:1h",1,true))
+  assert_nil(string.find(level0,"Johnston.Morfin.Jamal.",1,true))
+
+  level0 = m.graph("Johnston.Morfin.Jamal",{level=0})
+  assert(string.find(level0,"Johnston.Morfin.Jamal;1m:1h",1,true))
+  assert(string.find(level0,"Johnston.Morfin.Jamal;1h:12h",1,true))
+  assert(string.find(level0,"Johnston.Morfin.Jamal;1s:1m",1,true))
+  assert_nil(string.find(level0,"Johnston.Morfin.Jamal.",1,true))
 end
 
 function test_rank_output()
@@ -856,7 +866,7 @@ function test_rank_output()
                m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
                m.graph("Johnston.Morfin.Jamal",{level=2,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[5,1,0]]\n}\n}',m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal;1m:1h": [[5,1,0]]\n}\n}',m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
 end
 
 
@@ -888,20 +898,20 @@ function test_caching()
   m.graph("Johnston.Morfin.Jamal.Marcela",{level=1,count=1})
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
                m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[5,1,0]]\n}\n}',
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal;1m:1h": [[5,1,0]]\n}\n}',
                m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n}\n}',
                m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[10,2,0]]\n}\n}',
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n,"Johnston.Morfin.Jamal;1m:1h": [[10,2,0]]\n}\n}',
                m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
   MAX_CACHE_SIZE = 1
   m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
   m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
   assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n}\n}',
                m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n,"Johnston.Morfin.Jamal.Marcela;1m:1h": [[15,3,0]]\n}\n}',
+  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n,"Johnston.Morfin.Jamal;1m:1h": [[15,3,0]]\n}\n}',
                m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
 end
 
