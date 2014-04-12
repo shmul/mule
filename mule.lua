@@ -264,7 +264,7 @@ function main(opts,out_)
     writable_mule(function(m)
                     for i,f in ipairs(opts["rest"]) do
                       logi("processing",f)
-                      local rv = m.process(f,(i%10)==0) -- we update the DB every 10th file
+                      local rv = m.process(f,(i%100)>0) -- we update the DB every 100th file
                       out_.write(rv)
                     end
                     while m.update(UPDATE_AMOUNT) do
