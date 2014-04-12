@@ -9,6 +9,8 @@ local p = require "purepack"
 
 pcall(require, "profiler")
 
+local _can_fork = true -- depending on the db type we may choose to disable forking
+
 local function strip_slash(path_)
   return string.match(path_,"^(.-)/?$")
 end
@@ -28,12 +30,14 @@ function first_files(path_,pattern_,max_)
     end)
 end
 
+
 local function guess_db(db_path_,readonly_)
   logd("guess_db",db_path_)
   -- strip a trailing / if it exists
   db_path_ = strip_slash(db_path_)
   if string.find(db_path_,"_mdb$") then
     p.set_pack_lib("lpack")
+    _can_fork = false
     return l.lightning_mdb(db_path_,readonly_)
   elseif string.find(db_path_,"_cdb$") then
     p.set_pack_lib("bits")
@@ -248,7 +252,8 @@ function main(opts,out_)
                 stopped = stopped or httpd_can_be_stopped and token_==httpd_can_be_stopped
                 return stopped
               end,
-              opts["R"] and strip_slash(opts["R"])
+              opts["R"] and strip_slash(opts["R"]),
+              _can_fork
              )
     save_and_close(m,db,false)
   end
@@ -264,7 +269,7 @@ function main(opts,out_)
     writable_mule(function(m)
                     for i,f in ipairs(opts["rest"]) do
                       logi("processing",f)
-                      local rv = m.process(f,(i%10)==0) -- we update the DB every 10th file
+                      local rv = m.process(f,(i%100)>0) -- we update the DB every 100th file
                       out_.write(rv)
                     end
                     while m.update(UPDATE_AMOUNT) do

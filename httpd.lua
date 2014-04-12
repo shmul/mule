@@ -167,7 +167,7 @@ local handlers = { key = generic_get_handler,
 
 
 function send_response(send_,send_file_,req_,content_,with_mule_,
-                       backup_callback_,stop_cond_)
+                       backup_callback_,stop_cond_,can_fork_)
 
   if not req_ or not req_.url or not req_.verb then
     return send_(standard_response(400))
@@ -208,8 +208,13 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
       logw("stopping, using: ",qs.token)
       stop_cond_(qs.token)
     elseif handler_name=="backup" then
-      local path = backup_callback_()
-      rv = path and string.format("{'path':'%s'}",path) or "{}"
+      if req_.verb=="POST" then
+        local path = backup_callback_()
+        rv = path and string.format("{'path':'%s'}",path) or "{}"
+      else
+        logw("Only POST can be used")
+        rv = nil
+      end
     end
 
     if not rv or (type(rv)=="string" and #rv==0) then
@@ -225,17 +230,21 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   end
 
   if type(handler_result)=="function" then
-    fork_and_exit(function()
-                    response_continuation(handler_result(),true)
-                  end
-                 )
+    local function continuation()
+      response_continuation(handler_result(),true)
+    end
+    if can_fork_ then
+      fork_and_exit(continuation)
+    else
+      continuation()
+    end
     return
   end
   response_continuation(handler_result,false)
 end
 
 
-function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_callback_,stop_cond_,root_)
+function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_callback_,stop_cond_,root_,can_fork_)
   local address,port = string.match(address_port_,"(%S-):(%d+)")
   local sr = ltn12.source
 
@@ -299,7 +308,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
                     local req,content = read_request(skt)
 
                     send_response(send(skt),send_file(skt),
-                                  req,content,with_mule_,backup_callback_,stop_cond_)
+                                  req,content,with_mule_,backup_callback_,stop_cond_,can_fork_)
                   end)
 
   while not stop_cond_() do
