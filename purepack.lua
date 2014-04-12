@@ -34,6 +34,11 @@ function set_pack_lib(lib_)
         local _,a,b,c = string.unpack(str_,">III",s or 1)
         return a,b,c
       end
+
+      concat_three_strings = function(a_,b_,c_)
+        return string.pack("AAA",a_ or "",b_ or "",c_ or "")
+      end
+
       return true
     end
 
@@ -76,6 +81,11 @@ function set_pack_lib(lib_)
         (h or 0) + (g and sh(g,8) or 0) + (f and sh(f,16) or 0) + (e and sh(e,24) or 0),
         (l or 0) + (k and sh(k,8) or 0) + (j and sh(j,16) or 0) + (i and sh(i,24) or 0)
       end
+
+      concat_three_strings = function(a_,b_,c_)
+        return table.concat({a_ or "",b_ or "",c_ or ""})
+      end
+
       return true
     end
 
@@ -109,6 +119,10 @@ function set_pack_lib(lib_)
       from_binary3 = function(str_,s)
         s = s or 1
         return from_binary(str_,s),from_binary(str_,s+4),from_binary(str_,s+8)
+      end
+
+      concat_three_strings = function(a_,b_,c_)
+        return table.concat({a_ or "",b_ or "",c_ or ""})
       end
 
       return true

@@ -214,8 +214,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
           local i,_ = calculate_idx(s._timestamp,step,period)
           local key,p,q = page_key(name_,i)
           local page_data = pp.unpack(get(key)) or new_page_data()
-          local t,u,v,w,x = set_slot(page_data,q,offset_,s._timestamp,s._hits,s._sum)
-          put(key,pp.pack(table.concat({t,u,v,w,x})))
+          local t,u,v = set_slot(page_data,q,offset_,s._timestamp,s._hits,s._sum)
+          put(key,pp.pack(pp.concat_three_strings(t,u,v)))
         end
       end
       put(name_,pack_node(node))
@@ -225,8 +225,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local key,p,q = page_key(name_,idx_)
     local page_data = pp.unpack(get(key)) or new_page_data()
 
-    local t,u,v,w,x = set_slot(page_data,q,offset_,timestamp_,hits_,sum_)
-    page_data = table.concat({t,u,v,w,x},"")
+    local t,u,v = set_slot(page_data,q,offset_,timestamp_,hits_,sum_)
+    page_data = pp.concat_three_strings(t,u,v)
     put(key,pp.pack(page_data))
   end
 
