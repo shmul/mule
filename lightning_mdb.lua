@@ -10,9 +10,10 @@ local NUM_PAGES = 25600
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
 
-function lightning_mdb(base_dir_,read_only_,num_pages_)
+function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _meta,_meta_db
   local _envs = {}
+  local _slots_per_page
 
   local function txn(env_,func_)
     local t = env_:txn_begin(nil,0)
@@ -65,13 +66,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
                end)
   end
 
-  local function init()
-    _meta = new_env_factory("meta")
-    _meta_db = new_db(_meta)
-    add_env()
-    put("metadata=slots_per_page",SLOTS_PER_PAGE)
-  end
-
   local function get(k)
     if string.find(k,"metadata=",1,true) then
       return txn(_meta,function(t) return t:get(_meta_db,k) end)
@@ -81,6 +75,17 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
       local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
       if not err then return rv end
       logw("get",err)
+    end
+  end
+
+  local function init()
+    _meta = new_env_factory("meta")
+    _meta_db = new_db(_meta)
+    add_env()
+    _slots_per_page = get("metadata=slots_per_page")
+    if not _slots_per_page then
+     _slots_per_page = slots_per_page_ or SLOTS_PER_PAGE
+      put("metadata=slots_per_page",_slots_per_page)
     end
   end
 
@@ -110,8 +115,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
 
   local function page_key(name_,idx_)
     -- no sparse seq? then we should find the page
-    local p = math.floor(idx_/SLOTS_PER_PAGE)
-    local q = idx_%SLOTS_PER_PAGE
+    local p = math.floor(idx_/_slots_per_page)
+    local q = idx_%_slots_per_page
     return string.format("%04d|%s",p,name_),p,q
   end
 
@@ -178,7 +183,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
 
   local function internal_set_slot(name_,idx_,offset_,timestamp_,hits_,sum_)
     local function new_page_data()
-      return string.rep(string.char(0),pp.PNS*3*SLOTS_PER_PAGE)
+      return string.rep(string.char(0),pp.PNS*3*_slots_per_page)
     end
 
     -- the name is used as a key for the metadata
@@ -285,7 +290,14 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
   end
 
   local function backup(backup_path_)
-    return _e:copy(backup_path_)
+    if _meta then
+      logi("backing up meta")
+      _meta:copy(backup_path_)
+    end
+    for i,ed in ipairs(_envs) do
+      logi("backing up env",i)
+      ed[1]:copy(backup_path_)
+    end
   end
 
   init()
