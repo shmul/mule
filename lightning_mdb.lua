@@ -52,13 +52,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
     table.insert(_envs,{e,new_db(e)})
   end
 
-  local function init()
-    _meta = new_env_factory("meta")
-    _meta_db = new_db(_meta)
-    add_env()
-  end
-
-
   local function put(k,v)
     if string.find(k,"metadata=",1,true) then
       return _meta and txn(_meta,function(t) return t:put(_meta_db,k,v,0) end)
@@ -70,6 +63,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_)
                  add_env()
                  return put(k,v)
                end)
+  end
+
+  local function init()
+    _meta = new_env_factory("meta")
+    _meta_db = new_db(_meta)
+    add_env()
+    put("metadata=slots_per_page",SLOTS_PER_PAGE)
   end
 
   local function get(k)
