@@ -789,6 +789,7 @@ function mule(db_)
 
 
   local function update_line(metric_,sum_,timestamp_)
+    -- debugging code
     if metric_=="tagger.events_types.carbon_copy_submitted" then
       logd("original data",metric_,sum_,timestamp_)
     end
@@ -803,6 +804,7 @@ function mule(db_)
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
       local adjusted_timestamp,sum = seq.update(timestamp_,1,sum,replace)
+      -- debugging code
       if m=="tagger.events_types.carbon_copy_submitted" then
         logd("per sequence",n,sum,adjusted_timestamp)
       end
@@ -924,9 +926,23 @@ function mule(db_)
       _updated_sequences[n] = nil
     end
     logi("update_sequences end",time_now()-now,st,en,#sorted_updated_names)
+    -- returns true if there are more items to process
+    return en<#sorted_updated_names
   end
 
   local function process(data_,dont_update_,no_commands_)
+    local lines_count = 0
+
+    local function spillover_protection()
+      -- we protect from _updated_sequences growing too large if the input data is large
+      lines_count = lines_count + 1
+      if lines_count==UPDATED_SEQUENCES_MAX then
+        logi("process - forcing an update",lines_count)
+        update_sequences(UPDATE_AMOUNT)
+        lines_count = lines_count - UPDATE_AMOUNT
+      end
+    end
+
     -- strings are handled as file pointers if they exist or as a line
     -- tables as arrays of lines
     -- functions as iterators of lines
@@ -936,6 +952,7 @@ function mule(db_)
                                       function(f)
                                         for l in f:lines() do
                                           process_line(l,no_commands_)
+                                          spillover_protection()
                                         end
                                         return true
                                       end)
@@ -949,6 +966,7 @@ function mule(db_)
         local rv
         for _,d in ipairs(data_) do
           rv = process_line(d)
+          spillover_protection()
         end
         return rv
       end
@@ -959,9 +977,7 @@ function mule(db_)
       for d in data_ do
         rv = process_line(d)
         count = count + 1
-        if 0==(count % PROGRESS_AMOUNT) then
-          logd("process progress",count)
-        end
+        spillover_protection()
       end
       logd("processed",count)
       return rv
