@@ -9,109 +9,111 @@ local nop = function() end
 to_binary,to_binary3,from_binary,from_binary3 = nop,nop,nop,nop
 
 function set_pack_lib(lib_)
-  local helper()
-  local bits_lib = (bit32_found and bit32) or (bit_found and bit)
+  local function helper()
+    local bits_lib = (bit32_found and bit32) or (bit_found and bit)
 
-  if lib_=="lpack" then
-    if not string.pack or not string.unpack then
-      return nil,"purepack - lpack not found"
-    end
-
-    to_binary = function(int_)
-      return string.pack(">I",int_)
-    end
-
-    to_binary3 = function(a_,b_,c_)
-      return string.pack(">III",a_,b_,c_)
-    end
-
-    from_binary = function(str_,s)
-      local _,value = string.unpack(str_,">I",s or 1)
-      return value
-    end
-
-    from_binary3 = function(str_,s)
-      local _,a,b,c = string.unpack(str_,">III",s or 1)
-      return a,b,c
-    end
-    return true
-  end
-
-  if lib_=="bits" then
-    if not bits_lib then
-      return nil,"purepack - bits not found"
-    end
-
-    to_binary = function(int_)
-      local sh = bits_lib.rshift
-      local an = bits_lib.band
-      local i = sh(int_,16)
-      return string.char(an(sh(i,8),255),an(i,255),
-                         an(sh(int_,8),255),an(int_,255))
-    end
-
-    to_binary3 = function(a_,b_,c_)
-      local sh = bits_lib.rshift
-      local an = bits_lib.band
-      local i,j,k = sh(a_,16),sh(b_,16),sh(c_,16)
-
-      return string.char(an(sh(i,8),255),an(i,255),an(sh(a_,8),255),an(a_,255),
-                         an(sh(j,8),255),an(j,255),an(sh(b_,8),255),an(b_,255),
-                         an(sh(k,8),255),an(k,255),an(sh(c_,8),255),an(c_,255)
-                        )
-    end
-
-    from_binary = function(str_,s)
-      s = s or 1
-      local a,b,c,d = string.byte(str_,s,s+3)
-      local sh = bits_lib.lshift
-      return (d or 0) + (c and sh(c,8) or 0) + (b and sh(b,16) or 0) + (a and sh(a,24) or 0)
-    end
-
-    from_binary3 = function(str_,s)
-      s = s or 1
-      local a,b,c,d,e,f,g,h,i,j,k,l = string.byte(str_,s,s+11)
-      local sh = bits_lib.lshift
-      return (d or 0) + (c and sh(c,8) or 0) + (b and sh(b,16) or 0) + (a and sh(a,24) or 0),
-      (h or 0) + (g and sh(g,8) or 0) + (f and sh(f,16) or 0) + (e and sh(e,24) or 0),
-      (l or 0) + (k and sh(k,8) or 0) + (j and sh(j,16) or 0) + (i and sh(i,24) or 0)
-    end
-    return true
-  end
-
-  if lib_=="purepack" then
-    to_binary = function(int_)
-      local fl = math.floor
-      local i = fl(int_/65536)
-      return string.char((i~=0 and fl(i/256)%256) or 0,
-                         (i~=0 and i%256) or 0,
-                         fl(int_/256)%256,
-                         int_%256)
-    end
-    to_binary3 = function(a_,b_,c_)
-      return to_binary(a_)..to_binary(b_)..to_binary(c_)
-    end
-
-    from_binary = function(str_,s)
-      s = s or 1
-      if not str_ then
-        logi(s,"traceback",debug.traceback())
-        return 0
+    if lib_=="lpack" then
+      if not string.pack or not string.unpack then
+        return nil,"purepack - lpack not found"
       end
 
-      local a,b,c,d = string.byte(str_,s,s+3)
-      return (d or 0) +
-        (c and c*256 or 0) +
-        (b and b*65536 or 0) +
-        (a and a*16777216 or 0)
+      to_binary = function(int_)
+        return string.pack(">I",int_)
+      end
+
+      to_binary3 = function(a_,b_,c_)
+        return string.pack(">III",a_,b_,c_)
+      end
+
+      from_binary = function(str_,s)
+        local _,value = string.unpack(str_,">I",s or 1)
+        return value
+      end
+
+      from_binary3 = function(str_,s)
+        local _,a,b,c = string.unpack(str_,">III",s or 1)
+        return a,b,c
+      end
+      return true
     end
 
-    from_binary3 = function(str_,s)
-      s = s or 1
-      return from_binary(str_,s),from_binary(str_,s+4),from_binary(str_,s+8)
+    if lib_=="bits" then
+      if not bits_lib then
+        return nil,"purepack - bits not found"
+      end
+
+      to_binary = function(int_)
+        local sh = bits_lib.rshift
+        local an = bits_lib.band
+        local i = sh(int_,16)
+        return string.char(an(sh(i,8),255),an(i,255),
+                           an(sh(int_,8),255),an(int_,255))
+      end
+
+      to_binary3 = function(a_,b_,c_)
+        local sh = bits_lib.rshift
+        local an = bits_lib.band
+        local i,j,k = sh(a_,16),sh(b_,16),sh(c_,16)
+
+        return string.char(an(sh(i,8),255),an(i,255),an(sh(a_,8),255),an(a_,255),
+                           an(sh(j,8),255),an(j,255),an(sh(b_,8),255),an(b_,255),
+                           an(sh(k,8),255),an(k,255),an(sh(c_,8),255),an(c_,255)
+                          )
+      end
+
+      from_binary = function(str_,s)
+        s = s or 1
+        local a,b,c,d = string.byte(str_,s,s+3)
+        local sh = bits_lib.lshift
+        return (d or 0) + (c and sh(c,8) or 0) + (b and sh(b,16) or 0) + (a and sh(a,24) or 0)
+      end
+
+      from_binary3 = function(str_,s)
+        s = s or 1
+        local a,b,c,d,e,f,g,h,i,j,k,l = string.byte(str_,s,s+11)
+        local sh = bits_lib.lshift
+        return (d or 0) + (c and sh(c,8) or 0) + (b and sh(b,16) or 0) + (a and sh(a,24) or 0),
+        (h or 0) + (g and sh(g,8) or 0) + (f and sh(f,16) or 0) + (e and sh(e,24) or 0),
+        (l or 0) + (k and sh(k,8) or 0) + (j and sh(j,16) or 0) + (i and sh(i,24) or 0)
+      end
+      return true
     end
 
-    return true
+    if lib_=="purepack" then
+      to_binary = function(int_)
+        local fl = math.floor
+        local i = fl(int_/65536)
+        return string.char((i~=0 and fl(i/256)%256) or 0,
+                           (i~=0 and i%256) or 0,
+                           fl(int_/256)%256,
+                           int_%256)
+      end
+      to_binary3 = function(a_,b_,c_)
+        return to_binary(a_)..to_binary(b_)..to_binary(c_)
+      end
+
+      from_binary = function(str_,s)
+        s = s or 1
+        if not str_ then
+          logi(s,"traceback",debug.traceback())
+          return 0
+        end
+
+        local a,b,c,d = string.byte(str_,s,s+3)
+        return (d or 0) +
+          (c and c*256 or 0) +
+          (b and b*65536 or 0) +
+          (a and a*16777216 or 0)
+      end
+
+      from_binary3 = function(str_,s)
+        s = s or 1
+        return from_binary(str_,s),from_binary(str_,s+4),from_binary(str_,s+8)
+      end
+
+      return true
+    end
+    return nil,"unknown lib"
   end
 
   local rv,err = helper()
