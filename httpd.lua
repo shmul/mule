@@ -188,7 +188,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   if req_.verb=="OPTIONS" then
     return send_(standard_response(200,nil,CORS))
   end
-  logi("send_response for",req_.url)
+  logi("send_response - handling",req_.url)
   local handler_result = with_mule_(
     function(mule_)
       table.remove(segments,1)
