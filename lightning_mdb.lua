@@ -249,8 +249,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local cur = t:cursor_open(db)
       local find = string.find
       local k,v = cur:get(prefix_,lightningmdb.MDB_SET_RANGE)
+      local byte = string.byte
+      -- 124 is ascii for |
       repeat
-        if k and find(k,prefix_,1,true) and bounded_by_level(k,prefix_,level_) then
+        if k and byte(k,5)~=124 and find(k,prefix_,1,true) and bounded_by_level(k,prefix_,level_) then
           coroutine.yield(k,v)
         end
         k,v = cur:get(k,lightningmdb.MDB_NEXT)
