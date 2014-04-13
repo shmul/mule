@@ -50,11 +50,6 @@ function sequence(db_,name_)
     return at(idx_,2)
   end
 
-
-  local function set_slot(idx_,timestamp_,hits_,sum_)
-    at(idx_,nil,timestamp_,hits_,sum_)
-  end
-
   local function latest(idx_)
     local pos = math.floor(_period/_step)
     if not idx_ then
@@ -111,7 +106,7 @@ function sequence(db_,name_)
     else
       hits,sum = hits_ or 1,sum_
     end
-    set_slot(idx,adjusted_timestamp,hits,sum)
+    at(idx,nil,adjusted_timestamp,hits,sum)
     local lt = latest_timestamp()
     if adjusted_timestamp>lt then
       latest(idx)
