@@ -39,7 +39,7 @@ function test_payload()
       db.put(i,i)
     end
     for i=1,count_ do
-      assert_equal(tostring(i),db.get(i),index_)
+      assert_equal(i,db.get(i),index_)
       db.del(i)
       assert_nil(db.get(i),index_)
     end
