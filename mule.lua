@@ -117,7 +117,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
 
   local function helper(m)
     if executing then return end
-    for file in first_files(incoming_queue_path_,"%.mule$",10) do
+    for file in first_files(incoming_queue_path_,"%.mule$",20) do
       executing = true
       pcall_wrapper(function()
                       local sz = posix.stat(file,"size")
