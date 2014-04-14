@@ -372,10 +372,9 @@ function mule(db_)
   end
 
   local function reset(resource_,options_)
-    each_sequence(_db,resource_,nil,
-                  function(seq)
-                    _db.out(seq.name())
-                  end)
+    for name in db_.matching_keys(resource_) do
+      _db.out(name)
+    end
     return true
   end
 
@@ -570,7 +569,7 @@ function mule(db_)
 
 
 
-    local function slot(resource_,options_)
+  local function slot(resource_,options_)
     local str = strout("")
     local format = string.format
     local opts = { timestamps={options_ and options_.timestamp} }
@@ -578,20 +577,20 @@ function mule(db_)
 
     col.head()
     for m in split_helper(resource_,"/") do
-      each_sequence(_db,m,nil,
-                    function(seq)
-                      local col1 = collectionout(str,"[","]\n")
-                      seq.serialize(opts,
-                                    function()
-                                      col.elem(format("\"%s\": ",seq.name()))
-                                      col1.head()
-                                    end,
-                                    function(sum,hits,timestamp)
-                                      col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
-                                    end
-                                   )
-                      col1.tail()
-                    end)
+      for name in db_.matching_keys(m) do
+        local col1 = collectionout(str,"[","]\n")
+        local seq = sequence(db_,name)
+        seq.serialize(opts,
+                      function()
+                        col.elem(format("\"%s\": ",name))
+                        col1.head()
+                      end,
+                      function(sum,hits,timestamp)
+                        col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+                      end
+                     )
+        col1.tail()
+      end
     end
     col.tail()
 

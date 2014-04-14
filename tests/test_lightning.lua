@@ -17,8 +17,9 @@ function test_meta()
   assert_equal("cruel world",db.get("metadata=hello"))
   assert_nil(db.get("hello"))
 
-  for k,v in db.matching_keys("metadata=hello",1,true) do
+  for k in db.matching_keys("metadata=hello",1,true) do
     assert_equal("metadata=hello",k)
+    local v = db.get(k)
     assert_equal("cruel world",v)
   end
   db.del("metadata=hello")

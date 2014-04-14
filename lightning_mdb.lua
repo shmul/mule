@@ -234,7 +234,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local node = unpack_node(name_,get(name_))
     if node then
       logi("internal_out_slot - deleting pages",name_)
-      for idx=0,node._size-1 do
+      for idx=0,node._size-1,_slots_per_page do
         local key,p,q = page_key(name_,idx)
         del(key)
       end
@@ -246,16 +246,17 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function matching_keys(prefix_,level_,meta_)
     local function helper(env,db)
       local t,err = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
-      local cur = t:cursor_open(db)
       local find = string.find
-      local k,v = cur:get(prefix_,lightningmdb.MDB_SET_RANGE)
       local byte = string.byte
+
+      local cur = t:cursor_open(db)
+      local k = cur:get_key(prefix_,lightningmdb.MDB_SET_RANGE)
       -- 124 is ascii for |
       repeat
         if k and byte(k,5)~=124 and find(k,prefix_,1,true) and bounded_by_level(k,prefix_,level_) then
-          coroutine.yield(k,v)
+          coroutine.yield(k)
         end
-        k,v = cur:get(k,lightningmdb.MDB_NEXT)
+        k = cur:get_key(k,lightningmdb.MDB_NEXT)
       until not k
       cur:close()
       t:commit()
