@@ -37,7 +37,7 @@ local function guess_db(db_path_,readonly_)
   db_path_ = strip_slash(db_path_)
   if string.find(db_path_,"_mdb$") then
     p.set_pack_lib("lpack")
-    _can_fork = false
+--    _can_fork = false
     return l.lightning_mdb(db_path_,readonly_)
   elseif string.find(db_path_,"_cdb$") then
     p.set_pack_lib("bits")
@@ -117,7 +117,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
 
   local function helper(m)
     if executing then return end
-    for file in first_files(incoming_queue_path_,"%.mule$",10) do
+    for file in first_files(incoming_queue_path_,"%.mule$",20) do
       executing = true
       pcall_wrapper(function()
                       local sz = posix.stat(file,"size")

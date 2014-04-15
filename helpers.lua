@@ -778,8 +778,12 @@ function sparse_sequence(name_,slots_)
   _period = parse_time_unit(_period)
 
   local function add_slot(timestamp_)
-    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
-    return _slots[#_slots]
+    local s = { _timestamp = timestamp_, _hits = 0, _sum = 0}
+    table.insert(_slots,1,s)
+    return s
+
+--    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
+--    return _slots[#_slots]
   end
 
   local function find_slot(timestamp_)
