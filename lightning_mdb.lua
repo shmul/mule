@@ -9,12 +9,13 @@ local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 local NUM_PAGES = 25600
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
-
+local MAX_CACHE_SIZE = 200
 function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _meta,_meta_db
   local _envs = {}
   local _slots_per_page
   local _cache = {}
+  local _caches_size = 0
   local _nodes_cache = {}
 
   local function txn(env_,func_)
@@ -121,9 +122,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       put_helper(k,pack_node(v))
       nodes = nodes + 1
     end
-    logi("flush_cache",count,nodes)
+    logi("flush_cache",_caches_size,count,nodes)
     _cache = {}
     _nodes_cache = {}
+    _caches_size = 0
   end
 
   local function get_helper(k)
@@ -138,10 +140,14 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function get(k,dont_cache_)
+    if _caches_size>=MAX_CACHE_SIZE then
+      flush_cache()
+    end
     if dont_cache_ then
       return get_helper(k)
     end
     if not _cache[k] then
+      _caches_size = _caches_size + 1
       _cache[k] = pp.unpack(get_helper(k))
     end
     return _cache[k]
@@ -149,6 +155,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function get_node(k)
     if not _nodes_cache[k] then
+      _caches_size = _caches_size + 1
       _nodes_cache[k] = unpack_node(k,get_helper(k))
     end
     return _nodes_cache[k]
