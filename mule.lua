@@ -37,7 +37,7 @@ local function guess_db(db_path_,readonly_)
   db_path_ = strip_slash(db_path_)
   if string.find(db_path_,"_mdb$") then
     p.set_pack_lib("lpack")
---    _can_fork = false
+    _can_fork = false
     return l.lightning_mdb(db_path_,readonly_)
   elseif string.find(db_path_,"_cdb$") then
     p.set_pack_lib("bits")
