@@ -14,6 +14,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _meta,_meta_db
   local _envs = {}
   local _slots_per_page
+  local _cache = {}
+  local _nodes_cache = {}
 
   local function txn(env_,func_)
     local t = env_:txn_begin(nil,0)
@@ -53,7 +55,36 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     table.insert(_envs,{e,new_db(e)})
   end
 
-  local function put(k,v)
+
+  local function pack_node(node_)
+    local seq = node_._seq
+    if seq then
+      node_._slots = seq.slots()
+      node_._seq = nil
+    end
+    local packed = pp.pack(node_)
+    node_._seq = seq
+    node_._slots = nil
+    return packed
+  end
+
+  local function unpack_node(name_,data_)
+    if not data_ then
+      return nil
+    end
+    local node = pp.unpack(data_)
+    if not node then
+      return nil
+    end
+    if node._slots then
+      local seq = sparse_sequence(name_,node._slots)
+      node._slots = nil
+      node._seq = seq
+    end
+    return node
+  end
+
+  local function put_helper(k,v)
     if string.find(k,"metadata=",1,true) then
       return _meta and txn(_meta,function(t) return t:put(_meta_db,k,v,0) end)
     end
@@ -66,7 +97,33 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                end)
   end
 
-  local function get(k)
+  local function put(k,v)
+    _cache[k] = v
+    return _cache[k]
+  end
+
+  local function put_node(k,node)
+    _nodes_cache[k] = node
+    return _nodes_cache[k]
+  end
+
+  local function flush_cache()
+    local count,nodes = 0,0
+    logi("flush_cache start")
+    for k,v in pairs(_cache) do
+      put_helper(k,pp.pack(v))
+      count = count + 1
+    end
+    for k,v in pairs(_nodes_cache) do
+      put_helper(k,pack_node(v))
+      nodes = nodes + 1
+    end
+    logi("flush_cache",count,nodes)
+    _cache = {}
+    _nodes_cache = {}
+  end
+
+  local function get_helper(k)
     if string.find(k,"metadata=",1,true) then
       return txn(_meta,function(t) return t:get(_meta_db,k) end)
     end
@@ -74,9 +131,23 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     for _,ed in ipairs(_envs) do
       local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
       if not err then return rv end
-      logw("get",err)
     end
   end
+
+  local function get(k)
+    if not _cache[k] then
+      _cache[k] = pp.unpack(get_helper(k))
+    end
+    return _cache[k]
+  end
+
+  local function get_node(k)
+    if not _nodes_cache[k] then
+      _nodes_cache[k] = unpack_node(k,get_helper(k))
+    end
+    return _nodes_cache[k]
+  end
+
 
   local function init()
     _meta = new_env_factory("meta")
@@ -91,6 +162,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
 
   local function del(k)
+    _cache[k] = nil
+    _nodes_cache[k] = nil
     if string.find(k,"metadata=",1,true) then
       return txn(_meta,function(t) return t:del(_meta_db,k,nil) end)
     end
@@ -101,6 +174,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function search(prefix_)
+    flush_cache()
     for _,ed in ipairs(_envs) do
       local t = ed[1]:txn_begin(nil,lightningmdb.MDB_RDONLY)
       local cur = t:cursor_open(ed[2])
@@ -120,38 +194,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return string.format("%04d|%s",p,name_),p,q
   end
 
-  local function pack_node(node_)
-    local seq = node_._seq
-    if seq then
-      node_._slots = seq.slots()
-      node_._seq = nil
-    end
-    local packed = pp.pack(node_)
-    node_._seq = seq
-    node_._slots = nil
-    return packed
-  end
-
-  local function unpack_node(name_,data_)
-    local node = pp.unpack(data_)
-    if not node then
-      return nil
-    end
-    if node._slots then
-      local seq = sparse_sequence(name_,node._slots)
-      node._slots = nil
-      node._seq = seq
-    end
-    return node
-  end
-
   local function internal_get_slot(name_,idx_,offset_)
     local function no_data()
       if offset_ then return 0 end
       return 0,0,0
     end
     -- the name is used as a key for the metadata
-    local node = unpack_node(name_,get(name_))
+    local node = get_node(name_)
     if not node then
       return no_data()
     end
@@ -174,7 +223,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
 
     local key,p,q = page_key(name_,idx_)
-    local page_data = pp.unpack(get(key))
+    local page_data = get(key)
     if page_data then
       return get_slot(page_data,q,offset_)
     end
@@ -187,7 +236,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
 
     -- the name is used as a key for the metadata
-    local node = unpack_node(name_,get(name_))
+    local node = get_node(name_)
     if not node then
       -- a new node keeps a sparse_sequence instead of allocating actual pages for the slots
       local _,step,period = split_name(name_)
@@ -198,7 +247,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     -- getting the latest index
     if node._size==idx_ then
       node._latest = timestamp_ -- this is actually the index of the latest slots
-      put(name_,pack_node(node))
+      put_node(name_,node)
       return
     end
 
@@ -213,28 +262,28 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         for _,s in ipairs(slots) do
           local i,_ = calculate_idx(s._timestamp,step,period)
           local key,p,q = page_key(name_,i)
-          local page_data = pp.unpack(get(key)) or new_page_data()
+          local page_data = get(key) or new_page_data()
           local t,u,v = set_slot(page_data,q,offset_,s._timestamp,s._hits,s._sum)
-          put(key,pp.pack(pp.concat_three_strings(t,u,v)))
+          put(key,pp.concat_three_strings(t,u,v))
         end
       end
-      put(name_,pack_node(node))
+      put_node(name_,node)
       return
     end
 
     local key,p,q = page_key(name_,idx_)
-    local page_data = pp.unpack(get(key)) or new_page_data()
+    local page_data = get(key) or new_page_data()
 
     local t,u,v = set_slot(page_data,q,offset_,timestamp_,hits_,sum_)
     page_data = pp.concat_three_strings(t,u,v)
-    put(key,pp.pack(page_data))
+    put(key,page_data)
   end
 
   local function internal_out_slot(name_)
-    local node = unpack_node(name_,get(name_))
+    local node = get_node(name_)
     if node then
       logi("internal_out_slot - deleting pages",name_)
-      for idx=0,node._size-1 do
+      for idx=0,node._size-1,_slots_per_page do
         local key,p,q = page_key(name_,idx)
         del(key)
       end
@@ -246,22 +295,23 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function matching_keys(prefix_,level_,meta_)
     local function helper(env,db)
       local t,err = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
-      local cur = t:cursor_open(db)
       local find = string.find
-      local k,v = cur:get(prefix_,lightningmdb.MDB_SET_RANGE)
       local byte = string.byte
+
+      local cur = t:cursor_open(db)
+      local k = cur:get_key(prefix_,lightningmdb.MDB_SET_RANGE)
       -- 124 is ascii for |
       repeat
         if k and byte(k,5)~=124 and find(k,prefix_,1,true) and bounded_by_level(k,prefix_,level_) then
-          coroutine.yield(k,v)
+          coroutine.yield(k)
         end
-        k,v = cur:get(k,lightningmdb.MDB_NEXT)
+        k = cur:get_key(k,lightningmdb.MDB_NEXT)
       until not k
       cur:close()
       t:commit()
     end
-
     return coroutine.wrap(function()
+                            flush_cache()
                             if meta_ then
                               helper(_meta,_meta_db)
                               return
@@ -269,6 +319,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                             for _,ed in ipairs(_envs) do
                               helper(ed[1],ed[2])
                             end
+                            flush_cache()
                           end)
   end
 
@@ -276,7 +327,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function close()
     logi("lightning_mdb close")
-
+    flush_cache()
     if _meta then
       _meta:close()
       _meta = nil

@@ -17,8 +17,9 @@ function test_meta()
   assert_equal("cruel world",db.get("metadata=hello"))
   assert_nil(db.get("hello"))
 
-  for k,v in db.matching_keys("metadata=hello",1,true) do
+  for k in db.matching_keys("metadata=hello",1,true) do
     assert_equal("metadata=hello",k)
+    local v = db.get(k)
     assert_equal("cruel world",v)
   end
   db.del("metadata=hello")
@@ -38,7 +39,7 @@ function test_payload()
       db.put(i,i)
     end
     for i=1,count_ do
-      assert_equal(tostring(i),db.get(i),index_)
+      assert_equal(i,db.get(i),index_)
       db.del(i)
       assert_nil(db.get(i),index_)
     end

@@ -742,7 +742,7 @@ function update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
   return timestamp_,value_+rank_/(2^((timestamp_-rank_timestamp_)/step_)),false
 end
 
-local use_stp = true
+local use_stp = false
 function pcall_wrapper(callback_)
   if not use_stp or not stp then
     return pcall(callback_)
@@ -781,9 +781,6 @@ function sparse_sequence(name_,slots_)
     local s = { _timestamp = timestamp_, _hits = 0, _sum = 0}
     table.insert(_slots,1,s)
     return s
-
---    table.insert(_slots,{ _timestamp = timestamp_, _hits = 0, _sum = 0})
---    return _slots[#_slots]
   end
 
   local function find_slot(timestamp_)

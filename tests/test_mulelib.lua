@@ -56,33 +56,33 @@ end
 
 function test_parse_time_unit()
   local tests = {
-	{0,""},
-	{0,"1sd"},
-	{0,"d"},
-	{0," 1s"},
-	{0,"1s_"},
-	{1,"1s"},
-	{1,"1"},
-	{60,"1m"}, -- minute
-	{2*3600*24,"2d"},
-	{7*3600*24*365,"7y"},
-	{3600,"3600"},
+    {0,""},
+    {0,"1sd"},
+    {0,"d"},
+    {0," 1s"},
+    {0,"1s_"},
+    {1,"1s"},
+    {1,"1"},
+    {60,"1m"}, -- minute
+    {2*3600*24,"2d"},
+    {7*3600*24*365,"7y"},
+    {3600,"3600"},
   }
   for i,v in ipairs(tests) do
-	assert_equal(v[1],parse_time_unit(v[2]),i)
+    assert_equal(v[1],parse_time_unit(v[2]),i)
   end
 
 
   tests = {
-	{7*3600*24*365,"7y"},
-	{60,"1m"},
-	{2*3600*24,"2d"},
-	{7*3600*24,"1w"},
-	{14*3600*24,"2w"},
+    {7*3600*24*365,"7y"},
+    {60,"1m"},
+    {2*3600*24,"2d"},
+    {7*3600*24,"1w"},
+    {14*3600*24,"2w"},
   }
 
   for i,v in ipairs(tests) do
-	assert_equal(v[2],secs_to_time_unit(v[1]),i)
+    assert_equal(v[2],secs_to_time_unit(v[1]),i)
   end
 end
 
@@ -91,7 +91,7 @@ function test_string_lines()
   local str = "hello\ncruel\nworld"
   local lines = {}
   for i in string_lines(str) do
-	table.insert(lines,i)
+    table.insert(lines,i)
   end
 
   assert_equal(lines[1],"hello")
@@ -102,20 +102,20 @@ end
 
 function test_calculate_idx()
   local tests = {
-	-- {step,period,timestamp,slot,adjust}
-	{1,60,0,0,0},
-	{1,60,60,0,60},
-	{2,60,61,0,60},
-	{2,60,121,0,120},
-	{2,60,121,0,120},
-	{2,60,123,1,122},
+    -- {step,period,timestamp,slot,adjust}
+    {1,60,0,0,0},
+    {1,60,60,0,60},
+    {2,60,61,0,60},
+    {2,60,121,0,120},
+    {2,60,121,0,120},
+    {2,60,123,1,122},
     {300,2*24*60*60,1293836375,275,1293836100}
   }
 
   for i,t in ipairs(tests) do
-	local slot,adjusted = calculate_idx(t[3],t[1],t[2])
-	assert_equal(t[4],slot,i)
-	assert_equal(t[5],adjusted,i)
+    local slot,adjusted = calculate_idx(t[3],t[1],t[2])
+    assert_equal(t[4],slot,i)
+    assert_equal(t[5],adjusted,i)
   end
 end
 
@@ -170,73 +170,73 @@ function helper_time_sequence(db_)
   assert_equal(0,tbl[11])
   assert_equal(0,tbl[12])
 
---[[
-  local seq1 = sequence(db_,"seq")
-  local tblin = tablein(tbl)
-  local function read_3_values()
+  --[[
+    local seq1 = sequence(db_,"seq")
+    local tblin = tablein(tbl)
+    local function read_3_values()
     return tblin.read(),tblin.read(),tblin.read()
-  end
+    end
 
-  assert_equal("seq",seq1.deserialize(in_memory_db,true,read_3_values,read_3_values))
-  --]]
-  local tbl1 = {}
-  seq.serialize({all_slots=true},insert_all_args(tbl1),insert_all_args(tbl1))
-  for i,v in ipairs(tbl) do
-	assert_equal(v,tbl1[i],i)
-  end
+    assert_equal("seq",seq1.deserialize(in_memory_db,true,read_3_values,read_3_values))
+    --]]
+    local tbl1 = {}
+    seq.serialize({all_slots=true},insert_all_args(tbl1),insert_all_args(tbl1))
+    for i,v in ipairs(tbl) do
+      assert_equal(v,tbl1[i],i)
+    end
 
-  seq.update(10799,1,43)
-  assert_equal(43,seq.slot(59)._sum)
-  assert_equal(1,seq.slot(59)._hits)
+    seq.update(10799,1,43)
+    assert_equal(43,seq.slot(59)._sum)
+    assert_equal(1,seq.slot(59)._hits)
 
-  seq.update(10800,1,99)
-  assert_equal(99,seq.slot(0)._sum)
-  assert_equal(1,seq.slot(0)._hits)
+    seq.update(10800,1,99)
+    assert_equal(99,seq.slot(0)._sum)
+    assert_equal(1,seq.slot(0)._hits)
 
-  tbl = {}
-  seq.serialize({sorted=true,all_slots=true},insert_all_args(tbl),insert_all_args(tbl))
+    tbl = {}
+    seq.serialize({sorted=true,all_slots=true},insert_all_args(tbl),insert_all_args(tbl))
 
-  assert_equal("seq",tbl[1])
-  assert_equal(60,tbl[2])
-  assert_equal(3600,tbl[3]) -- period
+    assert_equal("seq",tbl[1])
+    assert_equal(60,tbl[2])
+    assert_equal(3600,tbl[3]) -- period
 
-  -- last slot
-  local last = 183
-  assert_equal(99,tbl[last-2])
-  assert_equal(1,tbl[last-1])
-  assert_equal(10800,tbl[last-0])
-  -- one before last slot
-  assert_equal(43,tbl[last-5])
-  assert_equal(1,tbl[last-4])
-  assert_equal(10740,tbl[last-3])
+    -- last slot
+    local last = 183
+    assert_equal(99,tbl[last-2])
+    assert_equal(1,tbl[last-1])
+    assert_equal(10800,tbl[last-0])
+    -- one before last slot
+    assert_equal(43,tbl[last-5])
+    assert_equal(1,tbl[last-4])
+    assert_equal(10740,tbl[last-3])
 
 end
 
 function test_to_timestamp()
   local tests = {
-	-- {expr_,now,latest,expected}
-	{"1",60,0,1},
-	{"1+2",60,10,3},
-	{"print(1+2)",60,10,nil},
-	{"now+2",60,10,62},
-	{"latest-7",60,10,3},
-	{"latest-1m",60,120,60},
-	{"now + latest - 1m",61,121,122},
-	{"1..",60,0,nil},
-	{"1..2",60,0,{1,2}},
-	{"31..2",60,0,{31,2}},
-	{"now + latest - 1m..1",61,121,{122,1}},
-	{"latest-1m..latest-1m",60,120,{60,60}},
+    -- {expr_,now,latest,expected}
+    {"1",60,0,1},
+    {"1+2",60,10,3},
+    {"print(1+2)",60,10,nil},
+    {"now+2",60,10,62},
+    {"latest-7",60,10,3},
+    {"latest-1m",60,120,60},
+    {"now + latest - 1m",61,121,122},
+    {"1..",60,0,nil},
+    {"1..2",60,0,{1,2}},
+    {"31..2",60,0,{31,2}},
+    {"now + latest - 1m..1",61,121,{122,1}},
+    {"latest-1m..latest-1m",60,120,{60,60}},
   }
 
   for i,t in ipairs(tests) do
-	local ts = to_timestamp(t[1],t[2],t[3])
-	if ts and type(t[4])=="table" then
-	  assert_equal(t[4][1],ts[1],i)
-	  assert_equal(t[4][2],ts[2],i)
-	else
-	  assert_equal(t[4],ts,i)
-	end
+    local ts = to_timestamp(t[1],t[2],t[3])
+    if ts and type(t[4])=="table" then
+      assert_equal(t[4][1],ts[1],i)
+      assert_equal(t[4][2],ts[2],i)
+    else
+      assert_equal(t[4],ts,i)
+    end
   end
 
 end
@@ -249,9 +249,9 @@ end
 local function table_itr(tbl_)
   local current = 0
   return function()
-		   current = current + 1
-		   return tbl_[current]
-		 end
+    current = current + 1
+    return tbl_[current]
+         end
 end
 
 function test_remove_comment()
@@ -319,9 +319,9 @@ local function sequence_any(seq_,callback_)
   seq_.serialize({all_slots=true},insert_all_args(out),insert_all_args(out))
   local count = 1
   for i,v in ipairs(out) do
-	if i>6 then -- first 3 slots are the header
-	  if callback_(v) then return true end
-	end
+    if i>6 then -- first 3 slots are the header
+      if callback_(v) then return true end
+    end
   end
 
   return false
@@ -339,7 +339,7 @@ end
 
 local function empty_metrics(metrics_)
   for _,m in ipairs(metrics_ or {}) do
-	if not empty_sequence(m) then return false end
+    if not empty_sequence(m) then return false end
   end
   return true
 end
@@ -348,7 +348,7 @@ end
 local function non_empty_metrics(metrics_)
   if not metrics_ then return false end
   for _,m in ipairs(metrics_) do
-	if non_empty_sequence(m) then return true end
+    if non_empty_sequence(m) then return true end
   end
   return false
 end
@@ -356,7 +356,7 @@ end
 local function dump_metrics(metrics_)
   if not metrics_ then return end
   for i,m in ipairs(metrics_) do
-	m.serialize(stdout(", "))
+    m.serialize(stdout(", "))
   end
 end
 
@@ -425,38 +425,38 @@ end
 function test_top_level_factories()
 
   function helper(m)
-	m.configure(table_itr({"beer. 60s:12h 1h:30d","beer 3m:1h"}))
-	assert_equal(0,#m.matching_sequences("beer.ale"))
-	local factories = m.get_factories()
-	assert_equal(1,table_size(factories))
-	assert(factories["beer"])
-	assert(not factories["beer.lager"])
-	assert_equal(nil,factories["beer.ale"])
-	assert_equal(nil,factories["beer.ale.brown.newcastle"])
+    m.configure(table_itr({"beer. 60s:12h 1h:30d","beer 3m:1h"}))
+    assert_equal(0,#m.matching_sequences("beer.ale"))
+    local factories = m.get_factories()
+    assert_equal(1,table_size(factories))
+    assert(factories["beer"])
+    assert(not factories["beer.lager"])
+    assert_equal(nil,factories["beer.ale"])
+    assert_equal(nil,factories["beer.ale.brown.newcastle"])
 
 
-  m.process({"beer.ale.mild 20 74857843","beer.ale.mild.bitter 20 74857843","beer.ale.mild.sweet 30 74857843"})
+    m.process({"beer.ale.mild 20 74857843","beer.ale.mild.bitter 20 74857843","beer.ale.mild.sweet 30 74857843"})
 
-	assert(empty_metrics(m.matching_sequences("beer.stout")))
+    assert(empty_metrics(m.matching_sequences("beer.stout")))
 
-	assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
-	assert(non_empty_metrics(m.matching_sequences("beer")))
-	assert(non_empty_metrics(m.matching_sequences("beer.ale")))
-	assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
-	assert(string.find(m.latest("beer"),"70,3,74857800"))
+    assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+    assert(non_empty_metrics(m.matching_sequences("beer")))
+    assert(non_empty_metrics(m.matching_sequences("beer.ale")))
+    assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
+    assert(string.find(m.latest("beer"),"70,3,74857800"))
 
-	m.process("beer.ale.brown.newcastle 98 74857954")
-	assert(m.matching_sequences("beer.ale.brown.newcastle"))
-	assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+    m.process("beer.ale.brown.newcastle 98 74857954")
+    assert(m.matching_sequences("beer.ale.brown.newcastle"))
+    assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
 
-	m.process("beer.stout.irish 98 74857954")
-	assert(non_empty_metrics(m.matching_sequences("beer.stout.irish")))
-	assert(non_empty_metrics(m.matching_sequences("beer.stout")))
-	assert(empty_metrics(m.matching_sequences("beer.wheat")))
+    m.process("beer.stout.irish 98 74857954")
+    assert(non_empty_metrics(m.matching_sequences("beer.stout.irish")))
+    assert(non_empty_metrics(m.matching_sequences("beer.stout")))
+    assert(empty_metrics(m.matching_sequences("beer.wheat")))
 
 
-	m.process("beer.stout 143 74858731")
-	assert(non_empty_metrics(m.matching_sequences("beer.stout")))
+    m.process("beer.stout 143 74858731")
+    assert(non_empty_metrics(m.matching_sequences("beer.stout")))
   end
 
   for_each_db("./tests/temp/top_level",helper)
@@ -489,50 +489,50 @@ end
 
 function test_reset()
   function helper(m)
-	m.configure(table_itr({"beer 60s:12h 1h:30d","beer.stout 3m:1h"}))
-	assert_equal(0,#m.matching_sequences("beer.ale"))
-	local factories = m.get_factories()
-	assert(factories["beer.stout"])
+    m.configure(table_itr({"beer 60s:12h 1h:30d","beer.stout 3m:1h"}))
+    assert_equal(0,#m.matching_sequences("beer.ale"))
+    local factories = m.get_factories()
+    assert(factories["beer.stout"])
 
-	assert_equal(0,#m.matching_sequences("beer.stout"))
-	assert_equal(0,#m.matching_sequences("beer.ale.brown.newcastle"))
+    assert_equal(0,#m.matching_sequences("beer.stout"))
+    assert_equal(0,#m.matching_sequences("beer.ale.brown.newcastle"))
 
-	m.process("beer.ale.mild 20 74857843")
+    m.process("beer.ale.mild 20 74857843")
 
-	assert(non_empty_metrics(m.matching_sequences("beer")))
-	assert(empty_metrics(m.matching_sequences("beer.stout")))
-	assert(2,#m.matching_sequences("beer.ale"))
-	assert(2,#m.matching_sequences("beer.ale.mild"))
+    assert(non_empty_metrics(m.matching_sequences("beer")))
+    assert(empty_metrics(m.matching_sequences("beer.stout")))
+    assert(2,#m.matching_sequences("beer.ale"))
+    assert(2,#m.matching_sequences("beer.ale.mild"))
 
-	assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
-	assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
+    assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+    assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
 
-	m.process("beer.ale.brown.newcastle 98 74857954")
-	assert(m.matching_sequences("beer.ale.brown.newcastle"))
-	assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+    m.process("beer.ale.brown.newcastle 98 74857954")
+    assert(m.matching_sequences("beer.ale.brown.newcastle"))
+    assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
 
-	m.process("beer.stout.irish 98 74857954")
-	assert(non_empty_metrics(m.matching_sequences("beer.stout.irish")))
-	assert(non_empty_metrics(m.matching_sequences("beer.stout")))
-
-
-	m.process("beer.stout 143 74858731")
-	assert(non_empty_metrics(m.matching_sequences("beer.stout")))
-	assert(non_empty_metrics(m.matching_sequences("beer")))
-
-	m.process(".reset beer.stout")
-	assert(non_empty_metrics(m.matching_sequences("beer")))
-
-	assert(empty_metrics(m.matching_sequences("beer.stout")))
-	assert(empty_metrics(m.matching_sequences("beer.ale.irish")))
-	assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+    m.process("beer.stout.irish 98 74857954")
+    assert(non_empty_metrics(m.matching_sequences("beer.stout.irish")))
+    assert(non_empty_metrics(m.matching_sequences("beer.stout")))
 
 
-	m.process(".reset beer.ale")
-	assert(non_empty_metrics(m.matching_sequences("beer")))
-	assert(empty_metrics(m.matching_sequences("beer.ale")))
-	assert(empty_metrics(m.matching_sequences("beer.ale.brown")))
-	assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+    m.process("beer.stout 143 74858731")
+    assert(non_empty_metrics(m.matching_sequences("beer.stout")))
+    assert(non_empty_metrics(m.matching_sequences("beer")))
+
+    m.process(".reset beer.stout")
+    assert(non_empty_metrics(m.matching_sequences("beer")))
+
+    assert(empty_metrics(m.matching_sequences("beer.stout")))
+    assert(empty_metrics(m.matching_sequences("beer.ale.irish")))
+    assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+
+
+    m.process(".reset beer.ale")
+    assert(non_empty_metrics(m.matching_sequences("beer")))
+    assert(empty_metrics(m.matching_sequences("beer.ale")))
+    assert(empty_metrics(m.matching_sequences("beer.ale.brown")))
+    assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
   end
 
 

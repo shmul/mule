@@ -50,11 +50,6 @@ function sequence(db_,name_)
     return at(idx_,2)
   end
 
-
-  local function set_slot(idx_,timestamp_,hits_,sum_)
-    at(idx_,nil,timestamp_,hits_,sum_)
-  end
-
   local function latest(idx_)
     local pos = math.floor(_period/_step)
     if not idx_ then
@@ -111,7 +106,7 @@ function sequence(db_,name_)
     else
       hits,sum = hits_ or 1,sum_
     end
-    set_slot(idx,adjusted_timestamp,hits,sum)
+    at(idx,nil,adjusted_timestamp,hits,sum)
     local lt = latest_timestamp()
     if adjusted_timestamp>lt then
       latest(idx)
@@ -377,10 +372,9 @@ function mule(db_)
   end
 
   local function reset(resource_,options_)
-    each_sequence(_db,resource_,nil,
-                  function(seq)
-                    _db.out(seq.name())
-                  end)
+    for name in db_.matching_keys(resource_) do
+      _db.out(name)
+    end
     return true
   end
 
@@ -575,7 +569,7 @@ function mule(db_)
 
 
 
-    local function slot(resource_,options_)
+  local function slot(resource_,options_)
     local str = strout("")
     local format = string.format
     local opts = { timestamps={options_ and options_.timestamp} }
@@ -583,20 +577,20 @@ function mule(db_)
 
     col.head()
     for m in split_helper(resource_,"/") do
-      each_sequence(_db,m,nil,
-                    function(seq)
-                      local col1 = collectionout(str,"[","]\n")
-                      seq.serialize(opts,
-                                    function()
-                                      col.elem(format("\"%s\": ",seq.name()))
-                                      col1.head()
-                                    end,
-                                    function(sum,hits,timestamp)
-                                      col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
-                                    end
-                                   )
-                      col1.tail()
-                    end)
+      for name in db_.matching_keys(m) do
+        local col1 = collectionout(str,"[","]\n")
+        local seq = sequence(db_,name)
+        seq.serialize(opts,
+                      function()
+                        col.elem(format("\"%s\": ",name))
+                        col1.head()
+                      end,
+                      function(sum,hits,timestamp)
+                        col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+                      end
+                     )
+        col1.tail()
+      end
     end
     col.tail()
 
