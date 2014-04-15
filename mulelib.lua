@@ -639,8 +639,8 @@ function mule(db_)
       st = math.random(en-max_)
       en = st+max_
     end
-
-    for i = st,en do
+    local i = st
+    while i<=en and time_now()-now<2 do
       local n = sorted_updated_names[i]
       local seq = sequence(_db,n)
       local s = _updated_sequences[n]
@@ -660,9 +660,7 @@ function mule(db_)
         alert_check(seq,now)
       end
       _updated_sequences[n] = nil
-      if time_now()-now>1 then
-        i = en
-      end
+      i = i+1
     end
     logi("update_sequences end",time_now()-now,st,en,#sorted_updated_names)
     -- returns true if there are more items to process
