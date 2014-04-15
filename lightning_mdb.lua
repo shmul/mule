@@ -94,7 +94,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                  local rv,err = t:put(_envs[#_envs][2],k,v,0)
                  if not err then return true end
                  add_env()
-                 return put(k,v)
+                 return put_helper(k,v)
                end)
   end
 
@@ -147,8 +147,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return get_helper(k)
     end
     if not _cache[k] then
-      _caches_size = _caches_size + 1
       _cache[k] = pp.unpack(get_helper(k))
+      if _cache[k] then
+        _caches_size = _caches_size + 1
+      end
     end
     return _cache[k]
   end
@@ -157,6 +159,9 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if not _nodes_cache[k] then
       _caches_size = _caches_size + 1
       _nodes_cache[k] = unpack_node(k,get_helper(k))
+      if _nodes_cache[k] then
+        _caches_size = _caches_size + 1
+      end
     end
     return _nodes_cache[k]
   end
@@ -315,10 +320,15 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local k = cur:get_key(prefix_,lightningmdb.MDB_SET_RANGE)
       -- 124 is ascii for |
       repeat
-        if k and byte(k,5)~=124 and find(k,prefix_,1,true) and bounded_by_level(k,prefix_,level_) then
+        local prefixed = k and find(k,prefix_,1,true)
+        if k and byte(k,5)~=124 and prefixed and bounded_by_level(k,prefix_,level_) then
           coroutine.yield(k)
         end
-        k = cur:get_key(k,lightningmdb.MDB_NEXT)
+        if not prefixed then
+          k = nil
+        else
+          k = cur:get_key(k,lightningmdb.MDB_NEXT)
+        end
       until not k
       cur:close()
       t:commit()
