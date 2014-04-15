@@ -117,27 +117,30 @@ local function incoming_queue(db_path_,incoming_queue_path_)
 
   local function helper(m)
     if executing then return end
-    for file in first_files(incoming_queue_path_,"%.mule$",20) do
+    local now = time_now()
+    for file in first_files(incoming_queue_path_,"%.mule$",10) do
       executing = true
-      pcall_wrapper(function()
-                      local sz = posix.stat(file,"size")
-                      logi("incoming_queue file",file,sz)
-                      if sz==0 then
-                        logi("empty file",file)
-                        os.remove(file)
-                        return
-                      end
-                      -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
-                      m.process(file,true,true)
-                      local cm = os.date("%y/%m/%d/%H/%M")
-                      if minute_dir~=cm then
-                        minute_dir = cm
-                        os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
-                      end
-                      new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix.basename(file)),"//","/")
-                      os.rename(file,new_name)
-                      logi("incoming_queue file processed",new_name)
-                  end)
+      if time_now()-now<=1 then
+        pcall_wrapper(function()
+                        local sz = posix.stat(file,"size")
+                        logi("incoming_queue file",file,sz)
+                        if sz==0 then
+                          logi("empty file",file)
+                          os.remove(file)
+                          return
+                        end
+                        -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
+                        m.process(file,true,true)
+                        local cm = os.date("%y/%m/%d/%H/%M")
+                        if minute_dir~=cm then
+                          minute_dir = cm
+                          os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
+                        end
+                        new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix.basename(file)),"//","/")
+                        os.rename(file,new_name)
+                        logi("incoming_queue file processed",new_name)
+                      end)
+      end
       executing = false
     end
   end

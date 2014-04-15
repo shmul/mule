@@ -623,14 +623,65 @@ function mule(db_)
     return wrap_json(str)
   end
 
+  local function update_sequences(max_)
+    -- we now update the real sequences
+    local now = time_now()
+    local sorted_updated_names = _db.sort_updated_names(keys(_updated_sequences))
+    local st = 1
+    local en = #sorted_updated_names
+    if en==0 then
+      --logd("no update required")
+      return
+    end
+    logi("update_sequences start")
+    -- why bother with randomness? to avoid starvation
+    if max_ and en>max_ then
+      st = math.random(en-max_)
+      en = st+max_
+    end
+
+    for i = st,en do
+      local n = sorted_updated_names[i]
+      local seq = sequence(_db,n)
+      local s = _updated_sequences[n]
+      for j,sl in ipairs(s.slots()) do
+        local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
+                                                  sl._hits==nil)
+        if adjusted_timestamp and sum then
+          _hints[n] = _hints[n] or {}
+          if not _hints[n]._rank_ts then
+            _hints[n]._rank = 0
+            _hints[n]._rank_ts = 0
+          end
+          _hints[n]._rank_ts,_hints[n]._rank = update_rank(
+            _hints[n]._rank_ts,_hints[n]._rank,
+            adjusted_timestamp,sum,n,seq.step())
+        end
+        alert_check(seq,now)
+      end
+      _updated_sequences[n] = nil
+      if time_now()-now>1 then
+        i = en
+      end
+    end
+    logi("update_sequences end",time_now()-now,st,en,#sorted_updated_names)
+    -- returns true if there are more items to process
+    return en<#sorted_updated_names
+  end
+
+
+
   local function save()
     logi("save",table_size(_factories),table_size(_alerts),table_size(_hints))
     _db.put("metadata=version",pp.pack(CURRENT_VERSION),true)
     _db.put("metadata=factories",pp.pack(_factories),true)
     _db.put("metadata=alerts",pp.pack(_alerts),true)
     _db.put("metadata=hints",pp.pack(_hints),true)
+    logi("save - flushing uncommited data")
+    while update_sequences(UPDATE_AMOUNT) do
+      -- nop
+    end
   end
-
 
   local function alert_set(resource_,options_)
     if not resource_ or #resource_==0 then
@@ -881,49 +932,6 @@ function mule(db_)
     logw("process_line error",rv,metric_line_)
     return nil
 
-  end
-
-  local function update_sequences(max_)
-    -- we now update the real sequences
-    local now = time_now()
-    local sorted_updated_names = _db.sort_updated_names(keys(_updated_sequences))
-    local st = 1
-    local en = #sorted_updated_names
-    if en==0 then
-      --logd("no update required")
-      return
-    end
-    logi("update_sequences start")
-    -- why bother with randomness? to avoid starvation
-    if max_ and en>max_ then
-      st = math.random(en-max_)
-      en = st+max_
-    end
-
-    for i = st,en do
-      local n = sorted_updated_names[i]
-      local seq = sequence(_db,n)
-      local s = _updated_sequences[n]
-      for j,sl in ipairs(s.slots()) do
-        local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
-                                                  sl._hits==nil)
-        if adjusted_timestamp and sum then
-          _hints[n] = _hints[n] or {}
-          if not _hints[n]._rank_ts then
-            _hints[n]._rank = 0
-            _hints[n]._rank_ts = 0
-          end
-          _hints[n]._rank_ts,_hints[n]._rank = update_rank(
-            _hints[n]._rank_ts,_hints[n]._rank,
-            adjusted_timestamp,sum,n,seq.step())
-        end
-        alert_check(seq,now)
-      end
-      _updated_sequences[n] = nil
-    end
-    logi("update_sequences end",time_now()-now,st,en,#sorted_updated_names)
-    -- returns true if there are more items to process
-    return en<#sorted_updated_names
   end
 
   local function process(data_,dont_update_,no_commands_)
