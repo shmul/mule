@@ -97,7 +97,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                end)
   end
 
-  local function put(k,v)
+  local function put(k,v,dont_cache_)
+    if dont_cache_ then
+      return put_helper(k,v)
+    end
     _cache[k] = v
     return _cache[k]
   end
@@ -134,7 +137,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
   end
 
-  local function get(k)
+  local function get(k,dont_cache_)
+    if dont_cache_ then
+      return get_helper(k)
+    end
     if not _cache[k] then
       _cache[k] = pp.unpack(get_helper(k))
     end

@@ -625,10 +625,10 @@ function mule(db_)
 
   local function save()
     logi("save",table_size(_factories),table_size(_alerts),table_size(_hints))
-    _db.put("metadata=version",pp.pack(CURRENT_VERSION))
-    _db.put("metadata=factories",pp.pack(_factories))
-    _db.put("metadata=alerts",pp.pack(_alerts))
-    _db.put("metadata=hints",pp.pack(_hints))
+    _db.put("metadata=version",pp.pack(CURRENT_VERSION),true)
+    _db.put("metadata=factories",pp.pack(_factories),true)
+    _db.put("metadata=alerts",pp.pack(_alerts),true)
+    _db.put("metadata=hints",pp.pack(_hints),true)
   end
 
 
@@ -766,18 +766,20 @@ function mule(db_)
 
   local function load()
     logi("load")
-    local ver = _db.get("metadata=version")
-    local factories = _db.get("metadata=factories")
-    local alerts = _db.get("metadata=alerts")
-    local hints = _db.get("metadata=hints")
-    local version = ver and pp.unpack(ver) or CURRENT_VERSION
+    local function helper(key_,dont_cache_,default_)
+      local v = _db.get(key_,dont_cache_)
+      return v and pp.unpack(v) or default_
+    end
+
+    local version = helper("metadata=version",true,CURRENT_VERSION)
     if not version==CURRENT_VERSION then
       error("unknown version")
       return nil
     end
-    _factories = factories and pp.unpack(factories) or {}
-    _alerts = alerts and pp.unpack(alerts) or {}
-    _hints = hints and pp.unpack(hints) or {}
+
+    _factories = helper("metadata=factories",true,{})
+    _alerts = helper("metadata=alerts",true,{})
+    _hints = helper("metadata=hints",true,{})
     logi("load",table_size(_factories),table_size(_alerts),table_size(_hints))
   end
 
@@ -1016,5 +1018,3 @@ function mule(db_)
     alert = alert
          }
 end
-
---verbose_log(true)
