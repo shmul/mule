@@ -94,7 +94,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                  local rv,err = t:put(_envs[#_envs][2],k,v,0)
                  if not err then return true end
                  add_env()
-                 return put(k,v)
+                 return put_helper(k,v)
                end)
   end
 
