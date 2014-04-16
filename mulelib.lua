@@ -607,7 +607,7 @@ function mule(db_)
     local format = string.format
     local find = string.find
     local col = collectionout(str,"{","}")
-    local level = tonumber(options_.level) or 1
+    local level = tonumber(options_.level) or 0
     col.head()
 
     logd("key - start traversing")

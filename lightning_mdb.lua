@@ -317,11 +317,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local byte = string.byte
 
       local cur = t:cursor_open(db)
-      local k = cur:get_key(prefix_,lightningmdb.MDB_SET_RANGE)
-      -- 124 is ascii for |
+      local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
       repeat
         local prefixed = k and find(k,prefix_,1,true)
-        if k and byte(k,5)~=124 and prefixed and bounded_by_level(k,prefix_,level_) then
+        if prefixed and byte(k,5)~=124 and bounded_by_level(k,prefix_,level_) then -- 124 is ascii for |
           coroutine.yield(k)
         end
         if not prefixed then

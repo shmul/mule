@@ -58,6 +58,12 @@ function test_traverse()
   end
 
   count = 0
+  for k,_ in t:traverse("") do
+    count = count + 1
+  end
+  assert_equal(5,count)
+
+  count = 0
   for k,_ in t:traverse("hello") do
     count = count + 1
   end

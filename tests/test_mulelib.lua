@@ -33,10 +33,11 @@ local function lightning_db_factory(name_)
 end
 
 local function for_each_db(name_,func_,no_mule_)
-  local dbs = {in_memory_db(),
-               lightning_db_factory(name_),
-               --cabinet_db_factory(name_),
-               column_db_factory(name_)}
+  local dbs = {
+    in_memory_db(),
+    lightning_db_factory(name_),
+    column_db_factory(name_)
+  }
   if cabinet then
     table.insert(dbs,cabinet_db_factory(name_))
   end
@@ -271,46 +272,49 @@ function test_parse_input_line()
 end
 
 function test_factories()
-  local m = mule(in_memory_db())
-  m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.ale 60s:24h"}))
+  local function helper(m)
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.ale 60s:24h"}))
 
-  assert_equal(3,#m.get_factories()["beer.ale"])
-  local factories = m.get_factories()
-  assert(factories["beer.ale"])
-  assert_equal(0,#m.matching_sequences("beer.ale"))
-  assert_equal(0,#m.matching_sequences("beer.ale.brown.newcastle"))
+    assert_equal(3,#m.get_factories()["beer.ale"])
+    local factories = m.get_factories()
+    assert(factories["beer.ale"])
+    assert_equal(0,#m.matching_sequences("beer.ale"))
+    assert_equal(0,#m.matching_sequences("beer.ale.brown.newcastle"))
 
-  m.process("beer.ale.brown.newcastle 20 74857843")
-  assert_equal(9,#m.matching_sequences("beer.ale"))
-  assert_equal(6,#m.matching_sequences("beer.ale.brown"))
-  assert_equal(3,#m.matching_sequences("beer.ale.brown.newcastle"))
-  assert_equal(0,#m.matching_sequences("beer.ale.pale"))
+    m.process("beer.ale.brown.newcastle 20 74857843")
+    assert_equal(9,#m.matching_sequences("beer.ale"))
+    assert_equal(6,#m.matching_sequences("beer.ale.brown"))
+    assert_equal(3,#m.matching_sequences("beer.ale.brown.newcastle"))
+    assert_equal(0,#m.matching_sequences("beer.ale.pale"))
 
-  m.process("beer.ale.belgian.trappist 70 56920123")
-  assert_equal(15,#m.matching_sequences("beer.ale"))
+    m.process("beer.ale.belgian.trappist 70 56920123")
+    assert_equal(15,#m.matching_sequences("beer.ale"))
 
-  m.process("beer.ale.belgian.trappist 99 62910121")
-  assert_equal(15,#m.matching_sequences("beer.ale"))
-
+    m.process("beer.ale.belgian.trappist 99 62910121")
+    assert_equal(15,#m.matching_sequences("beer.ale"))
+  end
+  for_each_db("./tests/temp/test_factories",helper)
 end
 
 function test_modify_factories_1()
-  local m = mule(in_memory_db())
-  m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.ale 60s:24h"}))
+  local function helper(m)
 
-  assert_equal(3,#m.get_factories()["beer.ale"])
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.ale 60s:24h"}))
 
-  m.modify_factories({{"beer.ale","1h:30d","2h:90d"}})
-  assert_equal(3,#m.get_factories()["beer.ale"])
-  local factories = m.get_factories()
-  assert(factories["beer.ale"])
-  -- first retention 60s:12h
-  assert_equal(60,factories["beer.ale"][1][1])
-  assert_equal(12*60*60,factories["beer.ale"][1][2])
-  -- second retention is new 2h:90d
-  assert_equal(2*60*60,factories["beer.ale"][2][1])
-  assert_equal(90*24*60*60,factories["beer.ale"][2][2])
+    assert_equal(3,#m.get_factories()["beer.ale"])
 
+    m.modify_factories({{"beer.ale","1h:30d","2h:90d"}})
+    assert_equal(3,#m.get_factories()["beer.ale"])
+    local factories = m.get_factories()
+    assert(factories["beer.ale"])
+    -- first retention 60s:12h
+    assert_equal(60,factories["beer.ale"][1][1])
+    assert_equal(12*60*60,factories["beer.ale"][1][2])
+    -- second retention is new 2h:90d
+    assert_equal(2*60*60,factories["beer.ale"][2][1])
+    assert_equal(90*24*60*60,factories["beer.ale"][2][2])
+  end
+  for_each_db("./tests/temp/test_factories_1",helper)
 end
 
 local function sequence_any(seq_,callback_)
@@ -378,48 +382,50 @@ function test_metric_hierarchy()
 end
 
 function test_export_configuration()
-  local db = in_memory_db()
-  local m = mule(db)
-  m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
+  local function helper(m)
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
 
-  assert(string.find(m.export_configuration(),'"beer.ale": ["1m:12h" ,"1h:30d" ]',1,true))
-  assert(string.find(m.export_configuration(),'"beer.wheat": ["10m:1y" ]',1,true))
+    assert(string.find(m.export_configuration(),'"beer.ale": ["1m:12h" ,"1h:30d" ]',1,true))
+    assert(string.find(m.export_configuration(),'"beer.wheat": ["10m:1y" ]',1,true))
+  end
+  for_each_db("./tests/temp/test_export_configuration",helper)
 end
 
 function test_process_in_memory()
-  local db = in_memory_db()
-  local m = mule(db)
-  m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
+  local function helper(m)
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
 
-  assert_equal(0,#m.matching_sequences("beer.ale"))
-  local factories = m.get_factories()
-  assert(factories["beer.ale"])
-  assert(factories["beer.stout"])
-  assert(not factories["beer.lager"])
-  assert_equal(1,#factories["beer.stout"])
-  assert_equal(2,#factories["beer.ale"])
-  assert_equal(nil,factories["beer.ale.brown.newcastle"])
+    assert_equal(0,#m.matching_sequences("beer.ale"))
+    local factories = m.get_factories()
+    assert(factories["beer.ale"])
+    assert(factories["beer.stout"])
+    assert(not factories["beer.lager"])
+    assert_equal(1,#factories["beer.stout"])
+    assert_equal(2,#factories["beer.ale"])
+    assert_equal(nil,factories["beer.ale.brown.newcastle"])
 
-  m.process("beer.ale.mild 20 74857843")
+    m.process("beer.ale.mild 20 74857843")
 
-  assert(empty_metrics(m.matching_sequences("beer.stout")))
+    assert(empty_metrics(m.matching_sequences("beer.stout")))
 
-  assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+    assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
 
-  assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
+    assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
 
-  m.process("beer.ale.brown.newcastle 98 74857954")
-  assert(m.matching_sequences("beer.ale.brown.newcastle"))
-  assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
+    m.process("beer.ale.brown.newcastle 98 74857954")
+    assert(m.matching_sequences("beer.ale.brown.newcastle"))
+    assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
 
-  m.process("beer.stout.irish 98 74857954")
-  assert(non_empty_metrics(m.matching_sequences("beer.stout.irish")))
-  assert(non_empty_metrics(m.matching_sequences("beer.stout")))
-  assert(empty_metrics(m.matching_sequences("beer.wheat")))
+    m.process("beer.stout.irish 98 74857954")
+    assert(non_empty_metrics(m.matching_sequences("beer.stout.irish")))
+    assert(non_empty_metrics(m.matching_sequences("beer.stout")))
+    assert(empty_metrics(m.matching_sequences("beer.wheat")))
 
 
-  m.process("beer.stout 143 74858731")
-  assert(non_empty_metrics(m.matching_sequences("beer.stout")))
+    m.process("beer.stout 143 74858731")
+    assert(non_empty_metrics(m.matching_sequences("beer.stout")))
+  end
+  for_each_db("./tests/temp/test_process_in_memory",helper)
 end
 
 function test_top_level_factories()
@@ -462,28 +468,23 @@ function test_top_level_factories()
   for_each_db("./tests/temp/top_level",helper)
 end
 
-function helper_modify_factories(m)
-  m.configure(table_itr({"beer.ale 60s:12h 1h:30d"}))
+function test_modify_factories()
+  local function helper(m)
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d"}))
 
-  m.process("beer.ale.mild 20 74857843")
-  assert(non_empty_metrics(m.matching_sequences("beer.ale")))
+    m.process("beer.ale.mild 20 74857843")
+    assert(non_empty_metrics(m.matching_sequences("beer.ale")))
 
-  assert_equal(4,#m.matching_sequences("beer.ale"))
-  assert(string.find(m.graph("beer.ale"),'"beer.ale;1m:12h": [[20,1,74857800]'))
-  assert(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]'))
-  m.modify_factories({{"beer.ale","1h:30d","2h:90d"}})
+    assert_equal(4,#m.matching_sequences("beer.ale"))
+    assert(string.find(m.graph("beer.ale"),'"beer.ale;1m:12h": [[20,1,74857800]'))
+    assert(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]'))
+    m.modify_factories({{"beer.ale","1h:30d","2h:90d"}})
 
-  assert(non_empty_metrics(m.matching_sequences("beer.ale")))
-  assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]'))
-  assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74857800]'))
-end
-
-function test_modify_factories_2()
-  helper_modify_factories(mule(in_memory_db()))
-end
-
-function test_modify_factories_3()
-  for_each_db("./tests/temp/modify_factories",helper_modify_factories)
+    assert(non_empty_metrics(m.matching_sequences("beer.ale")))
+    assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]'))
+    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74857800]'))
+  end
+  for_each_db("./tests/temp/modify_factories",helper)
 end
 
 
@@ -540,22 +541,24 @@ function test_reset()
 end
 
 function test_save_load()
-  local db = in_memory_db()
-  local m = mule(db)
+  local function helper(db)
+    local m = mule(db)
 
-  m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h"}))
-  assert_equal(2,table_size(m.get_factories()))
-  m.process("beer.ale.mild 20 74857843")
-  m.process("beer.ale.brown.newcastle 98 74857954")
-  m.process("beer.stout.irish 98 74857954")
-  m.process("beer.stout 143 74858731")
-  m.save()
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h"}))
+    assert_equal(2,table_size(m.get_factories()))
+    m.process("beer.ale.mild 20 74857843")
+    m.process("beer.ale.brown.newcastle 98 74857954")
+    m.process("beer.stout.irish 98 74857954")
+    m.process("beer.stout 143 74858731")
+    m.save()
 
-  local n = mule(db)
-  n.load()
-  assert_equal(2,table_size(n.get_factories()))
-  assert_equal(2,#n.get_factories()["beer.ale"])
-  assert_equal(1,#n.get_factories()["beer.stout"])
+    local n = mule(db)
+    n.load()
+    assert_equal(2,table_size(n.get_factories()))
+    assert_equal(2,#n.get_factories()["beer.ale"])
+    assert_equal(1,#n.get_factories()["beer.stout"])
+  end
+  for_each_db("./tests/temp/save_load",helper,true)
 end
 
 
@@ -701,7 +704,7 @@ function test_metric_one_level_children()
       {"beer.ale.brown",4},
       {"beer.ale",8},
       {"beer",2},
-      {"",0},
+      {"",2},
       {"foo",0},
     }
 
@@ -760,7 +763,7 @@ function test_key()
     m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
 
     m.process("./tests/fixtures/pale.mule")
-    assert(m.key("beer",{})==m.key("beer",{level=1}))
+    assert(m.key("beer",{})==m.key("beer",{level=0}))
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
     -- (cut -d' ' -f 1 tests/fixtures/pale.mule  | sort | uniq | wc -l)
@@ -784,8 +787,7 @@ function test_key()
     assert_equal(1+2*3,#split(all_keys,","))
 
   end
-
-  helper(in_memory_db())
+  for_each_db("./tests/temp/key",helper,true)
 end
 
 function test_bounded_by_level()
@@ -798,82 +800,85 @@ end
 
 
 function test_duplicate_timestamps()
-  local db = column_db_factory("temp/duplicate_timestamps")
-  local m = mule(db)
-  m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
-  m.process(n_lines(109,io.lines("./tests/fixtures/d_input.mule")))
-  for l in string_lines(m.dump("Johnston.Morfin",{to_str=true}).get_string()) do
-    if #l>0 then
-      assert_equal(4,#split(l," "),l)
+    local function helper(m)
+      m.configure(n_lines(109,io.lines("./tests/fixtures/d_conf")))
+      m.process(n_lines(109,io.lines("./tests/fixtures/d_input.mule")))
+      for l in string_lines(m.dump("Johnston.Morfin",{to_str=true}).get_string()) do
+        if #l>0 then
+          assert_equal(4,#split(l," "),l)
+        end
+      end
     end
-  end
+  for_each_db("./tests/temp/test_duplicate_timestamps",helper)
 end
 
 function test_dashes_in_keys()
-  local db = column_db_factory("temp/dashes_in_keys")
-  local m = mule(db)
-  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
-  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
-  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-  assert(string.find(m.key("Johnston",{level=4}),"Sweet%-Nuthin"))
-  assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
-  m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
-  assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
+  local function helper(m)
+    m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+    m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+    assert(string.find(m.key("Johnston",{level=4}),"Sweet%-Nuthin"))
+    assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1s:1m 78 1 300"))
+    m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
+    assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
+  end
+  for_each_db("./tests/temp/test_dashes_in_keys",helper)
 end
 
 function test_stacked()
-  local db = column_db_factory("temp/rank_output")
-  local m = mule(db)
-  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
-  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
-  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+  function helper(db)
+    local m = mule(db)
+    m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+    m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
 
-  local level2 = m.graph("Johnston.Morfin",{level=2})
-  local level1 = m.graph("Johnston.Morfin",{level=1})
-  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
-  assert(string.find(level2,"Johnston.Morfin.Jamal;1s:1m",1,true))
-  assert_nil(string.find(level1,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
-  assert(string.find(level1,"Johnston.Morfin.Jamal;1s:1m",1,true))
-  assert(string.find(level1,"Johnston.Morfin.Jamal;1m:1h",1,true))
+    local level2 = m.graph("Johnston.Morfin",{level=2})
+    local level1 = m.graph("Johnston.Morfin",{level=1})
+    assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+    assert(string.find(level2,"Johnston.Morfin.Jamal;1s:1m",1,true))
+    assert_nil(string.find(level1,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+    assert(string.find(level1,"Johnston.Morfin.Jamal;1s:1m",1,true))
+    assert(string.find(level1,"Johnston.Morfin.Jamal;1m:1h",1,true))
 
-  level2 = m.graph("Johnston.Morfin;1m:1h",{level=2})
-  level1 = m.graph("Johnston.Morfin;1m:1h",{level=1})
+    level2 = m.graph("Johnston.Morfin;1m:1h",{level=2})
+    level1 = m.graph("Johnston.Morfin;1m:1h",{level=1})
 
 
-  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
-  assert(string.find(level2,"Johnston.Morfin.Jamal;1m:1h",1,true))
-  assert_nil(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
-  assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
-  assert(string.find(level1,"Johnston.Morfin.Jamal;1m:1h",1,true))
-  assert_nil(string.find(level1,"Johnston.Morfin.Jamal;1h:12h",1,true))
+    assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
+    assert(string.find(level2,"Johnston.Morfin.Jamal;1m:1h",1,true))
+    assert_nil(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+    assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1m:1h",1,true))
+    assert(string.find(level1,"Johnston.Morfin.Jamal;1m:1h",1,true))
+    assert_nil(string.find(level1,"Johnston.Morfin.Jamal;1h:12h",1,true))
 
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=2,count=1}))
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=2,count=1}),
+                             '{"version": 3,\n"data": {"Johnston.Morfin.Jamal;%d+%w:%d+%w": [[5,1,0]]\n}\n}'))
 
-  local level0 = m.graph("Johnston.Morfin.Jamal;1m:1h",{level=0})
-  assert(string.find(level0,"Johnston.Morfin.Jamal;1m:1h",1,true))
-  assert_nil(string.find(level0,"Johnston.Morfin.Jamal.",1,true))
+    local level0 = m.graph("Johnston.Morfin.Jamal;1m:1h",{level=0})
+    assert(string.find(level0,"Johnston.Morfin.Jamal;1m:1h",1,true))
+    assert_nil(string.find(level0,"Johnston.Morfin.Jamal.",1,true))
 
-  level0 = m.graph("Johnston.Morfin.Jamal",{level=0})
-  assert(string.find(level0,"Johnston.Morfin.Jamal;1m:1h",1,true))
-  assert(string.find(level0,"Johnston.Morfin.Jamal;1h:12h",1,true))
-  assert(string.find(level0,"Johnston.Morfin.Jamal;1s:1m",1,true))
-  assert_nil(string.find(level0,"Johnston.Morfin.Jamal.",1,true))
+    level0 = m.graph("Johnston.Morfin.Jamal",{level=0})
+    assert(string.find(level0,"Johnston.Morfin.Jamal;1m:1h",1,true))
+    assert(string.find(level0,"Johnston.Morfin.Jamal;1h:12h",1,true))
+    assert(string.find(level0,"Johnston.Morfin.Jamal;1s:1m",1,true))
+    assert_nil(string.find(level0,"Johnston.Morfin.Jamal.",1,true))
+  end
+  for_each_db("./tests/temp/stacked",helper,true)
 end
 
 function test_rank_output()
-  local db = column_db_factory("temp/rank_output")
-  local m = mule(db)
-  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
-  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
-  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=2,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal;1m:1h": [[5,1,0]]\n}\n}',m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
-end
+  local function helper(m)
+    m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+    m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=1}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[5,1,0]]\n}\n}'))
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=2,count=1}),'{"version": 3,\n"data": {"Johnston.Morfin.Jamal;%d+%w:%d+%w]+": [[5,1,0]]\n}\n}'))
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=2}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.%w+;1m:1h": [[5,1,0]]\n}\n}'))
+  end
 
+  for_each_db("./tests/temp/test_rank_output",helper)
+end
 
 function test_rank()
   local ts,r = update_rank_helper(0,0,100,20,10)
@@ -895,31 +900,26 @@ function test_rank()
 end
 
 function test_caching()
-  local db = column_db_factory("temp/rank_output")
-  local m = mule(db)
-  m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
-  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
-  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-  m.graph("Johnston.Morfin.Jamal.Marcela",{level=1,count=1})
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.Jamal;1m:1h": [[5,1,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
-  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
-  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[10,2,0]]\n,"Johnston.Morfin.Jamal;1m:1h": [[10,2,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
-  MAX_CACHE_SIZE = 1
-  m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
-  m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=1,count=1}))
-  assert_equal('{"version": 3,\n"data": {"Johnston.Morfin.Jamal;1h:12h": [[15,3,0]]\n,"Johnston.Morfin.Jamal;1m:1h": [[15,3,0]]\n}\n}',
-               m.graph("Johnston.Morfin.Jamal",{level=1,count=2}))
-end
+  local function helper(m)
+    m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+    m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+    m.graph("Johnston.Morfin.Jamal.Marcela",{level=1,count=1})
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=1}),'{"version": 3,\n"data": {"Johnston.Morfin.Jamal;%w+": [[5,1,0]]\n}\n}'))
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=2}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.%w;1m:1h": [[5,1,0]]\n}\n}'))
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+    m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=1}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[10,2,0]]\n}\n}'))
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=2}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[10,2,0]]\n,"Johnston.Morfin.%w+;1m:1h": [[10,2,0]]\n}\n}'))
+    MAX_CACHE_SIZE = 1
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+    m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=1}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[15,3,0]]\n}\n}'))
+    assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=2}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[15,3,0]]\n,"Johnston.Morfin.%w+;1m:1h": [[15,3,0]]\n}\n}'))
+  end
 
+  for_each_db("./tests/temp/test_caching",helper)
+end
 
 --verbose_log(true)
 --profiler.start("profiler.out")

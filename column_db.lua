@@ -270,11 +270,16 @@ local tr = require("trie")
       local function put_semicolumn(rp)
         return ";"..rp
       end
+      if #prefix_==0 then
+        level_ = 2
+      else
+        level_ = level_ and level_+1
+      end
       return coroutine.wrap(
         function()
-          for k,n in index:traverse(prefix_,true,false,level_ and level_+1) do
+          for k,n in index:traverse(prefix_,true,false) do
             -- the 20140226 exclusion is to overcome a data corruption bug that Ops had. TODO - remove this
-            if find(k,"metadata=",1,true)~=1 and not find(k,"201402",1,true) then
+            if find(k,"metadata=",1,true)~=1 and not find(k,"201402",1,true) and bounded_by_level(k,prefix_,level_) then
               coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
             end
           end

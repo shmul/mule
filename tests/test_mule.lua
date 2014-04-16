@@ -29,7 +29,7 @@ function test_create()
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest = {".key beer.ale"}},str)
-  assert_equal(weak_hash('{"version": 3,\n"data": {"beer.ale;1d:3y": {"children": true},"beer.ale.pale;1h:30d": {},"beer.ale.pale;1d:3y": {},"beer.ale.pale;5m:2d": {},"beer.ale;1h:30d": {"children": true},"beer.ale;5m:2d": {"children": true}}\n}'),weak_hash(str.get_string()))
+  assert_equal(weak_hash('{"version": 3,\n"data": {"beer.ale;1d:3y": {"children": true},"beer.ale;1h:30d": {"children": true},"beer.ale;5m:2d": {"children": true}}\n}'),weak_hash(str.get_string()))
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest={"./tests/fixtures/input2.mule"}},str)
