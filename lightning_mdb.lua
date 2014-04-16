@@ -10,9 +10,10 @@ local NUM_PAGES = 25600
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
 local MAX_CACHE_SIZE = 200
+
 function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
-  local _meta,_meta_db
-  local _envs = {}
+  local _metas = {}
+  local _pages = {}
   local _slots_per_page
   local _cache = {}
   local _caches_size = 0
@@ -50,10 +51,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end)
   end
 
-  local function add_env()
-    local e = new_env_factory(tostring(#_envs))
-    logi("creating new env pair",#_envs)
-    table.insert(_envs,{e,new_db(e)})
+  local function add_env(array_,label_)
+    local e = new_env_factory(label_.."."..tostring(#array_))
+    logi("creating new env pair for",label_,#_pages)
+    table.insert(array_,{e,new_db(e)})
+    return array_[#array_]
   end
 
 
@@ -85,22 +87,26 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return node
   end
 
-  local function put_helper(k,v)
-    if string.find(k,"metadata=",1,true) then
-      return _meta and txn(_meta,function(t) return t:put(_meta_db,k,v,0) end)
-    end
-    return txn(_envs[#_envs][1],
+  local function native_put(k,v,meta_)
+    local function helper(array_,label_)
+      return txn(array_[#array_][1],
                function(t)
-                 local rv,err = t:put(_envs[#_envs][2],k,v,0)
+                 local rv,err = t:put(array_[#array_][2],k,v,0)
                  if not err then return true end
-                 add_env()
-                 return put_helper(k,v)
+                 add_env(array_,label_)
+                 return native_put(k,v,meta_)
                end)
+
+    end
+    if meta_ or string.find(k,"metadata=",1,true) then
+      return helper(_metas,"meta")
+    end
+    return helper(_pages,"page")
   end
 
-  local function put(k,v,dont_cache_)
+  local function put(k,v,dont_cache_,meta_)
     if dont_cache_ then
-      return put_helper(k,v)
+      return native_put(k,v,meta_)
     end
     _cache[k] = v
     return _cache[k]
@@ -115,11 +121,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local count,nodes = 0,0
     logi("flush_cache start")
     for k,v in pairs(_cache) do
-      put_helper(k,pp.pack(v))
+      native_put(k,v,false)
       count = count + 1
     end
     for k,v in pairs(_nodes_cache) do
-      put_helper(k,pack_node(v))
+      native_put(k,pack_node(v),true)
       nodes = nodes + 1
     end
     logi("flush_cache",_caches_size,count,nodes)
@@ -128,15 +134,18 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     _caches_size = 0
   end
 
-  local function get_helper(k)
-    if string.find(k,"metadata=",1,true) then
-      return txn(_meta,function(t) return t:get(_meta_db,k) end)
+  local function native_get(k,meta_)
+    local function helper(array_)
+      for _,ed in ipairs(array_) do
+        local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
+        if not err then return rv end
+      end
     end
 
-    for _,ed in ipairs(_envs) do
-      local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
-      if not err then return rv end
+    if meta_ or string.find(k,"metadata=",1,true) then
+      return helper(_metas)
     end
+    return helper(_pages)
   end
 
   local function get(k,dont_cache_)
@@ -144,10 +153,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       flush_cache()
     end
     if dont_cache_ then
-      return get_helper(k)
+      return native_get(k)
     end
     if not _cache[k] then
-      _cache[k] = pp.unpack(get_helper(k))
+      _cache[k] = native_get(k)
       if _cache[k] then
         _caches_size = _caches_size + 1
       end
@@ -158,7 +167,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function get_node(k)
     if not _nodes_cache[k] then
       _caches_size = _caches_size + 1
-      _nodes_cache[k] = unpack_node(k,get_helper(k))
+      _nodes_cache[k] = unpack_node(k,native_get(k,true))
       if _nodes_cache[k] then
         _caches_size = _caches_size + 1
       end
@@ -169,31 +178,34 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function init()
     _meta = new_env_factory("meta")
-    _meta_db = new_db(_meta)
-    add_env()
+    add_env(_metas,"meta")
+    add_env(_pages,"page")
     _slots_per_page = get("metadata=slots_per_page")
     if not _slots_per_page then
      _slots_per_page = slots_per_page_ or SLOTS_PER_PAGE
-      put("metadata=slots_per_page",_slots_per_page)
+      put("metadata=slots_per_page",_slots_per_page,true)
     end
   end
 
 
-  local function del(k)
-    _cache[k] = nil
-    _nodes_cache[k] = nil
-    if string.find(k,"metadata=",1,true) then
-      return txn(_meta,function(t) return t:del(_meta_db,k,nil) end)
+  local function del(k,meta_)
+    local function helper(array_)
+      for _,ed in ipairs(array_) do
+        local rv,err = txn(ed[1],function(t) return t:del(ed[2],k,nil) end)
+      end
     end
 
-    for _,ed in ipairs(_envs) do
-      local rv,err = txn(ed[1],function(t) return t:del(ed[2],k,nil) end)
+    _cache[k] = nil
+    _nodes_cache[k] = nil
+    if meta_ or string.find(k,"metadata=",1,true) then
+      helper(_metas)
     end
+    helper(_pages)
   end
 
   local function search(prefix_)
     flush_cache()
-    for _,ed in ipairs(_envs) do
+    for _,ed in ipairs(_metas) do
       local t = ed[1]:txn_begin(nil,lightningmdb.MDB_RDONLY)
       local cur = t:cursor_open(ed[2])
       local k,v = cur:get(prefix_,lightningmdb.MDB_SET_RANGE)
@@ -307,10 +319,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end
     end
     logi("internal_out_slot - deleting node",name_)
-    del(name_)
+    del(name_,true)
   end
 
-  local function matching_keys(prefix_,level_,meta_)
+  local function matching_keys(prefix_,level_)
     local function helper(env,db)
       local t,err = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
       local find = string.find
@@ -320,7 +332,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
       repeat
         local prefixed = k and find(k,prefix_,1,true)
-        if prefixed and byte(k,5)~=124 and bounded_by_level(k,prefix_,level_) then -- 124 is ascii for |
+        if not find(k,"metadata=",1,true) and prefixed and bounded_by_level(k,prefix_,level_) then
           coroutine.yield(k)
         end
         if not prefixed then
@@ -334,44 +346,44 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
     return coroutine.wrap(function()
                             flush_cache()
-                            if meta_ then
-                              helper(_meta,_meta_db)
-                              return
-                            end
-                            for _,ed in ipairs(_envs) do
+                            for _,ed in ipairs(_metas) do
                               helper(ed[1],ed[2])
                             end
-                            flush_cache()
                           end)
   end
 
 
 
   local function close()
-    logi("lightning_mdb close")
-    flush_cache()
-    if _meta then
-      _meta:close()
-      _meta = nil
-      _meta_db = nil
-    end
-
-    if _envs then
-      for _,ed in ipairs(_envs) do
+    local function helper(array_)
+      if not array_ then return end
+      for _,ed in ipairs(array_) do
         ed[1]:close()
       end
-      _envs = nil
     end
+
+    logi("lightning_mdb close")
+    flush_cache()
+    helper(_metas)
+    _metas = nil
+    helper(_pages)
+    _pages = nil
   end
 
   local function backup(backup_path_)
-    if _meta then
-      logi("backing up meta")
-      _meta:copy(backup_path_)
+    local function helper(array_,label_)
+      if not array_ then return end
+      for _,ed in ipairs(array_) do
+        logi("backing up",label_,i)
+        ed[1]:copy(backup_path_)
+      end
     end
-    for i,ed in ipairs(_envs) do
-      logi("backing up env",i)
-      ed[1]:copy(backup_path_)
+
+    if _meta then
+      helper(_metas,"meta")
+    end
+    if _pages then
+      helper(_pages,"page")
     end
   end
 

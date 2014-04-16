@@ -772,14 +772,22 @@ end
 function sparse_sequence(name_,slots_)
   local _metric,_step,_period
   local _slots = slots_ or {}
+  local _latest_timestamp
 
   _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
   _step = parse_time_unit(_step)
   _period = parse_time_unit(_period)
 
+  local function update_latest(timestamp_)
+    if not _latest_timestamp or _latest_timestamp<timestamp_ then
+      _latest_timestamp = timestamp_
+    end
+  end
+
   local function add_slot(timestamp_)
     local s = { _timestamp = timestamp_, _hits = 0, _sum = 0}
     table.insert(_slots,1,s)
+    update_latest(timestamp_)
     return s
   end
 
@@ -803,15 +811,23 @@ function sparse_sequence(name_,slots_)
 
   local function set(timestamp_,hits_,sum_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
+
+    if _latest_timestamp and adjusted_timestamp+_period<_latest_timestamp then
+      return nil
+    end
     local slot = find_by_index(idx) or add_slot(timestamp_)
     slot._sum = sum_
     slot._hits = hits_
     slot._timestamp = adjusted_timestamp
+    update_latest(adjusted_timestamp)
     return adjusted_timestamp,slot._sum
   end
 
   local function update(timestamp_,hits_,sum_,replace_)
     local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
+    if _latest_timestamp and adjusted_timestamp+_period<_latest_timestamp then
+      return nil
+    end
     -- here, unlike the regular sequence, we keep all the timestamps. The real sequence
     -- will discard stale ones
     local slot = find_slot(adjusted_timestamp)
