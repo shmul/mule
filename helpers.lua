@@ -825,7 +825,7 @@ function sparse_sequence(name_,slots_)
 
   local function update(timestamp_,hits_,sum_,replace_)
     local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
-    if _latest_timestamp and adjusted_timestamp+_period<_latest_timestamp then
+    if _latest_timestamp and adjusted_timestamp+_period<=_latest_timestamp then
       return nil
     end
     -- here, unlike the regular sequence, we keep all the timestamps. The real sequence

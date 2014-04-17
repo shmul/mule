@@ -921,5 +921,25 @@ function test_caching()
   for_each_db("./tests/temp/test_caching",helper)
 end
 
+function test_sparse_latest()
+  local seq = sparse_sequence("beer.ale;1m:1h")
+
+  seq.update(0,1,1)
+  assert_equal(0,seq.slots()[1]._timestamp)
+
+  seq.update(63,2,2)
+  assert_equal(60,seq.slots()[1]._timestamp)
+  assert_equal(2,seq.slots()[1]._hits)
+  seq.update(3663,3,3)
+  assert_equal(3660,seq.slots()[1]._timestamp)
+  assert_equal(3,seq.slots()[1]._hits)
+  assert_nil(seq.update(60,4,4))
+
+  seq.update(141,5,5)
+  assert_equal(120,seq.slots()[1]._timestamp)
+  assert_equal(5,seq.slots()[1]._sum)
+  seq.update(3687,6,6)
+  assert_equal(9,seq.slots()[2]._sum)
+end
 --verbose_log(true)
 --profiler.start("profiler.out")
