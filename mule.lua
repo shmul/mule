@@ -123,7 +123,6 @@ local function incoming_queue(db_path_,incoming_queue_path_)
       if time_now()-now<=1 then
         pcall_wrapper(function()
                         local sz = posix.stat(file,"size")
-                        logi("incoming_queue file",file,sz)
                         if sz==0 then
                           logi("empty file",file)
                           os.remove(file)

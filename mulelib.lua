@@ -623,27 +623,14 @@ function mule(db_)
     return wrap_json(str)
   end
 
+
   local function update_sequences(max_)
     -- we now update the real sequences
     local now = time_now()
-    local updated_names = keys(_updated_sequences)
-    local st = 1
-    local en = #updated_names
-    if en==0 then
-      --logd("no update required")
-      return
-    end
-    logi("update_sequences start")
+    local num_processed = 0
     -- why bother with randomness? to avoid starvation
-    if max_ and en>max_ then
-      st = math.random(en-max_)
-      en = st+max_
-    end
-    local i = st
-    for i=st,en do
-      local n = updated_names[i]
+    for n,s in iterate_table(_updated_sequences,true,max_) do
       local seq = sequence(_db,n)
-      local s = _updated_sequences[n]
       for j,sl in ipairs(s.slots()) do
         local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
                                                   sl._hits==nil)
@@ -660,10 +647,12 @@ function mule(db_)
         alert_check(seq,now)
       end
       _updated_sequences[n] = nil
+      num_processed = num_processed + 1
     end
-    logi("update_sequences end",time_now()-now,st,en,#updated_names)
+    if num_processed==0 then return false end
+    logi("update_sequences end",time_now()-now,num_processed)
     -- returns true if there are more items to process
-    return en<#updated_names
+    return next(_updated_sequences)~=nil
   end
 
 

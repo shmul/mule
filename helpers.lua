@@ -318,7 +318,7 @@ end
 function table_size(tbl_)
   if #tbl_>0 then return #tbl_ end
   local current = 0
-  for k,v in pairs(tbl_) do
+  for _,_ in pairs(tbl_) do
     current = current + 1
   end
 
@@ -575,6 +575,25 @@ function keys(table_)
   end
 
   return ks
+end
+
+function iterate_table(table_,random_start_,max_)
+  local size = table_size(table_)
+  if size==0 then return function() end end
+  max_ = (max_ and math.min(max_,size)) or size
+  local start = (random_start_ and math.random(1,1+(size-max_))) or 1
+
+  return coroutine.wrap(
+    function()
+      for k,v in pairs(table_) do
+        start = start-1
+        if start<=0 then
+          coroutine.yield(k,v)
+        end
+        max_ = max_ - 1
+        if max_==0 then return end
+      end
+    end)
 end
 
 function split_name(name_)

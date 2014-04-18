@@ -312,12 +312,12 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
                   end)
 
   while not stop_cond_() do
-    copas.step(1)
+    copas.step(0)
     if can_fork_ then
       noblock_wait_for_children()
     end
     with_mule_(function(mule_)
-                 mule_.update(UPDATE_AMOUNT/3)
+                 mule_.update(UPDATE_AMOUNT/10)
                  incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
                end)
   end
