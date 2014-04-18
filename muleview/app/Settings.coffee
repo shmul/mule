@@ -23,3 +23,6 @@ Ext.define "Muleview.Settings",
 
   # Maximum number of timestamp points to show in a chart:
   maxNumberOfChartPoints: 300
+
+  # Number of array items to process per asynchronous step:
+  asyncProcessStep: 10

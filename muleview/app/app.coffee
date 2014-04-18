@@ -10,6 +10,7 @@ Ext.application
     "Ext.tree.Panel"
     "Muleview.Mule"
     "Muleview.view.ToolTip"
+    "Muleview.Util"
   ]
   controllers: [
     "StatusBar"
@@ -21,13 +22,6 @@ Ext.application
   launch: ->
     Ext.get("initMask").hide()
     Muleview.event = Ext.Function.alias Muleview.app, "fireEvent"
-    Muleview.toUTCDate = (date) ->
-      new Date date.getUTCFullYear(),
-        date.getUTCMonth(),
-        date.getUTCDate(),
-        date.getUTCHours(),
-        date.getUTCMinutes(),
-        date.getUTCSeconds()
 
     # Form tooltip fix (http://stackoverflow.com/questions/15834689/extjs-4-2-tooltips-not-wide-enough-to-see-contents)
     delete Ext.tip.Tip.prototype.minWidth
