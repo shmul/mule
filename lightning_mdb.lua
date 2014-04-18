@@ -121,19 +121,23 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function flush_cache(amount_)
     local size,st,en = random_table_region(_cache,amount_)
+    if size>0 then
     logi("flush_cache pages start",st,en,size)
     for k,v in iterate_table(_cache,st,en) do
       native_put(k,v,false)
       _cache[k] = nil
     end
+    end
 
     size,st,en = random_table_region(_nodes_cache,amount_)
+    if size>0 then
     logi("flush_cache nodes start",st,en,size)
     for k,v in iterate_table(_nodes_cache,st,en) do
       native_put(k,pack_node(v),true)
       _nodes_cache[k] = nil
     end
     logi("flush_cache end")
+    end
     _caches_size = 0
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
