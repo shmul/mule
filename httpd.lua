@@ -315,8 +315,8 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
     copas.step(1)
     noblock_wait_for_children()
     with_mule_(function(mule_)
-                 mule_.update(UPDATE_AMOUNT)
-                 incoming_queue_callback_(mule_)
+                 mule_.update(100)--UPDATE_AMOUNT)
+                 incoming_queue_callback_(mule_,5)
                end)
   end
 end
