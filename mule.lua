@@ -115,10 +115,10 @@ local function incoming_queue(db_path_,incoming_queue_path_)
   local minute_dir = nil
   local processed = string.gsub(incoming_queue_path_,"_incoming","_processed")
 
-  local function helper(m)
+  local function helper(m,count)
     if executing then return end
     local now = time_now()
-    for file in first_files(incoming_queue_path_,"%.mule$",10) do
+    for file in first_files(incoming_queue_path_,"%.mule$",count) do
       executing = true
       if time_now()-now<=1 then
         pcall_wrapper(function()
