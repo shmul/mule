@@ -310,16 +310,17 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
                     send_response(send(skt),send_file(skt),
                                   req,content,with_mule_,backup_callback_,stop_cond_,can_fork_)
                   end)
-
+  local i = 0
   while not stop_cond_() do
-    copas.step(1)
+    copas.step(0)
     if can_fork_ then
       noblock_wait_for_children()
     end
     with_mule_(function(mule_)
-                 mule_.update(UPDATE_AMOUNT)
-                 incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
+                 if i%4==0 then mule_.update(UPDATE_AMOUNT) end
+                 incoming_queue_callback_(mule_,2)--NUM_INCOMING_FILES)
                end)
+    i = i + 1
   end
 end
 
