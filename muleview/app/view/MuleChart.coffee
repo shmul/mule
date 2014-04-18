@@ -9,6 +9,7 @@ Ext.define "Muleview.view.MuleChart",
   yAxisWidth: 40
   mainGraph: true
   cls: "mule-chart"
+  interpolation: "linear"
 
   initComponent: ->
     @series = @createSeries()
@@ -80,6 +81,7 @@ Ext.define "Muleview.view.MuleChart",
       width: @graphContainer.getWidth() - @yAxisWidth
       height: @graphContainer.getHeight() - 10
       renderer: "multi"
+      interpolation: @interpolation
       series: @series
 
     if @mainGraph
@@ -132,6 +134,7 @@ Ext.define "Muleview.view.MuleChart",
         for series in data
           for index in points_to_remove by -1
             agg = series[index + 1]
+            debugger unless agg
             if not agg.is_agg
               agg = {
                 is_agg: true,
@@ -280,7 +283,7 @@ Ext.define "Muleview.view.MuleChart",
       total = record.get(@topKeys[0])
       for key in keys
         value = record.get(key)
-        @hasData ||= value
+        @hasData ||= value?
         percent = 100 * value / total
         ans[key].push
           x: record.get("timestamp")
@@ -305,7 +308,7 @@ Ext.define "Muleview.view.MuleChart",
         renderer: "stack"
 
     for topKey in @topKeys
-      @hasData ||= seriesData[topKey].length > 0
+      @hasData ||= seriesData[topKey]?.length > 0
       series.push
         name: @keyLegendName(topKey)
         color: palette.color()
