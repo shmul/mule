@@ -635,7 +635,6 @@ function mule(db_)
       --logd("no update required")
       return
     end
-    logi("update_sequences start")
 
      -- why bother with randomness? to avoid starvation
     if max_ and en>max_ then
@@ -643,6 +642,7 @@ function mule(db_)
       en = st+max_
     end
 
+    logi("update_sequences start",st,en,size)
     for n,s in iterate_table(_updated_sequences,st,en) do
       local seq = sequence(_db,n)
       for j,sl in ipairs(s.slots()) do

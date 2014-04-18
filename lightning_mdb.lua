@@ -9,7 +9,7 @@ local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 local NUM_PAGES = 25600
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
-local MAX_CACHE_SIZE = 200
+local MAX_CACHE_SIZE = 2000
 
 function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _metas = {}
@@ -120,7 +120,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function flush_cache()
     local count,nodes = 0,0
-    logi("flush_cache start")
+    logi("flush_cache start",_caches_size)
     for k,v in pairs(_cache) do
       native_put(k,v,false)
       count = count + 1

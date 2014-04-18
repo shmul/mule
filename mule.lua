@@ -128,6 +128,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
                           os.remove(file)
                           return
                         end
+                        logi("incoming_queue file",file,sz)
                         -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
                         m.process(file,true,true)
                         local cm = os.date("%y/%m/%d/%H/%M")
