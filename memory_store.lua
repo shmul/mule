@@ -22,6 +22,7 @@ function in_memory_db()
     matching_keys = matching_keys,
     close = function () end,
     cache = function() end,
+    update = function() end,
   }
 
   self.sequence_storage = function(name_,numslots_)

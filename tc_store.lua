@@ -98,6 +98,7 @@ function cabinet_db(db_name_,readonly_)
     out = tc_out,
     matching_keys = matching_keys,
     close = tc_done,
+    update = function() end,
     cache = function() end,
 
   }

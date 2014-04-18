@@ -135,6 +135,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
     logi("flush_cache end")
     _caches_size = 0
+    return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
   local function native_get(k,meta_)
@@ -153,7 +154,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function get(k,dont_cache_)
     if _caches_size>=MAX_CACHE_SIZE then
-      flush_cache(CACHE_FLUSH_SIZE)
+--      flush_cache(CACHE_FLUSH_SIZE)
     end
     if dont_cache_ then
       return native_get(k)
@@ -169,7 +170,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function get_node(k)
     if _caches_size>=MAX_CACHE_SIZE then
-      flush_cache(CACHE_FLUSH_SIZE)
+--      flush_cache(CACHE_FLUSH_SIZE)
     end
 
     if not _nodes_cache[k] then
@@ -404,6 +405,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     matching_keys = matching_keys,
     close = close,
     backup = backup,
+    update = function(amount_) return flush_cache(amount_) end,
     cache = function() end,
   }
 

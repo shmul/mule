@@ -1006,7 +1006,9 @@ function mule(db_)
     slot = slot,
     modify_factories = modify_factories,
     process = process,
-    update = update_sequences,
+    update = function(amount_)
+      return update_sequences(amount_) or _db.update(amount_)
+      end,
     save = save,
     load = load,
     alert_set = alert_set,
