@@ -629,7 +629,7 @@ function mule(db_)
     local now = time_now()
     local num_processed = 0
     local size,st,en = random_table_region(_updated_sequences,max_)
-    logi("update_sequences start")
+    logi("update_sequences start",size,st,en)
     for n,s in iterate_table(_updated_sequences,st,en) do
       local seq = sequence(_db,n)
       for j,sl in ipairs(s.slots()) do
