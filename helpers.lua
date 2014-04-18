@@ -868,3 +868,19 @@ function count_dots(string_)
   string.gsub(string_,"%.",function() dots = dots + 1 end)
   return dots
 end
+
+function random_table_region(table_,region_size_)
+  local size = table_size(table_)
+  local st = 1
+  local en = size
+  if en==0 then
+    return size
+  end
+
+  -- why bother with randomness? to avoid starvation
+  if region_size_ and en>region_size_ then
+    st = math.random(en-region_size_)
+    en = st+region_size_
+  end
+  return size,st,en
+end

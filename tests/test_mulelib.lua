@@ -763,6 +763,7 @@ function test_key()
     m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
 
     m.process("./tests/fixtures/pale.mule")
+
     assert(m.key("beer",{})==m.key("beer",{level=0}))
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
@@ -941,5 +942,6 @@ function test_sparse_latest()
   seq.update(3687,6,6)
   assert_equal(9,seq.slots()[2]._sum)
 end
+
 --verbose_log(true)
 --profiler.start("profiler.out")

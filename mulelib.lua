@@ -628,21 +628,8 @@ function mule(db_)
     -- we now update the real sequences
     local now = time_now()
     local num_processed = 0
-    local size = table_size(_updated_sequences)
-    local st = 1
-    local en = size
-    if en==0 then
-      --logd("no update required")
-      return
-    end
+    local size,st,en = random_table_region(_updated_sequences,max_)
     logi("update_sequences start")
-
-     -- why bother with randomness? to avoid starvation
-    if max_ and en>max_ then
-      st = math.random(en-max_)
-      en = st+max_
-    end
-
     for n,s in iterate_table(_updated_sequences,st,en) do
       local seq = sequence(_db,n)
       for j,sl in ipairs(s.slots()) do

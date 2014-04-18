@@ -10,6 +10,7 @@ local NUM_PAGES = 25600
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
 local MAX_CACHE_SIZE = 200
+local CACHE_FLUSH_SIZE = 100
 
 function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _metas = {}
@@ -118,20 +119,21 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return _nodes_cache[k]
   end
 
-  local function flush_cache()
-    local count,nodes = 0,0
-    logi("flush_cache start")
-    for k,v in pairs(_cache) do
+  local function flush_cache(amount_)
+    local size,st,en = random_table_region(_cache,amount_)
+    logi("flush_cache pages start",st,en,size)
+    for k,v in iterate_table(_cache,st,en) do
       native_put(k,v,false)
-      count = count + 1
+      _cache[k] = nil
     end
-    for k,v in pairs(_nodes_cache) do
+
+    size,st,en = random_table_region(_nodes_cache,amount_)
+    logi("flush_cache nodes start",st,en,size)
+    for k,v in iterate_table(_nodes_cache,st,en) do
       native_put(k,pack_node(v),true)
-      nodes = nodes + 1
+      _nodes_cache[k] = nil
     end
-    logi("flush_cache",_caches_size,count,nodes)
-    _cache = {}
-    _nodes_cache = {}
+    logi("flush_cache end")
     _caches_size = 0
   end
 
@@ -151,7 +153,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function get(k,dont_cache_)
     if _caches_size>=MAX_CACHE_SIZE then
-      flush_cache()
+      flush_cache(CACHE_FLUSH_SIZE)
     end
     if dont_cache_ then
       return native_get(k)
@@ -167,11 +169,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function get_node(k)
     if _caches_size>=MAX_CACHE_SIZE then
-      flush_cache()
+      flush_cache(CACHE_FLUSH_SIZE)
     end
 
     if not _nodes_cache[k] then
-      _caches_size = _caches_size + 1
       _nodes_cache[k] = unpack_node(k,native_get(k,true))
       if _nodes_cache[k] then
         _caches_size = _caches_size + 1
@@ -208,7 +209,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function search(prefix_)
-    flush_cache()
+    --flush_cache()
     for _,ed in ipairs(_metas) do
       local t = ed[1]:txn_begin(nil,lightningmdb.MDB_RDONLY)
       local cur = t:cursor_open(ed[2])
