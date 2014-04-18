@@ -22,10 +22,6 @@ function in_memory_db()
     matching_keys = matching_keys,
     close = function () end,
     cache = function() end,
-    sort_updated_names = function(names_)
-      table.sort(names_)
-      return names_
-    end
   }
 
   self.sequence_storage = function(name_,numslots_)

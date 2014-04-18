@@ -384,11 +384,6 @@ local tr = require("trie")
       get_slot = internal_get_slot,
       matching_keys = matching_keys,
       cache = function(name_) return cache(name_) end,
-      sort_updated_names = function(names_)
-        -- TODO - is it worth it?
-        table.sort(names_)
-        return names_
-      end
     }
 
 

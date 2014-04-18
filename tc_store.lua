@@ -99,10 +99,6 @@ function cabinet_db(db_name_,readonly_)
     matching_keys = matching_keys,
     close = tc_done,
     cache = function() end,
-    sort_updated_names = function(names_)
-      table.sort(names_)
-      return names_
-    end
 
   }
   self.sequence_storage = function(name_,numslots_)

@@ -158,12 +158,12 @@ function sequence(db_,name_)
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
-        -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
-        if sum>=1380000000 or hits>=1380000000 then
-          loge("serialize_slot - out of band values",_name,timestamp,hits,sum)
-          sum = 0
-          hits = 0
-        end
+      -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
+      if sum>=1380000000 or hits>=1380000000 then
+        loge("serialize_slot - out of band values",_name,timestamp,hits,sum)
+        sum = 0
+        hits = 0
+      end
 
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
         slot_cb_(sum,hits,timestamp)
@@ -626,9 +626,9 @@ function mule(db_)
   local function update_sequences(max_)
     -- we now update the real sequences
     local now = time_now()
-    local sorted_updated_names = _db.sort_updated_names(keys(_updated_sequences))
+    local updated_names = keys(_updated_sequences)
     local st = 1
-    local en = #sorted_updated_names
+    local en = #updated_names
     if en==0 then
       --logd("no update required")
       return
@@ -640,8 +640,8 @@ function mule(db_)
       en = st+max_
     end
     local i = st
-    while i<=en and time_now()-now<2 do
-      local n = sorted_updated_names[i]
+    for i=st,en do
+      local n = updated_names[i]
       local seq = sequence(_db,n)
       local s = _updated_sequences[n]
       for j,sl in ipairs(s.slots()) do
@@ -660,11 +660,10 @@ function mule(db_)
         alert_check(seq,now)
       end
       _updated_sequences[n] = nil
-      i = i+1
     end
-    logi("update_sequences end",time_now()-now,st,en,#sorted_updated_names)
+    logi("update_sequences end",time_now()-now,st,en,#updated_names)
     -- returns true if there are more items to process
-    return en<#sorted_updated_names
+    return en<#updated_names
   end
 
 

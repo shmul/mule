@@ -93,6 +93,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                function(t)
                  local rv,err = t:put(array_[#array_][2],k,v,0)
                  if not err then return true end
+                 logw("native_put",k,err)
                  add_env(array_,label_)
                  return native_put(k,v,meta_)
                end)
@@ -165,6 +166,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function get_node(k)
+    if _caches_size>=MAX_CACHE_SIZE then
+      flush_cache()
+    end
+
     if not _nodes_cache[k] then
       _caches_size = _caches_size + 1
       _nodes_cache[k] = unpack_node(k,native_get(k,true))
@@ -177,7 +182,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
 
   local function init()
-    _meta = new_env_factory("meta")
     add_env(_metas,"meta")
     add_env(_pages,"page")
     _slots_per_page = get("metadata=slots_per_page")
@@ -400,10 +404,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     close = close,
     backup = backup,
     cache = function() end,
-    sort_updated_names = function(names_)
-      table.sort(names_)
-      return names_
-    end
   }
 
   self.sequence_storage = function(name_,numslots_)
