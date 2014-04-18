@@ -624,13 +624,13 @@ function mule(db_)
   end
 
 
-  local function update_sequences(max_)
+  local function flush_cache(max_)
     -- we now update the real sequences
     local now = time_now()
     local num_processed = 0
     local size,st,en = random_table_region(_updated_sequences,max_)
     if size==0 then return false end
-    logi("update_sequences start",size,st,en)
+    logi("flush_cache start",size,st,en)
     for n,s in iterate_table(_updated_sequences,st,en) do
       local seq = sequence(_db,n)
       for j,sl in ipairs(s.slots()) do
@@ -652,7 +652,7 @@ function mule(db_)
       num_processed = num_processed + 1
     end
     if num_processed==0 then return false end
-    logi("update_sequences end",time_now()-now,num_processed,size)
+    logi("flush_cache end",time_now()-now,num_processed,size)
     -- returns true if there are more items to process
     return next(_updated_sequences)~=nil
   end
@@ -666,7 +666,7 @@ function mule(db_)
     _db.put("metadata=alerts",pp.pack(_alerts),true)
     _db.put("metadata=hints",pp.pack(_hints),true)
     logi("save - flushing uncommited data")
-    while update_sequences(UPDATE_AMOUNT) do
+    while flush_cache(UPDATE_AMOUNT) do
       -- nop
     end
   end
@@ -930,7 +930,7 @@ function mule(db_)
       lines_count = lines_count + 1
       if lines_count==UPDATED_SEQUENCES_MAX then
         logi("process - forcing an update",lines_count)
-        update_sequences(UPDATE_AMOUNT)
+        flush_cache(UPDATE_AMOUNT)
         lines_count = lines_count - UPDATE_AMOUNT
       end
     end
@@ -978,7 +978,7 @@ function mule(db_)
 
     local rv = helper()
     if not dont_update_ then
-      update_sequences(UPDATE_AMOUNT)
+      flush_cache(UPDATE_AMOUNT)
     end
     return rv
   end
@@ -1006,8 +1006,8 @@ function mule(db_)
     slot = slot,
     modify_factories = modify_factories,
     process = process,
-    update = function(amount_)
-      return update_sequences(amount_) or _db.update(amount_)
+    flush_cache = function(amount_)
+      return flush_cache(amount_) or _db.flush_cache(amount_)
       end,
     save = save,
     load = load,

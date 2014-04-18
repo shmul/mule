@@ -383,7 +383,7 @@ local tr = require("trie")
       set_slot = internal_set_slot,
       get_slot = internal_get_slot,
       matching_keys = matching_keys,
-      update = function() end,
+      flush_cache = function() end,
       cache = function(name_) return cache(name_) end,
     }
 

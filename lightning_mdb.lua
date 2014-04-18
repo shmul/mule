@@ -17,7 +17,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _pages = {}
   local _slots_per_page
   local _cache = {}
-  local _caches_size = 0
   local _nodes_cache = {}
 
   local function txn(env_,func_)
@@ -134,7 +133,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       _nodes_cache[k] = nil
     end
     logi("flush_cache end")
-    _caches_size = 0
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
@@ -153,31 +151,18 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function get(k,dont_cache_)
-    if _caches_size>=MAX_CACHE_SIZE then
---      flush_cache(CACHE_FLUSH_SIZE)
-    end
     if dont_cache_ then
       return native_get(k)
     end
     if not _cache[k] then
       _cache[k] = native_get(k)
-      if _cache[k] then
-        _caches_size = _caches_size + 1
-      end
     end
     return _cache[k]
   end
 
   local function get_node(k)
-    if _caches_size>=MAX_CACHE_SIZE then
---      flush_cache(CACHE_FLUSH_SIZE)
-    end
-
     if not _nodes_cache[k] then
       _nodes_cache[k] = unpack_node(k,native_get(k,true))
-      if _nodes_cache[k] then
-        _caches_size = _caches_size + 1
-      end
     end
     return _nodes_cache[k]
   end
@@ -351,7 +336,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       t:commit()
     end
     return coroutine.wrap(function()
-                            flush_cache()
+                            --flush_cache()
                             for _,ed in ipairs(_metas) do
                               helper(ed[1],ed[2])
                             end
@@ -405,7 +390,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     matching_keys = matching_keys,
     close = close,
     backup = backup,
-    update = function(amount_) return flush_cache(amount_) end,
+    flush_cache = flush_cache,
     cache = function() end,
   }
 
