@@ -134,7 +134,6 @@ Ext.define "Muleview.view.MuleChart",
         for series in data
           for index in points_to_remove by -1
             agg = series[index + 1]
-            debugger unless agg
             if not agg.is_agg
               agg = {
                 is_agg: true,
