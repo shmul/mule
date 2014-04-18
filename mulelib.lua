@@ -628,8 +628,9 @@ function mule(db_)
     -- we now update the real sequences
     local now = time_now()
     local num_processed = 0
+    local size
     -- why bother with randomness? to avoid starvation
-    for n,s in iterate_table(_updated_sequences,true,max_) do
+    for n,s,q in iterate_table(_updated_sequences,true,max_) do
       local seq = sequence(_db,n)
       for j,sl in ipairs(s.slots()) do
         local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
@@ -648,9 +649,10 @@ function mule(db_)
       end
       _updated_sequences[n] = nil
       num_processed = num_processed + 1
+      size = q
     end
     if num_processed==0 then return false end
-    logi("update_sequences end",time_now()-now,num_processed)
+    logi("update_sequences end",time_now()-now,num_processed,size)
     -- returns true if there are more items to process
     return next(_updated_sequences)~=nil
   end

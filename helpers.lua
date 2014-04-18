@@ -588,7 +588,7 @@ function iterate_table(table_,random_start_,max_)
       for k,v in pairs(table_) do
         start = start-1
         if start<=0 then
-          coroutine.yield(k,v)
+          coroutine.yield(k,v,size)
         end
         max_ = max_ - 1
         if max_==0 then return end
