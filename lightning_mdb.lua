@@ -42,13 +42,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function new_db(env_)
     return txn(env_,
-      function(t)
-        local r,err = t:dbi_open(nil,read_only_ and 0 or lightningmdb.MDB_CREATE)
-        if err then
-          loge("new_db",err)
-        end
-        return r
-      end)
+               function(t)
+                 local r,err = t:dbi_open(nil,read_only_ and 0 or lightningmdb.MDB_CREATE)
+                 if err then
+                   loge("new_db",err)
+                 end
+                 return r
+               end)
   end
 
   local function add_env(array_,label_)
@@ -90,13 +90,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function native_put(k,v,meta_)
     local function helper(array_,label_)
       return txn(array_[#array_][1],
-               function(t)
-                 local rv,err = t:put(array_[#array_][2],k,v,0)
-                 if not err then return true end
-                 logw("native_put",k,err)
-                 add_env(array_,label_)
-                 return native_put(k,v,meta_)
-               end)
+                 function(t)
+                   local rv,err = t:put(array_[#array_][2],k,v,0)
+                   if not err then return true end
+                   logw("native_put",k,err)
+                   add_env(array_,label_)
+                   return native_put(k,v,meta_)
+                 end)
 
     end
     if meta_ or string.find(k,"metadata=",1,true) then
@@ -120,19 +120,23 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function flush_cache(amount_)
     local size,st,en = random_table_region(_cache,amount_)
-    logi("flush_cache pages start",st,en,size)
-    for k,v in iterate_table(_cache,st,en) do
-      native_put(k,v,false)
-      _cache[k] = nil
+    if size>0 then
+      logi("flush_cache pages start",st,en,size)
+      for k,v in iterate_table(_cache,st,en) do
+        native_put(k,v,false)
+        _cache[k] = nil
+      end
     end
 
     size,st,en = random_table_region(_nodes_cache,amount_)
-    logi("flush_cache nodes start",st,en,size)
-    for k,v in iterate_table(_nodes_cache,st,en) do
-      native_put(k,pack_node(v),true)
-      _nodes_cache[k] = nil
+    if size>0 then
+      logi("flush_cache nodes start",st,en,size)
+      for k,v in iterate_table(_nodes_cache,st,en) do
+        native_put(k,pack_node(v),true)
+        _nodes_cache[k] = nil
+      end
+      logi("flush_cache end")
     end
-    logi("flush_cache end")
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
@@ -173,7 +177,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     add_env(_pages,"page")
     _slots_per_page = get("metadata=slots_per_page")
     if not _slots_per_page then
-     _slots_per_page = slots_per_page_ or SLOTS_PER_PAGE
+      _slots_per_page = slots_per_page_ or SLOTS_PER_PAGE
       put("metadata=slots_per_page",_slots_per_page,true)
     end
   end
@@ -336,7 +340,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       t:commit()
     end
     return coroutine.wrap(function()
-                            --flush_cache()
+                            flush_cache(UPDATE_AMOUNT/10) -- we keep it here mainly for the sake of the unit tests
                             for _,ed in ipairs(_metas) do
                               helper(ed[1],ed[2])
                             end

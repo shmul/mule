@@ -748,6 +748,7 @@ function test_pale()
     assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamp="1360800000"}),"274,244",1,true))
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361127300"}),"1526,756",1,true))
     m.process("./tests/fixtures/pale.mule")
+    m.flush_cache()
     assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamp="1361300362"}),"19,11",1,true))
 
     assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
@@ -763,7 +764,7 @@ function test_key()
     m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
 
     m.process("./tests/fixtures/pale.mule")
-
+    m.flush_cache()
     assert(m.key("beer",{})==m.key("beer",{level=0}))
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys

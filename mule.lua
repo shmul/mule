@@ -275,8 +275,8 @@ function main(opts,out_)
                       local rv = m.process(f,(i%100)>0) -- we update the DB every 100th file
                       out_.write(rv)
                     end
-                    while m.update(UPDATE_AMOUNT) do
-                    -- nothing to do as update does all that we need
+                    while m.flush_cache() do
+                      -- nothing to do as update does all that we need
                     end
                   end)
   end
