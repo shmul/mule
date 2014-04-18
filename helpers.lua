@@ -577,21 +577,16 @@ function keys(table_)
   return ks
 end
 
-function iterate_table(table_,random_start_,max_)
-  local size = table_size(table_)
-  if size==0 then return function() end end
-  max_ = (max_ and math.min(max_,size)) or size
-  local start = (random_start_ and math.random(1,1+(size-max_))) or 1
-
+function iterate_table(table_,start_,end_)
   return coroutine.wrap(
     function()
       for k,v in pairs(table_) do
-        start = start-1
-        if start<=0 then
-          coroutine.yield(k,v,size)
+        start_ = start_-1
+        if start_<=0 then
+          coroutine.yield(k,v)
         end
-        max_ = max_ - 1
-        if max_==0 then return end
+        end_ = end_ - 1
+        if end_==0 then return end
       end
     end)
 end
