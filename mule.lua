@@ -114,6 +114,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
   local executing = false
   local minute_dir = nil
   local processed = string.gsub(incoming_queue_path_,"_incoming","_processed")
+  local failed = string.gsub(incoming_queue_path_,"_incoming","_failed")
 
   local function helper(m,count)
     if executing then return end
@@ -126,6 +127,12 @@ local function incoming_queue(db_path_,incoming_queue_path_)
                         if sz==0 then
                           logi("empty file",file)
                           os.remove(file)
+                          return
+                        end
+                        if sz>1048576 then
+                          logi("large file",file,sz)
+                          new_name = string.format("%s/%s",posix.basename(file))
+                          os.rename(file,new_name)
                           return
                         end
                         logi("incoming_queue file",file,sz)
