@@ -1,5 +1,5 @@
-local _,lr = pcall(require,"luarocks.require")
-local s,url = pcall(require,"socket.url")
+local _,lr = require "luarocks.require"
+local url = require "socket.url"
 local pp = require "purepack"
 local posix_exists,posix = pcall(require,'posix')
 local stp_exists,stp = pcall(require,"StackTracePlus")

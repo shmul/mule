@@ -1,6 +1,6 @@
 module("trie",package.seeall)
 require "helpers"
-local _,p = pcall(require,"purepack")
+local p = require "purepack"
 
 local new,unpack
 local methods = nil

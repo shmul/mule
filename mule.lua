@@ -218,6 +218,7 @@ function main(opts,out_)
     logi("creating",opts["d"],"using configuration",opts["c"])
     local db = guess_db(opts["d"],false)
     if not db then
+      logf("failed to create db")
       return
     end
     db:close()

@@ -1,10 +1,12 @@
 require "helpers"
 
 
-local lr = pcall(require,"luarocks.require")
-local cp = pcall(require,"copas")
-local _,ltn12 = pcall(require,"ltn12")
-local s,url = pcall(require,"socket.url")
+local lr = require "luarocks.require"
+local cp = require "copas"
+local ltn12 = require "ltn12"
+local url = require "socket.url"
+
+
 local status_codes = {
   [200] = "200 OK",
   [201] = "201 Created",
@@ -15,10 +17,6 @@ local status_codes = {
   [405] = "405 Method Not Allowed"
 }
 
-if not lr and cp then
-  loge("unable to find luarocks or copas")
-  return nil
-end
 
 require "mulelib"
 
