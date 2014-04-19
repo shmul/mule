@@ -823,10 +823,19 @@ function sparse_sequence(name_,slots_)
     return nil
   end
 
-  local function set(timestamp_,hits_,sum_)
+  local function calc_idx(timestamp_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
 
-    if _latest_timestamp and adjusted_timestamp+_period<_latest_timestamp then
+    if _latest_timestamp and adjusted_timestamp+_period<=_latest_timestamp then
+      return nil
+    end
+    return idx,adjusted_timestamp
+  end
+
+  local function set(timestamp_,hits_,sum_)
+    local idx,adjusted_timestamp = calc_idx(timestamp_)
+
+    if not idx then
       return nil
     end
     local slot = find_by_index(idx) or add_slot(timestamp_)
@@ -838,12 +847,11 @@ function sparse_sequence(name_,slots_)
   end
 
   local function update(timestamp_,hits_,sum_,replace_)
-    local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
-    if _latest_timestamp and adjusted_timestamp+_period<=_latest_timestamp then
+    local idx,adjusted_timestamp = calc_idx(timestamp_)
+
+    if not idx then
       return nil
     end
-    -- here, unlike the regular sequence, we keep all the timestamps. The real sequence
-    -- will discard stale ones
     local slot = find_slot(adjusted_timestamp)
     if replace_ then
       slot._sum = sum_
@@ -852,6 +860,7 @@ function sparse_sequence(name_,slots_)
       slot._sum = slot._sum+sum_
       slot._hits = slot._hits+hits_
     end
+    update_latest(adjusted_timestamp)
     return adjusted_timestamp,slot._sum
   end
 

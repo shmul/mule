@@ -77,11 +77,8 @@ function sequence(db_,name_)
 
   _seq_storage = db_.sequence_storage(name_,_period/_step)
 
-
   local function update(timestamp_,hits_,sum_,replace_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
-    -- if this value is way back (but still fits in this slot)
-    -- we discard it
     local timestamp,hits,sum = at(idx)
 
     -- we need to check whether we should update the current slot
@@ -630,7 +627,7 @@ function mule(db_)
     local num_processed = 0
     local size,st,en = random_table_region(_updated_sequences,max_)
     if size==0 then return false end
-    logi("flush_cache start",size,st,en)
+    logi("flush_cache start",st,en,size)
     for n,s in iterate_table(_updated_sequences,st,en) do
       local seq = sequence(_db,n)
       for j,sl in ipairs(s.slots()) do
