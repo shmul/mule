@@ -281,7 +281,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       if #node._seq.slots()==MAX_SLOTS_IN_SPARSE_SEQ then
         -- time to create actual pages
         local slots = node._seq.slots()
-        logi("lightningmdb creating pages",name_)
+        logi("lightningmdb creating pages",name_,t2s(slots))
         local _,step,period = split_name(name_)
         node._seq = nil
         for _,s in ipairs(slots) do
