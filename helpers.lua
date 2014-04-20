@@ -792,6 +792,13 @@ function sparse_sequence(name_,slots_)
   _step = parse_time_unit(_step)
   _period = parse_time_unit(_period)
 
+  -- we need to update the latest timestamp
+  if slots_ then
+    for i,s in ipairs(_slots) do
+      _latest_timestamp = math.max(_latest_timestamp or 0,s._timestamp)
+    end
+  end
+
   local function update_latest(timestamp_)
     if not _latest_timestamp or _latest_timestamp<timestamp_ then
       _latest_timestamp = timestamp_
