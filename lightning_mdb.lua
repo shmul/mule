@@ -53,7 +53,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function add_env(array_,label_)
     local e = new_env_factory(label_.."."..tostring(#array_))
-    logi("creating new env pair for",label_,#_pages)
+    logi("creating new env pair for",label_,#array_)
     table.insert(array_,{e,new_db(e)})
     return array_[#array_]
   end
@@ -89,9 +89,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function native_put(k,v,meta_)
     local function helper(array_,label_)
-      return txn(array_[#array_][1],
+      local last = array_[#array_]
+      return txn(last_element[1],
                  function(t)
-                   local rv,err = t:put(array_[#array_][2],k,v,0)
+                   local rv,err = t:put(last[2],k,v,0)
                    if not err then return true end
                    logw("native_put",k,err)
                    add_env(array_,label_)
