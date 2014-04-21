@@ -2,6 +2,7 @@ module("lightning_mdb",package.seeall)
 local lightningmdb_lib= require("lightningmdb")
 local pp = require("purepack")
 require "helpers"
+require "conf"
 
 
 local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
@@ -30,12 +31,23 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return rv,err
   end
 
-  local function new_env_factory(name_)
-    local e = lightningmdb.env_create()
+  local function new_env_factory(name_,create_)
     local full_path = base_dir_.."/"..name_
+    if not directory_exists(full_path) and not create_ then
+      logw("directory doesn't exist",full_path)
+      return nil
+    end
+    if create_ then
+      os.execute("mkdir -p "..full_path)
+    end
+    local e = lightningmdb.env_create()
     local r,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
-    os.execute("mkdir -p "..full_path)
-    e:open(full_path,read_only_ and lightningmdb.MDB_RDONLY or 0,420)
+    _,err = e:open(full_path,read_only_ and lightningmdb.MDB_RDONLY or 0,420)
+    if err then
+      loge("new_env_factory failed",err)
+      return nil
+    end
+
     logi("new_env_factory",full_path)
     return e
   end
@@ -46,13 +58,15 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                  local r,err = t:dbi_open(nil,read_only_ and 0 or lightningmdb.MDB_CREATE)
                  if err then
                    loge("new_db",err)
+                   return nil
                  end
                  return r
                end)
   end
 
-  local function add_env(array_,label_)
-    local e = new_env_factory(label_.."."..tostring(#array_))
+  local function add_env(array_,label_,create_)
+    local e = new_env_factory(label_.."."..tostring(#array_),create_)
+    if not e then return nil end
     logi("creating new env pair for",label_,#array_)
     table.insert(array_,{e,new_db(e)})
     return array_[#array_]
@@ -90,12 +104,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function native_put(k,v,meta_)
     local function helper(array_,label_)
       local last = array_[#array_]
-      return txn(last_element[1],
+      return txn(last[1],
                  function(t)
                    local rv,err = t:put(last[2],k,v,0)
                    if not err then return true end
                    logw("native_put",k,err)
-                   add_env(array_,label_)
+                   add_env(array_,label_,true)
                    return native_put(k,v,meta_)
                  end)
 
@@ -174,8 +188,14 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
 
   local function init()
-    add_env(_metas,"meta")
-    add_env(_pages,"page")
+    local function populate_env(array_,label_)
+      add_env(array_,label_,true)
+      while add_env(array_,label_,false) do
+        -- nop
+      end
+    end
+    populate_env(_metas,"meta")
+    populate_env(_pages,"page")
     _slots_per_page = get("metadata=slots_per_page")
     if not _slots_per_page then
       _slots_per_page = slots_per_page_ or SLOTS_PER_PAGE

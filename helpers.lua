@@ -5,8 +5,8 @@ local posix_exists,posix = pcall(require,'posix')
 local stp_exists,stp = pcall(require,"StackTracePlus")
 
 if not posix_exists or lunit then
-  print("disabling posix")
-  posix = nil
+--  print("disabling posix")
+--  posix = nil
 end
 
 if stp_exists then
@@ -360,6 +360,10 @@ function with_file(file_,func_,mode_)
   local rv = func_(f)
   f:close()
   return rv
+end
+
+function directory_exists(dir)
+  return posix.stat(dir,"type")=='directory'
 end
 
 function file_exists(file_)
