@@ -1004,7 +1004,8 @@ function mule(db_)
     modify_factories = modify_factories,
     process = process,
     flush_cache = function(amount_)
-      return flush_cache(amount_) or _db.flush_cache(amount_)
+      flush_cache(amount_) 
+      _db.flush_cache(amount_)
       end,
     save = save,
     load = load,
