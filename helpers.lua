@@ -318,8 +318,10 @@ end
 function table_size(tbl_)
   if #tbl_>0 then return #tbl_ end
   local current = 0
-  for _,_ in pairs(tbl_) do
+  local k = next(tbl_)
+  while k do
     current = current + 1
+    k = next(tbl_,k)
   end
 
   return current
