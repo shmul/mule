@@ -944,5 +944,11 @@ function test_sparse_latest()
   assert_equal(9,seq.slots()[2]._sum)
 end
 
+function test_table_size()
+  assert_equal(0,table_size({}))
+  assert_equal(1,table_size({1}))
+  assert_equal(1,table_size({a=1}))
+  assert_equal(2,table_size({a=1,b=2}))
+end
 --verbose_log(true)
 --profiler.start("profiler.out")
