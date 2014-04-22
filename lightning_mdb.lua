@@ -7,7 +7,7 @@ require "conf"
 
 local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 
-local NUM_PAGES = 25600
+local NUM_PAGES = 256000
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
 local MAX_CACHE_SIZE = 2000
@@ -153,8 +153,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         native_put(k,pack_node(v),true)
         _nodes_cache[k] = nil
       end
+      logi("flush_cache end")
     end
-    logi("flush_cache end")  
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
