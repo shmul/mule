@@ -154,8 +154,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         native_put(k,pack_node(v),true)
         _nodes_cache[k] = nil
       end
+      logi("flush_cache end")
     end
-    logi("flush_cache end")  
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
