@@ -7,7 +7,7 @@ require "conf"
 
 local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 
-local NUM_PAGES = 25600
+local NUM_PAGES = 256000
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
 local MAX_CACHE_SIZE = 2000
@@ -33,13 +33,14 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function new_env_factory(name_,create_)
     local full_path = base_dir_.."/"..name_
-    if not directory_exists(full_path) and not create_ then
-      logw("directory doesn't exist",full_path)
-      return nil
-    end
-    if create_ then
+    if not directory_exists(full_path) then
+      if not create_ then
+        logw("directory doesn't exist",full_path)
+        return nil
+      end
       os.execute("mkdir -p "..full_path)
     end
+
     local e = lightningmdb.env_create()
     local r,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
     _,err = e:open(full_path,read_only_ and lightningmdb.MDB_RDONLY or 0,420)
