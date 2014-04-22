@@ -2,21 +2,22 @@ module("lightning_mdb",package.seeall)
 local lightningmdb_lib= require("lightningmdb")
 local pp = require("purepack")
 require "helpers"
+require "conf"
 
 
 local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 
-local NUM_PAGES = 25600
+local NUM_PAGES = 256000
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
-local MAX_CACHE_SIZE = 200
+local MAX_CACHE_SIZE = 2000
+local CACHE_FLUSH_SIZE = 50
 
 function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _metas = {}
   local _pages = {}
   local _slots_per_page
   local _cache = {}
-  local _caches_size = 0
   local _nodes_cache = {}
 
   local function txn(env_,func_)
@@ -30,30 +31,43 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return rv,err
   end
 
-  local function new_env_factory(name_)
-    local e = lightningmdb.env_create()
+  local function new_env_factory(name_,create_)
     local full_path = base_dir_.."/"..name_
+    if not directory_exists(full_path) and not create_ then
+      logw("directory doesn't exist",full_path)
+      return nil
+    end
+    if create_ then
+      os.execute("mkdir -p "..full_path)
+    end
+    local e = lightningmdb.env_create()
     local r,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
-    os.execute("mkdir -p "..full_path)
-    e:open(full_path,read_only_ and lightningmdb.MDB_RDONLY or 0,420)
-    logi("new_env_factory",full_path)
+    _,err = e:open(full_path,read_only_ and lightningmdb.MDB_RDONLY or 0,420)
+    if err then
+      loge("new_env_factory failed",err)
+      return nil
+    end
+
+    logi("new_env_factory",full_path,t2s(e:stat()))
     return e
   end
 
   local function new_db(env_)
     return txn(env_,
-      function(t)
-        local r,err = t:dbi_open(nil,read_only_ and 0 or lightningmdb.MDB_CREATE)
-        if err then
-          loge("new_db",err)
-        end
-        return r
-      end)
+               function(t)
+                 local r,err = t:dbi_open(nil,read_only_ and 0 or lightningmdb.MDB_CREATE)
+                 if err then
+                   loge("new_db",err)
+                   return nil
+                 end
+                 return r
+               end)
   end
 
-  local function add_env(array_,label_)
-    local e = new_env_factory(label_.."."..tostring(#array_))
-    logi("creating new env pair for",label_,#_pages)
+  local function add_env(array_,label_,create_)
+    local e = new_env_factory(label_.."."..tostring(#array_),create_)
+    if not e then return nil end
+    logi("creating new env pair for",label_,#array_)
     table.insert(array_,{e,new_db(e)})
     return array_[#array_]
   end
@@ -89,15 +103,20 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function native_put(k,v,meta_)
     local function helper(array_,label_)
-      return txn(array_[#array_][1],
-               function(t)
-                 local rv,err = t:put(array_[#array_][2],k,v,0)
-                 if not err then return true end
-                 add_env(array_,label_)
-                 return native_put(k,v,meta_)
-               end)
-
+      for i,ed in ipairs(array_) do
+        local rv,err = txn(ed[1],function(t) return t:put(ed[2],k,v,0) end)
+        if not err then return end
+        -- when we put a key somewhere we must make sure no *previous* DB has the same key
+        if t:get_key(ed[2],k) then
+          logw("native_put removing key",label_,i,k)
+          t:del(ed[2],k,nil)
+        end
+      end
+      logw("native_put",k,err)
+      add_env(array_,label_,true)
+      return native_put(k,v,meta_)
     end
+
     if meta_ or string.find(k,"metadata=",1,true) then
       return helper(_metas,"meta")
     end
@@ -117,28 +136,33 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return _nodes_cache[k]
   end
 
-  local function flush_cache()
-    local count,nodes = 0,0
-    logi("flush_cache start")
-    for k,v in pairs(_cache) do
-      native_put(k,v,false)
-      count = count + 1
+  local function flush_cache(amount_)
+    local size,st,en = random_table_region(_cache,amount_)
+    if size>0 then
+      logi("flush_cache pages start",st,en,size)
+      for k,v in iterate_table(_cache,st,en) do
+        native_put(k,v,false)
+        _cache[k] = nil
+      end
     end
-    for k,v in pairs(_nodes_cache) do
-      native_put(k,pack_node(v),true)
-      nodes = nodes + 1
+
+    size,st,en = random_table_region(_nodes_cache,amount_)
+    if size>0 then
+      logi("flush_cache nodes start",st,en,size)
+      for k,v in iterate_table(_nodes_cache,st,en) do
+        native_put(k,pack_node(v),true)
+        _nodes_cache[k] = nil
+      end
+      logi("flush_cache end")
     end
-    logi("flush_cache",_caches_size,count,nodes)
-    _cache = {}
-    _nodes_cache = {}
-    _caches_size = 0
+    return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
   local function native_get(k,meta_)
     local function helper(array_)
       for _,ed in ipairs(array_) do
         local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
-        if not err then return rv end
+        if rv then return rv end
       end
     end
 
@@ -149,40 +173,35 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function get(k,dont_cache_)
-    if _caches_size>=MAX_CACHE_SIZE then
-      flush_cache()
-    end
     if dont_cache_ then
       return native_get(k)
     end
     if not _cache[k] then
       _cache[k] = native_get(k)
-      if _cache[k] then
-        _caches_size = _caches_size + 1
-      end
     end
     return _cache[k]
   end
 
   local function get_node(k)
     if not _nodes_cache[k] then
-      _caches_size = _caches_size + 1
       _nodes_cache[k] = unpack_node(k,native_get(k,true))
-      if _nodes_cache[k] then
-        _caches_size = _caches_size + 1
-      end
     end
     return _nodes_cache[k]
   end
 
 
   local function init()
-    _meta = new_env_factory("meta")
-    add_env(_metas,"meta")
-    add_env(_pages,"page")
+    local function populate_env(array_,label_)
+      add_env(array_,label_,true)
+      while add_env(array_,label_,false) do
+        -- nop
+      end
+    end
+    populate_env(_metas,"meta")
+    populate_env(_pages,"page")
     _slots_per_page = get("metadata=slots_per_page")
     if not _slots_per_page then
-     _slots_per_page = slots_per_page_ or SLOTS_PER_PAGE
+      _slots_per_page = slots_per_page_ or SLOTS_PER_PAGE
       put("metadata=slots_per_page",_slots_per_page,true)
     end
   end
@@ -204,7 +223,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function search(prefix_)
-    flush_cache()
+    --flush_cache()
     for _,ed in ipairs(_metas) do
       local t = ed[1]:txn_begin(nil,lightningmdb.MDB_RDONLY)
       local cur = t:cursor_open(ed[2])
@@ -345,7 +364,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       t:commit()
     end
     return coroutine.wrap(function()
-                            flush_cache()
+                            flush_cache(UPDATE_AMOUNT/10) -- we keep it here mainly for the sake of the unit tests
                             for _,ed in ipairs(_metas) do
                               helper(ed[1],ed[2])
                             end
@@ -399,11 +418,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     matching_keys = matching_keys,
     close = close,
     backup = backup,
+    flush_cache = flush_cache,
     cache = function() end,
-    sort_updated_names = function(names_)
-      table.sort(names_)
-      return names_
-    end
   }
 
   self.sequence_storage = function(name_,numslots_)
@@ -423,3 +439,4 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   return self
 end
+

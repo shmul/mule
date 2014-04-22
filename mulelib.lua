@@ -77,11 +77,8 @@ function sequence(db_,name_)
 
   _seq_storage = db_.sequence_storage(name_,_period/_step)
 
-
   local function update(timestamp_,hits_,sum_,replace_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
-    -- if this value is way back (but still fits in this slot)
-    -- we discard it
     local timestamp,hits,sum = at(idx)
 
     -- we need to check whether we should update the current slot
@@ -158,12 +155,12 @@ function sequence(db_,name_)
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
-        -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
-        if sum>=1380000000 or hits>=1380000000 then
-          loge("serialize_slot - out of band values",_name,timestamp,hits,sum)
-          sum = 0
-          hits = 0
-        end
+      -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
+      if sum>=1380000000 or hits>=1380000000 then
+        loge("serialize_slot - out of band values",_name,timestamp,hits,sum)
+        sum = 0
+        hits = 0
+      end
 
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
         slot_cb_(sum,hits,timestamp)
@@ -623,27 +620,16 @@ function mule(db_)
     return wrap_json(str)
   end
 
-  local function update_sequences(max_)
+
+  local function flush_cache(max_)
     -- we now update the real sequences
     local now = time_now()
-    local sorted_updated_names = _db.sort_updated_names(keys(_updated_sequences))
-    local st = 1
-    local en = #sorted_updated_names
-    if en==0 then
-      --logd("no update required")
-      return
-    end
-    logi("update_sequences start")
-    -- why bother with randomness? to avoid starvation
-    if max_ and en>max_ then
-      st = math.random(en-max_)
-      en = st+max_
-    end
-    local i = st
-    while i<=en and time_now()-now<2 do
-      local n = sorted_updated_names[i]
+    local num_processed = 0
+    local size,st,en = random_table_region(_updated_sequences,max_)
+    if size==0 then return false end
+    logi("flush_cache start",st,en,size)
+    for n,s in iterate_table(_updated_sequences,st,en) do
       local seq = sequence(_db,n)
-      local s = _updated_sequences[n]
       for j,sl in ipairs(s.slots()) do
         local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
                                                   sl._hits==nil)
@@ -660,11 +646,12 @@ function mule(db_)
         alert_check(seq,now)
       end
       _updated_sequences[n] = nil
-      i = i+1
+      num_processed = num_processed + 1
     end
-    logi("update_sequences end",time_now()-now,st,en,#sorted_updated_names)
+    if num_processed==0 then return false end
+    logi("flush_cache end",time_now()-now,num_processed,size)
     -- returns true if there are more items to process
-    return en<#sorted_updated_names
+    return next(_updated_sequences)~=nil
   end
 
 
@@ -676,7 +663,7 @@ function mule(db_)
     _db.put("metadata=alerts",pp.pack(_alerts),true)
     _db.put("metadata=hints",pp.pack(_hints),true)
     logi("save - flushing uncommited data")
-    while update_sequences(UPDATE_AMOUNT) do
+    while flush_cache(UPDATE_AMOUNT) do
       -- nop
     end
   end
@@ -940,7 +927,7 @@ function mule(db_)
       lines_count = lines_count + 1
       if lines_count==UPDATED_SEQUENCES_MAX then
         logi("process - forcing an update",lines_count)
-        update_sequences(UPDATE_AMOUNT)
+        flush_cache(UPDATE_AMOUNT)
         lines_count = lines_count - UPDATE_AMOUNT
       end
     end
@@ -988,7 +975,7 @@ function mule(db_)
 
     local rv = helper()
     if not dont_update_ then
-      update_sequences(UPDATE_AMOUNT)
+      flush_cache(UPDATE_AMOUNT)
     end
     return rv
   end
@@ -1016,7 +1003,10 @@ function mule(db_)
     slot = slot,
     modify_factories = modify_factories,
     process = process,
-    update = update_sequences,
+    flush_cache = function(amount_)
+      amount_ = amount_ or UPDATE_AMOUNT
+      return flush_cache(amount_) or  _db.flush_cache(amount_/8)
+      end,
     save = save,
     load = load,
     alert_set = alert_set,

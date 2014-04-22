@@ -1,12 +1,12 @@
-local _,lr = pcall(require,"luarocks.require")
-local s,url = pcall(require,"socket.url")
+local _,lr = require "luarocks.require"
+local url = require "socket.url"
 local pp = require "purepack"
 local posix_exists,posix = pcall(require,'posix')
 local stp_exists,stp = pcall(require,"StackTracePlus")
 
 if not posix_exists or lunit then
-  print("disabling posix")
-  posix = nil
+--  print("disabling posix")
+--  posix = nil
 end
 
 if stp_exists then
@@ -318,8 +318,10 @@ end
 function table_size(tbl_)
   if #tbl_>0 then return #tbl_ end
   local current = 0
-  for k,v in pairs(tbl_) do
+  local k = next(tbl_)
+  while k do
     current = current + 1
+    k = next(tbl_,k)
   end
 
   return current
@@ -360,6 +362,10 @@ function with_file(file_,func_,mode_)
   local rv = func_(f)
   f:close()
   return rv
+end
+
+function directory_exists(dir)
+  return posix.stat(dir,"type")=='directory'
 end
 
 function file_exists(file_)
@@ -577,6 +583,20 @@ function keys(table_)
   return ks
 end
 
+function iterate_table(table_,start_,end_)
+  return coroutine.wrap(
+    function()
+      for k,v in pairs(table_) do
+        start_ = start_-1
+        if start_<=0 then
+          coroutine.yield(k,v)
+        end
+        end_ = end_ - 1
+        if end_==0 then return end
+      end
+    end)
+end
+
 function split_name(name_)
   local metric,step,period = string.match(name_,"^(.+);(%w+):(%w+)$")
   return metric,step and parse_time_unit(step),period and parse_time_unit(period)
@@ -778,6 +798,13 @@ function sparse_sequence(name_,slots_)
   _step = parse_time_unit(_step)
   _period = parse_time_unit(_period)
 
+  -- we need to update the latest timestamp
+  if slots_ then
+    for i,s in ipairs(_slots) do
+      _latest_timestamp = math.max(_latest_timestamp or 0,s._timestamp)
+    end
+  end
+
   local function update_latest(timestamp_)
     if not _latest_timestamp or _latest_timestamp<timestamp_ then
       _latest_timestamp = timestamp_
@@ -809,10 +836,19 @@ function sparse_sequence(name_,slots_)
     return nil
   end
 
-  local function set(timestamp_,hits_,sum_)
+  local function calc_idx(timestamp_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
 
-    if _latest_timestamp and adjusted_timestamp+_period<_latest_timestamp then
+    if _latest_timestamp and adjusted_timestamp+_period<=_latest_timestamp then
+      return nil
+    end
+    return idx,adjusted_timestamp
+  end
+
+  local function set(timestamp_,hits_,sum_)
+    local idx,adjusted_timestamp = calc_idx(timestamp_)
+
+    if not idx then
       return nil
     end
     local slot = find_by_index(idx) or add_slot(timestamp_)
@@ -824,12 +860,11 @@ function sparse_sequence(name_,slots_)
   end
 
   local function update(timestamp_,hits_,sum_,replace_)
-    local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
-    if _latest_timestamp and adjusted_timestamp+_period<=_latest_timestamp then
+    local idx,adjusted_timestamp = calc_idx(timestamp_)
+
+    if not idx then
       return nil
     end
-    -- here, unlike the regular sequence, we keep all the timestamps. The real sequence
-    -- will discard stale ones
     local slot = find_slot(adjusted_timestamp)
     if replace_ then
       slot._sum = sum_
@@ -838,6 +873,7 @@ function sparse_sequence(name_,slots_)
       slot._sum = slot._sum+sum_
       slot._hits = slot._hits+hits_
     end
+    update_latest(adjusted_timestamp)
     return adjusted_timestamp,slot._sum
   end
 
@@ -853,4 +889,20 @@ function count_dots(string_)
   local dots = 0
   string.gsub(string_,"%.",function() dots = dots + 1 end)
   return dots
+end
+
+function random_table_region(table_,region_size_)
+  local size = table_size(table_)
+  local st = 1
+  local en = size
+  if en==0 then
+    return size
+  end
+
+  -- why bother with randomness? to avoid starvation
+  if region_size_ and en>region_size_ then
+    st = math.random(en-region_size_)
+    en = st+region_size_
+  end
+  return size,st,en
 end

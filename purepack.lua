@@ -155,17 +155,6 @@ function pack_helper(obj_,visited_,id_,out)
                                   type,len,val = yield(true)
                                 end
                               end)
---[[
-  local function push(type,len,val)
-    insert(out,type)
-    insert(out,to_binary(len))
-    if val then
-      insert(out,val)
-    end
-    return true
-  end
-  --]]
-
   local literal = coroutine.wrap(
     function(lit_)
       while true do
@@ -194,32 +183,6 @@ function pack_helper(obj_,visited_,id_,out)
         end
       end
     end)
---[[
-    local function literal(lit_)
-      local t = type(lit_)
-      if lit_==nil then -- nil and false are NOT the same thing
-        insert(out,"l")
-        return true
-      elseif t=="string" then
-        if not visited_[lit_] then
-          push("s",#lit_,lit_)
-          insert(out,to_binary(id_))
-          visited_[lit_] = id_
-          id_ = id_ + 1
-        else
-          push("r",visited_[lit_])
-        end
-        return true
-      elseif t=="number" then
-        push("i",lit_)
-        return true
-      elseif lit_==true or lit_==false then
-        insert(out,lit_ and "T" or "F")
-        return true
-      end
-      return false
-    end
-  --]]
 
   local function helper(o_)
     if not literal(o_) and type(o_)=="table" then

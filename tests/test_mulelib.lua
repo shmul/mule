@@ -748,6 +748,7 @@ function test_pale()
     assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamp="1360800000"}),"274,244",1,true))
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361127300"}),"1526,756",1,true))
     m.process("./tests/fixtures/pale.mule")
+    m.flush_cache()
     assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamp="1361300362"}),"19,11",1,true))
 
     assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
@@ -763,6 +764,7 @@ function test_key()
     m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
 
     m.process("./tests/fixtures/pale.mule")
+    m.flush_cache()
     assert(m.key("beer",{})==m.key("beer",{level=0}))
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
@@ -940,6 +942,13 @@ function test_sparse_latest()
   assert_equal(5,seq.slots()[1]._sum)
   seq.update(3687,6,6)
   assert_equal(9,seq.slots()[2]._sum)
+end
+
+function test_table_size()
+  assert_equal(0,table_size({}))
+  assert_equal(1,table_size({1}))
+  assert_equal(1,table_size({a=1}))
+  assert_equal(2,table_size({a=1,b=2}))
 end
 --verbose_log(true)
 --profiler.start("profiler.out")
