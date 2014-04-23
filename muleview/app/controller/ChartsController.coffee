@@ -191,7 +191,7 @@ Ext.define "Muleview.controller.ChartsController",
         # I'm doing the 2nd async request after the 1st one's response
           # because of some funky Mule behaviour
         Muleview.Mule.getGraphData @key, @retention, @safeCallback((data) =>
-          @fixDuplicateAndMissingTimestamps(data)
+          @fixDuplicateAndMissingTimestamps(data, false)
           @mainChart.updateData(data)
           @refreshButton.setProgress(false)
         )
@@ -249,12 +249,13 @@ Ext.define "Muleview.controller.ChartsController",
       # Defer the processing to have the masking properly displayed:
       Ext.defer @safeCallback( =>
         @updateRetentionsStore()
-        @defaultRetention = @retention || @retentionsStore.getAt(0).get("name")
+        defaultRetention = @retention
+        defaultRetention = @retentionsStore.getAt(0).get("name") unless @retentionsStore.findExact("name", defaultRetention) > -1
         @fixDuplicateAndMissingTimestamps(retData) for _ret,retData of @data
         @initLightCharts()
         @lightChartsContainer.setLoading(false)
 
-        @showRetention(@defaultRetention)
+        @showRetention(defaultRetention)
       ), 100
     )
 
@@ -302,6 +303,7 @@ Ext.define "Muleview.controller.ChartsController",
           showAreas: true
           topKeys: [@key]
           subKeys: @subkeys
+          interpolation: "step-after"
           data: data
       )
 
@@ -310,23 +312,28 @@ Ext.define "Muleview.controller.ChartsController",
         topKeys: @keys
         data: @data[@retention]
 
-  fixDuplicateAndMissingTimestamps: (data) ->
+  fixDuplicateAndMissingTimestamps: (data, omitMissingKeys = true) ->
     recordsByTimestamp = {}
+    allKeys = Ext.Object.getKeys(data)
 
     for key, keyData of data
       records = recordsByTimestamp[key] = {}
       for record in keyData
         records[record.x] ||= []
         records[record.x].push(record)
-
       data[key] = []
 
-    for key of data
+    if !omitMissingKeys
+      for key in allKeys
+        for timestamp, _ of recordsByTimestamp[key]
+          for otherKey in allKeys
+            recordsByTimestamp[otherKey][timestamp] ||= []
+
+    for key in allKeys
       for timestamp, timestampRecords of recordsByTimestamp[key]
-        timestampExistsInAllKeys = Ext.Array.every(Ext.Object.getKeys(data), (otherKey) -> recordsByTimestamp[otherKey][timestamp])
-        if timestampExistsInAllKeys
+        if !omitMissingKeys || Ext.Array.every(allKeys, (otherKey) -> recordsByTimestamp[otherKey][timestamp])
           sum = Ext.Array.sum(Ext.Array.pluck(timestampRecords, "y"))
-          average = sum / timestampRecords.length
+          average = sum / timestampRecords.length || 0
           data[key].push {
             x: parseInt(timestamp),
             y: average
@@ -336,7 +343,7 @@ Ext.define "Muleview.controller.ChartsController",
     Ext.StoreManager.get("alertsStore").getById("#{@key};#{@retention}")?.toGraphArray(@retention)
 
   addChart: (cfg) ->
-    @fixDuplicateAndMissingTimestamps(cfg.data)
+    @fixDuplicateAndMissingTimestamps(cfg.data, !@showSubkeys)
     common = {
       flex: 1
       alerts: @getAlerts()

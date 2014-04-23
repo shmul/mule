@@ -1,6 +1,7 @@
 * Issues
 ** TODO Alleged race-condition in stacked mode
 http://v2.mule.trusteer.net/test/#expressway.device_id;1h:90d
+** TODO Error in graph seems to mess history URL
 ** TODO Error-function not called in case of exception in Mule interface?
    Causes endless "Fetching..." :(
 ** TODO keystree Pbar inconsistent
