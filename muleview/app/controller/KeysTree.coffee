@@ -1,5 +1,8 @@
 Ext.define "Muleview.controller.KeysTree",
   extend: "Ext.app.Controller"
+  requires: [
+    "Muleview.Util"
+  ]
   models: [
     "MuleKey"
   ]
@@ -134,6 +137,8 @@ Ext.define "Muleview.controller.KeysTree",
   # Data fetching and displaying:
 
   fillFirstkeys: ->
+    @store.removeAll()
+
     # Add Root key:
     root = @getMuleKeyModel().create
       name: "root"
@@ -146,7 +151,7 @@ Ext.define "Muleview.controller.KeysTree",
       @getTree().setLoading(false)
 
   fetchKeys: (parent, callback) ->
-    Muleview.Mule.getSubKeys parent, 1, (keys) =>
+    Muleview.Mule.getSubKeys parent, 0, (keys) =>
       @addKeys keys, ->
         callback?(keys)
 
@@ -159,32 +164,35 @@ Ext.define "Muleview.controller.KeysTree",
     @keysLoaded ||= 0
     @keysToLoad += buffer.length
 
+    # Sort the new keys according to their depth:
     Ext.Array.sort buffer, (a, b) ->
       aLevel = ("." + a[0]).match(/\./g).length
       bLevel = ("." + b[0]).match(/\./g).length
       bLevel - aLevel
 
-    fn = () =>
-      if not Ext.isEmpty(buffer)
-        [key, hasKids] = buffer.pop()
-        Ext.defer(fn, 10)
-        @addKey(key, hasKids)
-        @keysLoaded += 1
-        @pbar.updateProgress(@keysLoaded / @keysToLoad)
-        @pbar.updateText(Ext.util.Format.number(@keysLoaded, ",") + " / " + Ext.util.Format.number(@keysToLoad, ",") + " Keys")
-        @pbar.show()
+    fn = (item) =>
+      [key, hasKids] = item
+      @addKey(key, hasKids)
+      @keysLoaded += 1
+      @pbar.updateProgress(@keysLoaded / @keysToLoad)
+      @pbar.updateText(Ext.util.Format.number(@keysLoaded, ",") + " / " + Ext.util.Format.number(@keysToLoad, ",") + " Keys")
+      @pbar.show()
 
-      else
-        Ext.defer =>
-          @pbar.hide() if @keysLoaded == @keysToLoad
-        , 3000
-        @store.sort ["name"]
-        callback()
-    fn()
+    finalFn = () =>
+      Ext.defer =>
+        @pbar.hide() if @keysLoaded == @keysToLoad
+      , 3000
+      @store.sort ["name"]
+      callback()
+    Muleview.Util.asyncProcess
+      array: buffer
+      processFn: fn
+      finalFn: finalFn
+      step: 1
 
   addKey: (key, hasKids) ->
-    # Don't add already existing keys:
     return @store.getRootNode() unless key
+    # Don't add already existing keys:
     existingNode = @store.getById(key)
     if existingNode
       existingNode.set("leaf", !hasKids)
