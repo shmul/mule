@@ -130,7 +130,7 @@ end
 local function config_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="POST" then
     logd("calling",handler_)
-    return mule_.configure(lines_without_comments(string_lines(content_)))
+    return mule_.configure(lines_without_comments(string_lines(content_))) and 200 or 400
   elseif req_.verb=="GET" then
     logd("calling",handler_)
     return mule_.export_configuration()
