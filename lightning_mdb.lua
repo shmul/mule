@@ -108,10 +108,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         local rv,err = txn(ed[1],function(t) return t:put(ed[2],k,v,0) end)
         if not err then return end
         -- when we put a key somewhere we must make sure no *previous* DB has the same key
-        if t:get_key(ed[2],k) then
-          logw("native_put removing key",label_,i,k)
-          t:del(ed[2],k,nil)
-        end
+        txn(ed[1],
+            function(t)
+              if t:get_key(ed[2],k) then
+                logw("native_put removing key",label_,i,k)
+                t:del(ed[2],k,nil)
+              end
+            end)
       end
       logw("native_put",k,err)
       add_env(array_,label_,true)
@@ -440,4 +443,3 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   return self
 end
-
