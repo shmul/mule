@@ -829,8 +829,9 @@ function mule(db_)
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
     sum = tonumber(sum)
-    if not metric_ or not sum_ or not timestamp_ then
-      logw("update_line - missing params",metric_,sum_,timestamp_)
+
+    if not metric_ or #metric_>MAX_METRIC_LEN or not sum_ or not timestamp_ then
+      logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
     for n,m in get_sequences(metric_) do

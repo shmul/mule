@@ -950,5 +950,18 @@ function test_table_size()
   assert_equal(1,table_size({a=1}))
   assert_equal(2,table_size({a=1,b=2}))
 end
+
+function test_bad_input_lines()
+  local function helper(m)
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.ale 60s:24h"}))
+    m.process("beer.ale.pale.012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 7 4")
+    m.process("beer.ale.;brown 6 54")
+    m.process("6 54")
+
+    assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
+  end
+  for_each_db("./tests/temp/test_bad_input_lines",helper)
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")
