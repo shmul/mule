@@ -885,7 +885,9 @@ function mule(db_)
     local function helper()
       local items,type = parse_input_line(metric_line_)
       if #items==0 then
-        logd("bad input",metric_line_)
+        if #metric_line_>0 then
+          logd("bad input",metric_line_)
+        end
         return nil
       end
 
@@ -1005,7 +1007,9 @@ function mule(db_)
     process = process,
     flush_cache = function(amount_)
       amount_ = amount_ or UPDATE_AMOUNT
-      return flush_cache(amount_) or  _db.flush_cache(amount_/8)
+      local fc1 = flush_cache(amount_)
+      local fc2 = _db.flush_cache(amount_/8)
+      return fc1 or fc2
       end,
     save = save,
     load = load,
