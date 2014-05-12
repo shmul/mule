@@ -661,7 +661,7 @@ function mule(db_)
     _db.put("metadata=version",pp.pack(CURRENT_VERSION),true)
     _db.put("metadata=factories",pp.pack(_factories),true)
     _db.put("metadata=alerts",pp.pack(_alerts),true)
-    _db.put("metadata=hints",pp.pack(_hints),true)
+    _db.put("metadata=hints",pp.pack({}),true)
     logi("save - flushing uncommited data")
     while flush_cache(UPDATE_AMOUNT) do
       -- nop
