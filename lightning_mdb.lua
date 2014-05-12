@@ -104,9 +104,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function native_put(k,v,meta_)
     local function helper(array_,label_)
+      local rv,err
       for i,ed in ipairs(array_) do
-        local rv,err = txn(ed[1],function(t) return t:put(ed[2],k,v,0) end)
-        if not err then return end
+        rv,err = txn(ed[1],function(t) return t:put(ed[2],k,v,0) end)
+        if not err then return nil end
         -- when we put a key somewhere we must make sure no *previous* DB has the same key
         txn(ed[1],
             function(t)
@@ -116,15 +117,17 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
               end
             end)
       end
-      logw("native_put",k,err)
-      add_env(array_,label_,true)
-      return native_put(k,v,meta_)
+      return err
     end
 
-    if meta_ or string.find(k,"metadata=",1,true) then
-      return helper(_metas,"meta")
+    local err = (meta_ or string.find(k,"metadata=",1,true)) and helper(_metas,"meta") or helper(_pages,"page")
+    if err then
+      logw("native_put",k,err)
+      add_env(array_,label_,true)
+      err = native_put(k,v,meta_) -- we attempt again, but only once.
+      logi("native_put 2nd attempt",k,err)
     end
-    return helper(_pages,"page")
+    return err
   end
 
   local function put(k,v,dont_cache_,meta_)
