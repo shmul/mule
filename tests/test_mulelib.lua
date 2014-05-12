@@ -764,7 +764,7 @@ function test_key()
     m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
 
     m.process("./tests/fixtures/pale.mule")
-    m.flush_cache()
+    repeat until not m.flush_cache()
     assert(m.key("beer",{})==m.key("beer",{level=0}))
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
@@ -833,9 +833,10 @@ function test_stacked()
     m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
     m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
     m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-
+    repeat until not m.flush_cache()
     local level2 = m.graph("Johnston.Morfin",{level=2})
     local level1 = m.graph("Johnston.Morfin",{level=1})
+
     assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
     assert(string.find(level2,"Johnston.Morfin.Jamal;1s:1m",1,true))
     assert_nil(string.find(level1,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
