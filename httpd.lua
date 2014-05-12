@@ -315,7 +315,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
       noblock_wait_for_children()
     end
     with_mule_(function(mule_)
-                 if i%4==0 then mule_.flush_cache(UPDATE_AMOUNT/2) end
+                 if i%FLUSH_CACHE_FREQUENCY==0 then mule_.flush_cache(UPDATE_AMOUNT/2) end
                  incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
                end)
     i = i + 1

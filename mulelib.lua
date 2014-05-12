@@ -1009,7 +1009,7 @@ function mule(db_)
     flush_cache = function(amount_)
       amount_ = amount_ or UPDATE_AMOUNT
       local fc1 = flush_cache(amount_)
-      local fc2 = _db.flush_cache(amount_/8)
+      local fc2 = _db.flush_cache(amount_/4)
       return fc1 or fc2
       end,
     save = save,
