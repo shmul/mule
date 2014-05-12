@@ -19,6 +19,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _slots_per_page
   local _cache = {}
   local _nodes_cache = {}
+  local _flush_cache_freq = 0
 
   local function txn(env_,func_)
     local t = env_:txn_begin(nil,0)
@@ -103,10 +104,15 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function native_put(k,v,meta_)
-    local function helper(array_,label_)
+    local function put_in_ed(ed_)
+      local rv,err = txn(ed_[1],function(t) return t:put(ed_[2],k,v,0) end)
+      return rv,err
+    end
+
+    local function helper1(array_,label_)
       local rv,err
       for i,ed in ipairs(array_) do
-        rv,err = txn(ed[1],function(t) return t:put(ed[2],k,v,0) end)
+        rv,err = put_in_ed(ed)
         if not err then return nil end
         -- when we put a key somewhere we must make sure no *previous* DB has the same key
         txn(ed[1],
@@ -120,14 +126,19 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return err
     end
 
-    local err = (meta_ or string.find(k,"metadata=",1,true)) and helper(_metas,"meta") or helper(_pages,"page")
-    if err then
-      logw("native_put",k,err)
-      add_env(array_,label_,true)
-      err = native_put(k,v,meta_) -- we attempt again, but only once.
-      logi("native_put 2nd attempt",k,err)
+
+    local function helper0(array_,label_)
+      local err = helper1(array_,label_)
+      if err then
+        logw("native_put",k,err)
+        local ed = add_env(array_,label_,true)
+        rv,err = put_in_ed(ed)  -- we attempt again, but only once.
+        logi("native_put 2nd attempt",k,err)
+      end
+      return err
     end
-    return err
+
+    return (meta_ or string.find(k,"metadata=",1,true)) and helper0(_metas,"meta") or helper0(_pages,"page")
   end
 
   local function put(k,v,dont_cache_,meta_)
@@ -144,9 +155,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function flush_cache(amount_)
+    if _flush_cache_freq%10==0 then
+      logi("flush_cache",table_size(_cache),table_size(_nodes_cache))
+    end
+    _flush_cache_freq = _flush_cache_freq + 1
     local size,st,en = random_table_region(_cache,amount_)
     if size>0 then
-      logi("flush_cache pages start",st,en,size)
+      --logi("flush_cache pages start",st,en,size)
       for k,v in iterate_table(_cache,st,en) do
         native_put(k,v,false)
         _cache[k] = nil
@@ -155,12 +170,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     size,st,en = random_table_region(_nodes_cache,amount_)
     if size>0 then
-      logi("flush_cache nodes start",st,en,size)
+      --logi("flush_cache nodes start",st,en,size)
       for k,v in iterate_table(_nodes_cache,st,en) do
         native_put(k,pack_node(v),true)
         _nodes_cache[k] = nil
       end
-      logi("flush_cache end")
+      --logi("flush_cache end")
     end
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
@@ -348,6 +363,36 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     del(name_,true)
   end
 
+  local function has_sub_keys(prefix_)
+    local function helper(env,db)
+      local t,err = env:txn_begin(nil,0) -- this may be called with an opened write cursor so we don't restrict ourselves to readonly
+      local find = string.find
+      local byte = string.byte
+      local found = false
+      local cur = t:cursor_open(db)
+      local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
+      repeat
+        local prefixed = k and find(k,prefix_,1,true)
+        if not find(k,"metadata=",1,true) and prefixed and k~=prefix_ then
+          found = true
+        end
+        if not prefixed then
+          k = nil
+        else
+          k = cur:get_key(k,lightningmdb.MDB_NEXT)
+        end
+      until not k or found
+      cur:close()
+      t:commit()
+      return found
+    end
+
+    flush_cache(UPDATE_AMOUNT/8) -- we keep it here mainly for the sake of the unit tests
+    for _,ed in ipairs(_metas) do
+      if helper(ed[1],ed[2]) then return true end
+    end
+  end
+
   local function matching_keys(prefix_,level_)
     local function helper(env,db)
       local t,err = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
@@ -422,6 +467,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     set_slot = internal_set_slot,
     get_slot = internal_get_slot,
     out = internal_out_slot,
+    has_sub_keys = has_sub_keys,
     matching_keys = matching_keys,
     close = close,
     backup = backup,

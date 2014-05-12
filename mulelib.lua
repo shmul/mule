@@ -299,6 +299,7 @@ function mule(db_)
   local _db = db_
   local _updated_sequences = {}
   local _hints = {}
+  local _flush_cache_freq = 0
 
   local function add_factory(metric_,retentions_)
     metric_ = string.match(metric_,"^(.-)%.*$")
@@ -611,7 +612,8 @@ function mule(db_)
     for prefix in split_helper(resource_ or "","/") do
       prefix = (prefix=="*" and "") or prefix
       for k in db_.matching_keys(prefix,level) do
-        local hash = (_hints[k] and _hints[k]._haschildren and "{\"children\": true}") or "{}"
+        local metric,_,_ = split_name(k)
+        local hash = db_.has_sub_keys(metric) and "{\"children\": true}" or "{}"
         col.elem(format("\"%s\": %s",k,hash))
       end
     end
@@ -622,12 +624,17 @@ function mule(db_)
 
 
   local function flush_cache(max_)
+    if _flush_cache_freq%10==0 then
+      logi("flush_cache",table_size(_updated_sequences))
+    end
+    _flush_cache_freq = _flush_cache_freq + 1
+
     -- we now update the real sequences
     local now = time_now()
     local num_processed = 0
     local size,st,en = random_table_region(_updated_sequences,max_)
     if size==0 then return false end
-    logi("flush_cache start",st,en,size)
+    --logi("flush_cache start",st,en,size)
     for n,s in iterate_table(_updated_sequences,st,en) do
       local seq = sequence(_db,n)
       for j,sl in ipairs(s.slots()) do
@@ -649,7 +656,7 @@ function mule(db_)
       num_processed = num_processed + 1
     end
     if num_processed==0 then return false end
-    logi("flush_cache end",time_now()-now,num_processed,size)
+    --logi("flush_cache end",time_now()-now,num_processed,size)
     -- returns true if there are more items to process
     return next(_updated_sequences)~=nil
   end
@@ -661,7 +668,7 @@ function mule(db_)
     _db.put("metadata=version",pp.pack(CURRENT_VERSION),true)
     _db.put("metadata=factories",pp.pack(_factories),true)
     _db.put("metadata=alerts",pp.pack(_alerts),true)
-    _db.put("metadata=hints",pp.pack({}),true)
+    _db.put("metadata=hints",pp.pack({}),true) -- we don't save the hints but recalc them every time we start
     logi("save - flushing uncommited data")
     while flush_cache(UPDATE_AMOUNT) do
       -- nop
@@ -815,7 +822,7 @@ function mule(db_)
 
     _factories = helper("metadata=factories",true,{})
     _alerts = helper("metadata=alerts",true,{})
-    _hints = helper("metadata=hints",true,{})
+    _hints = {}
     logi("load",table_size(_factories),table_size(_alerts),table_size(_hints))
   end
 
@@ -845,10 +852,6 @@ function mule(db_)
       -- the update function returns null
       if adjusted_timestamp then
         _updated_sequences[n] = seq
-        if m~=metric_ then -- we check the metric, but the *name* is updated
-          _hints[n] = _hints[n] or {}
-          _hints[n]._haschildren = true
-        end
       end
     end
   end

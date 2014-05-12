@@ -264,6 +264,20 @@ local tr = require("trie")
       return index:delete(key_)
     end
 
+    local function has_sub_keys(prefix_)
+      local gsub = string.gsub
+      local find = string.find
+      local function put_semicolumn(rp)
+        return ";"..rp
+      end
+      for k,n in index:traverse(prefix_,true,false) do
+        -- the 20140226 exclusion is to overcome a data corruption bug that Ops had. TODO - remove this
+        if find(k,"metadata=",1,true)~=1 and not find(k,"201402",1,true) and k~=prefix_ then
+          return true
+        end
+      end
+    end
+
     local function matching_keys(prefix_,level_)
       local gsub = string.gsub
       local find = string.find
@@ -382,6 +396,7 @@ local tr = require("trie")
       end,
       set_slot = internal_set_slot,
       get_slot = internal_get_slot,
+      has_sub_keys = has_sub_keys,
       matching_keys = matching_keys,
       flush_cache = function() end,
       cache = function(name_) return cache(name_) end,
