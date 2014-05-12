@@ -111,7 +111,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         -- when we put a key somewhere we must make sure no *previous* DB has the same key
         txn(ed[1],
             function(t)
-              if t:get_key(ed[2],k) then
+              if t:get(ed[2],k) then
                 logw("native_put removing key",label_,i,k)
                 t:del(ed[2],k,nil)
               end

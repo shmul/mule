@@ -28,3 +28,4 @@ find $shareddir/ -name "mule.log-*" -mtime +30 -delete
 find $shareddir/ -name "ltmule.log-*" -mtime +30 -delete
 
 log "end"
+
