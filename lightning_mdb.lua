@@ -371,7 +371,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       t:commit()
     end
     return coroutine.wrap(function()
-                            flush_cache(UPDATE_AMOUNT/10) -- we keep it here mainly for the sake of the unit tests
+                            flush_cache(UPDATE_AMOUNT/8) -- we keep it here mainly for the sake of the unit tests
                             for _,ed in ipairs(_metas) do
                               helper(ed[1],ed[2])
                             end
