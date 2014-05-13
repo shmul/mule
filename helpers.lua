@@ -892,7 +892,6 @@ function count_dots(string_)
 end
 
 function random_table_region(table_,region_size_)
---[[
   local size = table_size(table_)
   local st = 1
   local en = size
@@ -902,10 +901,9 @@ function random_table_region(table_,region_size_)
 
   -- why bother with randomness? to avoid starvation
   if region_size_ and en>region_size_ then
-    --st = math.random(en-region_size_)
+    st = math.random(en-region_size_)
     en = st+region_size_
   end
   return size,st,en
-  --]]
-  return (next(table_)~=nil and 1 or 0),1,region_size_ or table_size(table_)
+  --return (next(table_)~=nil and 1 or 0),1,region_size_ or table_size(table_)
 end
