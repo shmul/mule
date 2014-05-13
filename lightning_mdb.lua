@@ -120,11 +120,16 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return err
     end
 
-    local err = (meta_ or string.find(k,"metadata=",1,true)) and helper(_metas,"meta") or helper(_pages,"page")
+    local array,label = _pages,"page"
+    if meta_ or string.find(k,"metadata=",1,true) then
+      array = _metas
+      label = "meta"
+    end  
+    local err = helper(array,label) --(meta_ or string.find(k,"metadata=",1,true)) and helper(_metas,"meta") or helper(_pages,"page")
     if err then
       logw("native_put",k,err)
-      add_env(array_,label_,true)
-      err = native_put(k,v,meta_) -- we attempt again, but only once.
+      add_env(array,label,true)
+      err = helper(array,lavel) -- we attempt again, but only once.
       logi("native_put 2nd attempt",k,err)
     end
     return err
