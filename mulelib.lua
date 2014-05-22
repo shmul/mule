@@ -301,6 +301,13 @@ function mule(db_)
   local _hints = {}
   local _flush_cache_freq = 0
 
+  local function uniq_factories()
+    local factories = _factories
+    _factories = {}
+    for fm,rps in pairs(factories) do
+      _factories[fm] = uniq_pairs(rps)
+    end
+  end
   local function add_factory(metric_,retentions_)
     metric_ = string.match(metric_,"^(.-)%.*$")
     for _,rp in ipairs(retentions_) do
@@ -315,6 +322,9 @@ function mule(db_)
         table.insert(_factories[metric_],{step,period})
       end
     end
+
+    -- now we make sure the factories are unique
+    uniq_factories()
     return true
   end
 
@@ -821,6 +831,8 @@ function mule(db_)
     end
 
     _factories = helper("metadata=factories",true,{})
+    -- there was a bug which caused factories to be non-uniq so we fix it
+    uniq_factories()
     _alerts = helper("metadata=alerts",true,{})
     _hints = {}
     logi("load",table_size(_factories),table_size(_alerts),table_size(_hints))
