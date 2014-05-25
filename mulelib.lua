@@ -454,10 +454,10 @@ function mule(db_)
 
     alert._sum = average_sum
     if alert._critical_low and alert._warning_low and alert._critical_high and alert._warning_high then
-      alert._state = (average_sum<alert._critical_low and "CRITICAL LOW") or
-        (average_sum<alert._warning_low and "WARNING LOW") or
-        (average_sum>alert._critical_high and "CRITICAL HIGH") or
-        (average_sum>alert._warning_high and "WARNING HIGH") or
+      alert._state = (alert._critical_low~=-1 and average_sum<alert._critical_low and "CRITICAL LOW") or
+        (alert._warning_low~=-1 and average_sum<alert._warning_low and "WARNING LOW") or
+        (alert._critical_high~=-1 and average_sum>alert._critical_high and "CRITICAL HIGH") or
+        (alert._warning_high~=-1 and average_sum>alert._warning_high and "WARNING HIGH") or
         "NORMAL"
     else
       alert._state = "NORMAL"
