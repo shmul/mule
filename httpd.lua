@@ -138,7 +138,7 @@ local function config_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   return 405
 end
 
-local function crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
+local function alert_crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="PUT" then
     return mule_.alert_set(resource_,qs_params(content_))=="" and 201 or 400
   elseif req_.verb=="DELETE" then
@@ -159,7 +159,7 @@ local handlers = { key = generic_get_handler,
                    update = graph_handler,
                    config = config_handler,
                    stop = nop_handler,
-                   alert = crud_handler,
+                   alert = alert_crud_handler,
                    backup = nop_handler
 }
 
@@ -309,13 +309,18 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
                                   req,content,with_mule_,backup_callback_,stop_cond_,can_fork_)
                   end)
   local i = 0
-  while not stop_cond_() do
+
+  local function step()
     copas.step(0)
+  end
+
+  while not stop_cond_() do
+    step()
     if can_fork_ then
       noblock_wait_for_children()
     end
     with_mule_(function(mule_)
-                 mule_.flush_cache(UPDATE_AMOUNT)
+                 mule_.flush_cache(UPDATE_AMOUNT,step)
                  incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
                end)
     i = i + 1

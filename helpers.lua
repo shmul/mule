@@ -925,8 +925,8 @@ function count_dots(string_)
   return dots
 end
 
-function random_table_region(table_,region_size_)
-  local size = table_size(table_)
+function random_table_region(table_,region_size_,table_size_)
+  local size = table_size_ or table_size(table_)
   local st = 1
   local en = size
   if en==0 then
@@ -940,4 +940,16 @@ function random_table_region(table_,region_size_)
   end
   return size,st,en
   --return (next(table_)~=nil and 1 or 0),1,region_size_ or table_size(table_)
+end
+
+function every_nth_call(n_,callback_)
+  local counter = 0
+
+  return
+  function()
+    counter = counter + 1
+    if counter%n_==0 then
+      callback_()
+    end
+  end
 end

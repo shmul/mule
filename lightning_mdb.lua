@@ -19,7 +19,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _slots_per_page
   local _cache = {}
   local _nodes_cache = {}
-  local _flush_cache_freq = 0
+  local _flush_cache_logger = every_nth_call(10,
+                                             function()
+                                               logi("flush_cache",table_size(_cache),table_size(_nodes_cache))
+                                             end)
 
   local function txn(env_,func_)
     local t = env_:txn_begin(nil,0)
@@ -154,28 +157,27 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return _nodes_cache[k]
   end
 
-  local function flush_cache(amount_)
-    if _flush_cache_freq%10==0 then
-      logi("flush_cache",table_size(_cache),table_size(_nodes_cache))
-    end
-    _flush_cache_freq = _flush_cache_freq + 1
+  local function flush_cache(amount_,step_)
+    _flush_cache_logger()
+
+    local step_helper = every_nth_call(10,step_ or function() end)
+
     local size,st,en = random_table_region(_cache,amount_)
     if size>0 then
-      --logi("flush_cache pages start",st,en,size)
       for k,v in iterate_table(_cache,st,en) do
         native_put(k,v,false)
         _cache[k] = nil
+        step_helper()
       end
     end
 
     size,st,en = random_table_region(_nodes_cache,amount_)
     if size>0 then
-      --logi("flush_cache nodes start",st,en,size)
       for k,v in iterate_table(_nodes_cache,st,en) do
         native_put(k,pack_node(v),true)
         _nodes_cache[k] = nil
+        step_helper()
       end
-      --logi("flush_cache end")
     end
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
