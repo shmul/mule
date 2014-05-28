@@ -316,6 +316,7 @@ function t2s(tbl)
 end
 
 function table_size(tbl_)
+  if not tbl_ then return 0 end
   if #tbl_>0 then return #tbl_ end
   local current = 0
   local k = next(tbl_)
