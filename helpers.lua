@@ -620,6 +620,8 @@ end
 function iterate_table(table_,start_,end_)
   return coroutine.wrap(
     function()
+      if not table_ then return end
+
       for k,v in pairs(table_) do
         start_ = start_-1
         if start_<=0 then
