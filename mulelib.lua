@@ -678,14 +678,14 @@ function mule(db_)
 
 
 
-  local function save()
+  local function save(skip_flushing_)
     logi("save",table_size(_factories),table_size(_alerts),table_size(_hints))
     _db.put("metadata=version",pp.pack(CURRENT_VERSION),true)
     _db.put("metadata=factories",pp.pack(_factories),true)
     _db.put("metadata=alerts",pp.pack(_alerts),true)
     _db.put("metadata=hints",pp.pack({}),true) -- we don't save the hints but recalc them every time we start
-    logi("save - flushing uncommited data")
-    while flush_cache(UPDATE_AMOUNT) do
+    logi("save - flushing uncommited data",skip_flushing_)
+    while not skip_flushing_ and flush_cache(UPDATE_AMOUNT) do
       -- nop
     end
   end
@@ -715,7 +715,7 @@ function mule(db_)
     _alerts[resource_] = new_alert
 
     logi("set alert",resource_,t2s(_alerts[resource_]))
-    save()
+    save(true)
     return ""
   end
 
@@ -796,7 +796,7 @@ function mule(db_)
       end
     end
     logi("configure",table_size(_factories))
-    save()
+    save(true)
     return table_size(_factories)
   end
 
