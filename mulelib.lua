@@ -303,7 +303,7 @@ function mule(db_)
                                              function()
                                                local a = table_size(_updated_sequences)
                                                if a>0 then
-                                                 logi("flush_cache",a)
+                                                 logi("mulelib flush_cache",a)
                                                end
                                              end)
 
