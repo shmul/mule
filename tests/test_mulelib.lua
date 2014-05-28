@@ -310,9 +310,13 @@ function test_modify_factories_1()
     -- first retention 60s:12h
     assert_equal(60,factories["beer.ale"][1][1])
     assert_equal(12*60*60,factories["beer.ale"][1][2])
-    -- second retention is new 2h:90d
-    assert_equal(2*60*60,factories["beer.ale"][2][1])
-    assert_equal(90*24*60*60,factories["beer.ale"][2][2])
+    -- first retention 60s:24h
+    assert_equal(60,factories["beer.ale"][2][1])
+    assert_equal(24*60*60,factories["beer.ale"][2][2])
+
+    -- 3rd retention is new 2h:90d
+    assert_equal(2*60*60,factories["beer.ale"][3][1])
+    assert_equal(90*24*60*60,factories["beer.ale"][3][2])
   end
   for_each_db("./tests/temp/test_factories_1",helper)
 end
@@ -962,6 +966,17 @@ function test_bad_input_lines()
     assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
   end
   for_each_db("./tests/temp/test_bad_input_lines",helper)
+end
+
+function test_uniq_factories()
+  local function helper(m)
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d 60s:12h 1h:30d 60s:12h 1h:30d","beer.ale 60s:24h"}))
+    local factories = m.get_factories()
+    assert_equal(3,table_size(factories["beer.ale"]))
+    assert_equal(60,factories["beer.ale"][1][1])
+    assert_equal(12*60*60,factories["beer.ale"][1][2])
+  end
+  for_each_db("./tests/temp/test_uniq_factories",helper)
 end
 
 --verbose_log(true)

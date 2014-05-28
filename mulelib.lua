@@ -299,8 +299,21 @@ function mule(db_)
   local _db = db_
   local _updated_sequences = {}
   local _hints = {}
-  local _flush_cache_freq = 0
+  local _flush_cache_logger = every_nth_call(10,
+                                             function()
+                                               local a = table_size(_updated_sequences)
+                                               if a>0 then
+                                                 logi("mulelib flush_cache",a)
+                                               end
+                                             end)
 
+  local function uniq_factories()
+    local factories = _factories
+    _factories = {}
+    for fm,rps in pairs(factories) do
+      _factories[fm] = uniq_pairs(rps)
+    end
+  end
   local function add_factory(metric_,retentions_)
     metric_ = string.match(metric_,"^(.-)%.*$")
     for _,rp in ipairs(retentions_) do
@@ -315,6 +328,9 @@ function mule(db_)
         table.insert(_factories[metric_],{step,period})
       end
     end
+
+    -- now we make sure the factories are unique
+    uniq_factories()
     return true
   end
 
@@ -444,10 +460,10 @@ function mule(db_)
 
     alert._sum = average_sum
     if alert._critical_low and alert._warning_low and alert._critical_high and alert._warning_high then
-      alert._state = (average_sum<alert._critical_low and "CRITICAL LOW") or
-        (average_sum<alert._warning_low and "WARNING LOW") or
-        (average_sum>alert._critical_high and "CRITICAL HIGH") or
-        (average_sum>alert._warning_high and "WARNING HIGH") or
+      alert._state = (alert._critical_low~=-1 and average_sum<alert._critical_low and "CRITICAL LOW") or
+        (alert._warning_low~=-1 and average_sum<alert._warning_low and "WARNING LOW") or
+        (alert._critical_high~=-1 and average_sum>alert._critical_high and "CRITICAL HIGH") or
+        (alert._warning_high~=-1 and average_sum>alert._warning_high and "WARNING HIGH") or
         "NORMAL"
     else
       alert._state = "NORMAL"
@@ -623,18 +639,15 @@ function mule(db_)
   end
 
 
-  local function flush_cache(max_)
-    if _flush_cache_freq%10==0 then
-      logi("flush_cache",table_size(_updated_sequences))
-    end
-    _flush_cache_freq = _flush_cache_freq + 1
+  local function flush_cache(max_,step_)
+    _flush_cache_logger()
 
     -- we now update the real sequences
     local now = time_now()
     local num_processed = 0
     local size,st,en = random_table_region(_updated_sequences,max_)
     if size==0 then return false end
-    --logi("flush_cache start",st,en,size)
+
     for n,s in iterate_table(_updated_sequences,st,en) do
       local seq = sequence(_db,n)
       for j,sl in ipairs(s.slots()) do
@@ -654,9 +667,11 @@ function mule(db_)
       end
       _updated_sequences[n] = nil
       num_processed = num_processed + 1
+      if step_ and num_processed%10==0 then
+        step_()
+      end
     end
     if num_processed==0 then return false end
-    --logi("flush_cache end",time_now()-now,num_processed,size)
     -- returns true if there are more items to process
     return next(_updated_sequences)~=nil
   end
@@ -821,6 +836,8 @@ function mule(db_)
     end
 
     _factories = helper("metadata=factories",true,{})
+    -- there was a bug which caused factories to be non-uniq so we fix it
+    uniq_factories()
     _alerts = helper("metadata=alerts",true,{})
     _hints = {}
     logi("load",table_size(_factories),table_size(_alerts),table_size(_hints))
@@ -1009,10 +1026,10 @@ function mule(db_)
     slot = slot,
     modify_factories = modify_factories,
     process = process,
-    flush_cache = function(amount_)
+    flush_cache = function(amount_,step_)
       amount_ = amount_ or UPDATE_AMOUNT
-      local fc1 = flush_cache(amount_)
-      local fc2 = _db.flush_cache(amount_/4)
+      local fc1 = flush_cache(amount_,step_)
+      local fc2 = _db.flush_cache(amount_/4,step_)
       return fc1 or fc2
       end,
     save = save,

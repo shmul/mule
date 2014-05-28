@@ -583,6 +583,40 @@ function keys(table_)
   return ks
 end
 
+function uniq(array_)
+  local ks = {}
+  local insert = table.insert
+
+  for _,k in ipairs(array_) do
+    ks[k] = true
+  end
+
+  local un = {}
+  for k,_ in pairs(ks) do
+    insert(un,k)
+  end
+  return un
+end
+
+function uniq_pairs(array_)
+  local ks = {}
+
+  for _,prs in ipairs(array_) do
+    ks[prs[1]..":"..prs[2]] = true
+  end
+
+  local un = {}
+  local match = string.match
+  local insert = table.insert
+
+  for prs,_ in pairs(ks) do
+    local a,b = match(prs,"^(%w+):(%w+)$")
+    insert(un,{tonumber(a),tonumber(b)})
+  end
+  table.sort(un,function(u,v) return u[1]<v[1] or (u[1]==v[1] and u[2]<v[2]) end)
+  return un
+end
+
 function iterate_table(table_,start_,end_)
   return coroutine.wrap(
     function()
@@ -891,8 +925,8 @@ function count_dots(string_)
   return dots
 end
 
-function random_table_region(table_,region_size_)
-  local size = table_size(table_)
+function random_table_region(table_,region_size_,table_size_)
+  local size = table_size_ or table_size(table_)
   local st = 1
   local en = size
   if en==0 then
@@ -906,4 +940,16 @@ function random_table_region(table_,region_size_)
   end
   return size,st,en
   --return (next(table_)~=nil and 1 or 0),1,region_size_ or table_size(table_)
+end
+
+function every_nth_call(n_,callback_)
+  local counter = 0
+
+  return
+  function()
+    counter = counter + 1
+    if counter%n_==0 then
+      callback_()
+    end
+  end
 end

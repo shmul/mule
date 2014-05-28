@@ -1,10 +1,12 @@
 require "tests.strict"
 require "lunit"
-require "httpd"
+require "mule"
 module( "test_httpd", lunit.testcase,package.seeall )
 local cdb = require "column_db"
+local p = require "purepack"
 
 local function column_db_factory(name_)
+  p.set_pack_lib("bits")
   os.execute("rm -rf "..name_.."_cdb")
   os.execute("mkdir -p "..name_.."_cdb")
   return cdb.column_db(name_.."_cdb")
@@ -94,6 +96,16 @@ function test_alerts()
   assert(string.find(res.headers,'201',1,true))
   assert_nil(res.body)
 
+  res = request("PUT","alert/beer.ale.pale;5m:12h","critical_high=100&warning_high=80&warning_low=3&critical_low=-1&stale=6m&period=10m")
+  m.process("beer.ale.pale 1 "..os.time())
+  res = request("GET","alert")
+
+  assert(string.find(res.body,'"beer.ale.pale;5m:12h": [-1,3,80,100,600,360,1,"WARNING LOW"',1,true))
+  m.process("beer.ale.pale 101 "..os.time())
+  res = request("GET","alert")
+
+  assert(string.find(res.body,'"beer.ale.pale;5m:12h": [-1,3,80,100,600,360,102,"CRITICAL HIGH"',1,true))
+
   res = request("GET","alert")
 
   assert(string.find(res.body,'"beer.ale.brown;5m:12h": [4,8,16,18,600,360,32,"CRITICAL HIGH"',1,true))
@@ -107,5 +119,8 @@ function test_alerts()
   res = request("OPTIONS","graph/beer?alerts=true")
   assert(string.find(res.headers,'Access-Control-Allow-Origin: *',1,true))
 
+
   -- todo add alert for a graph that has holes in it (i.e. slots that weren't updated recently)
 end
+
+--verbose_log(true)
