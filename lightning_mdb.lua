@@ -19,14 +19,17 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _slots_per_page
   local _cache = {}
   local _nodes_cache = {}
-  local _flush_cache_logger = every_nth_call(10,
-                                             function()
-                                               local a = table_size(_cache)
-                                               local b = table_size(_nodes_cache)
-                                               if a>0 or b>0 then
-                                                 logi("lightning_mdb flush_cache",a,b)
-                                               end
-                                             end)
+
+
+  function flush_cache_logger()
+    local a = table_size(_cache)
+    local b = table_size(_nodes_cache)
+    if a>0 or b>0 then
+      logi("lightning_mdb flush_cache",a,b)
+    end
+  end
+
+  local _flush_cache_logger = every_nth_call(10,flush_cache_logger)
 
   local function txn(env_,func_)
     local t = env_:txn_begin(nil,0)
@@ -163,6 +166,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function flush_cache(amount_,step_)
     _flush_cache_logger()
+
+    if not amount_ then -- if we are flushing everything, we want to know how much we are going to flush
+      flush_cache_logger()
+    end
 
     local step_helper = every_nth_call(10,step_ or function() end)
 
