@@ -21,7 +21,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _nodes_cache = {}
   local _flush_cache_logger = every_nth_call(10,
                                              function()
-                                               logi("flush_cache",table_size(_cache),table_size(_nodes_cache))
+                                               local a = table_size(_cache)
+                                               local b = table_size(_nodes_cache)
+                                               if a>0 or b>0 then
+                                                 logi("flush_cache",a,b)
+                                               end
                                              end)
 
   local function txn(env_,func_)
@@ -389,7 +393,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return found
     end
 
-    flush_cache(UPDATE_AMOUNT/8) -- we keep it here mainly for the sake of the unit tests
+    flush_cache(UPDATE_AMOUNT/32) -- we keep it here mainly for the sake of the unit tests
     for _,ed in ipairs(_metas) do
       if helper(ed[1],ed[2]) then return true end
     end
@@ -418,7 +422,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       t:commit()
     end
     return coroutine.wrap(function()
-                            flush_cache(UPDATE_AMOUNT/8) -- we keep it here mainly for the sake of the unit tests
+                            flush_cache(UPDATE_AMOUNT/32) -- we keep it here mainly for the sake of the unit tests
                             for _,ed in ipairs(_metas) do
                               helper(ed[1],ed[2])
                             end

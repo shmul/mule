@@ -301,7 +301,10 @@ function mule(db_)
   local _hints = {}
   local _flush_cache_logger = every_nth_call(10,
                                              function()
-                                               logi("flush_cache",table_size(_updated_sequences))
+                                               local a = table_size(_updated_sequences)
+                                               if a>0 then
+                                                 logi("flush_cache",a)
+                                               end
                                              end)
 
   local function uniq_factories()
