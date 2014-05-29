@@ -380,13 +380,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local function helper(env,db)
       local t,err = env:txn_begin(nil,0) -- this may be called with an opened write cursor so we don't restrict ourselves to readonly
       local find = string.find
-      local byte = string.byte
       local found = false
       local cur = t:cursor_open(db)
       local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
       repeat
         local prefixed = k and find(k,prefix_,1,true)
-        if not find(k,"metadata=",1,true) and prefixed and k~=prefix_ then
+        if prefixed and k~=prefix_ and not find(k,"metadata=",1,true) then
           found = true
         end
         if not prefixed then
@@ -409,13 +408,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local function helper(env,db)
       local t,err = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
       local find = string.find
-      local byte = string.byte
 
       local cur = t:cursor_open(db)
       local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
       repeat
         local prefixed = k and find(k,prefix_,1,true)
-        if not find(k,"metadata=",1,true) and prefixed and bounded_by_level(k,prefix_,level_) then
+        if prefixed and  not find(k,"metadata=",1,true) and bounded_by_level(k,prefix_,level_) then
           coroutine.yield(k)
         end
         if not prefixed then
