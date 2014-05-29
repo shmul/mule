@@ -57,6 +57,10 @@ function test_alerts()
   assert(string.find(res.headers,'405',1,true))
   assert_nil(res.body)
 
+  res = request("PUT","alert/beer.ale","critical_high=100&warning_high=80&warning_low=20&critical_low=0&stale=6m")
+  assert(string.find(res.headers,'400',1,true))
+  assert_nil(res.body)
+
   res = request("PUT","alert","critical_high=100&warning_high=80&warning_low=20&critical_low=0&stale=6m&period=10m")
   assert(string.find(res.headers,'400',1,true))
   assert_nil(res.body)

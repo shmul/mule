@@ -695,6 +695,8 @@ function mule(db_)
     if not resource_ or #resource_==0 then
       return nil
     end
+    local metric,step,period = split_name(resource_)
+
     local new_alert = {
       _critical_low = tonumber(options_.critical_low),
       _warning_low = tonumber(options_.warning_low),
@@ -706,10 +708,11 @@ function mule(db_)
       _state = ""
     }
 
-    if not (new_alert._critical_low and new_alert._warning_low and
+    if not (metric and step and period and
+            new_alert._critical_low and new_alert._warning_low and
             new_alert._critical_high and new_alert._warning_high and
             new_alert._period) then
-      logw("alert_set threshold ill defined",t2s(options_),t2s(new_alert))
+      logw("alert_set threshold ill defined",resource_,t2s(options_),t2s(new_alert))
       return nil
     end
 
