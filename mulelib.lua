@@ -71,7 +71,8 @@ function sequence(db_,name_)
 
   _metric,_step,_period = split_name(name_)
   if not (_metric and _step and _period ) then
-    loge("failed generating sequence",name_)
+    loge("failed creating sequence",name_)
+    loge(debug.traceback())
     return NOP_SEQUENCE
   end
 
@@ -155,7 +156,7 @@ function sequence(db_,name_)
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
-      -- due to some bug we may have sum~timestamp (or hits), in such case we return 0
+      -- due to some bug we may have sum~timestamp (or hits), in such case we return 0, but only in the column db impl.
       if sum>=1380000000 or hits>=1380000000 then
         loge("serialize_slot - out of band values",_name,timestamp,hits,sum)
         sum = 0
@@ -673,7 +674,7 @@ function mule(db_)
     end
     if num_processed==0 then return false end
     -- returns true if there are more items to process
-    return next(_updated_sequences)~=nil
+    return _updated_sequences and next(_updated_sequences)~=nil
   end
 
 
@@ -903,6 +904,11 @@ function mule(db_)
   end
 
   local function process_line(metric_line_,no_commands_)
+    -- for debugging
+    if string.find(metric_line_,"download_s3_lean_events.downloads",1,true) then
+      logi("process_line",metric_line_)
+    end
+
     local function helper()
       local items,type = parse_input_line(metric_line_)
       if #items==0 then
