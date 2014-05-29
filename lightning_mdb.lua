@@ -174,22 +174,28 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local step_helper = every_nth_call(10,step_ or function() end)
 
     local size,st,en = random_table_region(_cache,amount_)
+    local insert = table.insert
+    local to_remove = {}
     if size>0 then
       for k,v in iterate_table(_cache,st,en) do
         native_put(k,v,false)
-        _cache[k] = nil
+        insert(to_remove,k)
         step_helper()
       end
+      delete_keys(_cache,to_remove)
     end
 
     size,st,en = random_table_region(_nodes_cache,amount_)
     if size>0 then
+      to_remove = {}
       for k,v in iterate_table(_nodes_cache,st,en) do
         native_put(k,pack_node(v),true)
-        _nodes_cache[k] = nil
+        insert(to_remove,k)
         step_helper()
       end
+      delete_keys(_nodes_cache,to_remove)
     end
+
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 

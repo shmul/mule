@@ -674,7 +674,7 @@ function mule(db_)
     end
     if num_processed==0 then return false end
     -- returns true if there are more items to process
-    return next(_updated_sequences)~=nil
+    return _updated_sequences and next(_updated_sequences)~=nil
   end
 
 

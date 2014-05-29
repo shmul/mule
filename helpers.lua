@@ -956,3 +956,9 @@ function every_nth_call(n_,callback_)
     end
   end
 end
+
+function delete_keys(table_,keys_)
+  for _,k in ipairs(keys_) do
+    table_[k] = nil
+  end
+end
