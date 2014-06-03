@@ -171,7 +171,9 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       flush_cache_logger()
     end
 
-    local step_helper = every_nth_call(10,step_ or function() end)
+    local nop = function() end
+    local step_helper = every_nth_call(10,step_ or nop)
+    local log_progress = not amount_ and every_nth_call(PROGRESS_AMOUNT,function(count_) logi("flush_cache - progress",count_) end)
 
     local size,st,en = random_table_region(_cache,amount_)
     local insert = table.insert
@@ -181,6 +183,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         native_put(k,v,false)
         insert(to_remove,k)
         step_helper()
+        if log_progress then log_progress() end
       end
       delete_keys(_cache,to_remove)
     end
@@ -192,6 +195,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         native_put(k,pack_node(v),true)
         insert(to_remove,k)
         step_helper()
+        if log_progress then log_progress() end
       end
       delete_keys(_nodes_cache,to_remove)
     end
