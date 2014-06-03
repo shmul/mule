@@ -172,33 +172,32 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
 
     local nop = function() end
-    local step_helper = every_nth_call(10,step_ or nop)
-    local log_progress = not amount_ and every_nth_call(PROGRESS_AMOUNT,function(count_) logi("flush_cache - progress",count_) end)
-
-    local size,st,en = random_table_region(_cache,amount_)
+    local log_progress = not amount_ and every_nth_call(PROGRESS_AMOUNT/10,function(count_) logi("flush_cache - progress",count_) end)
     local insert = table.insert
-    local to_remove = {}
-    if size>0 then
-      for k,v in iterate_table(_cache,st,en) do
-        native_put(k,v,false)
-        insert(to_remove,k)
-        step_helper()
+
+    local function helper(cache_,pack_)
+      local size,st,en = random_table_region(cache_,amount_)
+      if size==0 then return 0 end
+
+      local keys_array = {}
+
+      for k,v in iterate_table(cache_,st,en) do
+        insert(keys_array,{k,v})
+      end
+      for i=1,#keys_array,10 do
+        for j=i,math.min(#keys_array,i+10) do
+          local k,v = keys_array[j][1],keys_array[j][2]
+          native_put(k,pack_ and pack_node(v) or v,pack_)
+          cache_[k] = nil
+        end
+        if step_ then step_() end
         if log_progress then log_progress() end
       end
-      delete_keys(_cache,to_remove)
+      return size
     end
 
-    size,st,en = random_table_region(_nodes_cache,amount_)
-    if size>0 then
-      to_remove = {}
-      for k,v in iterate_table(_nodes_cache,st,en) do
-        native_put(k,pack_node(v),true)
-        insert(to_remove,k)
-        step_helper()
-        if log_progress then log_progress() end
-      end
-      delete_keys(_nodes_cache,to_remove)
-    end
+    helper(_cache,false)
+    local size = helper(_nodes_cache,true)
 
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
