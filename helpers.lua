@@ -952,7 +952,7 @@ function every_nth_call(n_,callback_)
   function()
     counter = counter + 1
     if counter%n_==0 then
-      callback_()
+      callback_(counter)
     end
   end
 end

@@ -72,7 +72,7 @@ function sequence(db_,name_)
   _metric,_step,_period = split_name(name_)
   if not (_metric and _step and _period ) then
     loge("failed creating sequence",name_)
-    loge(debug.traceback())
+    --loge(debug.traceback())
     return NOP_SEQUENCE
   end
 
