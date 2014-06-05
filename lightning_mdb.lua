@@ -115,13 +115,28 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function native_put(k,v,meta_)
     local function put_in_ed(ed_)
-      local rv,err = txn(ed_[1],function(t) return t:put(ed_[2],k,v,0) end)
+      local rv,err = txn(ed_[1],
+                         function(t)
+                           local rv,err = t:put(ed_[2],k,v,0)
+                           if err then
+                             return nil,err
+                           end
+                         end)
       return rv,err
+    end
+
+    local function find_first_db(array_)
+      for i,ed in ipairs(array_) do
+        local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
+        if rv then return i end
+      end
     end
 
     local function helper1(array_,label_)
       local rv,err
-      for i,ed in ipairs(array_) do
+      local first_db = find_first_db(array_) or 1
+      for i=first_db,#array_ do
+        local ed = array_[i]
         rv,err = put_in_ed(ed)
         if not err then return nil end
         -- when we put a key somewhere we must make sure no *previous* DB has the same key
@@ -148,7 +163,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return err
     end
 
-    return (meta_ or string.find(k,"metadata=",1,true)) and helper0(_metas,"meta") or helper0(_pages,"page")
+    if meta_ or string.find(k,"metadata=",1,true) then
+      return helper0(_metas,"meta")
+    end
+    return helper0(_pages,"page")
   end
 
   local function put(k,v,dont_cache_,meta_)
@@ -171,8 +189,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       flush_cache_logger()
     end
 
-    local nop = function() end
-    local log_progress = not amount_ and every_nth_call(PROGRESS_AMOUNT/10,function(count_) logi("flush_cache - progress",count_) end)
+    local log_progress = not amount_ and every_nth_call(PROGRESS_AMOUNT/10,function(count_) logi("flush_cache - progress",count_*10) end)
     local insert = table.insert
 
     local function helper(cache_,pack_)
@@ -246,7 +263,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     _slots_per_page = get("metadata=slots_per_page")
     if not _slots_per_page then
       _slots_per_page = slots_per_page_ or SLOTS_PER_PAGE
-      put("metadata=slots_per_page",_slots_per_page,true)
+      put("metadata=slots_per_page",_slots_per_page,true,true)
     end
   end
 
