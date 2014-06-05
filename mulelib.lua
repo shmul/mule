@@ -669,7 +669,7 @@ function mule(db_)
       _updated_sequences[n] = nil
       num_processed = num_processed + 1
       if step_ and num_processed%10==0 then
-        step_()
+        --step_()
       end
     end
     if num_processed==0 then return false end
