@@ -36,15 +36,16 @@ function test_payload()
   local function helper(num_pages_,count_,index_)
     local db = lightning_mdb_factory("./tests/temp/l_payload."..index_,num_pages_)
     for i=1,count_ do
-      db.put(i,i)
+      db.put(tostring(i),tostring(i))
     end
     for i=1,count_ do
-      assert_equal(i,db.get(i),index_)
-      db.del(i)
-      assert_nil(db.get(i),index_)
+      local k = tostring(i)
+      assert_equal(k,db.get(k),index_)
+      db.del(k)
+      assert_nil(db.get(k),index_)
     end
     for i=1,count_ do
-      assert_nil(db.get(i),index_)
+      assert_nil(db.get(tostring(i)),index_)
     end
   end
 

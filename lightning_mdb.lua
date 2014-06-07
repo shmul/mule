@@ -4,6 +4,7 @@ local pp = require("purepack")
 require "helpers"
 require "conf"
 
+local disable_cache = false --true
 
 local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 
@@ -34,16 +35,19 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function txn(env_,func_)
     local t = env_:txn_begin(nil,0)
     local rv,err,errno = func_(t)
+    err = err or (errno and tostring(errno))
     if err then
-      if err and #err=="" then
-        print(errno)
-      end
       logw("txn",err,errno)
-      t:abort()
+      pcall_wrapper(function() t:abort() end)
       return nil,err
     end
-    t:commit()
-    return rv,err
+    local c_rv,c_err = t:commit()
+    if c_rv then
+      return rv,err
+    end
+    t:abort()
+    logw("txn commit failed",c_err)
+    return c_rv,c_err
   end
 
   local function new_env_factory(name_,create_)
@@ -57,7 +61,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
 
     local e = lightningmdb.env_create()
-    local r,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
+    local _,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
     _,err = e:open(full_path,read_only_ and lightningmdb.MDB_RDONLY or 0,420)
     if err then
       loge("new_env_factory failed",err)
@@ -122,7 +126,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       for i,ed in ipairs(array_) do
         local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
         if k=="0042|brave.nginx;1h:90d" then
-          logi("native_get",i,k,meta_ or false,rv~=nil and #rv or "nil",err)
+          logi("native_get",i,k,meta_ or false,string_len(rv),err)
         end
 
         if rv then return rv end
@@ -141,7 +145,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                          function(t)
                            local rv,err = t:put(ed_[2],k,v,0)
                            if k=="0042|brave.nginx;1h:90d" then
-                             logi("native_put put_in_ed",rv~=nil and "nil" or rv,err~=nil and "nil" or err)
+                             logi("native_put put_in_ed",string_len(rv),string_len(err))
                            end
                            if err then
                              return nil,err
@@ -161,6 +165,17 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end
     end
 
+    local function del_with_index(array_,index_)
+      local ed = array_[index_]
+      txn(ed[1],
+          function(t)
+            if t:get(ed[2],k) then
+              logw("native_put del_with_index",index_,k)
+              t:del(ed[2],k,nil)
+            end
+          end)
+    end
+
     local function helper1(array_,label_)
       local rv,err
       local first_db = find_first_db(array_) or 1
@@ -174,17 +189,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         if not err then
           -- we remove the key from the following dbs
           for j=i+1,#array_ do
-            local ed = array_[j]
-            txn(ed[1],
-                function(t)
-                  if t:get(ed[2],k) then
-                    logw("native_put removing key",label_,i,k)
-                    t:del(ed[2],k,nil)
-                  end
-                end)
+            del_with_index(array_,j)
           end
           return nil
         end
+        -- just to be sure, we delete the key from the current db also as perhaps put failed but the key is there?
+        -- it shouldn't happen but just to play it safe
+        del_with_index(array_,i)
       end
       return err
     end
@@ -200,8 +211,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return err
     end
 
-    --    return (meta_ or string.find(k,"metadata=",1,true)) and helper0(_metas,"meta") or helper0(_pages,"page")
-
     if meta_ or string.find(k,"metadata=",1,true) then
       return helper0(_metas,"meta")
     end
@@ -214,7 +223,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       logi("put",k,#v)
     end
 
-    if dont_cache_ then
+    if dont_cache_ or disable_cache then
       return native_put(k,v,meta_)
     end
     _cache[k] = v
