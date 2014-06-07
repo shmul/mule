@@ -162,17 +162,20 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
 
     local function helper1(array_,label_)
-      local rv,err
+      local last_err
       local first_db = find_first_db(array_) or 1
       for i=first_db,#array_ do
         local ed = array_[i]
-        rv,err = put_in_ed(ed)
+	local rv,err = put_in_ed(ed)
         if k=="0042|brave.nginx;1h:90d" then
           logi("native_put helper1",first_db,i,err)
         end
 
         if not err then
           -- we remove the key from the following dbs
+	  if last_err then
+	    logi("helper1 - place in a following db",i,k)
+	  end
           for j=i+1,#array_ do
             local ed = array_[j]
             txn(ed[1],
@@ -185,8 +188,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
           end
           return nil
         end
+	logw("helper1",i,err)
+	last_err = err
       end
-      return err
+      return last_err
     end
 
     local function helper0(array_,label_)
