@@ -962,3 +962,7 @@ function delete_keys(table_,keys_)
     table_[k] = nil
   end
 end
+
+function string_len(str_)
+  return str_~=nil and #str_ or "nil"
+end

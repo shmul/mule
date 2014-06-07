@@ -153,8 +153,10 @@ function sequence(db_,name_)
   end
 
   local function serialize(opts_,metric_cb_,slot_cb_)
+    local date = os.date
 
-    local function serialize_slot(idx_,skip_empty_,slot_cb_)
+
+    local function serialize_slot(idx_,skip_empty_,slot_cb_,readable_)
       local timestamp,hits,sum = at(idx_)
       -- due to some bug we may have sum~timestamp (or hits), in such case we return 0, but only in the column db impl.
       if sum>=1380000000 or hits>=1380000000 then
@@ -164,7 +166,7 @@ function sequence(db_,name_)
       end
 
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
-        slot_cb_(sum,hits,timestamp)
+        slot_cb_(sum,hits,readable_ and date(timestamp,"%y%m%d:%H%M%S") or timestamp)
       end
     end
 
@@ -173,6 +175,7 @@ function sequence(db_,name_)
 
     local now = time_now()
     local latest_ts = latest_timestamp()
+    local readable = opts_.readable
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
     if opts_.all_slots then
@@ -181,7 +184,7 @@ function sequence(db_,name_)
       end
       for s in indices(opts_.sorted) do
         if not min_timestamp or min_timestamp<get_timestamp(s) then
-          serialize_slot(s,opts_.skip_empty,slot_cb_)
+          serialize_slot(s,opts_.skip_empty,slot_cb_,readable)
         end
       end
       return
@@ -191,7 +194,7 @@ function sequence(db_,name_)
       for _,t in ipairs(opts_.timestamps) do
         if t=="*" then
           for s in indices(opts_.sorted) do
-            serialize_slot(s,true,slot_cb_)
+            serialize_slot(s,true,slot_cb_,readable)
           end
         else
           local ts = to_timestamp(t,now,latest_ts)
@@ -203,7 +206,7 @@ function sequence(db_,name_)
               local idx,_ = calculate_idx(t,_step,_period)
               local its = get_timestamp(idx)
               if t-its<_period and (not min_timestamp or min_timestamp<its) then
-                serialize_slot(idx,true,slot_cb_)
+                serialize_slot(idx,true,slot_cb_,readable)
               end
             end
           end
@@ -516,6 +519,7 @@ function mule(db_)
     local col = collectionout(str,"{","}")
     local opts = { all_slots=not timestamps,
                    filter=options_.filter,
+                   readable=options_.readable,
                    timestamps=timestamps,
                    sorted=false,
                    skip_empty=true}
