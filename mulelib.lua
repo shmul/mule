@@ -166,7 +166,7 @@ function sequence(db_,name_)
       end
 
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
-        slot_cb_(sum,hits,readable_ and date(timestamp,"%y%m%d:%H%M%S") or timestamp)
+        slot_cb_(sum,hits,readable_ and date("%y%m%d:%H%M%S",timestamp) or timestamp)
       end
     end
 

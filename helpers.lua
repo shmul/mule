@@ -964,5 +964,5 @@ function delete_keys(table_,keys_)
 end
 
 function string_len(str_)
-  return str_~=nil and #str_ or "nil"
+  return str_~=nil and #tostring(str_) or "nil"
 end

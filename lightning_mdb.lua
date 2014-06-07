@@ -128,7 +128,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
           logi("native_get",i,k,meta_ or false,string_len(rv),err)
         end
 
-        if rv then return rv end
+        if rv then return rv,i end
       end
     end
 
@@ -138,7 +138,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return helper(_pages)
   end
 
-  local function native_put(k,v,meta_)
+  local function native_put(k,v,meta_,idx_hint_)
     local function put_in_ed(ed_)
       local rv,err = txn(ed_[1],
                          function(t)
@@ -157,19 +157,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return rv,err
     end
 
-    local function find_first_db(array_)
-      for i,ed in ipairs(array_) do
-        local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
-        if rv then return i end
-      end
-    end
-
     local function del_with_index(array_,index_)
       local ed = array_[index_]
       txn(ed[1],
           function(t)
             if t:get(ed[2],k) then
-              logw("native_put del_with_index",index_,k)
+              --logw("native_put del_with_index",index_,k)
               t:del(ed[2],k,nil)
             end
           end)
@@ -177,10 +170,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     local function helper1(array_,label_)
       local last_err
-      local first_db = find_first_db(array_) or 1
+      local first_db = idx_hint_ or 1
       for i=first_db,#array_ do
         local ed = array_[i]
-	local rv,err = put_in_ed(ed)
+        local rv,err = put_in_ed(ed)
         if k=="0042|brave.nginx;1h:90d" then
           logi("native_put helper1",first_db,i,err)
         end
@@ -194,10 +187,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         end
 
         last_err = err
-
-        -- just to be sure, we delete the key from the current db also as perhaps put failed but the key is there?
-        -- it shouldn't happen but just to play it safe
-        del_with_index(array_,i)
 
       end
       return last_err
@@ -229,13 +218,15 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if dont_cache_ or disable_cache then
       return native_put(k,v,meta_)
     end
-    _cache[k] = v
-    return _cache[k]
+    local idx = _cache[k] and _cache[k][2] or nil
+    _cache[k] = {v,idx}
+    return _cache[k][1]
   end
 
   local function put_node(k,node)
-    _nodes_cache[k] = node
-    return _nodes_cache[k]
+    local idx = _nodes_cache[k] and _nodes_cache[k][2] or nil
+    _nodes_cache[k] = {node,idx}
+    return _nodes_cache[k][1]
   end
 
   local function flush_cache(amount_,step_)
@@ -259,7 +250,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end
       for i=1,#keys_array,10 do
         for j=i,math.min(#keys_array,i+9) do
-          local k,v = keys_array[j][1],keys_array[j][2]
+          local k,vidx = keys_array[j][1],keys_array[j][2]
+          local v,idx = vidx[1],vidx[2]
           local packed = v
           if pack_ then
             packed = pack_node(v)
@@ -268,7 +260,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
             end
           end
           if packed then
-            native_put(k,packed,pack_)
+            native_put(k,packed,pack_,idx)
           end
           cache_[k] = nil
 
@@ -290,23 +282,25 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if k=="0042|brave.nginx;1h:90d" then
       logi("get 1",k,dont_cache_,_cache[k])
     end
-    if dont_cache_ then
-      return native_get(k)
-    end
-    if not _cache[k] then
-      _cache[k] = native_get(k)
+    if dont_cache_ or not _cache[k] then
+      local v,idx = native_get(k)
+      if dont_cache_ then
+        return v
+      end
+      _cache[k] = {v,idx}
     end
     if k=="0042|brave.nginx;1h:90d" then
-      logi("get 2",k,_cache[k] and #_cache[k] or "nil")
+      logi("get 2",k,_cache[k] and #_cache[k][1] or "nil")
     end
-    return _cache[k]
+    return _cache[k][1]
   end
 
   local function get_node(k)
     if not _nodes_cache[k] then
-      _nodes_cache[k] = unpack_node(k,native_get(k,true))
+      local v,idx = native_get(k,true)
+      _nodes_cache[k] = {unpack_node(k,v),idx}
     end
-    return _nodes_cache[k]
+    return _nodes_cache[k][1]
   end
 
 
@@ -505,6 +499,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function matching_keys(prefix_,level_)
     local function helper(env,db)
       local t,err = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
+      if not t or err then
+        logw("matching_keys",err)
+        return
+      end
       local find = string.find
 
       local cur = t:cursor_open(db)
