@@ -37,7 +37,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local rv,err,errno = func_(t)
     err = err or (errno and tostring(errno))
     if err then
-      --logw("txn",err,errno)
+--      logw("txn",err,errno)
       pcall_wrapper(function() t:abort() end)
       return nil,err
     end
@@ -45,7 +45,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if c_rv then
       return rv,err
     end
-    pcall_wrapper(function() t:abort() end)
+--    pcall_wrapper(function() t:abort() end)
+--    logw("txn commit failed",c_err)
     return c_rv,c_err
   end
 
