@@ -37,7 +37,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local rv,err,errno = func_(t)
     err = err or (errno and tostring(errno))
     if err then
-      logw("txn",err,errno)
+      --logw("txn",err,errno)
       pcall_wrapper(function() t:abort() end)
       return nil,err
     end
@@ -46,7 +46,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return rv,err
     end
     pcall_wrapper(function() t:abort() end)
-    logw("txn commit failed",c_err)
     return c_rv,c_err
   end
 
@@ -188,17 +187,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
         if not err then
           -- we remove the key from the following dbs
-	  if last_err then
-	    logi("helper1 - place in a following db",i,k)
-	  end
           for j=i+1,#array_ do
             del_with_index(array_,j)
           end
           return nil
         end
 
-	logw("helper1",i,err)
-	last_err = err
+        last_err = err
 
         -- just to be sure, we delete the key from the current db also as perhaps put failed but the key is there?
         -- it shouldn't happen but just to play it safe
