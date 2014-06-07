@@ -125,10 +125,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local function helper(array_)
       for i,ed in ipairs(array_) do
         local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
-        if k=="0042|brave.nginx;1h:90d" then
-          logi("native_get",i,k,meta_ or false,string_len(rv),err)
-        end
-
         if rv then return rv,i end
       end
     end
@@ -144,17 +140,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local rv,err = txn(ed_[1],
                          function(t)
                            local rv,err = t:put(ed_[2],k,v,0)
-                           if k=="0042|brave.nginx;1h:90d" then
-                             logi("native_put put_in_ed",string_len(rv),string_len(err))
-                           end
                            if err then
                              return nil,err
                            end
                          end)
 
-      if string.find(k,"brave.nginx;",1,true) then
-        logi("native_put",k,meta_,#v,rv==nil,err)
-      end
       return rv,err
     end
 
@@ -175,15 +165,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       for i=first_db,#array_ do
         local ed = array_[i]
         local rv,err = put_in_ed(ed)
-        if k=="0042|brave.nginx;1h:90d" then
-          logi("native_put helper1",first_db,i,err)
-        end
-
         if not err then
           -- we remove the key from the following dbs
-          for j=i+1,#array_ do
-            del_with_index(array_,j)
-          end
+--          for j=i+1,#array_ do
+--            del_with_index(array_,j)
+--          end
           return nil
         end
 
@@ -212,10 +198,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function put(k,v,dont_cache_,meta_)
-    if string.find(k,"brave.nginx;",1,true) then
-      logi("put",k,#v)
-    end
-
     if dont_cache_ or disable_cache then
       return native_put(k,v,meta_)
     end
@@ -280,9 +262,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
 
   local function get(k,dont_cache_)
-    if k=="0042|brave.nginx;1h:90d" then
-      logi("get 1",k,dont_cache_,_cache[k])
-    end
     if dont_cache_ or not _cache[k] then
       local v,idx = native_get(k)
       if dont_cache_ then
@@ -290,15 +269,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end
       _cache[k] = {v,idx}
     end
-    if k=="0042|brave.nginx;1h:90d" then
-      logi("get 2",k,_cache[k] and #_cache[k][1] or "nil")
-    end
     return _cache[k][1]
   end
 
   local function get_node(k)
     if not _nodes_cache[k] then
       local v,idx = native_get(k,true)
+      if not v then return nil end
       _nodes_cache[k] = {unpack_node(k,v),idx}
     end
     return _nodes_cache[k][1]
@@ -360,9 +337,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function internal_get_slot(name_,idx_,offset_)
     local function no_data()
-      if string.find(name_,"brave.nginx;",1,true) then
-        --        logi("internal_get_slot no_data",name_,idx_,offset_)
-      end
       if offset_ then return 0 end
       return 0,0,0
     end
@@ -400,17 +374,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function internal_set_slot(name_,idx_,offset_,timestamp_,hits_,sum_)
     local function new_page_data()
-      if string.find(name_,"brave.nginx;",1,true) then
-        logi("new_page_data",name_)
-      end
       return string.rep(string.char(0),pp.PNS*3*_slots_per_page)
     end
 
     -- the name is used as a key for the metadata
     local node = get_node(name_)
-    if string.find(name_,"brave.nginx;",1,true) then
-      logi("internal_set_slot",name_,idx_,timestamp_,hits_,sum_)
-    end
     if not node then
       -- a new node keeps a sparse_sequence instead of allocating actual pages for the slots
       local _,step,period = split_name(name_)
@@ -447,9 +415,6 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     local key,p,q = page_key(name_,idx_)
     local page_data = get(key) or new_page_data()
-    if string.find(name_,"brave.nginx;",1,true) then
-      logi("page_data",name_,key,p,q)
-    end
 
     local t,u,v = set_slot(page_data,q,offset_,timestamp_,hits_,sum_)
     page_data = pp.concat_three_strings(t,u,v)
