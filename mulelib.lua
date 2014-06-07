@@ -849,10 +849,6 @@ function mule(db_)
 
 
   local function update_line(metric_,sum_,timestamp_)
-    -- debugging code
-    if metric_=="tagger.events_types.carbon_copy_submitted" then
-      logd("original data",metric_,sum_,timestamp_)
-    end
     local replace,sum = string.match(sum_ or "","(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
@@ -865,10 +861,6 @@ function mule(db_)
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
       local adjusted_timestamp,sum = seq.update(timestamp_,1,sum,replace)
-      -- debugging code
-      if m=="tagger.events_types.carbon_copy_submitted" then
-        logd("per sequence",n,sum,adjusted_timestamp)
-      end
       -- it might happen that we try to update a too old timestamp. In such a case
       -- the update function returns null
       if adjusted_timestamp then
@@ -1040,7 +1032,7 @@ function mule(db_)
       local fc1 = flush_cache(amount_,step_)
       local fc2 = _db.flush_cache(amount_/4,step_)
       return fc1 or fc2
-      end,
+    end,
     save = save,
     load = load,
     alert_set = alert_set,
