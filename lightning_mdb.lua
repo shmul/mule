@@ -45,7 +45,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if c_rv then
       return rv,err
     end
-    t:abort()
+    pcall_wrapper(function() t:abort() end)
     logw("txn commit failed",c_err)
     return c_rv,c_err
   end
