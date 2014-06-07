@@ -201,7 +201,6 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     end)
 
   local function response_continuation(rv,blocking_)
-    logd("response_continuation")
     if handler_name=="stop" then
       logw("stopping, using: ",qs.token)
       stop_cond_(qs.token)
