@@ -196,11 +196,14 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
           end
           return nil
         end
+
 	logw("helper1",i,err)
 	last_err = err
+
         -- just to be sure, we delete the key from the current db also as perhaps put failed but the key is there?
         -- it shouldn't happen but just to play it safe
         del_with_index(array_,i)
+
       end
       return last_err
     end
