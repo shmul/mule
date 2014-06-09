@@ -20,7 +20,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _slots_per_page
   local _cache = {}
   local _nodes_cache = {}
-
+  local _readonly_txn = {}
 
   function flush_cache_logger()
     local a = table_size(_cache)
@@ -32,21 +32,63 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local _flush_cache_logger = every_nth_call(10,flush_cache_logger)
 
-  local function txn(env_,func_)
-    local t = env_:txn_begin(nil,0)
-    local rv,err,errno = func_(t)
+  local function acquire_readonly_txn(env_)
+    if not _readonly_txn[env_] then
+      local t,err,errno = env_:txn_begin(nil,lightningmdb.MDB_RDONLY)
+      if not t then
+        logw("acquire_readonly_txn",err)
+        return nil,err
+      end
+      _readonly_txn[env_] = {t,0}
+    end
+    _readonly_txn[env_][2] = _readonly_txn[env_][2] + 1
+    return _readonly_txn[env_][1]
+  end
+
+  local function release_readonly_txn(env_)
+    if not _readonly_txn[env_] then return nil end
+
+    _readonly_txn[env_][2] = _readonly_txn[env_][2] -1
+    if _readonly_txn[env_][2]==0 then
+      _readonly_txn[env_][1]:abort() -- readonly transactions can be aborted, there is no commit
+      _readonly_txn[env_] = nil
+    end
+  end
+
+  local function txn(env_,func_,read_only_)
+    local rv,t,err,errno
+    if read_only_ then
+      t = acquire_readonly_txn(env_)
+    else
+      t,err,errno = env_:txn_begin(nil,0)
+    end
+
+    if err then
+      if not t then
+        logw("txn - failed to create transaction",err)
+        print(err,debug.traceback())
+        return nil,err
+      end
+      read_only_ = false
+    end
+    rv,err,errno = func_(t)
     err = err or (errno and tostring(errno))
     if err then
---      logw("txn",err,errno)
-      pcall_wrapper(function() t:abort() end)
+      if read_only_ then
+        release_readonly_txn(env_)
+      else
+        pcall_wrapper(function() t:abort() end)
+      end
       return nil,err
+    end
+    if read_only_ then
+      release_readonly_txn(env_)
+      return rv,err
     end
     local c_rv,c_err = t:commit()
     if c_rv then
       return rv,err
     end
---    pcall_wrapper(function() t:abort() end)
---    logw("txn commit failed",c_err)
     return c_rv,c_err
   end
 
@@ -62,7 +104,9 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     local e = lightningmdb.env_create()
     local _,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
-    _,err = e:open(full_path,read_only_ and lightningmdb.MDB_RDONLY or 0,420)
+    _,err = e:open(full_path,
+                   lightningmdb.MDB_NOTLS+(read_only_ and lightningmdb.MDB_RDONLY or (lightningmdb.MDB_MAPASYNC + lightningmdb.MDB_WRITEMAP)),
+                   420) -- 420 is the open mode
     if err then
       loge("new_env_factory failed",err)
       return nil
@@ -124,7 +168,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function native_get(k,meta_)
     local function helper(array_)
       for i,ed in ipairs(array_) do
-        local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end)
+        local rv,err = txn(ed[1],function(t) return t:get(ed[2],k) end,true)
         if rv then return rv,i end
       end
     end
@@ -212,6 +256,20 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return _nodes_cache[k][1]
   end
 
+  local function sync()
+    local function helper(array_)
+      if not array_ then return end
+      for _,ed in ipairs(array_) do
+        local rv,err = ed[1]:sync(1)
+        if err then
+          logw("sync",err)
+        end
+      end
+    end
+    helper(_metas)
+    helper(_pages)
+  end
+
   local function flush_cache(amount_,step_)
     _flush_cache_logger()
 
@@ -246,8 +304,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
             native_put(k,packed,pack_,idx)
           end
           cache_[k] = nil
-
         end
+        sync()
         --if step_ then step_() end
         if log_progress then log_progress() end
       end
@@ -256,7 +314,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     helper(_cache,false)
     local size = helper(_nodes_cache,true)
-
+    sync()
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
@@ -315,13 +373,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function search(prefix_)
-    --flush_cache()
     for _,ed in ipairs(_metas) do
-      local t = ed[1]:txn_begin(nil,lightningmdb.MDB_RDONLY)
+      local t = acquire_readonly_txn(ed[1])
       local cur = t:cursor_open(ed[2])
       local k,v = cur:get(prefix_,lightningmdb.MDB_SET_RANGE)
       cur:close()
-      t:commit()
+      release_readonly_txn(ed[1])
       if k then
         return k,v
       end
@@ -436,14 +493,20 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function has_sub_keys(prefix_)
     local function helper(env,db)
-      local t,err = env:txn_begin(nil,0) -- this may be called with an opened write cursor so we don't restrict ourselves to readonly
+      local t,err = acquire_readonly_txn(env)
+
+      if err then
+        logw("has_sub_keys",err)
+        return
+      end
+
       local find = string.find
       local found = false
       local cur = t:cursor_open(db)
       local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
       repeat
         local prefixed = k and find(k,prefix_,1,true)
-        if prefixed and k~=prefix_ and not find(k,"metadata=",1,true) then
+        if prefixed and k~=prefix_ then
           found = true
         end
         if not prefixed then
@@ -453,7 +516,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         end
       until not k or found
       cur:close()
-      t:commit()
+      release_readonly_txn(env)
       return found
     end
 
@@ -464,18 +527,18 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function matching_keys(prefix_,level_)
     local function helper(env,db)
-      local t,err = env:txn_begin(nil,lightningmdb.MDB_RDONLY)
+      local t,err = acquire_readonly_txn(env)
       if not t or err then
         logw("matching_keys",err)
         return
       end
+      _active_keys_txn = t
       local find = string.find
-
       local cur = t:cursor_open(db)
       local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
       repeat
         local prefixed = k and find(k,prefix_,1,true)
-        if prefixed and  not find(k,"metadata=",1,true) and bounded_by_level(k,prefix_,level_) then
+        if prefixed and bounded_by_level(k,prefix_,level_) then
           coroutine.yield(k)
         end
         if not prefixed then
@@ -485,7 +548,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         end
       until not k
       cur:close()
-      t:commit()
+      release_readonly_txn(env)
     end
     return coroutine.wrap(function()
                             flush_cache(UPDATE_AMOUNT/32) -- we keep it here mainly for the sake of the unit tests
