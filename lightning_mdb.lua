@@ -538,13 +538,17 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
       repeat
         local prefixed = k and find(k,prefix_,1,true)
-        if prefixed and bounded_by_level(k,prefix_,level_) then
-          coroutine.yield(k)
-        end
-        if not prefixed then
-          k = nil
+        if prefixed then
+          if bounded_by_level(k,prefix_,level_) then
+            coroutine.yield(k)
+            k = cur:get_key(k,lightningmdb.MDB_NEXT)
+          else
+            local next_key = trim_to_level(k,prefix_,level_)..";"
+            local nk = cur:get_key(next_key,lightningmdb.MDB_SET_RANGE)
+            k = nk
+          end
         else
-          k = cur:get_key(k,lightningmdb.MDB_NEXT)
+          k = nil
         end
       until not k
       cur:close()

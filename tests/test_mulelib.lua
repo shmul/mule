@@ -715,7 +715,9 @@ function test_metric_one_level_children()
     for j,t in ipairs(tests) do
       local children = 0
       for i in db.matching_keys(t[1],1) do
-        children = children + 1
+        if string.find(i,"metadata=",1,true)~=1 then
+          children = children + 1
+        end
       end
       assert_equal(t[2],children,j)
     end
@@ -838,8 +840,8 @@ function test_stacked()
     m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
     m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
     repeat until not m.flush_cache()
-    local level2 = m.graph("Johnston.Morfin",{level=2})
     local level1 = m.graph("Johnston.Morfin",{level=1})
+    local level2 = m.graph("Johnston.Morfin",{level=2})
 
     assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
     assert(string.find(level2,"Johnston.Morfin.Jamal;1s:1m",1,true))
@@ -977,6 +979,39 @@ function test_uniq_factories()
     assert_equal(12*60*60,factories["beer.ale"][1][2])
   end
   for_each_db("./tests/temp/test_uniq_factories",helper)
+end
+
+function test_distinct_prefixes()
+  assert_nil(distinct_prefixes(nil))
+  assert_equal(t2s({"cruel","hello","world"}),t2s(distinct_prefixes({"world","hello","cruel"})))
+  assert_equal(t2s({"cruel","hello","world"}),t2s(distinct_prefixes({"world","hello","cruel","hello there"})))
+  assert_equal(t2s({"cruel","hell","world"}),t2s(distinct_prefixes({"world","hello","cruel","hell"})))
+  assert_equal(t2s({"cruel","hello","hoopla","world"}),t2s(distinct_prefixes({"world","hello","cruel","hoopla"})))
+end
+
+function test_drop_one_level()
+  assert_nil(drop_one_level(nil))
+  assert_equal("hello.cruel",drop_one_level("hello.cruel.world"))
+  assert_equal("hello.cruel.",drop_one_level("hello.cruel..world"))
+  assert_equal("hello",drop_one_level("hello.cruelworld"))
+  assert_equal("",drop_one_level("hellocruelworld"))
+  assert_equal("",drop_one_level(""))
+end
+
+function test_trim_to_level()
+  assert_nil(trim_to_level(nil))
+  assert_equal("hello.cruel",trim_to_level("hello.cruel.world","hello",1))
+  assert_equal("hello.cruel.world",trim_to_level("hello.cruel.world.again","hello",2))
+  assert_equal("hello.cruel.world",trim_to_level("hello.cruel.world.again","hello.cruel",1))
+  assert_equal("hello.cruel.world",trim_to_level("hello.cruel.world","hello",2))
+  assert_equal("hello.cruel.world",trim_to_level("hello.cruel.world","hello",4))
+  assert_nil(trim_to_level("hello.cruel.world","bool",1))
+  assert_equal("Johnston.Morfin.Jamal",trim_to_level("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema;1h:12h","Johnston.Morfin",1))
+  assert_equal("Johnston.Morfin.Jamal.Marcela",trim_to_level("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema;1h:12h","Johnston.Morfin",2))
+--  assert_equal("hello.cruel.",drop_one_level("hello.cruel..world"))
+--  assert_equal("hello",drop_one_level("hello.cruelworld"))
+--  assert_equal("",drop_one_level("hellocruelworld"))
+--  assert_equal("",drop_one_level(""))
 end
 
 --verbose_log(true)

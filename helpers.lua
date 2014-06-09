@@ -709,6 +709,38 @@ function bounded_by_level(string_,prefix_,level_)
   return count<=level_
 end
 
+function trim_to_level(string_,prefix_,level_)
+  local find = string.find
+  if not level_ or not string_ or find(string_,prefix_,1,true)~=1 then return end
+  local final_dot
+  local s = #prefix_-1
+
+
+  repeat
+    s = find(string_,".",s+1,true)
+    level_ = level_ - 1
+    final_dot = (s or 0)-1 -- leveraging the use of -1 as the end of string position
+  until not s or level_<0
+  return final_dot and string.sub(string_,1,final_dot) or nil
+end
+
+function drop_one_level(string_)
+  if not string_ then return end
+  local count = 0
+  local s = 0
+  local find = string.find
+
+  repeat
+    local t = find(string_,".",s+1,true)
+    if not t then
+      if s==0 then return '' end
+      return string.sub(string_,1,s-1)
+    end
+    s = t
+  until not s
+  return nil
+end
+
 -- from http://stackoverflow.com/questions/132397/get-back-the-output-of-os-execute-in-lua
 function os.capture(cmd, raw)
   local f = assert(io.popen(cmd, 'r'))
