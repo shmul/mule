@@ -629,9 +629,12 @@ function mule(db_)
     local level = tonumber(options_.level) or 0
     col.head()
 
+    if not resource_ or resource_=="" or resource_=="*" then
+      -- we take the factories as distinct prefixes
+      resource_ = table.concat(distinct_prefixes(keys(_factories),"/"))
+    end
     logd("key - start traversing")
-    for prefix in split_helper(resource_ or "","/") do
-      prefix = (prefix=="*" and "") or prefix
+    for prefix in split_helper(resource_,"/") do
       for k in db_.matching_keys(prefix,level) do
         local metric,_,_ = split_name(k)
         local hash = db_.has_sub_keys(metric) and "{\"children\": true}" or "{}"

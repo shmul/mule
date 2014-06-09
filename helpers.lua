@@ -966,3 +966,18 @@ end
 function string_len(str_)
   return str_~=nil and #tostring(str_) or "nil"
 end
+
+function distinct_prefixes(array_)
+  if not array_ then return nil end
+  local prefixes = {}
+  local last
+  local insert = table.insert
+  table.sort(array_)
+  for i,v in ipairs(array_) do
+    if not last or string.find(v,last,1,true)~=1 then
+      insert(prefixes,v)
+    end
+    last = v
+  end
+  return prefixes
+end

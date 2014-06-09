@@ -272,7 +272,7 @@ local tr = require("trie")
       end
       for k,n in index:traverse(prefix_,true,false) do
         -- the 20140226 exclusion is to overcome a data corruption bug that Ops had. TODO - remove this
-        if find(k,"metadata=",1,true)~=1 and not find(k,"201402",1,true) and k~=prefix_ then
+        if not find(k,"201402",1,true) and k~=prefix_ then
           return true
         end
       end
@@ -293,7 +293,7 @@ local tr = require("trie")
         function()
           for k,n in index:traverse(prefix_,true,false) do
             -- the 20140226 exclusion is to overcome a data corruption bug that Ops had. TODO - remove this
-            if find(k,"metadata=",1,true)~=1 and not find(k,"201402",1,true) and bounded_by_level(k,prefix_,level_) then
+            if not find(k,"201402",1,true) and bounded_by_level(k,prefix_,level_) then
               coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
             end
           end
