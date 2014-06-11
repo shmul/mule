@@ -696,17 +696,19 @@ end
 
 function bounded_by_level(string_,prefix_,level_)
   if not level_ then return true end
-  local count = 0
-  local s = #prefix_-1
+  local num_dots = 0
+  local s = #prefix_ or 0
   local find = string.find
 
+  -- we count the number of dot ('.') separated components past the prefix. level_==0 means we accept no dots in the tail
+  -- while level_==1 means we allow a single dot .
   repeat
     s = find(string_,".",s+1,true)
     if s then
-      count = count + 1
+      num_dots = num_dots + 1
     end
-  until not s or count>level_
-  return count<=level_
+  until not s or num_dots>level_
+  return num_dots<=level_
 end
 
 function trim_to_level(string_,prefix_,level_)
