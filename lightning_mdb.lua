@@ -210,15 +210,10 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         local ed = array_[i]
         local rv,err = put_in_ed(ed)
         if not err then
-          -- we remove the key from the following dbs
---          for j=i+1,#array_ do
---            del_with_index(array_,j)
---          end
           return nil
         end
 
         last_err = err
-
       end
       return last_err
     end
@@ -306,7 +301,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
           cache_[k] = nil
         end
         sync()
-        --if step_ then step_() end
+        if step_ then step_() end
         if log_progress then log_progress() end
       end
       return size

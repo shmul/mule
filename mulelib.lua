@@ -678,9 +678,6 @@ function mule(db_)
       end
       _updated_sequences[n] = nil
       num_processed = num_processed + 1
-      if step_ and num_processed%10==0 then
-        --step_()
-      end
     end
     if num_processed==0 then return false end
     -- returns true if there are more items to process
