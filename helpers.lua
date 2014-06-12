@@ -360,7 +360,7 @@ end
 function with_file(file_,func_,mode_)
   local f = io.open(file_,mode_ or "r")
   if not f then return false end
-  local rv = func_(f)
+  local rv = pcall_wrapper(function() func_(f) end)
   f:close()
   return rv
 end
