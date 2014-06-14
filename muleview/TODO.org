@@ -192,6 +192,7 @@ aka "Add alerts" button
 * Optimizations:
 ** DONE Welcome, Rickshaw
   ** Legend can be toggled via HTML, no need to re-render  graph
+** DONE ask for /graph before asking for /key
 ** TODO Bulk process stuff
    So that the UI won't freeze.
 ** TODO Try to implement onhashchange event myself
