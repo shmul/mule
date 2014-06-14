@@ -906,11 +906,6 @@ function mule(db_)
   end
 
   local function process_line(metric_line_,no_commands_)
-    -- for debugging
-    if string.find(metric_line_,"download_s3_lean_events.downloads",1,true) then
-      logi("process_line",metric_line_)
-    end
-
     local function helper()
       local items,type = parse_input_line(metric_line_)
       if #items==0 then
