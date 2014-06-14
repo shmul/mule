@@ -1,6 +1,6 @@
 require "helpers"
 require "mulelib"
-require "tc_store"
+pcall(require,"tc_store")
 local c = require "column_db"
 local _,l = pcall(require,"lightning_mdb")
 require "httpd"
