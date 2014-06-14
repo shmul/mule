@@ -241,13 +241,13 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return native_put(k,v,meta_)
     end
     local idx = _cache[k] and _cache[k][2] or nil
-    _cache[k] = {v,idx}
+    _cache[k] = {v,idx,true}
     return _cache[k][1]
   end
 
   local function put_node(k,node)
     local idx = _nodes_cache[k] and _nodes_cache[k][2] or nil
-    _nodes_cache[k] = {node,idx}
+    _nodes_cache[k] = {node,idx,true}
     return _nodes_cache[k][1]
   end
 
@@ -287,20 +287,21 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       for i=1,#keys_array,10 do
         for j=i,math.min(#keys_array,i+9) do
           local k,vidx = keys_array[j][1],keys_array[j][2]
-          local v,idx = vidx[1],vidx[2]
+          local v,idx,dirty = vidx[1],vidx[2],vidx[3]
           local packed = v
-          if pack_ then
-            packed = pack_node(v)
-            if not packed then
-              loge("flush_cache unable to pack",k)
+          if dirty then
+            if pack_ then
+              packed = pack_node(v)
+              if not packed then
+                loge("flush_cache unable to pack",k)
+              end
             end
-          end
-          if packed then
-            native_put(k,packed,pack_,idx)
+            if packed then
+              native_put(k,packed,pack_,idx)
+            end
           end
           cache_[k] = nil
         end
-        sync()
         if step_ then step_() end
         if log_progress then log_progress() end
       end
