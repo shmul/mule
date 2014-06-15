@@ -14,9 +14,9 @@ Ext.application
   ]
   controllers: [
     "StatusBar"
+    "ChartsController"
     "KeysTree"
     "History"
-    "ChartsController"
     "AlertsReportController"
   ]
   launch: ->

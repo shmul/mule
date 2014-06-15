@@ -145,11 +145,6 @@ Ext.define "Muleview.controller.KeysTree",
       fullname: "_root"
     @store.setRootNode(root)
 
-    # Ask Mule for the first keys
-    @getTree().setLoading(true)
-    @fetchKeys "", =>
-      @getTree().setLoading(false)
-
   fetchKeys: (parent, callback) ->
     Muleview.Mule.getSubKeys parent, 1, (keys) =>
       @addKeys keys, ->
