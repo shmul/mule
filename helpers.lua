@@ -360,7 +360,7 @@ end
 function with_file(file_,func_,mode_)
   local f = io.open(file_,mode_ or "r")
   if not f then return false end
-  local rv = func_(f)
+  local rv = pcall_wrapper(function() func_(f) end)
   f:close()
   return rv
 end
@@ -696,17 +696,51 @@ end
 
 function bounded_by_level(string_,prefix_,level_)
   if not level_ then return true end
-  local count = 0
-  local s = #prefix_-1
+  local num_dots = 0
+  local s = #prefix_ or 0
   local find = string.find
 
+  -- we count the number of dot ('.') separated components past the prefix. level_==0 means we accept no dots in the tail
+  -- while level_==1 means we allow a single dot .
   repeat
     s = find(string_,".",s+1,true)
     if s then
-      count = count + 1
+      num_dots = num_dots + 1
     end
-  until not s or count>level_
-  return count<=level_
+  until not s or num_dots>level_
+  return num_dots<=level_
+end
+
+function trim_to_level(string_,prefix_,level_)
+  local find = string.find
+  if not level_ or not string_ or find(string_,prefix_,1,true)~=1 then return end
+  local final_dot
+  local s = #prefix_-1
+
+
+  repeat
+    s = find(string_,".",s+1,true)
+    level_ = level_ - 1
+    final_dot = (s or 0)-1 -- leveraging the use of -1 as the end of string position
+  until not s or level_<0
+  return final_dot and string.sub(string_,1,final_dot) or nil
+end
+
+function drop_one_level(string_)
+  if not string_ then return end
+  local count = 0
+  local s = 0
+  local find = string.find
+
+  repeat
+    local t = find(string_,".",s+1,true)
+    if not t then
+      if s==0 then return '' end
+      return string.sub(string_,1,s-1)
+    end
+    s = t
+  until not s
+  return nil
 end
 
 -- from http://stackoverflow.com/questions/132397/get-back-the-output-of-os-execute-in-lua
@@ -965,4 +999,19 @@ end
 
 function string_len(str_)
   return str_~=nil and #tostring(str_) or "nil"
+end
+
+function distinct_prefixes(array_)
+  if not array_ then return nil end
+  local prefixes = {}
+  local last
+  local insert = table.insert
+  table.sort(array_)
+  for i,v in ipairs(array_) do
+    if not last or string.find(v,last,1,true)~=1 then
+      insert(prefixes,v)
+    end
+    last = v
+  end
+  return prefixes
 end

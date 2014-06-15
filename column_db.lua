@@ -272,7 +272,7 @@ local tr = require("trie")
       end
       for k,n in index:traverse(prefix_,true,false) do
         -- the 20140226 exclusion is to overcome a data corruption bug that Ops had. TODO - remove this
-        if find(k,"metadata=",1,true)~=1 and not find(k,"201402",1,true) and k~=prefix_ then
+        if not find(k,"201402",1,true) and k~=prefix_ then
           return true
         end
       end
@@ -293,7 +293,7 @@ local tr = require("trie")
         function()
           for k,n in index:traverse(prefix_,true,false) do
             -- the 20140226 exclusion is to overcome a data corruption bug that Ops had. TODO - remove this
-            if find(k,"metadata=",1,true)~=1 and not find(k,"201402",1,true) and bounded_by_level(k,prefix_,level_) then
+            if not find(k,"201402",1,true) and bounded_by_level(k,prefix_,level_) then
               coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
             end
           end
@@ -337,11 +337,7 @@ local tr = require("trie")
                                end
 
                                local t,u,v = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
-                               if offset_ then
-                                 cdb_.write(sid_,idx_,t..u..v)
-                               else
-                                 cdb_.write(sid_,idx_,t..u..v)
-                               end
+                               cdb_.write(sid_,idx_,t..u..v)
 
                                -- save all the files every SAVE_PERIOD
                                if not last_save or time_now()>last_save+SAVE_PERIOD then

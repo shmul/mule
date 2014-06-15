@@ -200,6 +200,23 @@ Creates a backup of the db next to it. Returns the path.
 * luarocks should also be installed using the package manager or (from source)[http://luarocks.org/en/Download].
 * install additional rocks - copas, lpack, luaposix, StackTracePlus (optional)
 
+### Lightning Memory-Mapped Database (LMDB)
+Assuming `/home/user/projects` is the root of your development projects
+
+<pre>
+git clone git://gitorious.org/mdb/mdb.git # This will create a directory `./mdb/libraries/liblmdb`.
+cd ./mdb/libraries/liblmdb`
+make`
+cd /home/user/projects
+git clone git://github.com/shmul/lightningdbm.git
+cd ./lightningmdb
+cp ../mdb/libraries/liblmdb/liblmdb.{a,so} .
+make
+</pre>
+
+copy lightningmdb.so to your mule directory
+
+
 ### Kyotocabinet (or tokyocabinet)
 
 We need either of them plus their lua interface. They can be installed using your favorite package manager or [from source](http://fallabs.com/kyotocabinet/pkg/) and [the lua interface](http://fallabs.com/kyotocabinet/luapkg/). For example here are the steps for Kyotocabinet
@@ -325,6 +342,9 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## LMDB
+Licensed under the [OpenLDAP Public License](http://www.openldap.org/software/release/license.html).
 
 ## Tokyo Cabinet
 Tokyo Cabinet is distributed under the "GNU Lesser General Public License".

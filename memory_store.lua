@@ -6,7 +6,7 @@ function in_memory_db()
   local function has_sub_keys(prefix_)
     local find = string.find
     for k,_ in pairs(_storage) do
-      if is_prefix(k,prefix_) and prefix_~=k and not find(k,"metadata=",1,true) then
+      if is_prefix(k,prefix_) and prefix_~=k then
         return true
       end
     end
@@ -17,7 +17,7 @@ function in_memory_db()
     return coroutine.wrap(
       function()
         for k,_ in pairs(_storage) do
-          if is_prefix(k,prefix_) and bounded_by_level(k,prefix_,level_) and not find(k,"metadata=",1,true) then
+          if is_prefix(k,prefix_) and bounded_by_level(k,prefix_,level_)  then
             coroutine.yield(k)
           end
         end
