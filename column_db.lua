@@ -337,11 +337,7 @@ local tr = require("trie")
                                end
 
                                local t,u,v = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
-                               if offset_ then
-                                 cdb_.write(sid_,idx_,t..u..v)
-                               else
-                                 cdb_.write(sid_,idx_,t..u..v)
-                               end
+                               cdb_.write(sid_,idx_,t..u..v)
 
                                -- save all the files every SAVE_PERIOD
                                if not last_save or time_now()>last_save+SAVE_PERIOD then
