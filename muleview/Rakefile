@@ -6,7 +6,7 @@ KEYS_FILE = "tmp/keys.data"
 TIMESTAMP_FILE = "tmp/input"
 APPENDED_TIMESTAMP_FILE = "tmp/agg_input"
 CONF_FILE = "tmp/conf"
-CURL = "curl localhost:3000/graph -X POST -T #{TIMESTAMP_FILE}"
+CURL = "curl localhost:8980/graph -X POST -T #{TIMESTAMP_FILE}"
 RETENTION = "5s:1d 5m:48h 1h:30d 1d:3y"
 
 @names = File.read("names_list.txt").split(/\s/) # Names list file

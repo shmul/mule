@@ -109,6 +109,19 @@ Ext.define "Muleview.Mule",
         ans[key] = data
       callback(ans)
 
+  getPieChartData: (key, retention, timestamp, callback) ->
+    @getGraphData key, retention, (data) =>
+      ans = []
+      Ext.iterate data, (subkey, records) ->
+        point = Ext.Array.findBy records, (record) ->
+          record.x == timestamp
+        if point
+          ans.push({
+            key: subkey
+            value: point.y
+          })
+      callback(ans)
+
   sortData: (dataArr) ->
     #TODO: something else?
     Ext.Array.sort dataArr, (a, b ) ->

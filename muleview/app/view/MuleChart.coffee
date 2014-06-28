@@ -23,11 +23,7 @@ Ext.define "Muleview.view.MuleChart",
 
   handleClick: (e) ->
     point = @lastHoveredPoint
-
-    if point?.series.type == "subkey"
-      Muleview.event "viewChange", point.series.key, null
-
-    @fireEvent "topkeyclick"
+    Muleview.event "topkeyclick", @, point?.series.type, point
 
   renderChart: () ->
     # If there's no data - show an empty "No Data" pane:
