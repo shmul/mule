@@ -2,7 +2,9 @@ Ext.define "Muleview.view.PieChart",
   extend: "Ext.window.Window"
   modal: false
   resizeable: true
-  width: "30%"
+  maximizable: true
+  minimizable: false # Minimizing doesn't work :(
+  width: "40%"
   height: "60%"
   layout: "fit"
 
@@ -62,14 +64,15 @@ Ext.define "Muleview.view.PieChart",
             contrast: true
             font: "18px Arial"
           tips:
-            width: 140
+            width: 200
             trackMouse: true
             renderer: (storeItem, item) ->
+              key = storeItem.get("key")
               value = storeItem.get("value")
               valueFormatted = Ext.util.Format.number(value, ",")
               percent = value / total * 100
               percentFormatted = Ext.util.Format.number(percent, "0.00")
-              @setTitle "#{valueFormatted} (#{percentFormatted}%)"
+              @setTitle "#{key} - #{valueFormatted} (#{percentFormatted}%)"
 
           highlight:
             segment:
