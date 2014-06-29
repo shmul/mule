@@ -64,7 +64,7 @@ Ext.define "Muleview.view.PieChart",
             contrast: true
             font: "18px Arial"
           tips:
-            width: 200
+            width: 400
             trackMouse: true
             renderer: (storeItem, item) ->
               key = storeItem.get("key")
