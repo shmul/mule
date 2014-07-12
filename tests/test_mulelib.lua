@@ -1014,5 +1014,21 @@ function test_trim_to_level()
 --  assert_equal("",drop_one_level(""))
 end
 
+function test_in_memory_serialization()
+  function helper(m)
+    m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+    m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+    local gr = m.graph("Johnston.Morfin.Jamal",{level=1,count=1,in_memory=true})
+    if gr["Johnston.Morfin.Jamal;1h:12h"] then
+      assert(arrays_equal({5,1,0},gr["Johnston.Morfin.Jamal;1h:12h"][1]))
+    end
+    gr = m.graph("Johnston.Emilia.Sweet-Nuthin",{level=1,count=1,in_memory=true})
+    if gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"] then
+      assert(arrays_equal({78,1,0},gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"][1]))
+    end
+  end
+  for_each_db("./tests/temp/test_in_memory_serialization",helper)
+end
 --verbose_log(true)
 --profiler.start("profiler.out")

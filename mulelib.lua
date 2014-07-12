@@ -158,13 +158,6 @@ function sequence(db_,name_)
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_,readable_)
       local timestamp,hits,sum = at(idx_)
-      -- due to some bug we may have sum~timestamp (or hits), in such case we return 0, but only in the column db impl.
-      if sum>=1380000000 or hits>=1380000000 then
-        loge("serialize_slot - out of band values",_name,timestamp,hits,sum)
-        sum = 0
-        hits = 0
-      end
-
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
         slot_cb_(sum,hits,readable_ and date("%y%m%d:%H%M%S",timestamp) or timestamp)
       end
@@ -530,6 +523,7 @@ function mule(db_)
     local insert = table.insert
     local now = time_now()
     local find = string.find
+    local in_memory = options_.in_memory and {}
 
     col.head()
     for m in split_helper(resource_,"/") do
@@ -562,20 +556,37 @@ function mule(db_)
       end
 
       for seq in sequences_generator(db_,m,level) do
-        if alerts then
-          names[#names+1] = seq.name()
+        if in_memory then
+          local current = {}
+          seq.serialize(
+            opts,
+            function()
+              in_memory[seq.name()] = current
+            end,
+            function(sum,hits,timestamp)
+              insert(current,{sum,hits,timestamp})
+          end)
+        else
+          if alerts then
+            names[#names+1] = seq.name()
+          end
+          local col1 = collectionout(str,": [","]\n")
+          seq.serialize(
+            opts,
+            function()
+              col.elem(format("\"%s\"",seq.name()))
+              col1.head()
+            end,
+            function(sum,hits,timestamp)
+              col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+          end)
+          col1.tail()
         end
-        local col1 = collectionout(str,": [","]\n")
-        seq.serialize(opts,
-                      function()
-                        col.elem(format("\"%s\"",seq.name()))
-                        col1.head()
-                      end,
-                      function(sum,hits,timestamp)
-                        col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
-                      end)
-        col1.tail()
       end
+    end
+
+    if in_memory then
+      return in_memory
     end
 
     if alerts then
@@ -583,6 +594,7 @@ function mule(db_)
     end
 
     col.tail()
+
     return wrap_json(str)
   end
 
@@ -745,6 +757,19 @@ function mule(db_)
   local function alert(resource_)
     local as = #resource_>0 and split(resource_,"/") or keys(_alerts)
     return wrap_json(output_alerts(as))
+  end
+
+  local function fdi(resource_)
+    local str = strout("")
+    local col = collectionout(str,"{","}")
+    local now = time_now()
+    col.head()
+    local graphs = graph(resource_,{in_memory = true})
+    logd("fdi - got graphs")
+    for k,v in pairs(graphs) do
+      local metric,step,period = split_name(k)
+      calculate_fdi(now,period,v)
+    end
   end
 
   local function command(items_)
@@ -1039,6 +1064,7 @@ function mule(db_)
     load = load,
     alert_set = alert_set,
     alert_remove = alert_remove,
-    alert = alert
+    alert = alert,
+    fdi = fdi
          }
 end
