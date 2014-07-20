@@ -257,7 +257,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
             socket.sink("close-when-done",socket_))
           logi("send, non blocking",s,err)
         else
-          local all_data = headers_..body_
+          local all_data = headers_..(body_ or "")
           local s,err = copas.send(socket_,all_data)
           socket.sink("close-when-done",socket_)
           logi("send, blocking",s,err)

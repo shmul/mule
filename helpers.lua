@@ -299,7 +299,7 @@ end
 
 
 function t2s(tbl)
-  if not tbl then
+  if tbl==nil then
     return
   end
   if type(tbl)~='table' then return tostring(tbl) end

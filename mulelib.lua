@@ -1,6 +1,7 @@
 require "helpers"
 local pp = require("purepack")
 require "conf"
+require "calculate_fdi_22"
 
 local function name(metric_,step_,period_)
   return string.format("%s;%s:%s",metric_,
@@ -293,6 +294,7 @@ end
 function mule(db_)
   local _factories = {}
   local _alerts = {}
+  local _anomalies = {} -- these do not persist as they can be recalulated
   local _db = db_
   local _updated_sequences = {}
   local _hints = {}
@@ -468,6 +470,20 @@ function mule(db_)
     return alert
   end
 
+  local function output_anomalies()
+    local str = strout("","\n")
+    local format = string.format
+    local col = collectionout(str,"{","}")
+    local now = time_now()
+    col.head()
+
+    for k,v in pairs(_anomalies) do
+      col.elem(format("\"%s\": [%s]",k,table.concat(v,",")))
+    end
+    col.tail()
+    return str
+  end
+
   local function output_alerts(names_)
     local str = strout("","\n")
     local format = string.format
@@ -478,13 +494,13 @@ function mule(db_)
     for _,n in ipairs(names_) do
       local seq = sequence(db_,n)
       local a,msg = alert_check(seq,now)
-      if a  and a._critical_low and a._warning_low and a._warning_high and a._critical_high and a._period then
+      if a and a._critical_low and a._warning_low and a._warning_high and a._critical_high and a._period then
         col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%s,%d,\"%s\",%d,\"%s\"]",
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
                         a._period,a._stale or "-1",a._sum,a._state,now,msg or ""))
-
       end
     end
+    col.elem(format("\"anomalies\": %s",output_anomalies().get_string()))
     col.tail()
     return str
   end
@@ -763,13 +779,34 @@ function mule(db_)
     local str = strout("")
     local col = collectionout(str,"{","}")
     local now = time_now()
+    local insert = table.insert
+    local format = string.format
     col.head()
     local graphs = graph(resource_,{in_memory = true})
     logd("fdi - got graphs")
+
     for k,v in pairs(graphs) do
       local metric,step,period = split_name(k)
-      calculate_fdi(now,period,v)
+      logd("fdi",parse_time_unit(step),k)
+      if metric and step and period then
+        local anomalies = {}
+        for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
+          if vv[2] then
+            insert(anomalies,vv[1])
+          end
+        end
+        _anomalies[k] = #anomalies>0 and anomalies or nil
+        if #anomalies>0 then
+          local ar = table.concat(anomalies,",")
+          col.elem(format("\"%s\": [%s]",k,ar))
+          logd("fdi - anomalies detected",k,ar)
+        end
+      else
+        loge("fdi - bad input",k)
+      end
     end
+    col.tail()
+    return wrap_json(str)
   end
 
   local function command(items_)
