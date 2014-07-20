@@ -470,7 +470,7 @@ function mule(db_)
     return alert
   end
 
-  local function output_anomalies()
+  local function output_anomalies(names_)
     local str = strout("","\n")
     local format = string.format
     local col = collectionout(str,"{","}")
@@ -478,17 +478,21 @@ function mule(db_)
     col.head()
 
     for k,v in pairs(_anomalies) do
-      col.elem(format("\"%s\": [%s]",k,table.concat(v,",")))
+      print(k,names_,names_ and names_[k])
+      if not names_ or names_[k] then
+        col.elem(format("\"%s\": [%s]",k,table.concat(v,",")))
+      end
     end
     col.tail()
     return str
   end
 
-  local function output_alerts(names_)
+  local function output_alerts(names_,all_anomalies_)
     local str = strout("","\n")
     local format = string.format
     local col = collectionout(str,"{","}")
     local now = time_now()
+    local ans = not all_anomalies_ and {} or nil
     col.head()
 
     for _,n in ipairs(names_) do
@@ -499,8 +503,11 @@ function mule(db_)
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
                         a._period,a._stale or "-1",a._sum,a._state,now,msg or ""))
       end
+      if not all_anomalies_ then
+        ans[n] = true
+      end
     end
-    col.elem(format("\"anomalies\": %s",output_anomalies().get_string()))
+    col.elem(format("\"anomalies\": %s",output_anomalies(ans).get_string()))
     col.tail()
     return str
   end
@@ -772,7 +779,7 @@ function mule(db_)
 
   local function alert(resource_)
     local as = #resource_>0 and split(resource_,"/") or keys(_alerts)
-    return wrap_json(output_alerts(as))
+    return wrap_json(output_alerts(as,#resource_==0))
   end
 
   local function fdi(resource_)
