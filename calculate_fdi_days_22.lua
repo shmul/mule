@@ -64,8 +64,6 @@ function calculate_fdi_days(times_, values_)
 						end
 				end
 
-				table.sort(mwa)
-				table.sort(mna)
 				local n = median(mwa)
 				m = median(mna)
 
@@ -213,3 +211,6 @@ function calculate_fdi_days(times_, values_)
 		return result
 
 end
+
+
+
