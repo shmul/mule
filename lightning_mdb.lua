@@ -522,6 +522,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
 
   local function matching_keys(prefix_,level_)
+    local reported = {}
     local function helper(env,db)
       local t,err = acquire_readonly_txn(env)
       if not t or err then
@@ -536,7 +537,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         local prefixed = k and find(k,prefix_,1,true)
         if prefixed then
           if bounded_by_level(k,prefix_,level_) then
-            coroutine.yield(k)
+            if not reported[k] then
+              -- since keys may appear in multiple DBs (probably due to a bug), we want to report them only once
+              coroutine.yield(k)
+              reported[k] = true
+            end
             k = cur:get_key(k,lightningmdb.MDB_NEXT)
           else
             local next_key = trim_to_level(k,prefix_,level_)..";"
