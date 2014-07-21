@@ -71,7 +71,7 @@ Ext.define "Muleview.Mule",
   # For a given key, returns data per each retention
   # in the form of "retention => data array"
   getKeyData: (key, callback) ->
-    @askMule "graph/#{key}?level=0&alerts=false&filter=now", (response) =>
+    @askMule "graph/#{key};?level=0&alerts=false&filter=now", (response) =>
       retentions = {}
       for own name, data of response
         [keyName, retention] = name.split(";")
