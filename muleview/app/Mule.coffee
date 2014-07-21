@@ -1,4 +1,8 @@
 Ext.define "Muleview.Mule",
+  requires: [
+    "Muleview.Settings"
+  ]
+
   singleton: true
   getAlertCommandUrl: (key, retention) ->
     @prefix() + "alert/#{key};#{retention}"
@@ -110,17 +114,21 @@ Ext.define "Muleview.Mule",
       callback(ans)
 
   getPieChartData: (key, retention, timestamp, callback) ->
-    @getGraphData key, retention, (data) =>
+    @askMule "graph/#{key};#{retention}?level=1&alerts=false&timestamp=#{timestamp}&count=999999", (response) ->
       ans = []
-      Ext.iterate data, (subkey, records) ->
-        point = Ext.Array.findBy records, (record) ->
-          record.x == timestamp
-        if point
+      topKeyTotal = null
+      Ext.iterate response, (subkey, records) ->
+        point = records[0]
+        subkeyPath = subkey.split(".")
+        lastSubkeyPath = subkeyPath.pop()
+        if subkeyPath.join(".") == key && point
           ans.push({
-            key: subkey
-            value: point.y
+            key: lastSubkeyPath.split(";")[0]
+            value: point[0]
           })
-      callback(ans)
+        else if subkey == key + ";" + retention && point
+          topKeyTotal = point[0]
+      callback(ans, topKeyTotal)
 
   sortData: (dataArr) ->
     #TODO: something else?

@@ -14,17 +14,49 @@ Ext.define "Muleview.view.PieChart",
         layout: "fit"
     ]
 
+  updateTitle: () ->
+    title = "#{@key}:#{@retention} @ #{@formattedTimestamp}"
+    if @total
+      formattedTotal = Ext.util.Format.number(@total, ",")
+      title += ", total: #{formattedTotal}"
+    @setTitle(title)
+
+
   initComponent: ->
     @items = @items()
-    formattedValue = Ext.util.Format.number(@value, ",")
-    @title = "#{@key}:#{@retention} @ #{@formattedTimestamp}, total: #{formattedValue}"
     @addListener "afterrender", =>
       @chartContainer.setLoading(true)
-      Muleview.Mule.getPieChartData @key, @retention, @timestamp, (data) =>
+      Muleview.Mule.getPieChartData @key, @retention, @timestamp, (data, topKeyTotal) =>
+        @total = topKeyTotal
         @chartContainer.setLoading(false)
+        @addOthersAndUnknown(data)
         @drawPieChart(data)
-        window.s = @store
+        @updateTitle()
+
     @callParent()
+    @updateTitle()
+
+
+  addOthersAndUnknown: (data) ->
+    # Sort data from largest to smallest
+    data = Ext.Array.sort(data, (a,b) -> b.value - a.value)
+
+    actualTotal = Ext.Array.sum(Ext.Array.pluck(data, "value"))
+    diff = @total - actualTotal
+    if diff > 0
+      data.push({
+        value: diff,
+        key: "[Unknown]"
+      })
+    @total = Math.max(@total, actualTotal)
+
+    # Unify least-meaningful Others:
+    if data.length > Muleview.Settings.maxPiechartSlices
+      others = Ext.Array.splice(data, Muleview.Settings.maxPiechartSlices - 1, data.length)
+      data.push
+        key: "[Others]"
+        value: Ext.Array.sum(Ext.Array.pluck(others, "value"))
+
 
   drawPieChart: (data) ->
     dataArr = Ext.Array.map data, (record) ->
@@ -45,7 +77,7 @@ Ext.define "Muleview.view.PieChart",
       data: dataArr
     }
 
-    total = Ext.Array.sum(Ext.Array.pluck(data, "value"))
+    total = @total
 
     @chart = Ext.create "Ext.chart.Chart", {
       type: "pie"

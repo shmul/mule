@@ -99,14 +99,15 @@ it gets into "ready" even though still waiting for mule events
    Also, it would be nice to have it configurable or at least togglable
 ** TODO Add indication to stale graphs
    We should somehow mark graphs that weren't updated for more than twice their period (bucket size)
-** TODO Scrollbar Zoom?
+** SKIPPED Scrollbar Zoom?
    Shouldn't be _that_ hard to implemenet
+It's hard.
 ** TODO Optional / Automatic Log scale?
 ** TODO Add combo box to MuleTimeField
    Instead of using the regex, have a combo with ["Seconds", "Minutes", ...]
 ** TODO Better distinguish main key tooltip and subkey tooltip (and alerts, too?)
 ** TODO Add error handling to request functions
-** TODO Maximize/restore button
+** DONE Maximize/restore button
 ** TODO Editable Settings
    There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
 ** TODO Nicer about box?
