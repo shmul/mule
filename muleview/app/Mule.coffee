@@ -1,4 +1,8 @@
 Ext.define "Muleview.Mule",
+  requires: [
+    "Muleview.Settings"
+  ]
+
   singleton: true
   getAlertCommandUrl: (key, retention) ->
     @prefix() + "alert/#{key};#{retention}"
@@ -67,7 +71,7 @@ Ext.define "Muleview.Mule",
   # For a given key, returns data per each retention
   # in the form of "retention => data array"
   getKeyData: (key, callback) ->
-    @askMule "graph/#{key}?level=0&alerts=false&filter=now", (response) =>
+    @askMule "graph/#{key};?level=0&alerts=false&filter=now", (response) =>
       retentions = {}
       for own name, data of response
         [keyName, retention] = name.split(";")
@@ -108,6 +112,23 @@ Ext.define "Muleview.Mule",
         @sortData(data)
         ans[key] = data
       callback(ans)
+
+  getPieChartData: (key, retention, timestamp, callback) ->
+    @askMule "graph/#{key};#{retention}?level=1&alerts=false&timestamp=#{timestamp}&count=999999", (response) ->
+      ans = []
+      topKeyTotal = null
+      Ext.iterate response, (subkey, records) ->
+        point = records[0]
+        subkeyPath = subkey.split(".")
+        lastSubkeyPath = subkeyPath.pop()
+        if subkeyPath.join(".") == key && point
+          ans.push({
+            key: lastSubkeyPath.split(";")[0]
+            value: point[0]
+          })
+        else if subkey == key + ";" + retention && point
+          topKeyTotal = point[0]
+      callback(ans, topKeyTotal)
 
   sortData: (dataArr) ->
     #TODO: something else?
