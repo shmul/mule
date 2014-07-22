@@ -1,6 +1,7 @@
 require "helpers"
 local pp = require("purepack")
 require "conf"
+require "calculate_fdi_22"
 
 local function name(metric_,step_,period_)
   return string.format("%s;%s:%s",metric_,
@@ -158,13 +159,6 @@ function sequence(db_,name_)
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_,readable_)
       local timestamp,hits,sum = at(idx_)
-      -- due to some bug we may have sum~timestamp (or hits), in such case we return 0, but only in the column db impl.
-      if sum>=1380000000 or hits>=1380000000 then
-        loge("serialize_slot - out of band values",_name,timestamp,hits,sum)
-        sum = 0
-        hits = 0
-      end
-
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
         slot_cb_(sum,hits,readable_ and date("%y%m%d:%H%M%S",timestamp) or timestamp)
       end
@@ -300,6 +294,7 @@ end
 function mule(db_)
   local _factories = {}
   local _alerts = {}
+  local _anomalies = {} -- these do not persist as they can be recalulated
   local _db = db_
   local _updated_sequences = {}
   local _hints = {}
@@ -475,23 +470,44 @@ function mule(db_)
     return alert
   end
 
-  local function output_alerts(names_)
+  local function output_anomalies(names_)
     local str = strout("","\n")
     local format = string.format
     local col = collectionout(str,"{","}")
     local now = time_now()
     col.head()
 
+    for k,v in pairs(_anomalies) do
+      print(k,names_,names_ and names_[k])
+      if not names_ or names_[k] then
+        col.elem(format("\"%s\": [%s]",k,table.concat(v,",")))
+      end
+    end
+    col.tail()
+    return str
+  end
+
+  local function output_alerts(names_,all_anomalies_)
+    local str = strout("","\n")
+    local format = string.format
+    local col = collectionout(str,"{","}")
+    local now = time_now()
+    local ans = not all_anomalies_ and {} or nil
+    col.head()
+
     for _,n in ipairs(names_) do
       local seq = sequence(db_,n)
       local a,msg = alert_check(seq,now)
-      if a  and a._critical_low and a._warning_low and a._warning_high and a._critical_high and a._period then
+      if a and a._critical_low and a._warning_low and a._warning_high and a._critical_high and a._period then
         col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%s,%d,\"%s\",%d,\"%s\"]",
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
                         a._period,a._stale or "-1",a._sum,a._state,now,msg or ""))
-
+      end
+      if not all_anomalies_ then
+        ans[n] = true
       end
     end
+    col.elem(format("\"anomalies\": %s",output_anomalies(ans).get_string()))
     col.tail()
     return str
   end
@@ -530,6 +546,7 @@ function mule(db_)
     local insert = table.insert
     local now = time_now()
     local find = string.find
+    local in_memory = options_.in_memory and {}
 
     col.head()
     for m in split_helper(resource_,"/") do
@@ -562,20 +579,37 @@ function mule(db_)
       end
 
       for seq in sequences_generator(db_,m,level) do
-        if alerts then
-          names[#names+1] = seq.name()
+        if in_memory then
+          local current = {}
+          seq.serialize(
+            opts,
+            function()
+              in_memory[seq.name()] = current
+            end,
+            function(sum,hits,timestamp)
+              insert(current,{sum,hits,timestamp})
+          end)
+        else
+          if alerts then
+            names[#names+1] = seq.name()
+          end
+          local col1 = collectionout(str,": [","]\n")
+          seq.serialize(
+            opts,
+            function()
+              col.elem(format("\"%s\"",seq.name()))
+              col1.head()
+            end,
+            function(sum,hits,timestamp)
+              col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+          end)
+          col1.tail()
         end
-        local col1 = collectionout(str,": [","]\n")
-        seq.serialize(opts,
-                      function()
-                        col.elem(format("\"%s\"",seq.name()))
-                        col1.head()
-                      end,
-                      function(sum,hits,timestamp)
-                        col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
-                      end)
-        col1.tail()
       end
+    end
+
+    if in_memory then
+      return in_memory
     end
 
     if alerts then
@@ -583,6 +617,7 @@ function mule(db_)
     end
 
     col.tail()
+
     return wrap_json(str)
   end
 
@@ -744,7 +779,41 @@ function mule(db_)
 
   local function alert(resource_)
     local as = #resource_>0 and split(resource_,"/") or keys(_alerts)
-    return wrap_json(output_alerts(as))
+    return wrap_json(output_alerts(as,#resource_==0))
+  end
+
+  local function fdi(resource_)
+    local str = strout("")
+    local col = collectionout(str,"{","}")
+    local now = time_now()
+    local insert = table.insert
+    local format = string.format
+    col.head()
+    local graphs = graph(resource_,{in_memory = true})
+    logd("fdi - got graphs")
+
+    for k,v in pairs(graphs) do
+      local metric,step,period = split_name(k)
+      logd("fdi",parse_time_unit(step),k)
+      if metric and step and period then
+        local anomalies = {}
+        for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
+          if vv[2] then
+            insert(anomalies,vv[1])
+          end
+        end
+        _anomalies[k] = #anomalies>0 and anomalies or nil
+        if #anomalies>0 then
+          local ar = table.concat(anomalies,",")
+          col.elem(format("\"%s\": [%s]",k,ar))
+          logd("fdi - anomalies detected",k,ar)
+        end
+      else
+        loge("fdi - bad input",k)
+      end
+    end
+    col.tail()
+    return wrap_json(str)
   end
 
   local function command(items_)
@@ -1039,6 +1108,7 @@ function mule(db_)
     load = load,
     alert_set = alert_set,
     alert_remove = alert_remove,
-    alert = alert
+    alert = alert,
+    fdi = fdi
          }
 end

@@ -26,3 +26,6 @@ Ext.define "Muleview.Settings",
 
   # Number of array items to process per asynchronous step:
   asyncProcessStep: 10
+
+  # Maximum number of slices in a piechart:
+  maxPiechartSlices: 20

@@ -299,7 +299,7 @@ end
 
 
 function t2s(tbl)
-  if not tbl then
+  if tbl==nil then
     return
   end
   if type(tbl)~='table' then return tostring(tbl) end
@@ -1014,4 +1014,14 @@ function distinct_prefixes(array_)
     last = v
   end
   return prefixes
+end
+
+function arrays_equal(rhs_,lhs_)
+  if not rhs_ and not lhs_ then return true end
+  if not rhs_ or not lhs_ then return false end
+  if #rhs_~=#lhs_ then return false end
+  for i,v in ipairs(rhs_) do
+    if v~=lhs_[i] then return false end
+  end
+  return true
 end

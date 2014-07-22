@@ -47,7 +47,7 @@ function test_alerts()
   end
 
   res = request("GET","alert")
-  assert(string.find(res.body,'"data": {}',1,true))
+  assert(string.find(res.body,'"data": {"anomalies": {}}',1,true))
 
   res = request("POST","alert")
   assert(string.find(res.headers,'405',1,true))
@@ -87,7 +87,7 @@ function test_alerts()
   assert(string.find(res.headers,'204'))
 
   res = request("GET","alert")
-  assert(string.find(res.body,'"data": {}',1,true))
+  assert(string.find(res.body,'"data": {"anomalies": {}}',1,true))
 
   res = request("PUT","alert/beer.ale.brown;5m:12h","critical_high=18&warning_high=16&warning_low=8&critical_low=4&stale=6m&period=10m")
   assert(string.find(res.headers,'201',1,true))

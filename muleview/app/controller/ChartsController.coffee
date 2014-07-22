@@ -6,6 +6,7 @@ Ext.define "Muleview.controller.ChartsController",
     "Muleview.view.MuleChart"
     "Muleview.view.MuleLightChart"
     "Muleview.view.AlertsEditor"
+    "Muleview.view.PieChart"
   ]
 
   refs: [
@@ -80,6 +81,22 @@ Ext.define "Muleview.controller.ChartsController",
         @mainChart?.setLegend(show)
         @legendButton.toggle(show)
       mainChartZoomChange: @updateZoomStats
+      topkeyclick: (chart, type, point, event) =>
+        return unless point and chart == @mainChart
+        key = point.series.key
+        retention = chart.retention
+        if type == "topkey"
+          pieChartWindow = Ext.create "Muleview.view.PieChart",
+            key: key
+            retention: retention
+            timestamp: point.value.x
+            value: point.value.y
+            formattedTimestamp:  point.formattedXValue
+          pieChartWindow.show()
+        else if type == "subkey"
+          Muleview.event "viewchange", key, retention
+
+
 
     @mainChartContainer.getHeader().on
       scope: @
@@ -348,6 +365,7 @@ Ext.define "Muleview.controller.ChartsController",
       flex: 1
       alerts: @getAlerts()
       title: ("#{key};#{@retention}" for key in @keys).join("<br />")
+      retention: @retention
       listeners:
         closed: =>
           Muleview.event "legendChange", false
