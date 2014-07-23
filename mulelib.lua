@@ -478,7 +478,6 @@ function mule(db_)
     col.head()
 
     for k,v in pairs(_anomalies) do
-      print(k,names_,names_ and names_[k])
       if not names_ or names_[k] then
         col.elem(format("\"%s\": [%s]",k,table.concat(v,",")))
       end

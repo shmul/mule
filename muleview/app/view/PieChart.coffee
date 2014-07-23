@@ -1,5 +1,9 @@
 Ext.define "Muleview.view.PieChart",
   extend: "Ext.window.Window"
+  requires: [
+    "Ext.chart.series.Pie"
+    "Ext.chart.Chart"
+  ]
   modal: false
   resizeable: true
   maximizable: true

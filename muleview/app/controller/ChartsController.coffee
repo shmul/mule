@@ -7,6 +7,7 @@ Ext.define "Muleview.controller.ChartsController",
     "Muleview.view.MuleLightChart"
     "Muleview.view.AlertsEditor"
     "Muleview.view.PieChart"
+    "Muleview.view.Preview"
   ]
 
   refs: [
