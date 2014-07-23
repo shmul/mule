@@ -112,11 +112,14 @@ Ext.define "Muleview.store.AlertsStore",
         ]
 
         for key, values of root.data
-          record = Ext.create("Muleview.model.Alert")
-          record.set(prop, values.shift()) for prop in fields
-          record.set("name", key)
-          record.commit()
-          records.push(record)
+          if key == "anomalies"
+
+          else
+            record = Ext.create("Muleview.model.Alert")
+            record.set(prop, values.shift()) for prop in fields
+            record.set("name", key)
+            record.commit()
+            records.push(record)
 
         Ext.create "Ext.data.ResultSet",
           total: records.length
