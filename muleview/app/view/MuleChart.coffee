@@ -113,6 +113,7 @@ Ext.define "Muleview.view.MuleChart",
 
     @createSmoother()
     @graph.updateCallbacks.push () =>
+      @drawAnomalies
       @drawAlerts()
     @graph.render()
     @createTooltips()
@@ -126,7 +127,7 @@ Ext.define "Muleview.view.MuleChart",
         data = Ext.clone(data)
         number_of_points = data[Ext.Object.getKeys(data)[0]].length
         max_points = Muleview.Settings.maxNumberOfChartPoints || 1000
-        points_to_remove = @get_points_to_remove(number_of_points, max_points)
+        points_to_remove = @getPointsToRemove(number_of_points, max_points)
         for series in data
           for index in points_to_remove by -1
             agg = series[index + 1]
@@ -147,7 +148,7 @@ Ext.define "Muleview.view.MuleChart",
         data
 
 
-  get_points_to_remove: (number_of_points, max_points) ->
+  getPointsToRemove: (number_of_points, max_points) ->
     ans = []
     number_of_points_to_remove = Math.abs(Math.min(0,  max_points - number_of_points))
     ratio = number_of_points / number_of_points_to_remove
@@ -175,6 +176,13 @@ Ext.define "Muleview.view.MuleChart",
       div.style["border-color"] = alert.color
       @alertDivs.push(div)
       @graph.element.appendChild(div)
+  drawAnomalies: () ->
+    anomalies = []
+    for key in @topKeys
+      anomalies = Ext.Array.union(anomalies, Muleview.Anomalies.getAnomaliesForKey(@key))
+    for anomaly in anomalies
+      @addTimeTag(anomaly)
+
 
   basicNumberFormatter: Ext.util.Format.numberRenderer(",0")
   numberFormatter: (n) ->

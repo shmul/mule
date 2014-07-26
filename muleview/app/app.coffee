@@ -11,6 +11,7 @@ Ext.application
     "Muleview.Mule"
     "Muleview.view.ToolTip"
     "Muleview.Util"
+    "Muleview.Anomalies"
   ]
   controllers: [
     "StatusBar"

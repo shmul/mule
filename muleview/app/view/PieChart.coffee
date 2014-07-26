@@ -81,6 +81,7 @@ Ext.define "Muleview.view.PieChart",
       data: dataArr
     }
 
+
     total = @total
 
     @chart = Ext.create "Ext.chart.Chart", {
