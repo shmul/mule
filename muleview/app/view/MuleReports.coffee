@@ -14,11 +14,12 @@ Ext.define "Muleview.view.MuleReports",
       split: true
       title: "Anomalies"
       store: Muleview.Anomalies.getStore()
+      collapsible: true
+      collapsed: false
       listeners:
         selectionchange: (me, selection) ->
           return if Ext.isEmpty(selection)
           anomaly = selection[0]
-          console.log('MuleReports.coffee\\ 21: anomaly.get("key"), anomaly.get("retention"):', anomaly.get("key"), anomaly.get("retention"));
           Muleview.event "viewChange", anomaly.get("key"), anomaly.get("retention")
 
       columns: [
