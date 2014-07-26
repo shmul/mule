@@ -7,5 +7,5 @@ Ext.define "Muleview.Anomalies",
     @anomalies = data
     Muleview.event "anomaliesupdate"
 
-  getAnomaliesForKey: (key) ->
-    @anomalies[key] || []
+  getAnomaliesForKey: (key, retention) ->
+    @anomalies[key + ";" + retention] || []

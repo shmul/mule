@@ -50,6 +50,7 @@ Ext.define "Muleview.view.MuleChart",
       yAxis: Ext.id()
       chart: Ext.id()
       legend: Ext.id()
+      annotator: Ext.id()
 
     # Prepare HTML content with new IDs:
     cmpHtml = '
@@ -58,8 +59,11 @@ Ext.define "Muleview.view.MuleChart",
           <div class="rickshaw-chart" id="' + @divs.chart + '"> </div>
           <div class="rickshaw-legend" id="' + @divs.legend + '"> </div>
         </div>
+        <div class="rickshaw-annotator" id="' + @divs.annotator + '"> </div>
       '
-    cmpHtml += '<div id="rickshaw-fixed-tooltip"> </div>' if @mainGraph
+    if @mainGraph
+      cmpHtml += '<div id="rickshaw-fixed-tooltip"> </div>'
+
 
     # Create main element:
     @add @graphContainer = Ext.create "Ext.Component",
@@ -91,6 +95,12 @@ Ext.define "Muleview.view.MuleChart",
       titleContainer.append title
       $(@divs.chart).prepend titleContainer
 
+    @annotator = new Rickshaw.Graph.Annotate
+      graph: @graph
+      element: @divs.annotator
+
+    @addAnomalies()
+
     Ext.fly(@graph.element).on
       click: @handleClick
       scope: @
@@ -113,11 +123,10 @@ Ext.define "Muleview.view.MuleChart",
 
     @createSmoother()
     @graph.updateCallbacks.push () =>
-      @drawAnomalies
       @drawAlerts()
+
     @graph.render()
     @createTooltips()
-    @createTimeTags()
     @fireEvent("graphchanged")
 
   createTimeTags: ->
@@ -186,12 +195,17 @@ Ext.define "Muleview.view.MuleChart",
       div.style["border-color"] = alert.color
       @alertDivs.push(div)
       @graph.element.appendChild(div)
-  drawAnomalies: () ->
+
+  addAnomalies: () ->
     anomalies = []
     for key in @topKeys
-      anomalies = Ext.Array.union(anomalies, Muleview.Anomalies.getAnomaliesForKey(@key))
-    for anomaly in anomalies
-      @addTimeTag(anomaly)
+      anomalies = Ext.Array.union(anomalies, Muleview.Anomalies.getAnomaliesForKey(key, @retention))
+    for anomalyTimestamp in anomalies
+      dateObj = Muleview.muleTimestampToDate(anomalyTimestamp)
+      formattedTime = Ext.Date.format(dateObj, "o-m-j H:i:s")
+      @annotator.add(anomalyTimestamp, "Anomaly at #{formattedTime}")
+
+    @annotator.update()
 
 
   basicNumberFormatter: Ext.util.Format.numberRenderer(",0")

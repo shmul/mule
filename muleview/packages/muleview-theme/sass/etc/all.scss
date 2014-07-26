@@ -306,6 +306,15 @@ $rickshawYAxis: 55px;
   height: 100%;
 }
 
+.rickshaw-annotator {
+  left: $rickshawYAxis;
+  margin-top: 15px;
+}
+
+.rickshaw-annotator .rickshaw_annotation_timeline .annotation  {
+  background-color: rgba(255, 224, 0, 0.74);
+}
+
 
 .chart-timestamp-tag {
   position: absolute;

@@ -359,6 +359,26 @@
   height: 100%;
 }
 
+/* line 309, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-annotator {
+  left: 55px;
+  margin-top: 15px;
+}
+
+/* line 314, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw-annotator .rickshaw_annotation_timeline .annotation {
+  background-color: rgba(255, 224, 0, 0.74);
+}
+
+/* line 319, ../../../packages/muleview-theme/sass/etc/all.scss */
+.chart-timestamp-tag {
+  position: absolute;
+  width: 2px;
+  background: yellow;
+  height: 100%;
+  top: 0px;
+}
+
 /* including package muleview-theme */
 /* including package ext-theme-classic */
 /* including package ext-theme-neutral */
