@@ -203,7 +203,7 @@ Ext.define "Muleview.view.MuleChart",
     for anomalyTimestamp in anomalies
       dateObj = Muleview.muleTimestampToDate(anomalyTimestamp)
       formattedTime = Ext.Date.format(dateObj, "o-m-j H:i:s")
-      @annotator.add(anomalyTimestamp, "Anomaly at #{formattedTime}")
+      @annotator.add(anomalyTimestamp, "Anomaly detected at:\n#{formattedTime}")
 
     @annotator.update()
 
