@@ -305,3 +305,12 @@ $rickshawYAxis: 55px;
   background-color: rgba(255, 224, 0, 0.3);
   height: 100%;
 }
+
+
+.chart-timestamp-tag {
+  position: absolute;
+  width: 2px;
+  background: yellow;
+  height: 100%;
+  top: 0px;
+}

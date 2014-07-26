@@ -117,7 +117,17 @@ Ext.define "Muleview.view.MuleChart",
       @drawAlerts()
     @graph.render()
     @createTooltips()
+    @createTimeTags()
     @fireEvent("graphchanged")
+
+  createTimeTags: ->
+    for timestamp in (@timeTags || [])
+      tag = $ "<div />",
+        class: "chart-timestamp-tag"
+      tag.css
+        left: @graph.x(timestamp)
+      $(@graph.element).append(tag)
+
 
   createSmoother: () ->
     @graph.stackData.hooks.data.push
@@ -324,3 +334,8 @@ Ext.define "Muleview.view.MuleChart",
 
   keyLegendName: (key) ->
     key.substring(key.lastIndexOf(".") + 1)
+
+  addTimeTag: (timestamp) ->
+    @timeTags ||= []
+    @timeTags.push(timestamp)
+    @renderChart()
