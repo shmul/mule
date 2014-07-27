@@ -141,6 +141,9 @@ Ext.define "Muleview.controller.AlertsReportController",
     ,
       ref: "refreshButton"
       selector: "#alertsSummaryRefresh"
+    ,
+      ref: "reportsView"
+      selector: "#reportsView"
   ]
 
   onLaunch: ->
@@ -192,10 +195,10 @@ Ext.define "Muleview.controller.AlertsReportController",
       if button.pressed
         selectedState = button.alertState
     if selectedState == null
-      @grid.collapse()
+      @getReportsView().collapse()
     else
       @gridStore.filter("stateClass", new RegExp(selectedState, "i")) if selectedState != "total"
-      @grid.expand()
+      @getReportsView().expand()
 
   handleLoad: (store) ->
     records = []
