@@ -113,7 +113,7 @@ Ext.define "Muleview.store.AlertsStore",
 
         for key, values of root.data
           if key == "anomalies"
-
+            Muleview.Anomalies.updateAnomalies(values)
           else
             record = Ext.create("Muleview.model.Alert")
             record.set(prop, values.shift()) for prop in fields

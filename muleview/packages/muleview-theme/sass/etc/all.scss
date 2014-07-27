@@ -305,3 +305,21 @@ $rickshawYAxis: 55px;
   background-color: rgba(255, 224, 0, 0.3);
   height: 100%;
 }
+
+.rickshaw-annotator {
+  left: $rickshawYAxis;
+  margin-top: 15px;
+}
+
+.rickshaw-annotator .rickshaw_annotation_timeline .annotation  {
+  background-color: rgba(255, 224, 0, 0.74);
+}
+
+
+.chart-timestamp-tag {
+  position: absolute;
+  width: 2px;
+  background: yellow;
+  height: 100%;
+  top: 0px;
+}

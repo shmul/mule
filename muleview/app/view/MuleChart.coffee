@@ -50,6 +50,7 @@ Ext.define "Muleview.view.MuleChart",
       yAxis: Ext.id()
       chart: Ext.id()
       legend: Ext.id()
+      annotator: Ext.id()
 
     # Prepare HTML content with new IDs:
     cmpHtml = '
@@ -58,8 +59,11 @@ Ext.define "Muleview.view.MuleChart",
           <div class="rickshaw-chart" id="' + @divs.chart + '"> </div>
           <div class="rickshaw-legend" id="' + @divs.legend + '"> </div>
         </div>
+        <div class="rickshaw-annotator" id="' + @divs.annotator + '"> </div>
       '
-    cmpHtml += '<div id="rickshaw-fixed-tooltip"> </div>' if @mainGraph
+    if @mainGraph
+      cmpHtml += '<div id="rickshaw-fixed-tooltip"> </div>'
+
 
     # Create main element:
     @add @graphContainer = Ext.create "Ext.Component",
@@ -91,6 +95,12 @@ Ext.define "Muleview.view.MuleChart",
       titleContainer.append title
       $(@divs.chart).prepend titleContainer
 
+    @annotator = new Rickshaw.Graph.Annotate
+      graph: @graph
+      element: @divs.annotator
+
+    @addAnomalies()
+
     Ext.fly(@graph.element).on
       click: @handleClick
       scope: @
@@ -114,9 +124,19 @@ Ext.define "Muleview.view.MuleChart",
     @createSmoother()
     @graph.updateCallbacks.push () =>
       @drawAlerts()
+
     @graph.render()
     @createTooltips()
     @fireEvent("graphchanged")
+
+  createTimeTags: ->
+    for timestamp in (@timeTags || [])
+      tag = $ "<div />",
+        class: "chart-timestamp-tag"
+      tag.css
+        left: @graph.x(timestamp)
+      $(@graph.element).append(tag)
+
 
   createSmoother: () ->
     @graph.stackData.hooks.data.push
@@ -126,7 +146,7 @@ Ext.define "Muleview.view.MuleChart",
         data = Ext.clone(data)
         number_of_points = data[Ext.Object.getKeys(data)[0]].length
         max_points = Muleview.Settings.maxNumberOfChartPoints || 1000
-        points_to_remove = @get_points_to_remove(number_of_points, max_points)
+        points_to_remove = @getPointsToRemove(number_of_points, max_points)
         for series in data
           for index in points_to_remove by -1
             agg = series[index + 1]
@@ -147,7 +167,7 @@ Ext.define "Muleview.view.MuleChart",
         data
 
 
-  get_points_to_remove: (number_of_points, max_points) ->
+  getPointsToRemove: (number_of_points, max_points) ->
     ans = []
     number_of_points_to_remove = Math.abs(Math.min(0,  max_points - number_of_points))
     ratio = number_of_points / number_of_points_to_remove
@@ -175,6 +195,18 @@ Ext.define "Muleview.view.MuleChart",
       div.style["border-color"] = alert.color
       @alertDivs.push(div)
       @graph.element.appendChild(div)
+
+  addAnomalies: () ->
+    anomalies = []
+    for key in @topKeys
+      anomalies = Ext.Array.union(anomalies, Muleview.Anomalies.getAnomaliesForKey(key, @retention))
+    for anomalyTimestamp in anomalies
+      dateObj = Muleview.muleTimestampToDate(anomalyTimestamp)
+      formattedTime = Ext.Date.format(dateObj, "o-m-j H:i:s")
+      @annotator.add(anomalyTimestamp, "Anomaly detected at:\n#{formattedTime}")
+
+    @annotator.update()
+
 
   basicNumberFormatter: Ext.util.Format.numberRenderer(",0")
   numberFormatter: (n) ->
@@ -316,3 +348,8 @@ Ext.define "Muleview.view.MuleChart",
 
   keyLegendName: (key) ->
     key.substring(key.lastIndexOf(".") + 1)
+
+  addTimeTag: (timestamp) ->
+    @timeTags ||= []
+    @timeTags.push(timestamp)
+    @renderChart()

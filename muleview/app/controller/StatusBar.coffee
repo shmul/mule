@@ -110,8 +110,7 @@ Ext.define "Muleview.controller.StatusBar",
         valueText += " (#{percentText}%)"
 
       # Time
-      utcOffset = new Date().getTimezoneOffset() * 60
-      dateObj = new Date((point.value.x + utcOffset) * 1000)
+      dateObj = Muleview.muleTimestampToDate(point.value.x)
       date = Ext.Date.format(dateObj, "Y-m-d")
       day = Ext.Date.format(dateObj, "l")
       time = Ext.Date.format(dateObj, "H:i:s")
