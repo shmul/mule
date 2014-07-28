@@ -785,6 +785,7 @@ function mule(db_)
     local str = strout("")
     local col = collectionout(str,"{","}")
     local now = time_now()
+    local last_days = to_timestamp(ANOMALIES_LAST_DAYS,now,nil)
     local insert = table.insert
     local format = string.format
     col.head()
@@ -796,13 +797,15 @@ function mule(db_)
       logd("fdi",parse_time_unit(step),k)
       if metric and step and period then
         local anomalies = {}
+        local most_recent = 0
         for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
           if vv[2] then
             insert(anomalies,vv[1])
           end
+          most_recent = vv[1]
         end
         _anomalies[k] = #anomalies>0 and anomalies or nil
-        if #anomalies>0 then
+        if most_recent>=last_days then
           local ar = table.concat(anomalies,",")
           col.elem(format("\"%s\": [%s]",k,ar))
           logd("fdi - anomalies detected",k,ar)
