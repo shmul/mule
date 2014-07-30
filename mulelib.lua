@@ -513,16 +513,6 @@ function mule(db_)
 
   local function update_rank(rank_timestamp_,rank_,timestamp_,value_,name_,step_)
     local ts,rk,same_ts = update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
-    if same_ts then
-      return ts,rk
-    end
-
-    -- new timestamp. We need to check for spikes
-    if rank_*POSITIVE_SPIKE_FACTOR<rk or rank_*NEGATIVE_SPIKE_FACTOR>rk then
-      -- TODO, we need to keep it around (in _alerts?)
-      -- TODO small values should be shooshed
-      -- logi("spike detected for",name_,timestamp_,rank_,rk)
-    end
     return ts,rk
   end
 
