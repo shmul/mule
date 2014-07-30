@@ -791,14 +791,16 @@ function mule(db_)
         for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
           if vv[2] then
             insert(anomalies,vv[1])
+            most_recent = vv[1]
           end
-          most_recent = vv[1]
         end
-        _anomalies[k] = #anomalies>0 and anomalies or nil
         if most_recent>=last_days then
+          _anomalies[k] = anomalies
           local ar = table.concat(anomalies,",")
           col.elem(format("\"%s\": [%s]",k,ar))
           logd("fdi - anomalies detected",k,ar)
+        else
+          _anomalies[k] = nil
         end
       else
         loge("fdi - bad input",k)
