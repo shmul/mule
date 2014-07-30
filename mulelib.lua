@@ -937,6 +937,13 @@ function mule(db_)
     end
   end
 
+  local function flush_all_caches(amount_,step_)
+    amount_ = amount_ or UPDATE_AMOUNT
+    local fc1 = flush_cache(amount_,step_)
+    local fc2 = _db.flush_cache(amount_/4,step_)
+    return fc1 or fc2
+  end
+
 
   local function modify_factories(factories_modifications_)
     -- the factories_modifications_ is a list of triples,
@@ -964,6 +971,7 @@ function mule(db_)
         logw("pattern not found",f[1])
       end
     end
+    flush_all_caches()
   end
 
   local function process_line(metric_line_,no_commands_)
@@ -1062,7 +1070,7 @@ function mule(db_)
 
     local rv = helper()
     if not dont_update_ then
-      flush_cache(UPDATE_AMOUNT)
+      flush_all_caches()
     end
     return rv
   end
@@ -1090,12 +1098,7 @@ function mule(db_)
     slot = slot,
     modify_factories = modify_factories,
     process = process,
-    flush_cache = function(amount_,step_)
-      amount_ = amount_ or UPDATE_AMOUNT
-      local fc1 = flush_cache(amount_,step_)
-      local fc2 = _db.flush_cache(amount_/4,step_)
-      return fc1 or fc2
-    end,
+    flush_cache = flush_all_caches,
     save = save,
     load = load,
     alert_set = alert_set,

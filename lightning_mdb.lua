@@ -555,12 +555,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       cur:close()
       release_readonly_txn(env)
     end
-    return coroutine.wrap(function()
-                            flush_cache(UPDATE_AMOUNT/32) -- we keep it here mainly for the sake of the unit tests
-                            for _,ed in ipairs(_metas) do
-                              helper(ed[1],ed[2])
-                            end
-                          end)
+    return coroutine.wrap(
+      function()
+        for _,ed in ipairs(_metas) do
+          helper(ed[1],ed[2])
+        end
+    end)
   end
 
 
