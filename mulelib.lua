@@ -1063,6 +1063,7 @@ function mule(db_)
     local rv = helper()
     if not dont_update_ then
       flush_cache(UPDATE_AMOUNT)
+      _db.flush_cache(UPDATE_AMOUNT/4)
     end
     return rv
   end
