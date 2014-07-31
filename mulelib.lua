@@ -771,7 +771,7 @@ function mule(db_)
     return wrap_json(output_alerts(as,#resource_==0))
   end
 
-  local function fdi(resource_)
+  local function fdi(resource_,options_)
     local str = strout("")
     local col = collectionout(str,"{","}")
     local now = time_now()
@@ -780,7 +780,9 @@ function mule(db_)
     local insert = table.insert
     local format = string.format
     col.head()
-    local graphs = graph(resource_,{in_memory = true})
+    options_ = options_ or {}
+    options_[in_memory] = true
+    local graphs = graph(resource_,options_)
     logd("fdi - got graphs")
 
     for k,v in pairs(graphs) do
