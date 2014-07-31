@@ -776,6 +776,7 @@ function mule(db_)
     local col = collectionout(str,"{","}")
     local now = time_now()
     local last_days = to_timestamp(ANOMALIES_LAST_DAYS,now,nil)
+    local today = normalize_timestamp(now,3600*24)
     local insert = table.insert
     local format = string.format
     col.head()
@@ -791,7 +792,9 @@ function mule(db_)
         for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
           if vv[2] then
             insert(anomalies,vv[1])
-            most_recent = vv[1]
+            if vv[2]~= today then
+              most_recent = vv[1]
+            end
           end
         end
         if most_recent>=last_days then
