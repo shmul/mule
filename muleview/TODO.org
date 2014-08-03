@@ -97,6 +97,7 @@ it gets into "ready" even though still waiting for mule events
 * Features:
 ** DONE Graph auto-refresh should be visible to the user
    Also, it would be nice to have it configurable or at least togglable
+** TODO Indication of alerts/anomalies in the keys tree
 ** TODO Double clicks on pie slices to drill-down
 ** TODO Add indication to stale graphs
    We should somehow mark graphs that weren't updated for more than twice their period (bucket size)
