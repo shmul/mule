@@ -40,6 +40,7 @@ Ext.define "Muleview.Anomalies",
         retention: retention
         anomaliesCount: timestamps.length
 
+    @getStore().removeAll()
     @getStore().add(records)
     Muleview.event "anomaliesupdate"
 
