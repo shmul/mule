@@ -244,13 +244,13 @@ function sequence(db_,name_)
 end
 
 
-local function sequences_for_prefix(db_,prefix_,retention_pair_)
+local function sequences_for_prefix(db_,prefix_,retention_pair_,level_)
   return coroutine.wrap(
     function()
       local find = string.find
       local yield = coroutine.yield
       prefix_ = (prefix_=="*" and "") or prefix_
-      for name in db_.matching_keys(prefix_) do
+      for name in db_.matching_keys(prefix_,level_) do
         if not retention_pair_ or find(name,retention_pair_,1,true) then
           yield(sequence(db_,name))
         end
@@ -279,15 +279,11 @@ local function wrap_json(stream_)
 end
 
 
-local function each_sequence(db_,prefix_,retention_pair_,callback_)
-  for seq in sequences_for_prefix(db_,prefix_,retention_pair_) do
-    callback_(seq)
-  end
-end
-
 local function each_metric(db_,metrics_,retention_pair_,callback_)
   for m in split_helper(metrics_,"/") do
-    each_sequence(db_,m,retention_pair_,callback_)
+    for seq in sequences_for_prefix(db_,m,retention_pair_) do
+      callback_(seq)
+    end
   end
 end
 
@@ -366,7 +362,7 @@ function mule(db_)
 
     col.head()
 
-    each_sequence(_db,resource_,nil,
+    each_metric(_db,resource_,nil,
                   function(seq)
                     if seq.latest_timestamp()<timestamp then
                       col.elem(format("\"%s\"",seq.name()))
@@ -539,22 +535,20 @@ function mule(db_)
 
     col.head()
     for m in split_helper(resource_,"/") do
-      if m=="*" then m = "" end
       if level then
         local ranked_children = {}
         local metric,rp = string.match(m,"^([^;]+)(;%w+:%w+)$")
-        for name in db_.matching_keys(metric or m,level) do
-          if not rp or find(name,rp,1,true) then
-            local name_level = count_dots(name)
-            local seq = sequence(db_,name)
-            -- we call update_rank to get adjusted ranks (in case the previous update was
-            -- long ago). This is a readonly operation
-            local hint = _hints[seq.name()] or {}
-            local _,seq_rank = update_rank(
-              hint._rank_ts or 0 ,hint._rank or 0,
-              normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
-            insert(ranked_children,{seq,seq_rank,name_level})
-          end
+        metric = metric or m
+        for seq in sequences_for_prefix(db_,metric,rp,level) do
+          local name = seq.name()
+          local name_level = count_dots(name)
+          -- we call update_rank to get adjusted ranks (in case the previous update was
+          -- long ago). This is a readonly operation
+          local hint = _hints[seq.name()] or {}
+          local _,seq_rank = update_rank(
+            hint._rank_ts or 0 ,hint._rank or 0,
+            normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
+          insert(ranked_children,{seq,seq_rank,name_level})
         end
         table.sort(ranked_children,function(a,b) return a[3]<b[3] or (a[3]==b[3] and a[2]>b[2]) end)
         sequences_generator = function()
@@ -619,22 +613,22 @@ function mule(db_)
     local col = collectionout(str,"{","}")
 
     col.head()
-    for m in split_helper(resource_,"/") do
-      for name in db_.matching_keys(m) do
-        local col1 = collectionout(str,"[","]\n")
-        local seq = sequence(db_,name)
-        seq.serialize(opts,
-                      function()
-                        col.elem(format("\"%s\": ",name))
-                        col1.head()
-                      end,
-                      function(sum,hits,timestamp)
-                        col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
-                      end
-                     )
-        col1.tail()
-      end
-    end
+    each_metric(db_,resource_,nil,
+                function(seq)
+                  local col1 = collectionout(str,"[","]\n")
+                  seq.serialize(opts,
+                                function()
+                                  col.elem(format("\"%s\": ",seq.name()))
+                                  col1.head()
+                                end,
+                                function(sum,hits,timestamp)
+                                  col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+                                end
+                  )
+                  col1.tail()
+                end
+    )
+
     col.tail()
 
     return wrap_json(str)
@@ -771,7 +765,7 @@ function mule(db_)
     return wrap_json(output_alerts(as,#resource_==0))
   end
 
-  local function fdi(resource_)
+  local function fdi(resource_,options_)
     local str = strout("")
     local col = collectionout(str,"{","}")
     local now = time_now()
@@ -780,7 +774,9 @@ function mule(db_)
     local insert = table.insert
     local format = string.format
     col.head()
-    local graphs = graph(resource_,{in_memory = true})
+    options_ = options_ or {}
+    options_[in_memory] = true
+    local graphs = graph(resource_,options_)
     logd("fdi - got graphs")
 
     for k,v in pairs(graphs) do
