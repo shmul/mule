@@ -775,7 +775,7 @@ function mule(db_)
     local format = string.format
     col.head()
     options_ = options_ or {}
-    options_[in_memory] = true
+    options_["in_memory"] = true
     local graphs = graph(resource_,options_)
     logd("fdi - got graphs")
 
@@ -786,11 +786,9 @@ function mule(db_)
         local anomalies = {}
         local most_recent = 0
         for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
-          if vv[2] then
+          if vv[2]~=today then -- we ignore today as it is likely to have only very partial data
             insert(anomalies,vv[1])
-            if vv[2]~= today then
-              most_recent = vv[1]
-            end
+            most_recent = vv[1]
           end
         end
         if most_recent>=last_days then
@@ -806,6 +804,13 @@ function mule(db_)
       end
     end
     col.tail()
+
+    -- add cleanup of outdated anomalies
+    for k,v in pairs(_anomalies) do
+      if v[#v]<last_days then
+        _anomalies[k] = nil
+      end
+    end
     return wrap_json(str)
   end
 
