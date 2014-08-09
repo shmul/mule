@@ -4,6 +4,12 @@
   }
 }
 
+
+img.x-tree-icon.x-tree-icon-parent.key-with-anomalies {
+  background-image: url("anomaly.png") !important;
+  width: 18px;
+}
+
 .load-mask-no-image {
   > div {
     background-image: none;

@@ -2,6 +2,7 @@ Ext.define "Muleview.controller.KeysTree",
   extend: "Ext.app.Controller"
   requires: [
     "Muleview.Util"
+    "Muleview.Anomalies"
   ]
   models: [
     "MuleKey"
@@ -50,6 +51,7 @@ Ext.define "Muleview.controller.KeysTree",
       viewChange: @receiveViewChangeEvent
       keysReceived: @addKeys
       scope: @
+      anomaliesupdate: @updateAnomalies
 
     @fillFirstkeys()
 
@@ -65,6 +67,11 @@ Ext.define "Muleview.controller.KeysTree",
   # ================================================================
   # Event handling:
 
+  updateAnomalies: () ->
+    for key in Muleview.Anomalies.getAllKeysWithAnomalies()
+      node = @store.getById(key)
+      @indicateNodeToHaveAnomalies(node) if node
+
   setMultiMode: (multi) ->
     return if !!multi == @isMulti
     @isMulti = !!multi
@@ -78,6 +85,9 @@ Ext.define "Muleview.controller.KeysTree",
 
     @getMultiModeBtn().setVisible(!multi)
     @getNormalModeBtn().setVisible(multi)
+
+  indicateNodeToHaveAnomalies: (node) ->
+    node.set("iconCls", "key-with-anomalies")
 
   handleItemClick: (me, node) ->
     # Reverse the check flag if in multi-mode:
@@ -202,6 +212,8 @@ Ext.define "Muleview.controller.KeysTree",
       leaf: !hasKids
       checked: if @isMulti then false else undefined
       fullname: key
+
+    @indicateNodeToHaveAnomalies(newNode) if Muleview.Anomalies.keyHasAnomalies(key)
 
     # Add the new node as a child to its parent:
     parent.appendChild(newNode)

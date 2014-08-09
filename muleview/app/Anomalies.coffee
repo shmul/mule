@@ -20,6 +20,8 @@ Ext.define "Muleview.model.Anomaly",
 Ext.define "Muleview.Anomalies",
   singleton: true
 
+  keysWithAnomalies: {}
+
   # store: Ext.create "Muleview.store.AnomaliesStore",
 
   getStore: ->
@@ -30,9 +32,12 @@ Ext.define "Muleview.Anomalies",
     @store
 
   updateAnomalies: (data) ->
+    @keysWithAnomalies = {}
     records = []
-    for name, timestamps of data
+    @data = data
+    for name, timestamps of @data
       [key, retention] = name.split(";")
+      @keysWithAnomalies[key] = true
       records.push
         name: name
         timestamps: timestamps
@@ -44,6 +49,12 @@ Ext.define "Muleview.Anomalies",
     @getStore().add(records)
     Muleview.event "anomaliesupdate"
 
-  getAnomaliesForKey: (key, retention) ->
+  keyHasAnomalies: (key) ->
+    @keysWithAnomalies[key]
+
+  getAllKeysWithAnomalies: () ->
+    Ext.Object.getKeys(@keysWithAnomalies)
+
+  getAnomaliesForGraph: (key, retention) ->
     record = @getStore().getById("#{key};#{retention}")
     record && record.get("timestamps") || []
