@@ -379,6 +379,17 @@
   top: 0px;
 }
 
+/* line 327, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw_annotation_timeline .annotation {
+  background: red;
+}
+
+/* line 331, ../../../packages/muleview-theme/sass/etc/all.scss */
+.rickshaw_graph .annotation_line {
+  display: block;
+  border-left-style: dashed;
+}
+
 /* including package muleview-theme */
 /* including package ext-theme-classic */
 /* including package ext-theme-neutral */
