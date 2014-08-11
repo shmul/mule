@@ -1,6 +1,10 @@
 * Issues
 ** TODO Alleged race-condition in stacked mode
 http://v2.mule.trusteer.net/test/#expressway.device_id;1h:90d
+** TODO Graph headline exceeds panel with too long
+** TODO Pie charts numbers
+   - [ ] Need to test
+   - [ ] Need to do something with leaves' pie charts (currently it's "unknown")
 ** TODO Error in graph seems to mess history URL
 ** TODO Error-function not called in case of exception in Mule interface?
    Causes endless "Fetching..." :(
