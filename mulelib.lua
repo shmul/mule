@@ -775,7 +775,7 @@ function mule(db_)
     local format = string.format
     col.head()
     options_ = options_ or {}
-    options_[in_memory] = true
+    options_["in_memory"] = true
     local graphs = graph(resource_,options_)
     logd("fdi - got graphs")
 
