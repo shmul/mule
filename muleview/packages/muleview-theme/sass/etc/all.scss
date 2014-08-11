@@ -4,6 +4,12 @@
   }
 }
 
+
+img.x-tree-icon.x-tree-icon-parent.key-with-anomalies {
+  background-image: url("anomaly.png") !important;
+  width: 18px;
+}
+
 .load-mask-no-image {
   > div {
     background-image: none;
@@ -322,4 +328,13 @@ $rickshawYAxis: 55px;
   background: yellow;
   height: 100%;
   top: 0px;
+}
+
+.rickshaw_annotation_timeline .annotation{
+  background: red;
+}
+
+.rickshaw_graph .annotation_line {
+  display: block;
+  border-left-style: dashed;
 }

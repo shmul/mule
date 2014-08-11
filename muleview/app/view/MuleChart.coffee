@@ -199,7 +199,7 @@ Ext.define "Muleview.view.MuleChart",
   addAnomalies: () ->
     anomalies = []
     for key in @topKeys
-      anomalies = Ext.Array.union(anomalies, Muleview.Anomalies.getAnomaliesForKey(key, @retention))
+      anomalies = Ext.Array.union(anomalies, Muleview.Anomalies.getAnomaliesForGraph(key, @retention))
     for anomalyTimestamp in anomalies
       dateObj = Muleview.muleTimestampToDate(anomalyTimestamp)
       formattedTime = Ext.Date.format(dateObj, "o-m-j H:i:s")
