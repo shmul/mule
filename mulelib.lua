@@ -784,14 +784,12 @@ function mule(db_)
       logd("fdi",parse_time_unit(step),k)
       if metric and step and period then
         local anomalies = {}
-        local most_recent = 0
         for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
-          if vv[2]~=today then -- we ignore today as it is likely to have only very partial data
+          if vv[2] and vv[1]~=today then -- we ignore today as it is likely to have only very partial data
             insert(anomalies,vv[1])
-            most_recent = vv[1]
           end
         end
-        if most_recent>=last_days then
+        if #anomalies>0 and anomalies[#anomalies]>=last_days then
           _anomalies[k] = anomalies
           local ar = table.concat(anomalies,",")
           col.elem(format("\"%s\": [%s]",k,ar))
