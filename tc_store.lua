@@ -79,6 +79,20 @@ function cabinet_db(db_name_,readonly_)
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_out = generate_functions()
 
   tc_init(db_name_,readonly_)
+  local function find_keys(substring_)
+    local find = string.find
+    local keys = tc_fwmkeys("")
+    return coroutine.wrap(
+      function()
+
+        for _,k in ipairs(keys or {}) do
+          if not find(k,"metadata=",1,true) and find(k,substring_,1,true) then
+            coroutine.yield(k)
+          end
+        end
+    end)
+  end
+
   local function has_sub_keys(prefix_)
     local find = string.find
     local keys = tc_fwmkeys(prefix_)
@@ -106,6 +120,7 @@ function cabinet_db(db_name_,readonly_)
     get = tc_get,
     put = tc_put,
     out = tc_out,
+    find_keys = find_keys,
     has_sub_keys = has_sub_keys,
     matching_keys = matching_keys,
     close = tc_done,

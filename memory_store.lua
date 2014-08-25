@@ -3,6 +3,18 @@ require "sequence_store"
 function in_memory_db()
   local _storage = {}
 
+  local function find_keys(substring_)
+    local find = string.find
+    return coroutine.wrap(
+      function()
+        for k,_ in pairs(_storage) do
+          if find(k,substring_,1,true) then
+            coroutine.yield(k)
+          end
+        end
+    end)
+  end
+
   local function has_sub_keys(prefix_)
     local find = string.find
     for k,_ in pairs(_storage) do
@@ -29,6 +41,7 @@ function in_memory_db()
     put = function(key_,value_) _storage[key_] = value_ end,
     out = function(key_) _storage[key_] = nil end,
     has_sub_keys = has_sub_keys,
+    find_keys = find_keys,
     matching_keys = matching_keys,
     close = function () end,
     cache = function() end,

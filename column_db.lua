@@ -264,6 +264,22 @@ local tr = require("trie")
       return index:delete(key_)
     end
 
+    local function find_keys(substring_)
+      local gsub = string.gsub
+      local find = string.find
+      local function put_semicolumn(rp)
+        return ";"..rp
+      end
+      return coroutine.wrap(
+        function()
+          for k,n in index:traverse("",true,false) do
+            if find(k,substring_,1,true) then
+              coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
+            end
+          end
+      end)
+    end
+
     local function has_sub_keys(prefix_)
       local gsub = string.gsub
       local find = string.find
@@ -392,6 +408,7 @@ local tr = require("trie")
       end,
       set_slot = internal_set_slot,
       get_slot = internal_get_slot,
+      find_keys = find_keys,
       has_sub_keys = has_sub_keys,
       matching_keys = matching_keys,
       flush_cache = function() end,

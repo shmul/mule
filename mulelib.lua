@@ -652,9 +652,10 @@ function mule(db_)
       resource_ = table.concat(distinct_prefixes(keys(_factories)),"/")
       level = level - 1
     end
+    local selector = options_.substring==true and db_.find_keys or db_.matching_keys
     logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
-      for k in db_.matching_keys(prefix,level) do
+      for k in selector(prefix,level) do
         local metric,_,_ = split_name(k)
         if metric then
           local hash = db_.has_sub_keys(metric) and "{\"children\": true}" or "{}"

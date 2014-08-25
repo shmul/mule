@@ -487,6 +487,39 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     del(name_,true)
   end
 
+  local function find_keys(substring_)
+    local function helper(env,db)
+      local t,err = acquire_readonly_txn(env)
+
+      if err then
+        logw("find_keys",err)
+        return
+      end
+
+      local find = string.find
+      local found = false
+      local cur = t:cursor_open(db)
+      local k = cur:get_key("",lightningmdb.MDB_FIRST)
+      repeat
+        if find(k,substring_,1,true) then
+          coroutine.yield(k)
+        end
+
+        k = cur:get_key(k,lightningmdb.MDB_NEXT)
+      until not k or found
+      cur:close()
+      release_readonly_txn(env)
+      return found
+    end
+
+    return coroutine.wrap(
+      function()
+        for _,ed in ipairs(_metas) do
+          if helper(ed[1],ed[2]) then return true end
+        end
+    end)
+  end
+
   local function has_sub_keys(prefix_)
     local function helper(env,db)
       local t,err = acquire_readonly_txn(env)
@@ -607,6 +640,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     set_slot = internal_set_slot,
     get_slot = internal_get_slot,
     out = internal_out_slot,
+    find_keys = find_keys,
     has_sub_keys = has_sub_keys,
     matching_keys = matching_keys,
     close = close,

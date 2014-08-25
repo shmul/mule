@@ -1030,5 +1030,21 @@ function test_in_memory_serialization()
   end
   for_each_db("./tests/temp/test_in_memory_serialization",helper)
 end
+
+function test_find_keys()
+  local function helper(m)
+    m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
+    m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
+    assert(string.find(m.key("Nuthin",{substring=true}),"Sweet-Nuthin",1,true))
+    assert(string.find(m.key("Sweet",{substring=true}),"Sweet-Nuthin",1,true))
+    assert_nil(string.find(m.key("sunday",{level=4,substring=true}),"sunday",1,true))
+    assert(string.find(m.key("ulem",{substring=true}),"Zulema",1,true))
+    assert_nil(string.find(m.key("mal.Mar",{substring=true}),"Nuthin",1,true))
+    assert(string.find(m.key("lia.Sw",{substring=true}),"Nuthin",1,true))
+  end
+  for_each_db("./tests/temp/test_find_keys",helper)
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")
