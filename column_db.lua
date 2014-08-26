@@ -264,7 +264,7 @@ local tr = require("trie")
       return index:delete(key_)
     end
 
-    local function find_keys(substring_)
+    local function find_keys(prefix_,substring_)
       local gsub = string.gsub
       local find = string.find
       local function put_semicolumn(rp)
@@ -272,7 +272,7 @@ local tr = require("trie")
       end
       return coroutine.wrap(
         function()
-          for k,n in index:traverse("",true,false) do
+          for k,n in index:traverse(prefix_,true,false) do
             if find(k,substring_,1,true) then
               coroutine.yield(gsub(k,"%.(%d+%w:%d+%w)$",put_semicolumn))
             end

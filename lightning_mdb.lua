@@ -487,7 +487,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     del(name_,true)
   end
 
-  local function find_keys(substring_)
+  local function find_keys(prefix_,substring_)
     local function helper(env,db)
       local t,err = acquire_readonly_txn(env)
 
@@ -499,14 +499,20 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local find = string.find
       local found = false
       local cur = t:cursor_open(db)
-      local k = cur:get_key("",lightningmdb.MDB_FIRST)
+      local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
       repeat
-        if find(k,substring_,1,true) then
-          coroutine.yield(k)
+        local prefixed = k and find(k,prefix_,1,true)
+        if prefixed and k~=prefix_ then
+          if find(k,substring_,1,true) then
+            coroutine.yield(k)
+          end
         end
-
-        k = cur:get_key(k,lightningmdb.MDB_NEXT)
-      until not k or found
+        if not prefixed then
+          k = nil
+        else
+          k = cur:get_key(k,lightningmdb.MDB_NEXT)
+        end
+      until not k
       cur:close()
       release_readonly_txn(env)
       return found

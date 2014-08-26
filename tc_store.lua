@@ -79,9 +79,9 @@ function cabinet_db(db_name_,readonly_)
   local tc_init,tc_done,tc_get,tc_put,tc_fwmkeys,tc_out = generate_functions()
 
   tc_init(db_name_,readonly_)
-  local function find_keys(substring_)
+  local function find_keys(prefix_,substring_)
     local find = string.find
-    local keys = tc_fwmkeys("")
+    local keys = tc_fwmkeys(prefix_)
     return coroutine.wrap(
       function()
 

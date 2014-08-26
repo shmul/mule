@@ -1,7 +1,7 @@
 require "helpers"
 local pp = require("purepack")
 require "conf"
-require "calculate_fdi_22"
+require "calculate_fdi_30"
 
 local function name(metric_,step_,period_)
   return string.format("%s;%s:%s",metric_,
@@ -652,7 +652,13 @@ function mule(db_)
       resource_ = table.concat(distinct_prefixes(keys(_factories)),"/")
       level = level - 1
     end
-    local selector = options_.substring==true and db_.find_keys or db_.matching_keys
+    local selector = db_.matching_keys
+    -- we are abusing the level param to hold the substring to be search, to make the for loop easier
+    if options_.substring then
+      selector = db_.find_keys
+      level = options_.substring
+    end
+
     logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
       for k in selector(prefix,level) do
