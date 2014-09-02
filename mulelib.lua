@@ -1,7 +1,7 @@
 require "helpers"
 local pp = require("purepack")
 require "conf"
-require "calculate_fdi_30"
+require "calculate_fdi_31"
 
 local function name(metric_,step_,period_)
   return string.format("%s;%s:%s",metric_,

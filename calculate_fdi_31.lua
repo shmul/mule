@@ -1,4 +1,4 @@
-require 'calculate_fdi_days_30'
+require 'calculate_fdi_days_31'
 
 -- costants
 local INTERVAL = 86400
@@ -10,6 +10,7 @@ function calculate_fdi(epoh_time_, interval_, graph_)
     return nil
   end
 
+
   -- prepare time and value series
   local size = #graph_
 
@@ -18,7 +19,7 @@ function calculate_fdi(epoh_time_, interval_, graph_)
   for _,v in ipairs(graph_) do
     local t = v[3]
     if(t > max) then max = t end
-    if((t < min) and (t > 1370044800)) then min = t end
+    if((t < min) and (t > 1357344000)) then min = t end
   end
 
   local range = 1 + (max - min) / INTERVAL
