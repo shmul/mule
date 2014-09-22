@@ -1,5 +1,5 @@
 ------------------------------------
--- Daily algo, Matlab version 31 ---
+-- Daily algo, Matlab version 32 ---
 ------------------------------------
 require 'helpers'
 
@@ -12,9 +12,10 @@ local WEEK = 7
 local DRIFT = 1
 local THRESHOLD = 4
 local FORGETTING_FACTOR = 0.06
-local LOGNORMAL_SHIFT = 4
+local LOGNORMAL_SHIFT = 100
 local MAX_ALARM_PERIOD = 4
 local R_DRIFT = 1.5
+local R_SAFETY = 2
 local MAX_SD_CHANGE = 0.017
 local MIN_SD = 0.1
 
@@ -133,11 +134,11 @@ function calculate_fdi_days(times_, values_)
 
     local wdif = 0
     for _,value in pairs(mwa) do
-      if(math.abs(value - nout) > sd) then wdif = wdif + 1 end
+      if(math.abs(value - nout) > R_SAFETY*sd) then wdif = wdif + 1 end
     end
     local ndif = 0
     for _,value in pairs(mna) do
-      if(math.abs(value - mout) > sd) then ndif = ndif + 1 end
+      if(math.abs(value - mout) > R_SAFETY*sd) then ndif = ndif + 1 end
     end
 
     if((wdif == 0) and (ndif == 0) and (mout >= nout)) then
