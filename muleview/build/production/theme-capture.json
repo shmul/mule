@@ -471,28 +471,6 @@
         "h": 22,
         "w": 46,
         "x": 10,
-        "y": 671
-      },
-      "id": "button-1018",
-      "radius": {
-        "bl": 3,
-        "br": 3,
-        "tl": 3,
-        "tr": 3
-      },
-      "slices": {}
-    },
-    {
-      "border": {
-        "b": 1,
-        "l": 1,
-        "r": 1,
-        "t": 1
-      },
-      "box": {
-        "h": 22,
-        "w": 46,
-        "x": 10,
         "y": 703
       },
       "gradient": "top",
@@ -606,28 +584,6 @@
         "h": 32,
         "w": 46,
         "x": 10,
-        "y": 831
-      },
-      "id": "button-1023",
-      "radius": {
-        "bl": 3,
-        "br": 3,
-        "tl": 3,
-        "tr": 3
-      },
-      "slices": {}
-    },
-    {
-      "border": {
-        "b": 1,
-        "l": 1,
-        "r": 1,
-        "t": 1
-      },
-      "box": {
-        "h": 32,
-        "w": 46,
-        "x": 10,
         "y": 873
       },
       "gradient": "top",
@@ -729,28 +685,6 @@
         "sides": "images/btn/btn-default-toolbar-medium-disabled-sides.gif"
       },
       "stretch": "bottom"
-    },
-    {
-      "border": {
-        "b": 1,
-        "l": 1,
-        "r": 1,
-        "t": 1
-      },
-      "box": {
-        "h": 40,
-        "w": 46,
-        "x": 10,
-        "y": 1041
-      },
-      "id": "button-1028",
-      "radius": {
-        "bl": 3,
-        "br": 3,
-        "tl": 3,
-        "tr": 3
-      },
-      "slices": {}
     },
     {
       "border": {
