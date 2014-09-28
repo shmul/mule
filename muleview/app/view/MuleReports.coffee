@@ -25,11 +25,13 @@ Ext.define "Muleview.view.MuleReports",
       columns: [
           dataIndex: "name",
           header: "Name"
-          flex: 2
-        ,
-          dataIndex: "anomaliesCount"
-          header: "Anomalies Count"
           flex: 1
+        ,
+          dataIndex: "timestamps"
+          flex: 1
+          header: "Latest Anomaly"
+          renderer: (value, metadata, record) ->
+            Ext.Date.format(record.getLatestTimestamp(), "l, o-m-j H:i:s")
       ]
     }
     ,{

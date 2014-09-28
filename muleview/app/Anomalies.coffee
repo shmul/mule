@@ -11,24 +11,35 @@ Ext.define "Muleview.model.Anomaly",
       name: "retention"
       type: "string"
     ,
-      name: "anomaliesCount"
-      type: "int"
-    ,
       name: "timestamps"
   ]
+  getLatestTimestamp: () ->
+    unless @latestTimestamp
+      timestamps = @get("timestamps")
+      @latestTimestamp = timestamps[0] || 0
+      for timestamp in timestamps
+        @latestTimestamp = Math.max(@latestTimestamp, timestamp)
+    Muleview.muleTimestampToDate(@latestTimestamp)
 
 Ext.define "Muleview.Anomalies",
   singleton: true
 
   keysWithAnomalies: {}
 
-  # store: Ext.create "Muleview.store.AnomaliesStore",
-
   getStore: ->
     unless @store
       @store = Ext.create "Ext.data.ArrayStore",
         model: "Muleview.model.Anomaly",
         data: []
+        sorters: [
+          {
+            sorterFn: (a, b) ->
+              rankA = a.getLatestTimestamp()
+              rankB = b.getLatestTimestamp()
+              return 0 if rankA == rankB
+              if rankA > rankB then -1 else 1
+          }
+        ]
     @store
 
   updateAnomalies: (data) ->
@@ -43,7 +54,6 @@ Ext.define "Muleview.Anomalies",
         timestamps: timestamps
         key: key
         retention: retention
-        anomaliesCount: timestamps.length
 
     @getStore().removeAll()
     @getStore().add(records)

@@ -1188,6 +1188,98 @@ img {
   border: 0;
 }
 
+/* line 1, ../../../packages/ext-theme-base/sass/src/panel/Header.scss */
+.x-header-icon {
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  vertical-align: middle;
+  text-align: center;
+}
+
+/* line 8, ../../../packages/ext-theme-base/sass/src/panel/Header.scss */
+.x-header-text-container {
+  overflow: hidden;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+}
+
+/* line 15, ../../../packages/ext-theme-base/sass/src/panel/Header.scss */
+.x-rtl.x-header-text-container {
+  -o-text-overflow: clip;
+  text-overflow: clip;
+}
+
+/* line 4, ../../../packages/ext-theme-base/sass/src/dd/DD.scss */
+.x-dd-drag-proxy,
+.x-dd-drag-current {
+  z-index: 1000000!important;
+  pointer-events: none;
+}
+
+/* line 2, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-dd-drag-repair .x-dd-drag-ghost {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=60);
+  opacity: 0.6;
+}
+/* line 6, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-dd-drag-repair .x-dd-drop-icon {
+  display: none;
+}
+
+/* line 11, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-dd-drag-ghost {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=85);
+  opacity: 0.85;
+  padding: 5px;
+  padding-left: 20px;
+  white-space: nowrap;
+  color: #000;
+  font: normal 11px tahoma, arial, verdana, sans-serif;
+  border: 1px solid;
+  border-color: #ddd #bbb #bbb #ddd;
+  background-color: #fff;
+}
+
+/* line 28, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-dd-drop-icon {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 1;
+}
+
+/* line 51, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-rtl .x-dd-drag-ghost {
+  padding-left: 5px;
+  padding-right: 20px;
+}
+/* line 55, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-rtl .x-dd-drop-icon {
+  left: auto;
+  right: 3px;
+}
+
+/* line 66, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-dd-drop-ok .x-dd-drop-icon {
+  background-image: url(images/dd/drop-yes.gif);
+}
+
+/* line 70, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-dd-drop-ok-add .x-dd-drop-icon {
+  background-image: url(images/dd/drop-add.gif);
+}
+
+/* line 75, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
+.x-dd-drop-nodrop div.x-dd-drop-icon {
+  background-image: url(images/dd/drop-no.gif);
+}
+
 /* line 1, ../../../packages/ext-theme-base/sass/src/layout/component/Dock.scss */
 .x-docked {
   position: absolute !important;
@@ -1326,98 +1418,6 @@ img {
 /* line 101, ../../../packages/ext-theme-base/sass/src/layout/component/Dock.scss */
 .x-noborder-trbl {
   border-width: 0 !important;
-}
-
-/* line 1, ../../../packages/ext-theme-base/sass/src/panel/Header.scss */
-.x-header-icon {
-  background-repeat: no-repeat;
-  background-position: 0 0;
-  vertical-align: middle;
-  text-align: center;
-}
-
-/* line 8, ../../../packages/ext-theme-base/sass/src/panel/Header.scss */
-.x-header-text-container {
-  overflow: hidden;
-  -o-text-overflow: ellipsis;
-  text-overflow: ellipsis;
-}
-
-/* line 15, ../../../packages/ext-theme-base/sass/src/panel/Header.scss */
-.x-rtl.x-header-text-container {
-  -o-text-overflow: clip;
-  text-overflow: clip;
-}
-
-/* line 4, ../../../packages/ext-theme-base/sass/src/dd/DD.scss */
-.x-dd-drag-proxy,
-.x-dd-drag-current {
-  z-index: 1000000!important;
-  pointer-events: none;
-}
-
-/* line 2, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-dd-drag-repair .x-dd-drag-ghost {
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=60);
-  opacity: 0.6;
-}
-/* line 6, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-dd-drag-repair .x-dd-drop-icon {
-  display: none;
-}
-
-/* line 11, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-dd-drag-ghost {
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=85);
-  opacity: 0.85;
-  padding: 5px;
-  padding-left: 20px;
-  white-space: nowrap;
-  color: #000;
-  font: normal 11px tahoma, arial, verdana, sans-serif;
-  border: 1px solid;
-  border-color: #ddd #bbb #bbb #ddd;
-  background-color: #fff;
-}
-
-/* line 28, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-dd-drop-icon {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  display: block;
-  width: 16px;
-  height: 16px;
-  background-color: transparent;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index: 1;
-}
-
-/* line 51, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-rtl .x-dd-drag-ghost {
-  padding-left: 5px;
-  padding-right: 20px;
-}
-/* line 55, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-rtl .x-dd-drop-icon {
-  left: auto;
-  right: 3px;
-}
-
-/* line 66, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-dd-drop-ok .x-dd-drop-icon {
-  background-image: url(images/dd/drop-yes.gif);
-}
-
-/* line 70, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-dd-drop-ok-add .x-dd-drop-icon {
-  background-image: url(images/dd/drop-add.gif);
-}
-
-/* line 75, ../../../packages/ext-theme-base/sass/src/dd/StatusProxy.scss */
-.x-dd-drop-nodrop div.x-dd-drop-icon {
-  background-image: url(images/dd/drop-no.gif);
 }
 
 /* line 2, ../../../packages/ext-theme-base/sass/src/panel/Panel.scss */
@@ -1908,11 +1908,6 @@ table.x-form-checkboxgroup {
   overflow: auto;
 }
 
-/* line 1, ../../../packages/ext-theme-base/sass/src/layout/container/Fit.scss */
-.x-fit-item {
-  position: relative;
-}
-
 /* line 1, ../../../packages/ext-theme-base/sass/src/panel/Table.scss */
 .x-grid-row {
   outline: none;
@@ -1982,6 +1977,11 @@ table.x-form-checkboxgroup {
 /* line 14, ../../../packages/ext-theme-base/sass/src/layout/container/Border.scss */
 .x-region-collapsed-placeholder {
   z-index: 4;
+}
+
+/* line 1, ../../../packages/ext-theme-base/sass/src/layout/container/Fit.scss */
+.x-fit-item {
+  position: relative;
 }
 
 /* line 1, ../../../packages/ext-theme-base/sass/src/layout/container/Column.scss */
