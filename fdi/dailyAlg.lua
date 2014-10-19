@@ -1,5 +1,5 @@
 ------------------------------------
--- Daily algo, Matlab version 33 ---
+-- Daily algo, Matlab version 34 ---
 ------------------------------------
 require 'helpers'
 require 'fdi/statisticsBasic'
@@ -21,7 +21,7 @@ local SD_EST_PERIOD = 28
 local MIN_SD = 0.1
 
 -- initial model
-local INIT_SD = 0.5
+local INIT_SD = 0.2
 local INIT_R = 0.2
 local INIT_M = math.log(LOGNORMAL_SHIFT)
 
