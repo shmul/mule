@@ -7,6 +7,7 @@ Ext.define "Muleview.view.ChartsView",
   requires: [
     "Muleview.view.RefreshButton"
     "Ext.form.field.ComboBox"
+    "Muleview.Settings"
   ]
 
   items: [
@@ -85,6 +86,14 @@ Ext.define "Muleview.view.ChartsView",
           icon: "resources/default/images/legend.png"
           enableToggle: true
           pressed: Muleview.Settings.showLegend
+        },
+
+        {
+          text: "Show Anomalies"
+          icon: "resources/default/images/anomaly.png"
+          id: "showAnomaliesButton"
+          enableToggle: true
+          pressed: Muleview.Settings.showAnomalies
         },
 
         "-",

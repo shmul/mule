@@ -29,6 +29,9 @@ Ext.define "Muleview.controller.ChartsController",
       ref: "subkeysButton"
       selector: "#subkeysButton"
     ,
+      ref: "showAnomaliesButton"
+      selector: "#showAnomaliesButton"
+    ,
       ref: "alertsButton"
       selector: "#editAlertsButton"
     ,
@@ -127,6 +130,13 @@ Ext.define "Muleview.controller.ChartsController",
       toggle: (legendButton, pressed) ->
         Muleview.event "legendChange", pressed
 
+    @getShowAnomaliesButton().on
+      scope: @
+      click: (me) ->
+        Muleview.Settings.showAnomalies = me.pressed
+        @redrawChart()
+
+
     @subkeysButton.on
       scope: @
       toggle: (subkeysButton, pressed) ->
@@ -175,6 +185,10 @@ Ext.define "Muleview.controller.ChartsController",
       click: @restoreMainChartPanel
     @updateStateButtons()
     @showNoData()
+
+  redrawChart: ->
+    #TODO: just redraw, not complete refresh
+    @viewChange(@keys, @retention, true)
 
   viewChange: (keys, retention, forceUpdate) ->
     keys = keys.split(",") if Ext.isString(keys)

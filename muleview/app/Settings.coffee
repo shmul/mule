@@ -18,6 +18,9 @@ Ext.define "Muleview.Settings",
   # Show chart legend by default:
   showLegend: true
 
+  # Show graph anomalies by default:
+  showAnomalies: true
+
   # Show subkeys by default:
   showSubkeys: false
 

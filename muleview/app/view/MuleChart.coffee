@@ -99,7 +99,7 @@ Ext.define "Muleview.view.MuleChart",
       graph: @graph
       element: @divs.annotator
 
-    @addAnomalies()
+    @addAnomalies() if Muleview.Settings.showAnomalies
 
     Ext.fly(@graph.element).on
       click: @handleClick
