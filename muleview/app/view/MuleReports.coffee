@@ -27,12 +27,13 @@ Ext.define "Muleview.view.MuleReports",
           header: "Name"
           flex: 1
         ,
-          dataIndex: "timestamps"
+          xtype: "datecolumn"
+          dataIndex: "latestTimestamp"
           flex: 1
           header: "Latest Anomaly"
-          renderer: (value, metadata, record) ->
-            Ext.Date.format(record.getLatestTimestamp(), "l, o-m-j H:i:s")
+          format: "l, o-m-j H:i:s"
       ]
+
     }
     ,{
       id: "alertsReport"
