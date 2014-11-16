@@ -92,6 +92,8 @@ Mule exposes a REST/JSON interface . Results are return using either plain JSON 
 To update mule's configuration POST a configuration file to
 
     http://muleserver/config
+e.g.
+    curl -vd @<(echo "wine. 1d:3y") http://muleserver/config
 
 To read (export) the configuration GET
 
