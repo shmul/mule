@@ -149,6 +149,18 @@ local function alert_crud_handler(mule_,handler_,req_,resource_,qs_params_,conte
   return 405
 end
 
+local function kvs_crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
+  if req_.verb=="PUT" or req_.verb=="POST" then
+    mule_.kvs_put(resource_,content_)
+    return 201
+  elseif req_.verb=="DELETE" then
+    return mule_.kvs_out(resource_)
+  elseif req_.verb=="GET" then
+    return function() return mule_.kvs_get(resource_) end
+  end
+  return 405
+end
+
 local function nop_handler()
 end
 
@@ -161,6 +173,7 @@ local handlers = { key = generic_get_handler,
                    config = config_handler,
                    stop = nop_handler,
                    alert = alert_crud_handler,
+                   kvs = kvs_crud_handler,
                    backup = nop_handler
 }
 

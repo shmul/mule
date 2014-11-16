@@ -86,7 +86,7 @@ function cabinet_db(db_name_,readonly_)
       function()
 
         for _,k in ipairs(keys or {}) do
-          if not find(k,"metadata=",1,true) and find(k,substring_,1,true) then
+          if not special_key(k) and find(k,substring_,1,true) then
             coroutine.yield(k)
           end
         end
@@ -97,7 +97,7 @@ function cabinet_db(db_name_,readonly_)
     local find = string.find
     local keys = tc_fwmkeys(prefix_)
     for _,k in ipairs(keys or {}) do
-      if not find(k,"metadata=",1,true) and k~=prefix_ then
+      if not special_key(k) and k~=prefix_ then
         return true
       end
     end
@@ -109,7 +109,7 @@ function cabinet_db(db_name_,readonly_)
         local find = string.find
         local keys = tc_fwmkeys(prefix_)
         for _,k in ipairs(keys or {}) do
-          if bounded_by_level(k,prefix_,level_) and not find(k,"metadata=",1,true) then
+          if bounded_by_level(k,prefix_,level_) and not special_key(k) then
             coroutine.yield(k)
           end
         end

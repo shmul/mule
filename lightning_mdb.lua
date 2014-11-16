@@ -173,7 +173,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end
     end
 
-    if meta_ or string.find(k,"metadata=",1,true) then
+    if meta_ or special_key(k) then
       return helper(_metas)
     end
     return helper(_pages)
@@ -229,7 +229,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return err
     end
 
-    if meta_ or string.find(k,"metadata=",1,true) then
+    if meta_ or special_key(k) then
       return helper0(_metas,"meta")
     end
     return helper0(_pages,"page")
@@ -362,7 +362,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     _cache[k] = nil
     _nodes_cache[k] = nil
-    if meta_ or string.find(k,"metadata=",1,true) then
+    if meta_ or special_key(k) then
       helper(_metas)
     end
     helper(_pages)

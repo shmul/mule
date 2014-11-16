@@ -709,7 +709,17 @@ function mule(db_)
     return _updated_sequences and next(_updated_sequences)~=nil
   end
 
+  local function kvs_put(key_,value_)
+    return _db.put("kvs="..key_,value_,true)
+  end
 
+  local function kvs_get(key_)
+    return _db.get("kvs="..key_,true)
+  end
+
+  local function kvs_out(key_)
+    return _db.out("kvs="..key_,true)
+  end
 
   local function save(skip_flushing_)
     logi("save",table_size(_factories),table_size(_alerts),table_size(_hints))
@@ -1123,6 +1133,9 @@ function mule(db_)
     alert_set = alert_set,
     alert_remove = alert_remove,
     alert = alert,
+    kvs_put = kvs_put,
+    kvs_get = kvs_get,
+    kvs_out = kvs_out,
     fdi = fdi
          }
 end

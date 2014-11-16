@@ -1025,3 +1025,8 @@ function arrays_equal(rhs_,lhs_)
   end
   return true
 end
+
+function special_key(key_)
+  local find = string.find
+  return 1==find(key_,"metadata=",1,true) or 1==find(key_,"kvs=",1,true)
+end

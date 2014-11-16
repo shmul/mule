@@ -241,7 +241,7 @@ local tr = require("trie")
 
     local function put(key_,value_)
       local node = index:find(key_)
-      local is_metadata = string.find(key_,"metadata=",1,true)
+      local is_metadata = special_key(key_)
       dirty = true
       -- value is updated only for metadata nodes
       if not node then
@@ -254,7 +254,7 @@ local tr = require("trie")
 
     local function get(key_)
       local node = index:find(key_)
-      if node and string.find(key_,"metadata=",1,true) then
+      if node and special_key(key_) then
         return node.value
       end
     end

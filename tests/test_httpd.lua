@@ -127,4 +127,51 @@ function test_alerts()
   -- todo add alert for a graph that has holes in it (i.e. slots that weren't updated recently)
 end
 
+function test_kvs()
+  local db = column_db_factory("./tests/temp/kvs")
+  local m = mule(db)
+  local res = {}
+
+  local function request(verb_,url_,body_)
+    local res = {}
+    local req = {
+      verb = verb_,
+      url = url_,
+      protocol = "HTTP/1.0",
+    }
+    send_response(fake_send(res),function() end,req,body_,
+                  function(callback_) return callback_(m) end)
+
+    return res
+  end
+
+  res = request("GET","kvs/ttb")
+  assert_nil(res.body)
+
+  res = request("POST","kvs/ttb","it's so heavy")
+  assert(string.find(res.headers,'201',1,true))
+
+  res = request("GET","kvs/ttb")
+  assert_equal("it's so heavy",res.body)
+
+  res = request("PUT","kvs/ttb","yes it is")
+  assert(string.find(res.headers,'201',1,true))
+
+  res = request("PUT","kvs/band","i know")
+  assert(string.find(res.headers,'201',1,true))
+
+  res = request("GET","kvs/ttb")
+  assert_equal("yes it is",res.body)
+
+  res = request("DELETE","kvs/ttb")
+  assert_nil(res.body)
+
+  res = request("GET","kvs/ttb")
+  assert_nil(res.body)
+
+  res = request("GET","kvs/band")
+  assert_equal("i know",res.body)
+
+end
+
 --verbose_log(true)
