@@ -788,8 +788,10 @@ function mule(db_)
     local now = time_now()
     local last_days = to_timestamp(ANOMALIES_LAST_DAYS,now,nil)
     local last_hours = to_timestamp(ANOMALIES_LAST_HOURS,now,nil)
+    local last_minutes = to_timestamp(ANOMALIES_LAST_MINUTES,now,nil)
     local today = normalize_timestamp(now,86400)
     local this_hour = normalize_timestamp(now,3600)
+    local this_5_minute = normalize_timestamp(now,300)
     local insert = table.insert
     local format = string.format
     col.head()
@@ -805,13 +807,14 @@ function mule(db_)
         local anomalies = {}
         local daily = step==86400
         local hourly = step==3600
+        local minutely = step==300 -- actually five minutes
         for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
           -- we ignore today/this-hour as it is likely to have only very partial data
-          if vv[2] and ((daily and vv[1]~=today) or (hourly and vv[1]~=this_hour)) then
+          if vv[2] and ((daily and vv[1]~=today) or (hourly and vv[1]~=this_hour) or (minutely and vv[1]~=this_5_minute)) then
             insert(anomalies,vv[1])
           end
         end
-        if #anomalies>0 and ((daily and anomalies[#anomalies]>=last_days) or (hourly and anomalies[#anomalies]>=last_hours)) then
+        if #anomalies>0 and ((daily and anomalies[#anomalies]>=last_days) or (hourly and anomalies[#anomalies]>=last_hours) or (minutely and anomalies[#anomalies]>=last_minutes)) then
           _anomalies[k] = anomalies
           local ar = table.concat(anomalies,",")
           col.elem(format("\"%s\": [%s]",k,ar))

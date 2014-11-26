@@ -1,8 +1,8 @@
 ------------------------------------
--- Daily algo, Matlab version 34 ---
+-- Daily algo, Matlab version 35 ---
 ------------------------------------
 require 'helpers'
-require 'fdi/statisticsBasic'
+require 'statisticsBasic'
 
 -- costants
 local INTERVAL = 86400
@@ -11,14 +11,15 @@ local WEEK = 7
 
 -- parameters
 local DRIFT = 1
-local THRESHOLD = 4
+local THRESHOLD = 6
 local FORGETTING_FACTOR = 0.06
-local LOGNORMAL_SHIFT = 100
+local LOGNORMAL_SHIFT = 150
 local MAX_ALARM_PERIOD = 4
-local R_DRIFT = 1.5
+local R_DRIFT = 1.2
 local R_SAFETY = 2
-local SD_EST_PERIOD = 28
 local MIN_SD = 0.1
+local SD_EST_PERIOD = 28
+local INIT_PERIOD = 17
 
 -- initial model
 local INIT_SD = 0.2
@@ -26,6 +27,8 @@ local INIT_R = 0.2
 local INIT_M = math.log(LOGNORMAL_SHIFT)
 
 function calculate_fdi_days(times_, values_)
+
+  local step = 0
 
   -- samples model
   local m = INIT_M
@@ -49,10 +52,11 @@ function calculate_fdi_days(times_, values_)
   local insert = table.insert
 	local remove = table.remove
 
-
   local function iter(timestamp_, value_)
 
-    local tval = math.log(LOGNORMAL_SHIFT + value_)
+		step = step + 1
+
+		local tval = math.log(LOGNORMAL_SHIFT + value_)
     local ii = (timestamp_ - REF_TIME) / INTERVAL
 
     local y
@@ -62,12 +66,7 @@ function calculate_fdi_days(times_, values_)
       y = tval
     end
 
-		if(value_ == 0) then
-		  downtime = downtime + 1
-      lastDowntime = ii
-    else
-      downtime = 0
-    end
+		local anoRaw = math.abs(y - m) / sd
 
     if(alarmPeriod < MAX_ALARM_PERIOD) then
       local err = y - m
@@ -96,11 +95,19 @@ function calculate_fdi_days(times_, values_)
 
       m = y
 
-			lastRef = m;
+			lastRef = m
 		  for jj = 1,MAX_ALARM_PERIOD-1 do
-        devWindow[SD_EST_PERIOD + 1 - jj] = weeklyWindow[WEEK + 1 - jj] - lastRef;
+        devWindow[SD_EST_PERIOD + 1 - jj] = weeklyWindow[WEEK + 1 - jj] - lastRef
       end
 
+    end
+
+		-- downtime
+		if((((alarmPeriod > 0) or (downtime > 0)) and (value_ == 0))) then
+		  downtime = downtime + 1
+      lastDowntime = ii
+    else
+      downtime = 0
     end
 
 		-- update sd
@@ -138,7 +145,6 @@ function calculate_fdi_days(times_, values_)
                 break
             end
         end
-
 
         local sdx = std(trDevWindow) * SD_EST_PERIOD / #trDevWindow;
         sd = math.sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*sdx^2);
@@ -199,10 +205,22 @@ function calculate_fdi_days(times_, values_)
       end
     end
 
-    return (alarmPeriod > 0)
+		local alert = step > INIT_PERIOD and alarmPeriod > 0
+		local ano = 0
+		if(step > INIT_PERIOD and alarmPeriod > 0) then
+				if(anoRaw > 4 * THRESHOLD) then
+						ano = 3
+				elseif(anoRaw < THRESHOLD) then
+						ano = 1
+				else
+						ano = 2
+				end
+		end
+
+		local iterResult = {alert, ano}
+
+    return iterResult
   end
-
-
 
 	-- initialize
 	for ii = 1,WEEK do
@@ -224,8 +242,8 @@ function calculate_fdi_days(times_, values_)
 
   -- detect changes
   for ii=1,range do
-    local alert = iter(times_[ii], values_[ii])
-		local x = {times_[ii], alert}
+    local iterResult = iter(times_[ii], values_[ii])
+		local x = {times_[ii], iterResult[1], iterResult[2]}
     insert(result, x)
   end
 

@@ -1,11 +1,11 @@
 -------------------------------------
--- Hourly algo, Matlab version 17 ---
+-- Hourly algo, Matlab version 18 ---
 -------------------------------------
 require 'helpers'
 
 -- costants
 local  INTERVAL = 3600
-local  REF_TIME = 1357344000
+local  REF_TIME = 1357344000 + 60 * 7 * 86400
 local  DAY = 24
 local  WEEK = 7
 
@@ -19,6 +19,7 @@ local  MAX_ALARM_PERIOD = 2
 local  MAX_SD_CHANGE = 0.05
 local  MIN_SD = 0.2
 local  PHASE_DEV = 2
+local  INIT_PERIOD = 60
 
 -- initial model
 local INIT_SD = 0.2
@@ -26,6 +27,8 @@ local INIT_M = math.log(LOGNORMAL_SHIFT)
 
 
 function calculate_fdi_hours(times_, values_)
+
+  local step = 0
 
   -- samples model
 	local sd = INIT_SD
@@ -42,6 +45,8 @@ function calculate_fdi_hours(times_, values_)
 
   local function iter(timestamp_, value_)
 
+	  step = step + 1
+
     local tval = math.log(LOGNORMAL_SHIFT + value_)
     local ii = (timestamp_ - REF_TIME) / INTERVAL
     local hh = (ii % DAY) + 1
@@ -55,7 +60,6 @@ function calculate_fdi_hours(times_, values_)
     end
 
     local err = 1000
-    local y
     for jj = ii-PHASE_DEV,ii+PHASE_DEV do
       local hhj = (jj % DAY) + 1
       local ddj = math.floor((jj % (WEEK*DAY)) / DAY) + 1
@@ -67,9 +71,10 @@ function calculate_fdi_hours(times_, values_)
       end
       if(math.abs(tval-est) < math.abs(err)) then
         err = tval-est
-        y = est
       end
     end
+
+    local anoRaw = math.abs(err) / sd
 
     if(alarmPeriod < MAX_ALARM_PERIOD) then
       local upperCusumTemp = math.max(0, upperCusum + (err - DRIFT * sd))
@@ -86,7 +91,6 @@ function calculate_fdi_hours(times_, values_)
             lowerCusum = 0
             alarmPeriod = 0
         end
-
 
         -- update sd
         local sdtemp = math.sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*err^2)
@@ -125,11 +129,6 @@ function calculate_fdi_hours(times_, values_)
       upperCusum = 0
       lowerCusum = 0
       alarmPeriod = 0
-      if(dd > 2) then
-        y = nday[hh]
-      else
-        y = wday[hh]
-      end
     end
 
     if(dd > 2) then
@@ -138,8 +137,22 @@ function calculate_fdi_hours(times_, values_)
       wdayap[hh] = alarmPeriod
     end
 
-		return (alarmPeriod > 0)
-	end
+		local alert = step > INIT_PERIOD and alarmPeriod > 0
+		local ano = 0
+		if(step > INIT_PERIOD and alarmPeriod > 0) then
+				if(anoRaw > 4 * THRESHOLD_UP) then
+						ano = 3
+				elseif(anoRaw < THRESHOLD_UP) then
+						ano = 1
+				else
+						ano = 2
+				end
+		end
+
+		local iterResult = {alert, ano}
+
+    return iterResult
+  end
 
   local result = {}
 
@@ -151,8 +164,8 @@ function calculate_fdi_hours(times_, values_)
 
   -- detect changes
   for ii=1,range do
-    local alert = iter(times_[ii], values_[ii])
-    local x = {times_[ii], alert}
+    local iterResult = iter(times_[ii], values_[ii])
+		local x = {times_[ii], iterResult[1], iterResult[2]}
     insert(result, x)
   end
 
