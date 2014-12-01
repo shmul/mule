@@ -12,7 +12,7 @@ local REF_TIME = 1357344000 + 72 * 7 * 86400
 local DRIFT = 2
 local THRESHOLD = 10
 local FORGETTING_FACTOR = 0.15
-local LOGNORMAL_SHIFT = 100
+local LOGNORMAL_SHIFT = 150
 local MAX_ALARM_PERIOD = 4
 local MIN_SD = 0.05
 local SD_EST_PERIOD = 28
@@ -51,7 +51,7 @@ function calculate_fdi_minutes(times_, values_)
 		local tval = math.log(LOGNORMAL_SHIFT + value_)
     local ii = (timestamp_ - REF_TIME) / INTERVAL
     local y = tval
-		local anoRaw = math.abs(y - m) / sd
+		local anoRaw = math.abs(y - (m + a1)) / sd
 
 		local err = 0
     if(alarmPeriod < MAX_ALARM_PERIOD) then
@@ -133,7 +133,7 @@ function calculate_fdi_minutes(times_, values_)
 		local alert = step > INIT_PERIOD and alarmPeriod > 0
 		local ano = 0
 		if(step > INIT_PERIOD and alarmPeriod > 0) then
-				if(anoRaw > 4 * THRESHOLD) then
+		    if(anoRaw > 4 * THRESHOLD) then
 						ano = 3
 				elseif(anoRaw < THRESHOLD) then
 						ano = 1
@@ -144,7 +144,7 @@ function calculate_fdi_minutes(times_, values_)
 
 		local iterResult = {alert, ano}
 
-    return iterResult
+		return iterResult
   end
 
 	-- initialize

@@ -14,7 +14,7 @@ local  DRIFT = 1
 local  THRESHOLD_UP = 6
 local  THRESHOLD_DOWN = 10
 local  FORGETTING_FACTOR = 0.1
-local  LOGNORMAL_SHIFT = 4
+local  LOGNORMAL_SHIFT = 150
 local  MAX_ALARM_PERIOD = 2
 local  MAX_SD_CHANGE = 0.05
 local  MIN_SD = 0.2
@@ -148,6 +148,7 @@ function calculate_fdi_hours(times_, values_)
 						ano = 2
 				end
 		end
+
 
 		local iterResult = {alert, ano}
 
