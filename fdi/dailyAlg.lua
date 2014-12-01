@@ -2,7 +2,7 @@
 -- Daily algo, Matlab version 35 ---
 ------------------------------------
 require 'helpers'
-require 'statisticsBasic'
+require 'fdi/statisticsBasic'
 
 -- costants
 local INTERVAL = 86400

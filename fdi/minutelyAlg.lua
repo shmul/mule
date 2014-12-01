@@ -2,7 +2,7 @@
 -- Minutely algo, Matlab version 03 ---
 ---------------------------------------
 require 'helpers'
-require 'statisticsBasic'
+require 'fdi/statisticsBasic'
 
 -- costants
 local INTERVAL = 300
