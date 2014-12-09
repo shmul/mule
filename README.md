@@ -180,6 +180,35 @@ Retrieving only the latest updated slot is supported via
 
 Both of these requests may use multiple metrics separated by `/`.
 
+#### Alerts
+
+##### Checking
+Alerts are designed with the [nagios](http://www.nagios.org/) conventions in mind.
+
+When an alert is defined, its state can be checked using a simple GET request
+
+     http://muleserver/alert/<name>
+
+If no `name` is given, all the alerts are retrieved. The return value is
+
+```json
+{"version": 3,
+"data": {"<name>": [<critical_low>,<warning_low>,<warning_high>,<critical_high>,<period>,<stale>,<value>,<state>,<check_timestamp>,<msg>]}
+}
+```
+
+* `critical_low, warning_low, warning_high, critical_high` - thresholds
+* `period` - the graph period
+* `stale` - time (in seconds) during which if no update to the graph is made, the state would change to `STALE`. Note that updating the graph with a 0 value is considered an update.
+* `value` - the graph's value the the time of check.
+* `state` - `NORMAL, CRITICAL_LOW, WARNING_LOW, WARNING_HIGH, CRITICAL_HIGH, stale`
+* `check_timestamp` - the time of check.
+* `msg` - optional text message.
+
+
+#### Defining Alerts
+TODO
+
 #### stop
 
     http://muleserver/stop?password=<pwd>
