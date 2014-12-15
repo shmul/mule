@@ -180,6 +180,7 @@ function helper_time_sequence(db_)
 
     assert_equal("seq",seq1.deserialize(in_memory_db,true,read_3_values,read_3_values))
     --]]
+
     local tbl1 = {}
     seq.serialize({all_slots=true},insert_all_args(tbl1),insert_all_args(tbl1))
     for i,v in ipairs(tbl) do
@@ -361,13 +362,6 @@ local function non_empty_metrics(metrics_)
   return false
 end
 
-local function dump_metrics(metrics_)
-  if not metrics_ then return end
-  for i,m in ipairs(metrics_) do
-    m.serialize(stdout(", "))
-  end
-end
-
 function test_metric_hierarchy()
   local ms = metric_hierarchy("foo")
   assert_equal("foo",ms())
@@ -525,7 +519,16 @@ function test_reset()
     assert(non_empty_metrics(m.matching_sequences("beer.stout")))
     assert(non_empty_metrics(m.matching_sequences("beer")))
 
-    m.process(".reset beer.stout")
+    assert(string.find(m.graph("beer.stout;1h:30d"),'[143,1,74858400]',1,true))
+    assert(string.find(m.graph("beer.stout;1h:30d"),'[98,1,74854800]',1,true))
+    m.process(".reset beer.stout 74857920 false")
+    assert(string.find(m.graph("beer.stout;1h:30d"),'[143,1,74858400]',1,true))
+    assert(string.find(m.graph("beer.stout;1h:30d"),'[0,0,74854800]',1,true))
+
+    assert_nil(string.find(m.graph("beer.stout;1h:30d"),'[98,1,74858400]',1,true))
+    assert(non_empty_metrics(m.matching_sequences("beer")))
+
+    m.process(".reset beer.stout nil true")
     assert(non_empty_metrics(m.matching_sequences("beer")))
 
     assert(empty_metrics(m.matching_sequences("beer.stout")))
@@ -533,7 +536,7 @@ function test_reset()
     assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
 
 
-    m.process(".reset beer.ale")
+    m.process(".reset beer.ale nil true")
     assert(non_empty_metrics(m.matching_sequences("beer")))
     assert(empty_metrics(m.matching_sequences("beer.ale")))
     assert(empty_metrics(m.matching_sequences("beer.ale.brown")))

@@ -147,6 +147,13 @@ or (for compatibility with older versions)
 The contents of the file are lines in the format described in the *input* section
     <metric> <value> <timestamp>
 
+##### Resetting graph data
+Use a DELETE request to completly erase a graph, or to nullify its data. Excatly one of the following params should be provided.
+* `force` - pass `force=true` to remove the graph.
+* `timestamp` - all the entries, prior to the timestamp (including it) will by nullified. Note that they will not be deleted but rather set to 0.
+* `level` - the depth of the sub keys that will be reset. Default is 0.
+
+
 #### Metrics hierarchy
 The metrics and names create a hierarchy which can be retrieved by sending a GET request to
 

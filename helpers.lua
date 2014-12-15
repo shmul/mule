@@ -521,6 +521,7 @@ function to_timestamp_helper(expr_,now_,latest_)
 end
 
 function to_timestamp(expr_,now_,latest_)
+  if not expr_ then return nil end
   local from,to = string.match(expr_,"(.+)%.%.(.+)")
   if not from then
     return to_timestamp_helper(expr_,now_,latest_)

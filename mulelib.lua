@@ -153,6 +153,21 @@ function sequence(db_,name_)
       end)
   end
 
+  local function reset_to_timestamp(timestamp_)
+    local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
+    local affected = false
+    for s in indices() do
+      local ts = get_timestamp(s)
+      if ts>0 and ts<=adjusted_timestamp then
+        update(ts,0,0,true)
+        affected = true
+      end
+    end
+    _seq_storage.save(_name)
+    return affected
+  end
+
+
   local function serialize(opts_,metric_cb_,slot_cb_)
     local date = os.date
 
@@ -238,6 +253,7 @@ function sequence(db_,name_)
     update_batch = update_batch,
     latest = latest,
     latest_timestamp = latest_timestamp,
+    reset_to_timestamp = reset_to_timestamp,
     reset = reset,
     serialize = serialize,
          }
@@ -381,10 +397,32 @@ function mule(db_)
   end
 
   local function reset(resource_,options_)
-    for name in db_.matching_keys(resource_) do
-      _db.out(name)
+    local timestamp = to_timestamp(options_.timestamp,time_now(),nil)
+    local level = tonumber(options_.level) or 0
+    local force = is_true(options_.force)
+    local str = strout("","\n")
+    local format = string.format
+    local col = collectionout(str,"[","]")
+    local timestamp = tonumber(options_.timestamp)
+
+    col.head()
+
+    for name in db_.matching_keys(resource_,level) do
+      if force then
+        _db.out(name)
+        col.elem(format("\"%s\"",name))
+      elseif timestamp then
+        local seq = sequence(db_,name)
+        logi("reset to timestamp",name,timestamp)
+        if seq.reset_to_timestamp(timestamp) then
+          col.elem(format("\"%s\"",name))
+        end
+      end
     end
-    return true
+
+    col.tail()
+
+    return wrap_json(str)
   end
 
 
@@ -875,7 +913,7 @@ function mule(db_)
         return gc(items_[2],{timestamp=items_[3],force=is_true(items_[4])})
       end,
       reset = function()
-        return reset(items_[2])
+        return reset(items_[2],{timestamp=items_[3],force=is_true(items_[4])})
       end,
       dump = function()
         return dump(items_[2],{to_str=is_true(items_[3])})

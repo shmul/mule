@@ -121,6 +121,9 @@ local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   elseif req_.verb=="POST" then
     logd("POST: calling",handler_,#content_)
     return mule_.process(lines_without_comments(string_lines(content_)),true)
+  elseif req_.verb=="DELETE" then
+    logd("DELETE: calling",handler_)
+    return mule_.reset(resource_,qs_params_)
   else
     logw("Only GET/POST can be used")
     return 405
