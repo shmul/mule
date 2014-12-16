@@ -163,14 +163,12 @@ function sequence(db_,name_)
         affected = true
       end
     end
-    _seq_storage.save(_name)
     return affected
   end
 
 
   local function serialize(opts_,metric_cb_,slot_cb_)
     local date = os.date
-
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_,readable_)
       local timestamp,hits,sum = at(idx_)
@@ -396,36 +394,6 @@ function mule(db_)
     return wrap_json(str)
   end
 
-  local function reset(resource_,options_)
-    local timestamp = to_timestamp(options_.timestamp,time_now(),nil)
-    local level = tonumber(options_.level) or 0
-    local force = is_true(options_.force)
-    local str = strout("","\n")
-    local format = string.format
-    local col = collectionout(str,"[","]")
-    local timestamp = tonumber(options_.timestamp)
-
-    col.head()
-
-    for name in db_.matching_keys(resource_,level) do
-      if force then
-        _db.out(name)
-        col.elem(format("\"%s\"",name))
-      elseif timestamp then
-        local seq = sequence(db_,name)
-        logi("reset to timestamp",name,timestamp)
-        if seq.reset_to_timestamp(timestamp) then
-          col.elem(format("\"%s\"",name))
-        end
-      end
-    end
-
-    col.tail()
-
-    return wrap_json(str)
-  end
-
-
 
   local function dump(resource_,options_)
     local str = options_.to_str and strout("") or stdout("")
@@ -558,9 +526,9 @@ function mule(db_)
     local col = collectionout(str,"{","}")
     local opts = { all_slots=not timestamps,
                    filter=options_.filter,
-                   readable=options_.readable,
+                   readable=is_true(options_.readable),
                    timestamps=timestamps,
-                   sorted=false,
+                   sorted=is_true(options_.sorted),
                    skip_empty=true}
     local sequences_generator = immediate_metrics
     local alerts = is_true(options_.alerts)
@@ -713,33 +681,40 @@ function mule(db_)
   end
 
 
+  local function flush_cache_of_sequence(name_,sparse_)
+    sparse_ = sparse_  or _updated_sequences[name_]
+    if not sparse_ then return nil end
+
+    local seq = sequence(_db,name_)
+    local now = time_now()
+    for j,sl in ipairs(sparse_.slots()) do
+      local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
+                                                sl._hits==nil)
+      if adjusted_timestamp and sum then
+        _hints[name_] = _hints[name_] or {}
+        if not _hints[name_]._rank_ts then
+          _hints[name_]._rank = 0
+          _hints[name_]._rank_ts = 0
+        end
+        _hints[name_]._rank_ts,_hints[name_]._rank = update_rank(
+          _hints[name_]._rank_ts,_hints[name_]._rank,
+          adjusted_timestamp,sum,name_,seq.step())
+      end
+      alert_check(seq,now)
+    end
+    _updated_sequences[name_] = nil
+  end
+
   local function flush_cache(max_,step_)
     _flush_cache_logger()
 
     -- we now update the real sequences
-    local now = time_now()
     local num_processed = 0
     local size,st,en = random_table_region(_updated_sequences,max_)
     if size==0 then return false end
 
     for n,s in iterate_table(_updated_sequences,st,en) do
-      local seq = sequence(_db,n)
-      for j,sl in ipairs(s.slots()) do
-        local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
-                                                  sl._hits==nil)
-        if adjusted_timestamp and sum then
-          _hints[n] = _hints[n] or {}
-          if not _hints[n]._rank_ts then
-            _hints[n]._rank = 0
-            _hints[n]._rank_ts = 0
-          end
-          _hints[n]._rank_ts,_hints[n]._rank = update_rank(
-            _hints[n]._rank_ts,_hints[n]._rank,
-            adjusted_timestamp,sum,n,seq.step())
-        end
-        alert_check(seq,now)
-      end
-      _updated_sequences[n] = nil
+      flush_cache_of_sequence(n,s)
       num_processed = num_processed + 1
     end
     if num_processed==0 then return false end
@@ -769,6 +744,37 @@ function mule(db_)
     while not skip_flushing_ and flush_cache(UPDATE_AMOUNT) do
       -- nop
     end
+  end
+
+  local function reset(resource_,options_)
+    local timestamp = to_timestamp(options_.timestamp,time_now(),nil)
+    local level = tonumber(options_.level) or 0
+    local force = is_true(options_.force)
+    local str = strout("","\n")
+    local format = string.format
+    local col = collectionout(str,"[","]")
+    local timestamp = tonumber(options_.timestamp)
+
+    col.head()
+
+    for name in db_.matching_keys(resource_,level) do
+      flush_cache_of_sequence(name)
+      if force then
+        logi("reset",name)
+        _db.out(name)
+        col.elem(format("\"%s\"",name))
+      elseif timestamp then
+        local seq = sequence(db_,name)
+        logi("reset to timestamp",name,timestamp)
+        if seq.reset_to_timestamp(timestamp) then
+          col.elem(format("\"%s\"",name))
+        end
+      end
+    end
+
+    col.tail()
+
+    return wrap_json(str)
   end
 
   local function alert_set(resource_,options_)
@@ -847,16 +853,20 @@ function mule(db_)
         local hourly = step==3600
         local minutely = step==300 -- actually five minutes
         for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
+          local vv1 = vv[1]
           -- we ignore today/this-hour as it is likely to have only very partial data
-          if vv[2] and ((daily and vv[1]~=today) or (hourly and vv[1]~=this_hour) or (minutely and vv[1]~=this_5_minute)) then
-            insert(anomalies,vv[1])
+          if vv[2] and
+            ((daily and vv1~=today and vv1>=last_days) or
+                (hourly and vv1~=this_hour and vv1>=last_hours) or
+              (minutely and vv1~=this_5_minute) and vv1>=last_minutes) then
+            insert(anomalies,vv1)
           end
         end
-        if #anomalies>0 and ((daily and anomalies[#anomalies]>=last_days) or (hourly and anomalies[#anomalies]>=last_hours) or (minutely and anomalies[#anomalies]>=last_minutes)) then
+        if #anomalies>0 then
           _anomalies[k] = anomalies
           local ar = table.concat(anomalies,",")
           col.elem(format("\"%s\": [%s]",k,ar))
-          logd("fdi - anomalies detected",most_recent,today,k,ar)
+          logd("fdi - anomalies detected",today,k,ar)
         else
           _anomalies[k] = nil
         end
@@ -913,7 +923,7 @@ function mule(db_)
         return gc(items_[2],{timestamp=items_[3],force=is_true(items_[4])})
       end,
       reset = function()
-        return reset(items_[2],{timestamp=items_[3],force=is_true(items_[4])})
+        return reset(items_[2],{timestamp=items_[3],force=is_true(items_[4]),level=tonumber(items_[5])})
       end,
       dump = function()
         return dump(items_[2],{to_str=is_true(items_[3])})

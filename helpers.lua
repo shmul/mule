@@ -899,7 +899,7 @@ function sparse_sequence(name_,slots_)
 
   local function find_by_index(idx_)
     -- there is only one timestamp that fits the index
-    for i,s in ipairs(_slots) do
+    for _,s in ipairs(_slots) do
       local i,_ = calculate_idx(s._timestamp,_step,_period)
       if i==idx_ then
         return s
@@ -911,7 +911,9 @@ function sparse_sequence(name_,slots_)
   local function calc_idx(timestamp_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
 
-    if _latest_timestamp and adjusted_timestamp+_period<=_latest_timestamp then
+    -- we if the adjusted timestamp is too old, we can ignore it
+
+    if _latest_timestamp and adjusted_timestamp<=_latest_timestamp-_period then
       return nil
     end
     return idx,adjusted_timestamp
@@ -923,7 +925,7 @@ function sparse_sequence(name_,slots_)
     if not idx then
       return nil
     end
-    local slot = find_by_index(idx) or add_slot(timestamp_)
+    local slot = find_by_index(idx) or add_slot(adjusted_timestamp)
     slot._sum = sum_
     slot._hits = hits_
     slot._timestamp = adjusted_timestamp
@@ -953,6 +955,7 @@ function sparse_sequence(name_,slots_)
     set = set,
     update = update,
     find_by_index = find_by_index,
+    latest = function() return _latest_timestamp end,
     slots = function() return _slots end
          }
 end
