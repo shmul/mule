@@ -5,7 +5,7 @@ require 'helpers'
 
 -- costants
 local  INTERVAL = 3600
-local  REF_TIME = 1357344000 + 60 * 7 * 86400
+local  REF_TIME = 1357344000
 local  DAY = 24
 local  WEEK = 7
 

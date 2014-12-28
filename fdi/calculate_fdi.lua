@@ -16,31 +16,29 @@ function calculate_fdi(epoh_time_, interval_, graph_)
   -- prepare time and value series
   local size = #graph_
 
-	local ref = 0
+	local bufSize = 0
   if interval_ == DAY_INTERVAL then
-	  ref = 1357344000
+	  bufSize = 365
 	elseif interval_ == HOUR_INTERVAL then
-	  ref = 1357344000 + 10136*3600
+	  bufSize = 2160
   elseif interval_ == MINUTES_INTERVAL then
-	  ref = 1370044800
+	  bufSize = 864
 	else
-	  ref = 0
+	  bufSize = 0
   end
 
-  local min = 2000000000
   local max = 0
   for _,v in ipairs(graph_) do
     local t = v[3]
     if(t > max) then max = t end
-    if((t < min) and (t > ref)) then min = t end
   end
 
-  local range = 1 + (max - min) / interval_
+  local min = max - (bufSize-1) * interval_
 
   local times = {}
   local values = {}
 
-  for ii=1,range do
+  for ii=1,bufSize do
     times[ii] = min + interval_ * (ii-1)
     values[ii] = 0
   end

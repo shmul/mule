@@ -2,12 +2,12 @@
 -- Minutely algo, Matlab version 03 ---
 ---------------------------------------
 require 'helpers'
-require 'fdi/statisticsBasic'
---require 'statisticsBasic'
+--require 'fdi/statisticsBasic'
+require 'statisticsBasic'
 
 -- costants
 local INTERVAL = 300
-local REF_TIME = 1357344000
+local REF_TIME = 1357344000 + 72 * 7 * 86400
 
 -- parameters
 local DRIFT = 2
@@ -21,7 +21,7 @@ local INIT_PERIOD = 24
 
 -- initial model
 local INIT_SD = 0.15
-local INIT_R = 0.2
+-- local INIT_R = 0.2
 local INIT_M = math.log(LOGNORMAL_SHIFT)
 
 
