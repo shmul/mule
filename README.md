@@ -381,8 +381,14 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+## Luarocks
+Licensed under their [own license](http://luarocks.org/en/License)
+
 ## LMDB
 Licensed under the [OpenLDAP Public License](http://www.openldap.org/software/release/license.html).
+
+## lightningdbm
+Licensed under the MIT license (https://github.com/shmul/lightningdbm).
 
 ## Tokyo Cabinet
 Tokyo Cabinet is distributed under the "GNU Lesser General Public License".
@@ -392,6 +398,12 @@ Kyoto Cabinet is distributed under the "GNU General Public License".
 
 ## Lunit
 Lunit is licensed under the terms of the MIT license. [Lunit home page](http://www.nessie.de/mroth/lunit/)
+
+## Luasocket
+Licensed under the MIT license (https://github.com/diegonehab/luasocket)
+
+## luaposix
+Licensed under the MIT license (https://github.com/luaposix/luaposix)
 
 ## Copas
 Copas of the Kepler project is used and is disributed under [this license](http://keplerproject.github.com/copas/license.html). Copyright (c) 2005-2010 Kepler Project.
