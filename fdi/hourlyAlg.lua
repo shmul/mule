@@ -2,6 +2,8 @@
 -- Hourly algo, Matlab version 18 ---
 -------------------------------------
 require 'helpers'
+require 'fdi/statisticsBasic'
+--require 'statisticsBasic'
 
 -- costants
 local  INTERVAL = 3600
@@ -41,16 +43,25 @@ function calculate_fdi_hours(times_, values_)
   local ndayap = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	local wdayap = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-	local insert = table.insert
-
   local function iter(timestamp_, value_)
+
+		-- lua optimization
+    local insert = table.insert
+    local remove = table.remove
+    local log = math.log
+    local abs = math.abs
+    local max = math.max
+    local min = math.min
+    local sqrt = math.sqrt
+    local floor = math.floor
+    local ceil = math.ceil
 
 	  step = step + 1
 
-    local tval = math.log(LOGNORMAL_SHIFT + value_)
+    local tval = log(LOGNORMAL_SHIFT + value_)
     local ii = (timestamp_ - REF_TIME) / INTERVAL
     local hh = (ii % DAY) + 1
-    local dd = math.floor((ii % (WEEK*DAY)) / DAY) + 1
+    local dd = floor((ii % (WEEK*DAY)) / DAY) + 1
 
 		local alarmPeriod
     if(dd > 2) then
@@ -62,23 +73,23 @@ function calculate_fdi_hours(times_, values_)
     local err = 1000
     for jj = ii-PHASE_DEV,ii+PHASE_DEV do
       local hhj = (jj % DAY) + 1
-      local ddj = math.floor((jj % (WEEK*DAY)) / DAY) + 1
+      local ddj = floor((jj % (WEEK*DAY)) / DAY) + 1
       local est
 			if(ddj > 2) then
         est = nday[hhj]
       else
         est = wday[hhj]
       end
-      if(math.abs(tval-est) < math.abs(err)) then
+      if(abs(tval-est) < abs(err)) then
         err = tval-est
       end
     end
 
-    local anoRaw = math.abs(err) / sd
+    local anoRaw = abs(err) / sd
 
     if(alarmPeriod < MAX_ALARM_PERIOD) then
-      local upperCusumTemp = math.max(0, upperCusum + (err - DRIFT * sd))
-      local lowerCusumTemp = math.min(0, lowerCusum + (err + DRIFT * sd))
+      local upperCusumTemp = max(0, upperCusum + (err - DRIFT * sd))
+      local lowerCusumTemp = min(0, lowerCusum + (err + DRIFT * sd))
       if(((upperCusumTemp > THRESHOLD_UP * sd) or (lowerCusumTemp < -THRESHOLD_DOWN * sd))) then
         alarmPeriod = alarmPeriod + 1
 
@@ -93,7 +104,7 @@ function calculate_fdi_hours(times_, values_)
         end
 
         -- update sd
-        local sdtemp = math.sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*err^2)
+        local sdtemp = sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*err^2)
         if(sdtemp - sd > MAX_SD_CHANGE) then
 				  sd = sd + MAX_SD_CHANGE
         elseif(sdtemp - sd < -MAX_SD_CHANGE) then
@@ -164,6 +175,7 @@ function calculate_fdi_hours(times_, values_)
   end
 
   -- detect changes
+	local insert = table.insert
   for ii=1,range do
     local iterResult = iter(times_[ii], values_[ii])
 		local x = {times_[ii], iterResult[1], iterResult[2]}

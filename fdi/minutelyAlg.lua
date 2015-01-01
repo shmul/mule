@@ -41,24 +41,32 @@ function calculate_fdi_minutes(times_, values_)
 	local lastRef = INIT_M
 	local a1 = 0
 
-	-- lua optimization
-  local insert = table.insert
-	local remove = table.remove
 
   local function iter(timestamp_, value_)
 
+	  -- lua optimization
+    local insert = table.insert
+    local remove = table.remove
+    local log = math.log
+    local abs = math.abs
+    local max = math.max
+    local min = math.min
+    local sqrt = math.sqrt
+    local floor = math.floor
+    local ceil = math.ceil
+
 		step = step + 1
 
-		local tval = math.log(LOGNORMAL_SHIFT + value_)
+		local tval = log(LOGNORMAL_SHIFT + value_)
     local ii = (timestamp_ - REF_TIME) / INTERVAL
     local y = tval
-		local anoRaw = math.abs(y - (m + a1)) / sd
+		local anoRaw = abs(y - (m + a1)) / sd
 
 		local err = 0
     if(alarmPeriod < MAX_ALARM_PERIOD) then
 		  err =  y - (m + a1)
-      local upperCusumTemp = math.max(0, upperCusum + (err - DRIFT * sd))
-      local lowerCusumTemp = math.min(0, lowerCusum + (err + DRIFT * sd))
+      local upperCusumTemp = max(0, upperCusum + (err - DRIFT * sd))
+      local lowerCusumTemp = min(0, lowerCusum + (err + DRIFT * sd))
       if(((upperCusumTemp > THRESHOLD * sd) or (lowerCusumTemp < -THRESHOLD * sd))) then
         alarmPeriod = alarmPeriod + 1;
       else
@@ -108,7 +116,7 @@ function calculate_fdi_minutes(times_, values_)
           break
         end
 				for ii,value in pairs(devWindow) do
-				  if(devInd[ii] and (math.abs((value - mu)/sig) >= 2)) then
+				  if(devInd[ii] and (abs((value - mu)/sig) >= 2)) then
 						devInd[ii] = false
 						stop = false
 				  end
@@ -125,7 +133,7 @@ function calculate_fdi_minutes(times_, values_)
 		  end
 
       local sdx = std(trDevWindow) * SD_EST_PERIOD / #trDevWindow;
-      sd = math.sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*sdx^2);
+      sd = sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*sdx^2);
       if(sd < MIN_SD) then
         sd = MIN_SD
       end
@@ -163,6 +171,7 @@ function calculate_fdi_minutes(times_, values_)
   end
 
   -- detect changes
+	local insert = table.insert
   for ii=1,range do
     local iterResult = iter(times_[ii], values_[ii])
 		local x = {times_[ii], iterResult[1], iterResult[2]}

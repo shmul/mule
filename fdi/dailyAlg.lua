@@ -49,15 +49,23 @@ function calculate_fdi_days(times_, values_)
 	local downtime = 0
   local lastDowntime = 0
 
-	-- lua optimization
-  local insert = table.insert
-	local remove = table.remove
 
   local function iter(timestamp_, value_)
 
+		-- lua optimization
+    local insert = table.insert
+    local remove = table.remove
+    local log = math.log
+    local abs = math.abs
+    local max = math.max
+    local min = math.min
+    local sqrt = math.sqrt
+    local floor = math.floor
+    local ceil = math.ceil
+
 		step = step + 1
 
-		local tval = math.log(LOGNORMAL_SHIFT + value_)
+		local tval = log(LOGNORMAL_SHIFT + value_)
     local ii = (timestamp_ - REF_TIME) / INTERVAL
 
     local y
@@ -67,12 +75,12 @@ function calculate_fdi_days(times_, values_)
       y = tval
     end
 
-		local anoRaw = math.abs(y - m) / sd
+		local anoRaw = abs(y - m) / sd
 
     if(alarmPeriod < MAX_ALARM_PERIOD) then
       local err = y - m
-      local upperCusumTemp = math.max(0, upperCusum + (err - DRIFT * sd))
-      local lowerCusumTemp = math.min(0, lowerCusum + (err + DRIFT * sd))
+      local upperCusumTemp = max(0, upperCusum + (err - DRIFT * sd))
+      local lowerCusumTemp = min(0, lowerCusum + (err + DRIFT * sd))
       if(((upperCusumTemp > THRESHOLD * sd) or (lowerCusumTemp < -THRESHOLD * sd))) then
         alarmPeriod = alarmPeriod + 1;
       else
@@ -131,7 +139,7 @@ function calculate_fdi_days(times_, values_)
                 break
             end
 						for ii,value in pairs(devWindow) do
-								if(devInd[ii] and (math.abs((value - mu)/sig) >= 2)) then
+								if(devInd[ii] and (abs((value - mu)/sig) >= 2)) then
 								  devInd[ii] = false
 									stop = false
 								end
@@ -148,7 +156,7 @@ function calculate_fdi_days(times_, values_)
         end
 
         local sdx = std(trDevWindow) * SD_EST_PERIOD / #trDevWindow;
-        sd = math.sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*sdx^2);
+        sd = sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*sdx^2);
         if(sd < MIN_SD) then
             sd = MIN_SD
         end
@@ -174,18 +182,18 @@ function calculate_fdi_days(times_, values_)
 
       local wdif = 0
       for _,value in pairs(mwa) do
-        if(math.abs(value - nout) > R_SAFETY*sd) then wdif = wdif + 1 end
+        if(abs(value - nout) > R_SAFETY*sd) then wdif = wdif + 1 end
       end
       local ndif = 0
       for _,value in pairs(mna) do
-        if(math.abs(value - mout) > R_SAFETY*sd) then ndif = ndif + 1 end
+        if(abs(value - mout) > R_SAFETY*sd) then ndif = ndif + 1 end
       end
 
       if((wdif == 0) and (ndif == 0) and (mout >= nout)) then
         local rout = mout - nout
 
         if(rPeriod < MAX_ALARM_PERIOD) then
-          if((math.abs(rout - r) > R_DRIFT)) then
+          if((abs(rout - r) > R_DRIFT)) then
             rPeriod = rPeriod + 1
           else
             r = r + FORGETTING_FACTOR * (rout - r)
@@ -242,6 +250,7 @@ function calculate_fdi_days(times_, values_)
   end
 
   -- detect changes
+	local insert = table.insert
   for ii=1,range do
     local iterResult = iter(times_[ii], values_[ii])
 		local x = {times_[ii], iterResult[1], iterResult[2]}

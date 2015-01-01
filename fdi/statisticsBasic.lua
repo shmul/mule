@@ -2,15 +2,18 @@
 -- Basic statistical functions   ---
 ------------------------------------
 
+
 function median(array_)
+  local insert = table.insert
   local len = #array_
   if len == 0 then
 		loge('median - array size must be greater than zero')
 		return 0
   end
   local sorted = {}
+
   for _,value in pairs(array_) do
-    table.insert(sorted, value)
+    insert(sorted, value)
   end
   table.sort(sorted)
   local res
