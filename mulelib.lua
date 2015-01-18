@@ -756,18 +756,21 @@ function mule(db_)
     local timestamp = tonumber(options_.timestamp)
 
     col.head()
-
-    for name in db_.matching_keys(resource_,level) do
-      flush_cache_of_sequence(name)
-      if force then
-        logi("reset",name)
-        _db.out(name)
-        col.elem(format("\"%s\"",name))
-      elseif timestamp then
-        local seq = sequence(db_,name)
-        logi("reset to timestamp",name,timestamp)
-        if seq.reset_to_timestamp(timestamp) then
+    if resource_=="" then
+      logw("reset - got empty key. bailing out");
+    else
+      for name in db_.matching_keys(resource_,level) do
+        flush_cache_of_sequence(name)
+        if force then
+          logi("reset",name)
+          _db.out(name)
           col.elem(format("\"%s\"",name))
+        elseif timestamp then
+          local seq = sequence(db_,name)
+          logi("reset to timestamp",name,timestamp)
+          if seq.reset_to_timestamp(timestamp) then
+            col.elem(format("\"%s\"",name))
+          end
         end
       end
     end
