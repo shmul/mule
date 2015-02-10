@@ -57,6 +57,7 @@ function calculate_fdi_hours(times_, values_)
     local min = math.min
     local sqrt = math.sqrt
 		local exp = math.exp
+		local floor = math.floor
 
 	  step = step + 1
 
@@ -209,9 +210,9 @@ function calculate_fdi_hours(times_, values_)
 		local ano = 0
 		if(alert) then
 				if(err > 0) then
-						ano = upperCusumAno
+						ano = min(1000, floor(upperCusumAno + 0.5))
 				else
-						ano = lowerCusumAno
+						ano = max(-1000, floor(lowerCusumAno + 0.5))
 				end
 		end
 

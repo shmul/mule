@@ -224,9 +224,9 @@ function calculate_fdi_days(times_, values_)
 		local ano = 0
 		if(alert) then
 				if(err > 0) then
-						ano = upperCusumAno
+						ano = min(1000, floor(upperCusumAno + 0.5))
 				else
-						ano = lowerCusumAno
+						ano = max(-1000, floor(lowerCusumAno + 0.5))
 				end
 		end
 

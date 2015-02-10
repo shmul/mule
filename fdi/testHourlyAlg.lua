@@ -76,7 +76,7 @@ for line in io.lines(filePath) do
 						tdind = tdind + 1
 						assert(matlab[zz][tdind][1] == td, string.format('failed test alarm: signal num = %d, alert num = %d, got %d instead of %d', zz, tdind, td, matlab[zz][tdind][1]))
 						assert(matlab[zz][tdind][2] == math.floor(value[3]+0.5), string.format('failed test estimated: signal num = %d, alert num = %d, got %d instead of %d', zz, tdind, math.floor(value[3]+0.5), matlab[zz][tdind][2]))
-						assert(matlab[zz][tdind][3] == math.floor(value[4]+0.5), string.format('failed test ano-measure: signal num = %d, alert num = %d, got %d instead of %d', zz, tdind, math.floor(value[4]+0.5), matlab[zz][tdind][3]))
+						assert(matlab[zz][tdind][3] == value[4], string.format('failed test ano-measure: signal num = %d, alert num = %d, got %d instead of %d', zz, tdind, value[4], matlab[zz][tdind][3]))
 				end
 			end
 			assert(tdind == table.getn(matlab[zz]), string.format('failed test: signal num = %d, entries num = %d, expected = %d',zz, tdind, table.getn(matlab[zz])))
