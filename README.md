@@ -10,11 +10,11 @@ Mule is an RRD tool designed with simplicity of use in mind. Its main use case i
 
 # Definitions
 
-* retention pair: `<step,period>`, e.g. `1h:30d`
+* retention pair: `step:period`, e.g. `1h:30d`
 * metric - a (logical) name *without* any retention data, e.g. `beer.stout.irish`
-* event - a trio `<name,value,timestamp>` - input to the database
+* event - a trio `name value timestamp` - input to the database
 * sequence - list of slots, identified by a triple `<metric,step,period>`. These are managed by mule
-* name - a trio `<metric,step,period>`, e.g. `beer.stout:1h:30d`.
+* name - a trio `metric;step:period`, e.g. `beer.stout;1h:30d`.
 * factory - names (i.e. a trio) that are used for the configuration
 
 # Usage
@@ -410,6 +410,3 @@ Copas of the Kepler project is used and is disributed under [this license](http:
 
 ## lpack
 [lpack](http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lpack) is used.
-
-## luaposix
-[luaposix](https://github.com/luaposix/luaposix) is used.
