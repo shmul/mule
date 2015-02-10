@@ -1,5 +1,5 @@
 ---------------------------------------
--- Minutely algo, Matlab version 03 ---
+-- Minutely algo, Matlab version 04 ---
 ---------------------------------------
 require 'helpers'
 require 'fdi/statisticsBasic'
@@ -36,6 +36,8 @@ function calculate_fdi_minutes(times_, values_)
   -- change model
   local upperCusum = 0
   local lowerCusum = 0
+	local upperCusumAno = 0
+  local lowerCusumAno = 0
 	local devWindow = {}
   local alarmPeriod = 0
 	local lastRef = INIT_M
@@ -54,6 +56,7 @@ function calculate_fdi_minutes(times_, values_)
     local sqrt = math.sqrt
     local floor = math.floor
     local ceil = math.ceil
+		local exp = math.exp
 
 		step = step + 1
 
@@ -62,9 +65,13 @@ function calculate_fdi_minutes(times_, values_)
     local y = tval
 		local anoRaw = abs(y - (m + a1)) / sd
 
-		local err = 0
+		local est = y
+    local err = 0
     if(alarmPeriod < MAX_ALARM_PERIOD) then
-		  err =  y - (m + a1)
+		  est = m + a1
+		  err =  y - est
+			upperCusumAno = max(0, upperCusumAno + (err - DRIFT * sd))
+      lowerCusumAno = min(0, lowerCusumAno + (err + DRIFT * sd))
       local upperCusumTemp = max(0, upperCusum + (err - DRIFT * sd))
       local lowerCusumTemp = min(0, lowerCusum + (err + DRIFT * sd))
       if(((upperCusumTemp > THRESHOLD * sd) or (lowerCusumTemp < -THRESHOLD * sd))) then
@@ -79,6 +86,9 @@ function calculate_fdi_minutes(times_, values_)
           alarmPeriod = 0
         end
 
+				upperCusumAno = upperCusum
+        lowerCusumAno = lowerCusum
+
         -- update m
         local newm = m + a1 + FORGETTING_FACTOR * err
         local newa1 = a1 + FORGETTING_FACTOR^2 * err
@@ -90,6 +100,9 @@ function calculate_fdi_minutes(times_, values_)
       upperCusum = 0
       lowerCusum = 0
       alarmPeriod = 0
+
+			upperCusumAno = upperCusum
+      lowerCusumAno = lowerCusum
 
       m = y
 
@@ -141,17 +154,15 @@ function calculate_fdi_minutes(times_, values_)
 
 		local alert = step > INIT_PERIOD and alarmPeriod > 0
 		local ano = 0
-		if(step > INIT_PERIOD and alarmPeriod > 0) then
-		    if(anoRaw > 4 * THRESHOLD) then
-						ano = 3
-				elseif(anoRaw < THRESHOLD) then
-						ano = 1
+		if(alert) then
+				if(err > 0) then
+						ano = upperCusumAno
 				else
-						ano = 2
+						ano = lowerCusumAno
 				end
 		end
 
-		local iterResult = {alert, ano}
+		local iterResult = {timestamp_, alert, exp(est) - LOGNORMAL_SHIFT, ano}
 
 		return iterResult
   end
@@ -174,8 +185,7 @@ function calculate_fdi_minutes(times_, values_)
 	local insert = table.insert
   for ii=1,range do
     local iterResult = iter(times_[ii], values_[ii])
-		local x = {times_[ii], iterResult[1], iterResult[2]}
-    insert(result, x)
+		insert(result, iterResult)
   end
 
   return result

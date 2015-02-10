@@ -1,5 +1,5 @@
 ------------------------------------
--- Daily algo, Matlab version 35 ---
+-- Daily algo, Matlab version 38 ---
 ------------------------------------
 require 'helpers'
 require 'fdi/statisticsBasic'
@@ -12,19 +12,22 @@ local WEEK = 7
 
 -- parameters
 local DRIFT = 1
-local THRESHOLD = 6
-local FORGETTING_FACTOR = 0.06
+local THRESHOLD = 4
+local SPIKE_THRESHOLD = 3
 local LOGNORMAL_SHIFT = 150
-local MAX_ALARM_PERIOD = 4
-local R_DRIFT = 1.2
-local R_SAFETY = 2
-local MIN_SD = 0.1
-local SD_EST_PERIOD = 28
-local INIT_PERIOD = 17
+local CYCLE_FORGETTING_FACTOR = 0.3
+local TREND_FORGETTING_FACTOR = 0.05
+local SD_FORGETTING_FACTOR = 0.2
+local MAX_TREND = 0.1
+local MIN_SD = 0.15
+local MAX_SD = 1
+local MAX_DEV = 2.5
+local SD_RANGE = 2
+local SD_ON_ALARM = 2
+local STABILITY_PERIOD = 4
 
 -- initial model
 local INIT_SD = 0.2
-local INIT_R = 0.2
 local INIT_M = math.log(LOGNORMAL_SHIFT)
 
 function calculate_fdi_days(times_, values_)
@@ -32,23 +35,19 @@ function calculate_fdi_days(times_, values_)
   local step = 0
 
   -- samples model
-  local m = INIT_M
-  local r = INIT_R
-  local sd = INIT_SD
+  local primaryCycle = {}
+	local trend = 0
+	local sdCycle = {}
 
   -- change model
   local upperCusum = 0
   local lowerCusum = 0
-  local weeklyWindow = {}
-	local devWindow = {}
+  local upperCusumAno = 0
+  local lowerCusumAno = 0
+  local secondaryCycle = {}
+  local stateCycle	= {}
+	local errCycle ={}
   local alarmPeriod = 0
-  local rPeriod = 0
-	local lastRef = INIT_M
-
-	-- downtime
-	local downtime = 0
-  local lastDowntime = 0
-
 
   local function iter(timestamp_, value_)
 
@@ -62,184 +61,182 @@ function calculate_fdi_days(times_, values_)
     local sqrt = math.sqrt
     local floor = math.floor
     local ceil = math.ceil
+		local exp = math.exp
+
 
 		step = step + 1
-
-		local tval = log(LOGNORMAL_SHIFT + value_)
+    local tval = log(LOGNORMAL_SHIFT + value_)
     local ii = (timestamp_ - REF_TIME) / INTERVAL
+    local hh = (ii % WEEK) + 1
+		local est
+		local err
 
-    local y
-    if((ii % 7) < 2) then
-      y = tval + r
+    if(step <= WEEK) then
+
+      primaryCycle[hh] = tval
+			secondaryCycle[hh] = INIT_M
+			errCycle[hh] = 0
+			stateCycle[hh] = 0
+			sdCycle[hh] = INIT_SD
+      est = tval
+      err = 0
+
+      if(step == WEEK) then
+        local cycValue = median(primaryCycle)
+        for kk = 1,WEEK	 do
+				  primaryCycle[kk] = cycValue
+				end
+      end
+
     else
-      y = tval
-    end
 
-		local anoRaw = abs(y - m) / sd
-
-    if(alarmPeriod < MAX_ALARM_PERIOD) then
-      local err = y - m
-      local upperCusumTemp = max(0, upperCusum + (err - DRIFT * sd))
-      local lowerCusumTemp = min(0, lowerCusum + (err + DRIFT * sd))
-      if(((upperCusumTemp > THRESHOLD * sd) or (lowerCusumTemp < -THRESHOLD * sd))) then
-        alarmPeriod = alarmPeriod + 1;
-      else
-        if(alarmPeriod == 0) then
-          upperCusum = upperCusumTemp
-          lowerCusum = lowerCusumTemp
-        else -- (alarmPeriod > 0)
-          upperCusum = 0
-          lowerCusum = 0
-          alarmPeriod = 0
-        end
-
-        -- update m
-        m = m + FORGETTING_FACTOR * err
+      est = primaryCycle[hh] + trend
+      if(est < INIT_M) then
+        est = INIT_M
       end
+      err = tval - est
+		  remove(errCycle, 1)
+      insert(errCycle, err)
 
-    else -- (alarmPeriod == MAX_ALARM_PERIOD)
-      upperCusum = 0
-      lowerCusum = 0
-      alarmPeriod = 0
-
-      m = y
-
-			lastRef = m
-		  for jj = 1,MAX_ALARM_PERIOD-1 do
-        devWindow[SD_EST_PERIOD + 1 - jj] = weeklyWindow[WEEK + 1 - jj] - lastRef
-      end
-
-    end
-
-		-- downtime
-		if((((alarmPeriod > 0) or (downtime > 0)) and (value_ == 0))) then
-		  downtime = downtime + 1
-      lastDowntime = ii
-    else
-      downtime = 0
-    end
-
-		-- update sd
-		if(downtime == 0) then
-		  remove(devWindow, 1)
-		  insert(devWindow, y-lastRef)
-      if(alarmPeriod == 0) then
-				local devInd = {}
-				local trDevWindow = {}
-				for ii = 1,SD_EST_PERIOD do
-		      devInd[ii] = true
-					trDevWindow[ii] = devWindow[ii]
+			local opt = 0
+      if(stateCycle[hh] > 0) then
+        local secondest = secondaryCycle[hh] + trend
+        if(secondest < INIT_M) then
+            secondest = INIT_M
         end
+        local seconderr = tval - secondest
 
-        while true do
-            local stop = true
-            local mu = mean(trDevWindow)
-            local sig = std(trDevWindow)
-            if(sig == 0) then
-                break
-            end
-						for ii,value in pairs(devWindow) do
-								if(devInd[ii] and (abs((value - mu)/sig) >= 2)) then
-								  devInd[ii] = false
-									stop = false
-								end
-						end
-						trDevWindow = {}
-            for ii = 1,SD_EST_PERIOD do
-				      if(devInd[ii]) then
-                insert(trDevWindow, devWindow[ii])
-				      end
-            end
-            if(stop) then
-                break
-            end
-        end
-
-        local sdx = std(trDevWindow) * SD_EST_PERIOD / #trDevWindow;
-        sd = sqrt((1-FORGETTING_FACTOR)*sd^2 + FORGETTING_FACTOR*sdx^2);
-        if(sd < MIN_SD) then
-            sd = MIN_SD
+        if(abs(seconderr) < abs(err)) then
+            est = secondest
+            err = seconderr
+            opt = 1
         end
       end
-    end
 
-    -- update r
-    remove(weeklyWindow, 1)
-    insert(weeklyWindow, tval)
+      local upperCusumTemp = max(0, upperCusum + (err/sdCycle[hh] - DRIFT))
+      local lowerCusumTemp = min(0, lowerCusum + (err/sdCycle[hh] + DRIFT))
 
-    if(ii - lastDowntime > WEEK) then
-      local mwa = {}
-      local mna = {}
-      for jj,v in ipairs(weeklyWindow) do
-        if((((ii-WEEK)+jj) % 7) < 2) then
-          insert(mwa,v)
-        else
-          insert(mna, v)
-        end
-      end
-      local mout = median(mna)
-      local nout = median(mwa)
+      upperCusumAno = max(0, upperCusumAno + (err/sdCycle[hh] - DRIFT))
+      lowerCusumAno = min(0, lowerCusumAno + (err/sdCycle[hh] + DRIFT))
 
-      local wdif = 0
-      for _,value in pairs(mwa) do
-        if(abs(value - nout) > R_SAFETY*sd) then wdif = wdif + 1 end
-      end
-      local ndif = 0
-      for _,value in pairs(mna) do
-        if(abs(value - mout) > R_SAFETY*sd) then ndif = ndif + 1 end
-      end
 
-      if((wdif == 0) and (ndif == 0) and (mout >= nout)) then
-        local rout = mout - nout
+      if((upperCusumTemp > THRESHOLD) or (lowerCusumTemp < -THRESHOLD) or (abs(err)/sdCycle[hh] > SPIKE_THRESHOLD)) then
 
-        if(rPeriod < MAX_ALARM_PERIOD) then
-          if((abs(rout - r) > R_DRIFT)) then
-            rPeriod = rPeriod + 1
-          else
-            r = r + FORGETTING_FACTOR * (rout - r)
-            rPeriod = 0
+        secondaryCycle[hh] = tval
+        stateCycle[hh] = 1
+
+			  local minerr = errCycle[1+WEEK-STABILITY_PERIOD]
+			  local maxerr = errCycle[1+WEEK-STABILITY_PERIOD]
+				local sumerr = errCycle[1+WEEK-STABILITY_PERIOD]
+			  for kk=2+WEEK-STABILITY_PERIOD,WEEK do
+			    if(errCycle[kk] < minerr) then minerr = errCycle[kk] end
+				  if(errCycle[kk] > maxerr) then maxerr = errCycle[kk] end
+					sumerr = sumerr + errCycle[kk]
+		    end
+			  local range = maxerr - minerr
+        if(range/sdCycle[hh] < SD_RANGE) then
+          local jump = sumerr/STABILITY_PERIOD
+          for hhj = 1,WEEK do
+            primaryCycle[hhj] = primaryCycle[hhj] + jump
+            errCycle[hhj] = errCycle[hhj] - jump
+            stateCycle[hhj] = 1
           end
-        else
-          r = rout
-          rPeriod = 0
-        end
+		    end
+
+		    alarmPeriod = alarmPeriod + 1
+
       else
-        rPeriod = 0
+
+        if(stateCycle[hh] == 1) then
+
+				  if(opt == 1) then
+				    secondaryCycle[hh] = CYCLE_FORGETTING_FACTOR * secondaryCycle[hh] + (1 - CYCLE_FORGETTING_FACTOR) * tval
+				    stateCycle[hh] = 2;
+
+				  else
+				    primaryCycle[hh] = CYCLE_FORGETTING_FACTOR * primaryCycle[hh]+ (1 - CYCLE_FORGETTING_FACTOR) * tval
+				    stateCycle[hh] = 0
+				  end
+
+		    elseif(stateCycle[hh] == 2) then
+
+				  if(opt == 1) then
+				    primaryCycle[hh] = CYCLE_FORGETTING_FACTOR * secondaryCycle[hh] + (1 - CYCLE_FORGETTING_FACTOR) * tval
+					  stateCycle[hh] = 0
+				  else
+            primaryCycle[hh] = CYCLE_FORGETTING_FACTOR * primaryCycle[hh] + (1 - CYCLE_FORGETTING_FACTOR) * tval
+					  stateCycle[hh] = 0
+				  end
+
+		    else
+
+          -- update cycle
+				  primaryCycle[hh] = primaryCycle[hh] + trend + CYCLE_FORGETTING_FACTOR * err
+
+				  -- update trend
+				  trend = trend + TREND_FORGETTING_FACTOR * err
+				  if(trend > MAX_TREND) then
+            trend = MAX_TREND
+				  end
+          if(trend < -MAX_TREND) then
+				    trend = -MAX_TREND
+				  end
+
+		    end
+
+		    if(alarmPeriod > 0) then
+				  upperCusumAno = upperCusumTemp
+				  lowerCusumAno = lowerCusumTemp
+		    end
+
+		    alarmPeriod = 0
+
+		    upperCusum = upperCusumTemp
+		    lowerCusum = lowerCusumTemp
+
       end
 
-		else
-      if(downtime > WEEK) then
-        r = 0
-        rPeriod = 0
-      end
+
+      -- update sd
+      if(alarmPeriod <= SD_ON_ALARM) then
+        local ub = MAX_DEV * sdCycle[hh]
+			  local dev
+		    if(err > ub) then
+				  dev = ub
+		    elseif(err < -ub) then
+		      dev = -ub
+		    else
+				  dev = err
+		    end
+		    sdCycle[hh] = sqrt((1-SD_FORGETTING_FACTOR)*sdCycle[hh]^2 + SD_FORGETTING_FACTOR*dev^2)
+        if(sdCycle[hh] < MIN_SD) then
+            sdCycle[hh] = MIN_SD
+		    end
+		    if(sdCycle[hh] > MAX_SD) then
+          sdCycle[hh] = MAX_SD
+		    end
+		  end
+
     end
 
-		local alert = step > INIT_PERIOD and alarmPeriod > 0
+
+		local alert = step > 2*WEEK and alarmPeriod > 0
 		local ano = 0
-		if(step > INIT_PERIOD and alarmPeriod > 0) then
-				if(anoRaw > 4 * THRESHOLD) then
-						ano = 3
-				elseif(anoRaw < THRESHOLD) then
-						ano = 1
+		if(alert) then
+				if(err > 0) then
+						ano = upperCusumAno
 				else
-						ano = 2
+						ano = lowerCusumAno
 				end
 		end
 
-		local iterResult = {alert, ano}
+		local iterResult = {timestamp_, alert, exp(est) - LOGNORMAL_SHIFT, ano}
 
     return iterResult
-  end
 
-	-- initialize
-	for ii = 1,WEEK do
-		weeklyWindow[ii] = INIT_M
-  end
+  end -- of iter
 
-	local initDev = INIT_SD * math.sqrt(27/28)
-	for ii = 1,SD_EST_PERIOD do
-		devWindow[ii] = initDev * ((-1)^ii)
-  end
+	----------------------------------------------------------
 
   local result = {}
 
@@ -253,8 +250,7 @@ function calculate_fdi_days(times_, values_)
 	local insert = table.insert
   for ii=1,range do
     local iterResult = iter(times_[ii], values_[ii])
-		local x = {times_[ii], iterResult[1], iterResult[2]}
-    insert(result, x)
+		insert(result, iterResult)
   end
 
   return result

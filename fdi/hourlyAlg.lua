@@ -1,5 +1,5 @@
 -------------------------------------
--- Hourly algo, Matlab version 18 ---
+-- Hourly algo, Matlab version 27 ---
 -------------------------------------
 require 'helpers'
 require 'fdi/statisticsBasic'
@@ -41,7 +41,9 @@ function calculate_fdi_hours(times_, values_)
 	local alarmPeriod = 0
 	local upperCusum = 0
   local lowerCusum = 0
-	local downtime = 0
+	local upperCusumAno = 0
+  local lowerCusumAno = 0
+  local downtime = 0
 
 
   local function iter(timestamp_, value_)
@@ -54,6 +56,7 @@ function calculate_fdi_hours(times_, values_)
     local max = math.max
     local min = math.min
     local sqrt = math.sqrt
+		local exp = math.exp
 
 	  step = step + 1
 
@@ -66,6 +69,7 @@ function calculate_fdi_hours(times_, values_)
 				downtime = 0
 		end
 		local err = 0
+		local est = tval
 
 		if(step <= WEEK) then
 				primaryCycle[hh] = tval
@@ -87,7 +91,7 @@ function calculate_fdi_hours(times_, values_)
 
 		else
 
-		    local est = primaryCycle[hh] + trend
+		    est = primaryCycle[hh] + trend
 				if(est < log(LOGNORMAL_SHIFT)) then
 						est = log(LOGNORMAL_SHIFT)
 				end
@@ -108,6 +112,9 @@ function calculate_fdi_hours(times_, values_)
 								secondaryCycle[hh] = temp
 						end
 				end
+
+				upperCusumAno = max(0, upperCusumAno + (err - DRIFT * sd))
+        lowerCusumAno = min(0, lowerCusumAno + (err + DRIFT * sd))
 
 				local upperCusumTemp = max(0, upperCusum + (err - DRIFT * sd))
 				local lowerCusumTemp = min(0, lowerCusum + (err + DRIFT * sd))
@@ -157,6 +164,11 @@ function calculate_fdi_hours(times_, values_)
 								lowerCusum = 0
 						end
 
+						if(alarmPeriod > 0) then
+								upperCusumAno = upperCusum
+								lowerCusumAno = lowerCusum
+						end
+
 						-- reset alarm
 						alarmPeriod = 0
 
@@ -193,20 +205,17 @@ function calculate_fdi_hours(times_, values_)
 		end
 
 
-		local alert = step > 2 * WEEK and alarmPeriod > 0
+		local alert = step > 2*WEEK and alarmPeriod > 0
 		local ano = 0
 		if(alert) then
-				local anoRaw = abs(err) / sd
-				if(anoRaw > 4 * THRESHOLD) then
-						ano = 3
-				elseif(anoRaw < THRESHOLD) then
-						ano = 1
+				if(err > 0) then
+						ano = upperCusumAno
 				else
-						ano = 2
+						ano = lowerCusumAno
 				end
 		end
 
-		local iterResult = {alert, ano}
+		local iterResult = {timestamp_, alert, exp(est) - LOGNORMAL_SHIFT, ano}
 
     return iterResult
   end
@@ -235,8 +244,7 @@ function calculate_fdi_hours(times_, values_)
 	local insert = table.insert
   for ii=1,range do
     local iterResult = iter(times_[ii], values_[ii])
-		local x = {times_[ii], iterResult[1], iterResult[2]}
-    insert(result, x)
+		insert(result, iterResult)
   end
   return result
 
