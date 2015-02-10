@@ -760,12 +760,13 @@ function mule(db_)
       logw("reset - got empty key. bailing out");
     else
       for name in db_.matching_keys(resource_,level) do
-        flush_cache_of_sequence(name)
         if force then
           logi("reset",name)
+          _updated_sequences[name] = nil
           _db.out(name)
           col.elem(format("\"%s\"",name))
         elseif timestamp then
+          flush_cache_of_sequence(name)
           local seq = sequence(db_,name)
           logi("reset to timestamp",name,timestamp)
           if seq.reset_to_timestamp(timestamp) then
