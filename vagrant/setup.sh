@@ -8,11 +8,8 @@ sudo locale-gen UTF-8 || :
 
 : Installing packages:
 : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if ! which curl
-then
-  sudo apt-get update -y
-fi
-sudo apt-get install -y curl python-software-properties python g++ make unzip lua5.1 luarocks wget software-properties-common openjdk-6-jre nginx
+sudo apt-get update -y
+sudo apt-get install -y curl python-software-properties python g++ make unzip lua5.1 luarocks wget software-properties-common openjdk-6-jre nginx git autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev
 
 : Installing rocks:
 : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,11 +27,18 @@ then
   sudo npm install -g coffee-script@1.6.2
 fi
 
-if ! which rvm
+if [ ! -e ~/.rbenv ]
 then
-  : Installing RVM, Ruby:
-  : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  curl -L https://get.rvm.io | HOME=/home/vagrant bash -ls stable --ruby=1.9.3 --verify-downloads 1
+  git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
+  echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+  echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+  source ~/.bashrc
+
+  git clone https://github.com/sstephenson/ruby-build.git
+  cd ruby-build
+  sudo ./install.sh
+  rbenv install 2.2.0
+  rbenv global 2.2.0
 fi
 
 if ! which sencha
