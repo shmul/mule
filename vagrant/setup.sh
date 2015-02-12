@@ -30,9 +30,9 @@ fi
 if [ ! -e ~/.rbenv ]
 then
   git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
-  echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
-  echo 'eval "$(rbenv init -)"' >> ~/.bashrc
-  source ~/.bashrc
+  echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
+  echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
+  source ~/.bash_profile
 
   git clone https://github.com/sstephenson/ruby-build.git
   cd ruby-build
