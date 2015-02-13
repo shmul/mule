@@ -1,9 +1,11 @@
 
 function app() {
-  function load_graph(graph_,target_) {
+  function load_graph(graph_,target_,label_) {
     var graph = scent_ds.graph(graph_);
-    var raw_data = graph[1][graph[0]];
+    var name = graph[0];
+    var raw_data = graph[1][name];
     var data = [];
+
     for (var rw in raw_data) {
       var dt = raw_data[rw][2];
       if ( dt>100000 ) {
@@ -19,7 +21,7 @@ function app() {
     }];
 
     MG.data_graphic({
-      title: graph[0],
+      //title: graph[0],
       data: data,
       markers: markers,
       show_secondary_x_label: false,
@@ -32,19 +34,19 @@ function app() {
       //interpolate: "monotone",
       missing_is_zero: true,
     });
+    $(label_).text(name);
+    return name;
   }
 
-  load_graph("httpreq","#chart-1");
-  load_graph("httpreq","#chart-2");
-  load_graph("httpreq","#chart-3");
-  /*
-    $(function() {
-    $('#chart-1').on('click', function() {
-    alert("chart-1");
-    });
-    });
-  */
+  load_graph("httpreq","#chart-1","#chart-1-label");
+  load_graph("httpreq","#chart-2","#chart-2-label");
+  load_graph("httpreq","#chart-3","#chart-3-label");
 
+  $('#chart-1').on('click', function() {
+    load_graph("httpreq","#modal-body","#modal-label");
+    var el = $("#modal-target");
+    $("#modal-target").modal('show');
+  });
 }
 
 

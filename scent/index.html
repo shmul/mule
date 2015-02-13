@@ -179,14 +179,27 @@
           </h1>
           <ol class="breadcrumb">
             <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-            <li><a href="#">Examples</a></li>
             <li class="active">Blank page</li>
           </ol>
         </section>
 
         <!-- Main content -->
-        <section class="content">
+        <!-- Modal -->
+        <div class="modal fade" id="modal-target" tabindex="-1" role="dialog" aria-labelledby="modal-label" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content modal-lg">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="modal-label"></h4>
+              </div>
+              <div class="modal-body" id="modal-body">
+              </div>
+              <div class="modal-footer"></div>
+            </div>
+          </div>
+        </div> <!-- ./modal -->
 
+        <section class="content" id="modal-target">
           <!-- Default box -->
           <div class="box">
             <div class="box-header with-border">
@@ -201,6 +214,9 @@
               <div class="row">
                 <div class="col-md-4">
                   <div class="box box-primary">
+                    <div class="box-header">
+                      <h3 id="chart-1-label" class="box-title"></h3>
+                    </div>
                     <div class="box-body">
                       <div id="chart-1" style="height: 300px;"></div>
                     </div><!-- /.box-body-->
@@ -208,6 +224,9 @@
                 </div><!-- /.col -->
                 <div class="col-md-4">
                   <div class="box box-primary">
+                    <div class="box-header">
+                      <h3 id="chart-2-label" class="box-title"></h3>
+                    </div>
                     <div class="box-body">
                       <div id="chart-2" style="height: 300px;"></div>
                     </div><!-- /.box-body-->
@@ -215,6 +234,9 @@
                 </div><!-- /.col -->
                 <div class="col-md-4">
                   <div class="box box-primary">
+                    <div class="box-header">
+                      <h3 id="chart-3-label" class="box-title"></h3>
+                    </div>
                     <div class="box-body">
                       <div id="chart-3" style="height: 300px;"></div>
                     </div><!-- /.box-body-->
@@ -239,6 +261,7 @@
           <b>Version</b> 0.1 (based on <a href="http://almsaeedstudio.com/AdminLTE/" target="_blank">AdminLTE</a>)
         </div>
         <!-- TODO - open an overlay of phish youtube -->
+        <!-- Look here http://stackoverflow.com/questions/18622508/bootstrap-3-and-youtube-in-modal -->
         <strong>Scent of a mule, you better watch out where <a href="https://www.youtube.com/watch?v=qBkhao0DEhU">you go</a></strong>
       </footer>
     </div><!-- ./wrapper -->
