@@ -5,15 +5,15 @@ function app() {
     var name = graph[0];
     var raw_data = graph[1][name];
     var data = [];
-
+    var m = 0;
     for (var rw in raw_data) {
       var dt = raw_data[rw][2];
+      var v = raw_data[rw][0];
       if ( dt>100000 ) {
-        data.push({x:dt, y:raw_data[rw][0]});
+        data.push({x:dt, y:v});
       }
     };
     data.sort(function(a,b) { return a.x-b.x });
-
 
     var markers = [{
       'date': new Date('2014-05-01T00:00:00.000Z'),
@@ -80,7 +80,8 @@ function app() {
 
   for (i=1; i<=4; ++i) {
     var name = build_graph_cell($("#charts-container"),i);
-    load_graph("httpreq","#"+name,"#"+name+"-label");
+    var g = i%2==0 ? "httpreq" : "s3.phishing";
+    load_graph(g,"#"+name,"#"+name+"-label");
   }
 
 }
