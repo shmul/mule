@@ -61,7 +61,32 @@ function app() {
     }
   }
 
-
+  function update_alerts() {
+    var raw_data = scent_ds.alerts();
+    // 0-critical, 1-warning, 2-anomaly, 3-normal
+    var alerts = [[],[],[],[]];
+    for (n in raw_data) {
+      var current = raw_data[n];
+      var idx = -1;
+      switch ( current[7] ) {
+      case "CRITICAL LOW":
+      case "CRITICAL HIGH": idx = 0; break;
+      case "WARNING LOW":
+      case "WARNING HIGH": idx = 1; break;
+      case "NORMAL": idx = 3; break;
+      }
+      if ( idx!=-1 ) {
+        alerts[idx].push(current);
+      }
+    }
+    var anomalies = raw_data["anomalies"];
+    for (n in anomalies) {
+      alerts[2].push(anomalies[n]);
+    }
+    for (i=0; i<4; ++i) {
+      $("#alert-"+(i+1)).text(alerts[i].length);
+    }
+  }
 
 
   function build_graph_cell(parent_,idx_) {
@@ -85,7 +110,7 @@ function app() {
     var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
     load_graph(g,"#"+name,"#"+name+"-label");
   }
-
+  update_alerts();
 }
 
 

@@ -19,15 +19,14 @@ function scent_ds_mockup (ready_) {
     load_fixture(fixtures_scripts[f]);
   }
 
-  function alerts(alert_type_) {
-    if ( alert_type_=="critical" ) {
-
-    }
-  }
 
   function graph(graph_name_) {
     var gr = fixtures["graph"];
     return gr[graph_name_];
+  }
+
+  function alerts(graph_name_) {
+    return fixtures["alert"];
   }
 
   function load_settings(user_) {
@@ -39,6 +38,7 @@ function scent_ds_mockup (ready_) {
   return {
     critical : function() { return alerts("critical"); },
     graph : graph,
+    alerts : alerts,
     load_settings: load_settings,
     save_settings: save_settings,
   }
