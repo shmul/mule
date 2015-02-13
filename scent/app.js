@@ -1,9 +1,7 @@
 
 function app() {
-  function load_graph(graph_,target_,label_) {
-    var graph = scent_ds.graph(graph_);
-    var name = graph[0];
-    var raw_data = graph[1][name];
+  function load_graph(name_,target_,label_,no_modal_) {
+    var raw_data = scent_ds.graph(name_);
     var data = [];
     var m = 0;
     for (var rw in raw_data) {
@@ -48,15 +46,19 @@ function app() {
     x_axis.render();
     y_axis.render();
     graph.render();
-    $(label_).text(name);
+    $(label_).text(name_);
 
-    $(target_).on('click', function() {
-      load_graph("httpreq","#modal-body","#modal-label");
-      var el = $("#modal-target");
-      $("#modal-target").modal('show');
-    });
-
-    return name;
+    if ( !no_modal_ ) {
+      $(target_).on('click', function() {
+        load_graph(name_,"#modal-body","#modal-label",true);
+        var el = $("#modal-target");
+        $("#modal-target").modal('show');
+      });
+      // cleanup
+      $('#modal-target').on('hidden.bs.modal', function (e) {
+        $("#modal-body").html("");
+      });
+    }
   }
 
 
@@ -80,7 +82,7 @@ function app() {
 
   for (i=1; i<=4; ++i) {
     var name = build_graph_cell($("#charts-container"),i);
-    var g = i%2==0 ? "httpreq" : "s3.phishing";
+    var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
     load_graph(g,"#"+name,"#"+name+"-label");
   }
 

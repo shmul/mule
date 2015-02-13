@@ -1,7 +1,7 @@
 // all data items on the page come from here. We can work in mockup or real world mode
 
 function scent_ds_mockup (ready_) {
-  var fixtures_scripts = ["s3.phishing","httpreq","alerts"];
+  var fixtures_scripts = ["config","key","graph","alert"];
   var fixtures = {};
 
   function load_fixture(name_,path_) {
@@ -15,7 +15,6 @@ function scent_ds_mockup (ready_) {
     });
   }
 
-
   for (var f in fixtures_scripts) {
     load_fixture(fixtures_scripts[f]);
   }
@@ -27,18 +26,21 @@ function scent_ds_mockup (ready_) {
   }
 
   function graph(graph_name_) {
-    var gr = fixtures[graph_name_];
-    if ( gr["httpreq.frontend_messaging.304;1h:90d"] ) {
-      return ["httpreq.frontend_messaging.304;1h:90d",gr];
-    }
-    if ( gr["download_from_s3.downloads.phishing_constant_patterns;1h:90d"] ) {
-      return ["download_from_s3.downloads.phishing_constant_patterns;1h:90d",gr];
-    }
+    var gr = fixtures["graph"];
+    return gr[graph_name_];
+  }
+
+  function load_settings(user_) {
+  }
+
+  function save_settings(user_,settings_) {
   }
 
   return {
     critical : function() { return alerts("critical"); },
     graph : graph,
+    load_settings: load_settings,
+    save_settings: save_settings,
   }
 
 
