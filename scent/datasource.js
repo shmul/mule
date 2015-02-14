@@ -29,18 +29,30 @@ function scent_ds_mockup (ready_) {
     return fixtures["alert"];
   }
 
-  function load_settings(user_) {
+  // if key == "persistent" the data is taken from the server, otherwise session storage
+  // is used
+  function load(user_,key_) {
+    if (key_=="persistent" ) {
+      return localStorage[user_];
+    }
+    return sessionStorage[user_][key_];
   }
 
-  function save_settings(user_,settings_) {
+  function save(user_,key_,data_) {
+    if (key_=="persistent" ) {
+      localStorage[user_][key_] = data_;
+      return;
+    }
+    sessionStorage[user_][key_] = data_;
   }
 
   return {
     critical : function() { return alerts("critical"); },
     graph : graph,
+    keys : keys,
     alerts : alerts,
-    load_settings: load_settings,
-    save_settings: save_settings,
+    load: load,
+    save: save,
   }
 
 
