@@ -64,6 +64,16 @@ function app() {
   function update_alerts() {
     var raw_data = scent_ds.alerts();
     // 0-critical, 1-warning, 2-anomaly, 3-normal
+    function translate(i) {
+      switch (i) {
+      case 0: return { title: "Critical", type: "critical"};
+      case 1: return { title: "Warning", type: "warning"};
+      case 2: return { title: "Anomaly", type: "anomaly"};
+      case 3: return { title: "Normal", type: "normal"};
+      }
+      return {}
+    }
+    var date_format = d3.time.format("%Y-%M-%d:%H%M%S");
     var alerts = [[],[],[],[]];
     for (n in raw_data) {
       var current = raw_data[n];
@@ -76,15 +86,49 @@ function app() {
       case "NORMAL": idx = 3; break;
       }
       if ( idx!=-1 ) {
-        alerts[idx].push(current);
+        alerts[idx].push([n,current]);
       }
     }
     var anomalies = raw_data["anomalies"];
     for (n in anomalies) {
-      alerts[2].push(anomalies[n]);
+      alerts[2].push([n,anomalies[n]]);
     }
-    for (i=0; i<4; ++i) {
-      $("#alert-"+(i+1)).text(alerts[i].length);
+
+    var template_data = [];
+    for (var i=0; i<4; ++i) {
+      var len = alerts[i].length;
+      $("#alert-"+(i+1)).text(len);
+      var d = [];
+      for (var j=0; j<len; ++j) {
+        if ( i==2 ) { //anomalies
+          var cur = alerts[i][j][1];
+          cur.sort();
+          d.push({
+            graph : alerts[i][j][0],
+            time : date_format(new Date(cur[0]*1000)),
+            type : "anomaly" // this is needed for jsrender's predicate in the loop
+          });
+        } else {
+          var cur = alerts[i][j][1];
+          d.push({
+            graph : alerts[i][j][0],
+            time : date_format(new Date(cur[8]*1000)),
+            value : cur[6],
+            crit_high : cur[3],
+            warn_high : cur[2],
+            warn_low : cur[1],
+            crit_low : cur[0],
+            stale : cur[5],
+          });
+        }
+      }
+      var tr = translate(i);
+      template_data.push({title:tr.title,type:tr.type,records:d});
+    }
+    $("#alert-container").html($.templates("#alert-template").render(template_data));
+    for (var i=0; i<4; ++i) {
+      var tr = translate(i);
+      $("#alert-"+tr.type).dataTable();
     }
   }
 
