@@ -42,10 +42,15 @@ function app() {
       tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
       ticksTreatment: ticksTreatment
     } );
-
-    x_axis.render();
-    y_axis.render();
+    var annotator = new Rickshaw.Graph.Annotate({
+      graph: graph,
+      element: document.querySelector(target_+'-timeline')
+    });
     graph.render();
+
+    annotator.add(1423785600,"hello cruel world");
+		annotator.update();
+
     $(label_).text(name_);
 
     if ( !no_modal_ ) {
