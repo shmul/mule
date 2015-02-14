@@ -1,5 +1,7 @@
 
 function app() {
+  var user = "Shmul the mule";
+
   function load_graph(name_,target_,label_,no_modal_) {
     var raw_data = scent_ds.graph(name_);
     var data = [];
@@ -136,6 +138,26 @@ function app() {
       $("#alert-"+tr.type).dataTable();
     }
   }
+
+  function load_graphs_lists(list_name_,data_) {
+    if ( data_ && data_.length>0 ) {
+      var template_data = [];
+      for (var d=0; d<data_.length; ++d) {
+        template_data.push({idx:1+d, name:data_[d]});
+      }
+      $("#"+list_name_+"-container").append($.templates("#"+list_name_+"-template").render(template_data));
+    }
+  }
+  var persistent = scent_ds.load(user,"persistent");
+  var favorites = persistent.favorites;
+  var recent = scent_ds.load(user,"recent");
+  load_graphs_lists("favorite",favorites);
+  load_graphs_lists("recent",recent);
+
+  $(window).bind('hashchange', function () { //detect hash change
+    var hash = window.location.hash.slice(1); //hash to string (= "myanchor")
+    //do sth here, hell yeah!
+    });
 
 
   function build_graph_cell(parent_,idx_) {

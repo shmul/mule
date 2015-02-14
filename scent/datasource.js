@@ -3,6 +3,17 @@
 function scent_ds_mockup (ready_) {
   var fixtures_scripts = ["config","key","graph","alert"];
   var fixtures = {};
+  const user = "Shmul the mule";
+
+  save(user,"recent",
+       ["brave.backend;1d:2y",
+        "event.activation_failed;5m:3d",
+        "kashmir_report_db_storer;5m:3d"]);
+  save(user,"persistent",
+       {favorites:["event.bho_blocked_blacklisted;1h:90d",
+                   "event.browser_apc_detected;1h:90d",
+                   "event.buka_mr_result;1d:2y"]
+       });
 
   function load_fixture(name_,path_) {
     $.ajax({
@@ -38,17 +49,17 @@ function scent_ds_mockup (ready_) {
   // is used
   function load(user_,key_) {
     if (key_=="persistent" ) {
-      return localStorage[user_];
+      return $.localStorage.get(user_+".persistent");
     }
-    return sessionStorage[user_][key_];
+    return $.sessionStorage.get(user_+"."+key_);
   }
 
   function save(user_,key_,data_) {
     if (key_=="persistent" ) {
-      localStorage[user_][key_] = data_;
+      $.localStorage.set(user_+".persistent",data_);
       return;
     }
-    sessionStorage[user_][key_] = data_;
+    $.sessionStorage.set(user_+"."+key_,data_);
   }
 
   return {
