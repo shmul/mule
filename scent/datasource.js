@@ -25,6 +25,11 @@ function scent_ds_mockup (ready_) {
     return gr[graph_name_];
   }
 
+  function key(key_) {
+    var ky = fixtures["key"];
+    return ky[key_];
+  }
+
   function alerts(graph_name_) {
     return fixtures["alert"];
   }
@@ -49,7 +54,7 @@ function scent_ds_mockup (ready_) {
   return {
     critical : function() { return alerts("critical"); },
     graph : graph,
-    keys : keys,
+    key : key,
     alerts : alerts,
     load: load,
     save: save,

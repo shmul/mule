@@ -90,18 +90,8 @@ function app() {
 
 
   function build_graph_cell(parent_,idx_) {
-    var cell = [
-      '<div class="col-md-4">',
-      '<div class="box box-primary">',
-      '<div class="box-header">',
-      '<h3 id="chart-'+idx_+'-label" class="box-title"></h3>',
-      '</div>',
-      '<div class="box-body">',
-      '<div id="chart-'+idx_+'"></div>',
-      '</div><!-- /.box-body-->',
-      '</div><!-- /.box -->',
-      '</div><!-- /.col -->'].join("");
-    parent_.append(cell);
+    var template = $.templates("#chart-template");
+    $(parent_).append(template.render([{idx:idx_}]));
     return "chart-"+idx_;
   }
 
