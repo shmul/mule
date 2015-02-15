@@ -65,6 +65,16 @@ function app() {
     }
   }
 
+  function setup_alerts_menu() {
+    var template_data = [
+      {Name: "Critical", name: "critical", indicator: "danger", color: "red"},
+      {Name: "Warning", name: "warning", indicator: "warning", color: "orange"},
+      {Name: "Anomaly", name: "anomaly", indicator: "info", color: "blue"},
+      {Name: "Stale", name: "stale", indicator: "info", color: "light-blue"},
+      {Name: "Normal", name: "normal", indicator: "success", color: "green"}
+    ];
+    $("#alerts-menu-container").html($.templates("#alerts-menu-template").render(template_data));
+  }
   function update_alerts() {
     var raw_data = scent_ds.alerts();
     // 0-critical, 1-warning, 2-anomaly, 3-Stale, 4-Normal
@@ -88,7 +98,7 @@ function app() {
       case "CRITICAL HIGH": idx = 0; break;
       case "WARNING LOW":
       case "WARNING HIGH": idx = 1; break;
-      case "STALE": idx = 3; break;
+      case "stale": idx = 3; break;
       case "NORMAL": idx = 4; break;
       }
       if ( idx!=-1 ) {
@@ -103,7 +113,8 @@ function app() {
     var template_data = [];
     for (var i=0; i<5; ++i) {
       var len = alerts[i].length;
-      $("#alert-"+(i+1)).text(len);
+      var tr = translate(i);
+      $("#alert-menu-"+tr.type).text(len);
       var d = [];
       for (var j=0; j<len; ++j) {
         if ( i==2 ) { //anomalies
@@ -128,7 +139,6 @@ function app() {
           });
         }
       }
-      var tr = translate(i);
       template_data.push({title:tr.title,type:tr.type,records:d});
     }
     $("#alert-container").html($.templates("#alert-template").render(template_data));
@@ -170,6 +180,7 @@ function app() {
     var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
     load_graph(g,"#"+name,"#"+name+"-label");
   }
+  setup_alerts_menu();
   update_alerts();
 }
 

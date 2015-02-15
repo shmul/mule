@@ -140,27 +140,15 @@
             </li>
             <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
             <li class="header">ALERTS</li>
+            <div id="alerts-menu-container"></div>
+            <script id="alerts-menu-template" type="text/x-jsrender">
             <li>
-              <a href="#">
-                <i class="fa fa-circle-o text-danger"></i> Critical
-                <small class="label pull-right bg-red" id="alert-1"></small>
-              </a></li>
-            <li>
-              <a href="#">
-                <i class="fa fa-circle-o text-warning"></i> Warning
-                <small class="label pull-right bg-orange" id="alert-2"></small>
-              </a></li>
-            <li>
-              <a href="#">
-                <i class="fa fa-circle-o text-info"></i> Anomalies
-                <small class="label pull-right bg-blue" id="alert-3"></small>
-              </a></li>
-            <li>
-              <a href="#">
-                <i class="fa fa-circle-o text-green"></i> Normal
-                <small class="label pull-right bg-green" id="alert-4"></small>
-              </a></li>>
-          </ul>
+              <a href="#alert-{{:name}}">
+                <i class="fa fa-circle-o text-{{:indicator}}"></i> {{:Name}} </a>
+                <small class="label pull-right bg-{{:color}}" id="alert-menu-{{:name}}"></small>
+            </li>
+            </script>
+         </ul>
         </section>
         <!-- /.sidebar -->
       </aside>
