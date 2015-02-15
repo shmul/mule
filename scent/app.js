@@ -29,9 +29,6 @@ function app() {
         data: data
       } ]
     } );
-    var hoverDetail = new Rickshaw.Graph.HoverDetail( {
-	    graph: graph
-    } );
 
     const ticksTreatment = 'glow';
     var x_axis = new Rickshaw.Graph.Axis.Time( {
@@ -44,15 +41,15 @@ function app() {
       tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
       ticksTreatment: ticksTreatment
     } );
+    graph.render();
+/*
     var annotator = new Rickshaw.Graph.Annotate({
       graph: graph,
       element: document.querySelector(target_+'-timeline')
     });
-    graph.render();
-
     annotator.add(1423785600,"hello cruel world");
 		annotator.update();
-
+*/
     $(label_).text(name_);
 
     if ( !no_modal_ ) {
@@ -70,18 +67,19 @@ function app() {
 
   function update_alerts() {
     var raw_data = scent_ds.alerts();
-    // 0-critical, 1-warning, 2-anomaly, 3-normal
+    // 0-critical, 1-warning, 2-anomaly, 3-Stale, 4-Normal
     function translate(i) {
       switch (i) {
       case 0: return { title: "Critical", type: "critical"};
       case 1: return { title: "Warning", type: "warning"};
       case 2: return { title: "Anomaly", type: "anomaly"};
-      case 3: return { title: "Normal", type: "normal"};
+      case 3: return { title: "Stale", type: "stale"};
+      case 4: return { title: "Normal", type: "normal"};
       }
       return {}
     }
     var date_format = d3.time.format("%Y-%M-%d:%H%M%S");
-    var alerts = [[],[],[],[]];
+    var alerts = [[],[],[],[],[]];
     for (n in raw_data) {
       var current = raw_data[n];
       var idx = -1;
@@ -90,7 +88,8 @@ function app() {
       case "CRITICAL HIGH": idx = 0; break;
       case "WARNING LOW":
       case "WARNING HIGH": idx = 1; break;
-      case "NORMAL": idx = 3; break;
+      case "STALE": idx = 3; break;
+      case "NORMAL": idx = 4; break;
       }
       if ( idx!=-1 ) {
         alerts[idx].push([n,current]);
@@ -102,7 +101,7 @@ function app() {
     }
 
     var template_data = [];
-    for (var i=0; i<4; ++i) {
+    for (var i=0; i<5; ++i) {
       var len = alerts[i].length;
       $("#alert-"+(i+1)).text(len);
       var d = [];
@@ -133,7 +132,7 @@ function app() {
       template_data.push({title:tr.title,type:tr.type,records:d});
     }
     $("#alert-container").html($.templates("#alert-template").render(template_data));
-    for (var i=0; i<4; ++i) {
+    for (var i=0; i<5; ++i) {
       var tr = translate(i);
       $("#alert-"+tr.type).dataTable();
     }
