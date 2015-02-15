@@ -1,0 +1,8 @@
+.modal.modal-wide .modal-dialog {
+  width: 90%;
+}
+.modal-wide .modal-body {
+  overflow-y: auto;
+}
+
+#modal-target .modal-body { margin-bottom: 900px }
