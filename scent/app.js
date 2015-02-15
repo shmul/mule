@@ -182,6 +182,11 @@ function app() {
   }
   setup_alerts_menu();
   update_alerts();
+
+  $(".modal-wide").on("show.bs.modal", function() {
+    var height = $(window).height();
+    $(this).find(".modal-body").css("max-height", height);
+  });
 }
 
 
