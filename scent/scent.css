@@ -6,3 +6,14 @@
 }
 
 #modal-target .modal-body { margin-bottom: 900px }
+
+
+/* override some AdminLTE
+*/
+.sidebar-menu .treeview-menu  li > a {
+  padding: 5px 5px 5px 15px;
+  display: block;
+  font-size: 14px;
+  white-space: nowrap;
+  text-overflow: clip;
+}

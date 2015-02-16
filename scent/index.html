@@ -9,7 +9,8 @@
     <!-- Ionicons -->
     <link href="./plugins/ionicons.2.0.0.min.css" rel="stylesheet" type="text/css" />
     <!-- Theme style -->
-    <link href="./plugins/AdminLTE/css/AdminLTE.min.css" rel="stylesheet" type="text/css" />
+    <link href="./plugins/datatables/dataTables.bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="./plugins/AdminLTE/css/AdminLTE.css" rel="stylesheet" type="text/css" />
     <!-- AdminLTE Skins. Choose a skin from the css/skins
           folder instead of downloading all of them to reduce the load. -->
     <link href="./plugins/AdminLTE/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css" />
@@ -122,7 +123,7 @@
               <ul class="treeview-menu">
                 <div id="favorite-container"></div>
                 <script id="favorite-template" type="text/x-jsrender">
-                  <li><a href="./#{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+                  <li><a href="#{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
                 </script>
               </ul>
             </li>
@@ -135,7 +136,7 @@
               <ul class="treeview-menu">
                 <div id="recent-container"></div>
                 <script id="recent-template" type="text/x-jsrender">
-                  <li><a href="./#{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+                  <li><a href="#{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
                 </script>
               </ul>
             </li>
