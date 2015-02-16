@@ -2,6 +2,44 @@
 function app() {
   var user = "Shmul the mule";
 
+  const TIME_UNITS = {s:1, m:60, h:3600, d:3600*24, w:3600*24*7, y:3600*24*365};
+  function timeunit_to_seconds(timeunit_) {
+    var m = timeunit_.match(/^(\d+)(\w)$/);
+    if ( !m[1] || !m[2] ) { return null; }
+    var secs = TIME_UNITS[m[2]];
+    var a = parseInt(m[1]);
+    return a && secs ? secs*a : null;
+  }
+
+  function graph_split(graph_) {
+    var m = graph_.match(/^([\w\.\-]+);(\d\w+):(\d\w+)$/);
+    if ( !m || m.length!=4 ) { return null; }
+    m.shift();
+    return m;
+  }
+
+
+  function mule_config() {
+    return jQuery.extend(true,{},scent_ds.config());
+  }
+
+  function generate_other_graphs(graph_) {
+    var m = graph_.match(/^([\w\-]+)\./);
+    if ( !m || !m[1] ) { return null; }
+    var c = mule_config()[m[1]];
+    if ( !c ) { return null; }
+    var gs = graph_split(graph_);
+    if ( !gs ) { return null; }
+    var i = c.indexOf(gs[1]+":"+gs[2]);
+    if ( i!=-1 ) {
+      c.splice(i,1);
+    }
+    for (var j=0; j<c.length; ++j) {
+      c[j] = gs[0]+";"+c[j];
+    }
+    return c;
+  }
+
   function load_graph(name_,target_,label_,no_modal_) {
     var raw_data = scent_ds.graph(name_);
     var data = [];
@@ -175,18 +213,47 @@ function app() {
     return "chart-"+idx_;
   }
 
-  for (i=1; i<=4; ++i) {
-    var name = build_graph_cell($("#charts-container"),i);
-    var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
-    load_graph(g,"#"+name,"#"+name+"-label");
+  function setup_charts() {
+    for (i=1; i<=6; ++i) {
+      var name = build_graph_cell($("#charts-container"),i);
+      var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
+      load_graph(g,"#"+name,"#"+name+"-label");
+    }
+
+    $(".modal-wide").on("show.bs.modal", function() {
+      var height = $(window).height();
+      $(this).find(".modal-body").css("max-height", height);
+    });
   }
+
+  function run_tests() {
+    QUnit.config.hidepassed = true;
+    $(".content-wrapper").prepend("<div id='qunit'></div>");
+    QUnit.test("utility functions", function( assert ) {
+      assert.equal(timeunit_to_seconds("5m"),300);
+      assert.equal(timeunit_to_seconds("1y"),60*60*24*365);
+      assert.equal(timeunit_to_seconds("1d"),60*60*24);
+      assert.deepEqual(graph_split("brave.frontend;1d:2y"),["brave.frontend","1d","2y"]);
+      assert.deepEqual(graph_split("event.buka_mr_result;1h:90d"),["event.buka_mr_result","1h","90d"]);
+      assert.deepEqual(generate_other_graphs("kashmir_report_db_storer.sql_queries;1h:90d"),
+                       ["kashmir_report_db_storer.sql_queries;5m:3d","kashmir_report_db_storer.sql_queries;1d:2y"]);
+      assert.deepEqual(generate_other_graphs("malware_signature.foo.bar;1h:90d"),
+                       ["malware_signature.foo.bar;1d:2y"]);
+      assert.deepEqual(generate_other_graphs("malware_signature.foo.bar;60d:90y"),
+                       ["malware_signature.foo.bar;1h:90d","malware_signature.foo.bar;1d:2y"]);
+
+    });
+  }
+
+  // call init functions
+
+
+  run_tests();
+  setup_charts();
   setup_alerts_menu();
   update_alerts();
 
-  $(".modal-wide").on("show.bs.modal", function() {
-    var height = $(window).height();
-    $(this).find(".modal-body").css("max-height", height);
-  });
+
 }
 
 

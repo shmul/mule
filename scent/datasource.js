@@ -30,6 +30,9 @@ function scent_ds_mockup (ready_) {
     load_fixture(fixtures_scripts[f]);
   }
 
+  function config() {
+    return fixtures["config"];
+  }
 
   function graph(graph_name_) {
     var gr = fixtures["graph"];
@@ -64,6 +67,7 @@ function scent_ds_mockup (ready_) {
 
   return {
     critical : function() { return alerts("critical"); },
+    config : config,
     graph : graph,
     key : key,
     alerts : alerts,
