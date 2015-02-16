@@ -18,7 +18,6 @@ function app() {
     return m;
   }
 
-
   function mule_config() {
     return jQuery.extend(true,{},scent_ds.config());
   }
@@ -38,6 +37,12 @@ function app() {
       c[j] = gs[0]+";"+c[j];
     }
     return c;
+  }
+
+  function graph_refresh_time(graph_) {
+    var gs = graph_split(graph_);
+    if ( !gs) { return null; }
+    return timeunit_to_seconds(gs[1]);
   }
 
   function load_graph(name_,target_,label_,no_modal_) {
@@ -241,7 +246,8 @@ function app() {
                        ["malware_signature.foo.bar;1d:2y"]);
       assert.deepEqual(generate_other_graphs("malware_signature.foo.bar;60d:90y"),
                        ["malware_signature.foo.bar;1h:90d","malware_signature.foo.bar;1d:2y"]);
-
+      assert.equal(graph_refresh_time("malware_signature.foo.bar;1h:90d"),3600);
+      assert.equal(graph_refresh_time("kashmir_report_db_storer.sql_queries;5m:3d"),300);
     });
   }
 
