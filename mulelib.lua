@@ -138,7 +138,7 @@ function sequence(db_,name_)
           for i=1,(_period/_step) do
             coroutine.yield(i-1)
           end
-        end)
+      end)
     end
     local array = {}
     for i=1,(_period/_step) do
@@ -150,7 +150,7 @@ function sequence(db_,name_)
         for _,s in ipairs(array) do
           coroutine.yield(s[1])
         end
-      end)
+    end)
   end
 
   local function reset_to_timestamp(timestamp_)
@@ -169,11 +169,14 @@ function sequence(db_,name_)
 
   local function serialize(opts_,metric_cb_,slot_cb_)
     local date = os.date
+    local readable = opts_.readable
+    local average = opts_.stat=="average"
 
-    local function serialize_slot(idx_,skip_empty_,slot_cb_,readable_)
+    local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
-        slot_cb_(sum,hits,readable_ and date("%y%m%d:%H%M%S",timestamp) or timestamp)
+        local value = average and (sum/hits) or sum
+        slot_cb_(value,hits,readable and date("%y%m%d:%H%M%S",timestamp) or timestamp)
       end
     end
 
@@ -182,16 +185,16 @@ function sequence(db_,name_)
 
     local now = time_now()
     local latest_ts = latest_timestamp()
-    local readable = opts_.readable
     local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
       (opts_.filter=="now" and now-_period) or nil
+
     if opts_.all_slots then
       if not opts_.dont_cache then
         _seq_storage.cache(name_) -- this is a hint that the sequence can be cached
       end
       for s in indices(opts_.sorted) do
         if not min_timestamp or min_timestamp<get_timestamp(s) then
-          serialize_slot(s,opts_.skip_empty,slot_cb_,readable)
+          serialize_slot(s,opts_.skip_empty,slot_cb_)
         end
       end
       return
@@ -201,7 +204,7 @@ function sequence(db_,name_)
       for _,t in ipairs(opts_.timestamps) do
         if t=="*" then
           for s in indices(opts_.sorted) do
-            serialize_slot(s,true,slot_cb_,readable)
+            serialize_slot(s,true,slot_cb_)
           end
         else
           local ts = to_timestamp(t,now,latest_ts)
@@ -213,7 +216,7 @@ function sequence(db_,name_)
               local idx,_ = calculate_idx(t,_step,_period)
               local its = get_timestamp(idx)
               if t-its<_period and (not min_timestamp or min_timestamp<its) then
-                serialize_slot(idx,true,slot_cb_,readable)
+                serialize_slot(idx,true,slot_cb_)
               end
             end
           end
@@ -254,7 +257,7 @@ function sequence(db_,name_)
     reset_to_timestamp = reset_to_timestamp,
     reset = reset,
     serialize = serialize,
-         }
+  }
 end
 
 
@@ -269,7 +272,7 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_,level_)
           yield(sequence(db_,name))
         end
       end
-    end)
+  end)
 end
 
 function immediate_metrics(db_,name_,level_)
@@ -280,7 +283,7 @@ function immediate_metrics(db_,name_,level_)
       for name in db_.matching_keys(name_,0) do
         coroutine.yield(sequence(db_,name))
       end
-    end)
+  end)
 end
 
 
@@ -314,7 +317,7 @@ function mule(db_)
                                                if a>0 then
                                                  logi("mulelib flush_cache",a)
                                                end
-                                             end)
+  end)
 
   local function uniq_factories()
     local factories = _factories
@@ -362,7 +365,7 @@ function mule(db_)
             end
           end
         end
-      end)
+    end)
   end
 
 
@@ -377,12 +380,12 @@ function mule(db_)
     col.head()
 
     each_metric(_db,resource_,nil,
-                  function(seq)
-                    if seq.latest_timestamp()<timestamp then
-                      col.elem(format("\"%s\"",seq.name()))
-                      garbage[#garbage+1] = seq.name()
-                    end
-                  end)
+                function(seq)
+                  if seq.latest_timestamp()<timestamp then
+                    col.elem(format("\"%s\"",seq.name()))
+                    garbage[#garbage+1] = seq.name()
+                  end
+    end)
     col.tail()
 
     if options_.force then
@@ -407,9 +410,9 @@ function mule(db_)
                                 end,
                                 function(sum,hits,timestamp)
                                   str.write(" ",sum," ",hits," ",timestamp)
-                                end)
+                  end)
                   str.write("\n")
-                end)
+    end)
     return str
   end
 
@@ -529,6 +532,7 @@ function mule(db_)
                    readable=is_true(options_.readable),
                    timestamps=timestamps,
                    sorted=is_true(options_.sorted),
+                   stat=options_.stat,
                    skip_empty=true}
     local sequences_generator = immediate_metrics
     local alerts = is_true(options_.alerts)
@@ -563,7 +567,7 @@ function mule(db_)
               for i=1,(math.min(#ranked_children,options_.count or DEFAULT_COUNT)) do
                 coroutine.yield(ranked_children[i][1])
               end
-            end)
+          end)
         end
       end
 
@@ -799,8 +803,8 @@ function mule(db_)
     }
 
     if not (metric and step and period and
-            new_alert._critical_low and new_alert._warning_low and
-            new_alert._critical_high and new_alert._warning_high and
+              new_alert._critical_low and new_alert._warning_low and
+              new_alert._critical_high and new_alert._warning_high and
             new_alert._period) then
       logw("alert_set threshold ill defined",resource_,t2s(options_),t2s(new_alert))
       return nil
@@ -863,7 +867,7 @@ function mule(db_)
             ((daily and vv1~=today and vv1>=last_days) or
                 (hourly and vv1~=this_hour and vv1>=last_hours) or
               (minutely and vv1~=this_5_minute) and vv1>=last_minutes) then
-            insert(anomalies,vv1)
+              insert(anomalies,vv1)
           end
         end
         if #anomalies>0 then
@@ -915,7 +919,7 @@ function mule(db_)
                            critical_high = items_[6],
                            period = items_[7],
                            stale = items_[8],
-                                   })
+        })
       end,
       latest = function()
         return latest(items_[2])
@@ -1000,19 +1004,18 @@ function mule(db_)
   end
 
 
-  local function update_line(metric_,sum_,timestamp_)
+  local function update_line(metric_,sum_,timestamp_,hits_)
     local replace,sum = string.match(sum_ or "","(=?)(%d+)")
     replace = replace=="="
     timestamp_ = tonumber(timestamp_)
     sum = tonumber(sum)
-
     if not metric_ or #metric_>MAX_METRIC_LEN or not sum_ or not timestamp_ then
       logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
-      local adjusted_timestamp,sum = seq.update(timestamp_,1,sum,replace)
+      local adjusted_timestamp,sum = seq.update(timestamp_,hits_ or 1,sum,replace)
       -- it might happen that we try to update a too old timestamp. In such a case
       -- the update function returns null
       if adjusted_timestamp then
@@ -1077,7 +1080,7 @@ function mule(db_)
 
       -- 1) standard update
       if not string.find(items[1],";",1,true) then
-        return update_line(items[1],items[2],items[3])
+        return update_line(items[1],items[2],items[3],items[4])
       end
 
       -- 2) an entire sequence
@@ -1123,7 +1126,7 @@ function mule(db_)
                                           spillover_protection()
                                         end
                                         return true
-                                      end)
+        end)
         if file_exists then
           return true
         end
@@ -1164,7 +1167,7 @@ function mule(db_)
     each_metric(_db,metric_,nil,
                 function(seq)
                   table.insert(seqs,seq)
-                end)
+    end)
     return seqs
   end
 
@@ -1192,5 +1195,5 @@ function mule(db_)
     kvs_get = kvs_get,
     kvs_out = kvs_out,
     fdi = fdi
-         }
+  }
 end
