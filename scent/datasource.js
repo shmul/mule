@@ -40,8 +40,23 @@ function scent_ds_mockup (ready_) {
   }
 
   function key(key_) {
-    var ky = fixtures["key"];
-    return ky[key_];
+    var all_keys = fixtures["key"];
+    var k = $.map(all_keys,function(element,index) {return index});
+    var rv = []
+    if ( key_=="" ) { // no dots -> bring top level only
+      $.each(k,function(idx,e) {
+        if ( /^[\w-]+;/.test(e) )
+          rv.push(e);
+      });
+    } else {
+      var normalized_input = key_[key_.length-1]=='.' ? key_ : key_+".";
+      var re = new RegExp("^" + key_+"[\\w;:-]*");
+      $.each(k,function(idx,e) {
+        if ( re.test(e) )
+          rv.push(e);
+      });
+    }
+    return rv;
   }
 
   function alerts(graph_name_) {

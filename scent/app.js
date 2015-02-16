@@ -45,6 +45,25 @@ function app() {
     return timeunit_to_seconds(gs[1]);
   }
 
+  function string_set_add(set_,key_) {
+    set_ = set_ || {};
+    set_[key_] = true;
+    return set_;
+  }
+
+  function string_set_add_array(set_,keys_) {
+    set_ = set_ || {};
+    $.each(keys_,function(idx,k) {
+      set_[k] = true;
+    });
+    return set_;
+  }
+
+  function string_set_keys(set_) {
+    return $.map(set_ || {},function(key_,idx_) { return idx_; });
+  }
+
+  // --- application functions
   function load_graph(name_,target_,label_,no_modal_) {
     var raw_data = scent_ds.graph(name_);
     var data = [];
@@ -85,14 +104,14 @@ function app() {
       ticksTreatment: ticksTreatment
     } );
     graph.render();
-/*
-    var annotator = new Rickshaw.Graph.Annotate({
+    /*
+      var annotator = new Rickshaw.Graph.Annotate({
       graph: graph,
       element: document.querySelector(target_+'-timeline')
-    });
-    annotator.add(1423785600,"hello cruel world");
-		annotator.update();
-*/
+      });
+      annotator.add(1423785600,"hello cruel world");
+		  annotator.update();
+    */
     $(label_).text(name_);
 
     if ( !no_modal_ ) {
@@ -209,7 +228,7 @@ function app() {
   $(window).bind('hashchange', function () { //detect hash change
     var hash = window.location.hash.slice(1); //hash to string (= "myanchor")
     //do sth here, hell yeah!
-    });
+  });
 
 
   function build_graph_cell(parent_,idx_) {
@@ -231,6 +250,26 @@ function app() {
     });
   }
 
+  function setup_search_keys() {
+    $("#search-form").submit(function( event ) {
+      alert( $("#search-keys-input").val() );
+      event.preventDefault();
+    });
+    $("#search-keys-input").typeahead({
+      source:function (query,process) {
+        if ( !this.scent_keys ) {
+          this.scent_keys = string_set_add_array({},scent_ds.key(""));
+        } else if ( query[query.length-1]=='.') {
+          string_set_add_array(this.scent_keys,scent_ds.key(query));
+        }
+        process(string_set_keys(this.scent_keys));
+      },
+      minLength: 0,
+      items: 'all',
+    });
+
+  }
+
   function run_tests() {
     QUnit.config.hidepassed = true;
     $(".content-wrapper").prepend("<div id='qunit'></div>");
@@ -249,6 +288,39 @@ function app() {
       assert.equal(graph_refresh_time("malware_signature.foo.bar;1h:90d"),3600);
       assert.equal(graph_refresh_time("kashmir_report_db_storer.sql_queries;5m:3d"),300);
     });
+
+    QUnit.test("key function", function( assert ) {
+      assert.deepEqual(scent_ds.key("brave"),[  "brave;1d:2y",
+                                                "brave;1h:90d",
+                                                "brave;5m:3d",
+                                                "brave.backend;1d:2y",
+                                                "brave.backend;1h:90d",
+                                                "brave.backend;5m:3d",
+                                                "brave.hrl_collect;1d:2y",
+                                                "brave.hrl_collect;1h:90d",
+                                                "brave.hrl_collect;5m:3d",
+                                                "brave.request;1d:2y",
+                                                "brave.request;1h:90d",
+                                                "brave.request;5m:3d",
+                                                "brave.frontend;1d:2y",
+                                                "brave.frontend;1h:90d",
+                                                "brave.frontend;5m:3d"]);
+      assert.deepEqual(scent_ds.key("brave."),[  "brave;1d:2y",
+                                                 "brave;1h:90d",
+                                                 "brave;5m:3d",
+                                                 "brave.backend;1d:2y",
+                                                 "brave.backend;1h:90d",
+                                                 "brave.backend;5m:3d",
+                                                 "brave.hrl_collect;1d:2y",
+                                                 "brave.hrl_collect;1h:90d",
+                                                 "brave.hrl_collect;5m:3d",
+                                                 "brave.request;1d:2y",
+                                                 "brave.request;1h:90d",
+                                                 "brave.request;5m:3d",
+                                                 "brave.frontend;1d:2y",
+                                                 "brave.frontend;1h:90d",
+                                                 "brave.frontend;5m:3d"]);
+    });
   }
 
   // call init functions
@@ -257,6 +329,7 @@ function app() {
   run_tests();
   setup_charts();
   setup_alerts_menu();
+  setup_search_keys();
   update_alerts();
 
 

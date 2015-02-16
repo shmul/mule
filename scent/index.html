@@ -92,12 +92,10 @@
         <!-- sidebar: style can be found in sidebar.less -->
         <section class="sidebar">
           <!-- search form -->
-          <form action="#" method="get" class="sidebar-form">
+          <form action="#" class="sidebar-form" id="search-form">
             <div class="input-group">
-              <input type="text" name="q" class="form-control" placeholder="Search..."/>
-              <span class="input-group-btn">
-                <button type='submit' name='seach' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
-              </span>
+              <input id="search-keys-input" type="text"" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
+
             </div>
           </form>
           <!-- /.search form - TODO add something here-->
@@ -302,6 +300,7 @@
     <script src="./plugins/history/jquery.history.js" type="text/javascript"></script>
     <script src="./plugins/storage/jquery.storageapi.min.js" type="text/javascript"></script>
     <script src="./plugins/qunit-1.17.1.js" type="text/javascript"></script>
+    <script src="./plugins/Bootstrap-3-Typeahead-3.1.0/bootstrap3-typeahead.min.js" type="text/javascript"></script>
     <!-- Datasource -->
     <script src="./datasource.js" type="text/javascript"></script>
     <!-- app -->
