@@ -198,20 +198,21 @@
             <div class="box-body">
               <div class="row" id="charts-container">
                 <script id="chart-template" type="text/x-jsrender">
-                 <div class="col-md-4">
-                 <div class="box box-primary">
-                 <div class="box-header">
-                 <h3 id="chart-{{:idx}}-label" class="box-title"></h3>
-                 </div>
-                 <div class="box-body">
-                   <div id="chart-{{:idx}}-container">
-                     <div id="chart-{{:idx}}"></div>
-                     <div id="chart-{{:idx}}-timeline"></div>
-                     <div id="chart-{{:idx}}-slider"></div>
-                   </div>
-                 </div><!-- /.box-body-->
-                 </div><!-- /.box -->
-                 </div><!-- /.col -->
+                <div class="col-md-4">
+                  <div class="box box-primary">
+                    <div class="box-header">
+                      <h3 id="chart-{{:idx}}-label" class="box-title"></h3>
+                    </div>
+                    <div class="box-body">
+                      <div id="chart-{{:idx}}-container">
+                        <div id="chart-{{:idx}}"></div>
+                        <div id="chart-{{:idx}}-timeline"></div>
+                        <div id="chart-{{:idx}}-slider"></div>
+                        <div id="chart-{{:idx}}-footer"></div>
+                      </div>
+                    </div><!-- /.box-body-->
+                  </div><!-- /.box -->
+                </div><!-- /.col -->
                 </script>
               </div><!-- /.row -->
             </div><!-- /.box-body -->
