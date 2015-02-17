@@ -20,23 +20,21 @@ end
 
 local function column_db_factory(name_)
   p.set_pack_lib("bits")
-  os.execute("rm -rf "..name_.."_cdb")
-  os.execute("mkdir -p "..name_.."_cdb")
-  return cdb.column_db(name_.."_cdb")
+  local dir = create_test_directory(name_.."_cdb")
+  return cdb.column_db(dir)
 end
 
 local function lightning_db_factory(name_)
   p.set_pack_lib("lpack")
-  os.execute("rm -rf "..name_.."_mdb")
-  os.execute("mkdir -p "..name_.."_mdb")
-  return mdb.lightning_mdb(name_.."_mdb")
+  local dir = create_test_directory(name_.."_mdb")
+  return mdb.lightning_mdb(dir)
 end
 
 local function for_each_db(name_,func_,no_mule_)
   local dbs = {
---    in_memory_db(),
+    in_memory_db(),
     lightning_db_factory(name_),
---    column_db_factory(name_)
+    column_db_factory(name_)
   }
   if cabinet then
 --    table.insert(dbs,cabinet_db_factory(name_))
@@ -245,7 +243,7 @@ end
 
 
 function test_sequences()
-  for_each_db("./tests/temp/test_sequences",helper_time_sequence,true)
+  for_each_db("test_sequences",helper_time_sequence,true)
 end
 
 local function table_itr(tbl_)
@@ -294,7 +292,7 @@ function test_factories()
     m.process("beer.ale.belgian.trappist 99 62910121")
     assert_equal(15,#m.matching_sequences("beer.ale"))
   end
-  for_each_db("./tests/temp/test_factories",helper)
+  for_each_db("test_factories",helper)
 end
 
 function test_modify_factories_1()
@@ -319,7 +317,7 @@ function test_modify_factories_1()
     assert_equal(2*60*60,factories["beer.ale"][3][1])
     assert_equal(90*24*60*60,factories["beer.ale"][3][2])
   end
-  for_each_db("./tests/temp/test_factories_1",helper)
+  for_each_db("test_factories_1",helper)
 end
 
 local function sequence_any(seq_,callback_)
@@ -386,7 +384,7 @@ function test_export_configuration()
     assert(string.find(m.export_configuration(),'"beer.ale": ["1m:12h" ,"1h:30d" ]',1,true))
     assert(string.find(m.export_configuration(),'"beer.wheat": ["10m:1y" ]',1,true))
   end
-  for_each_db("./tests/temp/test_export_configuration",helper)
+  for_each_db("test_export_configuration",helper)
 end
 
 function test_process_in_memory()
@@ -423,7 +421,7 @@ function test_process_in_memory()
     m.process("beer.stout 143 74858731")
     assert(non_empty_metrics(m.matching_sequences("beer.stout")))
   end
-  for_each_db("./tests/temp/test_process_in_memory",helper)
+  for_each_db("test_process_in_memory",helper)
 end
 
 function test_top_level_factories()
@@ -463,7 +461,7 @@ function test_top_level_factories()
     assert(non_empty_metrics(m.matching_sequences("beer.stout")))
   end
 
-  for_each_db("./tests/temp/top_level",helper)
+  for_each_db("top_level",helper)
 end
 
 function test_modify_factories()
@@ -482,7 +480,7 @@ function test_modify_factories()
     assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]'))
     assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74857800]'))
   end
-  for_each_db("./tests/temp/modify_factories",helper)
+  for_each_db("modify_factories",helper)
 end
 
 
@@ -544,7 +542,7 @@ function test_reset()
   end
 
 
-  for_each_db("./tests/temp/reset",helper)
+  for_each_db("reset",helper)
 end
 
 function test_reset2()
@@ -561,7 +559,7 @@ function test_reset2()
 
   end
 
-  for_each_db("./tests/temp/reset2",helper)
+  for_each_db("reset2",helper)
 end
 
 function test_save_load()
@@ -582,7 +580,7 @@ function test_save_load()
     assert_equal(2,#n.get_factories()["beer.ale"])
     assert_equal(1,#n.get_factories()["beer.stout"])
   end
-  for_each_db("./tests/temp/save_load",helper,true)
+  for_each_db("save_load",helper,true)
 end
 
 
@@ -618,7 +616,7 @@ function test_process_other_dbs()
     m.process("beer.stout 143 74858731")
     assert(non_empty_metrics(m.matching_sequences("beer.stout")))
   end
-  for_each_db("./tests/temp/process_tokyo",helper)
+  for_each_db("process_tokyo",helper)
 end
 
 function test_latest()
@@ -672,7 +670,7 @@ function test_latest()
     assert(string.find(m.graph("beer.ale;1h:30d","latest-3m"),"92,2,3600"))
   end
 
-  for_each_db("./tests/temp/process",helper)
+  for_each_db("process",helper)
 end
 
 function test_update_only_relevant()
@@ -707,7 +705,7 @@ function test_update_only_relevant()
     assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp="latest"}),"[164,1,840]",1,true))
   end
 
-  for_each_db("./tests/temp/update_only_relevant",helper)
+  for_each_db("update_only_relevant",helper)
 end
 
 
@@ -743,7 +741,7 @@ function test_metric_one_level_children()
     end
   end
 
-  for_each_db("./tests/temp/one_level_children",helper,true)
+  for_each_db("one_level_children",helper,true)
 end
 
 
@@ -761,7 +759,7 @@ function test_dump_restore()
 
   end
 
-  for_each_db("./tests/temp/dump_restore",helper)
+  for_each_db("dump_restore",helper)
 end
 
 
@@ -781,7 +779,7 @@ function test_pale()
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361300362"}),"46,27",1,true))
   end
 
-  for_each_db("./tests/temp/pale",helper,true)
+  for_each_db("pale",helper,true)
 end
 
 function test_key()
@@ -815,7 +813,7 @@ function test_key()
     assert_equal(1+2*3,#split(all_keys,","))
 
   end
-  for_each_db("./tests/temp/key",helper,true)
+  for_each_db("key",helper,true)
 end
 
 function test_bounded_by_level()
@@ -837,7 +835,7 @@ function test_duplicate_timestamps()
         end
       end
     end
-  for_each_db("./tests/temp/test_duplicate_timestamps",helper)
+  for_each_db("test_duplicate_timestamps",helper)
 end
 
 function test_dashes_in_keys()
@@ -850,7 +848,7 @@ function test_dashes_in_keys()
     m.process("Johnston.Emilia.Sweet-Nuthin 2 300")
     assert(string.find(m.dump("Johnston.Emilia",{to_str=true}).get_string(),"Sweet%-Nuthin;1m:1h 80 2 300"))
   end
-  for_each_db("./tests/temp/test_dashes_in_keys",helper)
+  for_each_db("test_dashes_in_keys",helper)
 end
 
 function test_stacked()
@@ -893,7 +891,7 @@ function test_stacked()
     assert(string.find(level0,"Johnston.Morfin.Jamal;1s:1m",1,true))
     assert_nil(string.find(level0,"Johnston.Morfin.Jamal.",1,true))
   end
-  for_each_db("./tests/temp/stacked",helper,true)
+  for_each_db("stacked",helper,true)
 end
 
 function test_rank_output()
@@ -906,7 +904,7 @@ function test_rank_output()
     assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=2}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[5,1,0]]\n,"Johnston.Morfin.%w+;1m:1h": [[5,1,0]]\n}\n}'))
   end
 
-  for_each_db("./tests/temp/test_rank_output",helper)
+  for_each_db("test_rank_output",helper)
 end
 
 function test_rank()
@@ -947,7 +945,7 @@ function test_caching()
     assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=2}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[15,3,0]]\n,"Johnston.Morfin.%w+;1m:1h": [[15,3,0]]\n}\n}'))
   end
 
-  for_each_db("./tests/temp/test_caching",helper)
+  for_each_db("test_caching",helper)
 end
 
 function test_sparse_latest()
@@ -987,7 +985,7 @@ function test_bad_input_lines()
 
     assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
   end
-  for_each_db("./tests/temp/test_bad_input_lines",helper)
+  for_each_db("test_bad_input_lines",helper)
 end
 
 function test_uniq_factories()
@@ -998,7 +996,7 @@ function test_uniq_factories()
     assert_equal(60,factories["beer.ale"][1][1])
     assert_equal(12*60*60,factories["beer.ale"][1][2])
   end
-  for_each_db("./tests/temp/test_uniq_factories",helper)
+  for_each_db("test_uniq_factories",helper)
 end
 
 function test_distinct_prefixes()
@@ -1048,7 +1046,7 @@ function test_in_memory_serialization()
       assert(arrays_equal({78,1,0},gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"][1]))
     end
   end
-  for_each_db("./tests/temp/test_in_memory_serialization",helper)
+  for_each_db("test_in_memory_serialization",helper)
 end
 
 function test_find_keys()
@@ -1064,7 +1062,7 @@ function test_find_keys()
     assert_nil(string.find(m.key("mal.Mar",{substring=true}),"Nuthin",1,true))
     assert(string.find(m.key("",{substring="lia.Sw"}),"Nuthin",1,true))
   end
-  for_each_db("./tests/temp/test_find_keys",helper)
+  for_each_db("test_find_keys",helper)
 end
 
 
