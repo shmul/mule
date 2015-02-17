@@ -137,19 +137,23 @@ function app() {
     ];
     $("#alerts-menu-container").html($.templates("#alerts-menu-template").render(template_data));
   }
-  function update_alerts() {
+
+  function update_alerts(category_to_show_) {
     var raw_data = scent_ds.alerts();
     // 0-critical, 1-warning, 2-anomaly, 3-Stale, 4-Normal
-    function translate(i) {
-      switch (i) {
-      case 0: return { title: "Critical", type: "critical"};
-      case 1: return { title: "Warning", type: "warning"};
-      case 2: return { title: "Anomaly", type: "anomaly"};
-      case 3: return { title: "Stale", type: "stale"};
-      case 4: return { title: "Normal", type: "normal"};
-      }
-      return {}
+    const lookup = {
+      0: { title: "Critical", type: "critical"},
+      1: { title: "Warning", type: "warning"},
+      2: { title: "Anomaly", type: "anomaly"},
+      3: { title: "Stale", type: "stale"},
+      4: { title: "Normal", type: "normal"},
+      critical: 0,
+      warning: 1,
+      anomaly: 2,
+      stale: 3,
+      normal: 4
     }
+
     var date_format = d3.time.format("%Y-%M-%d:%H%M%S");
     var alerts = [[],[],[],[],[]];
     for (n in raw_data) {
@@ -173,10 +177,14 @@ function app() {
     }
 
     var template_data = [];
+    var category_idx = lookup[category_to_show_];
     for (var i=0; i<5; ++i) {
       var len = alerts[i].length;
-      var tr = translate(i);
+      var tr = lookup[i];
       $("#alert-menu-"+tr.type).text(len);
+      if ( i!=category_idx ) {
+        continue;
+      }
       var d = [];
       for (var j=0; j<len; ++j) {
         if ( i==2 ) { //anomalies
@@ -203,9 +211,11 @@ function app() {
       }
       template_data.push({title:tr.title,type:tr.type,records:d});
     }
-    $("#alert-container").html($.templates("#alert-template").render(template_data));
-    for (var i=0; i<5; ++i) {
-      var tr = translate(i);
+
+    var tr = lookup[category_idx];
+    if ( tr ) {
+      $("#alert-container").empty();
+      $("#alert-container").html($.templates("#alert-template").render(template_data));
       $("#alert-"+tr.type).dataTable();
     }
   }
@@ -330,20 +340,21 @@ function app() {
 
     router.get('alert/:category', function(req){
       var category = req.params.category;
-      console.log("alert",category);
-      //
+      update_alerts(category);
     });
 
     router.get('graph/:id', function(req){
       var id = req.params.id;
-      console.log("graph",id);
     });
 
     router.get('dashboard/:id', function(req){
       var id = req.params.id;
-      console.log("dashboard",id);
     });
 
+    router.on('navigate', function(event){
+      console.log('URL changed to %s', this.fragment.get());
+      $("#alert-container").empty();
+    });
   }
 
 
