@@ -12,7 +12,8 @@ function scent_ds_mockup (ready_) {
   save(user,"persistent",
        {favorites:["event.bho_blocked_blacklisted;1h:90d",
                    "event.browser_apc_detected;1h:90d",
-                   "event.buka_mr_result;1d:2y"]
+                   "event.buka_mr_result;1d:2y"],
+        dashboards:["events","general"]
        });
 
   function load_fixture(name_,path_) {

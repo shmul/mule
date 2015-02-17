@@ -210,26 +210,26 @@ function app() {
     }
   }
 
-  function load_graphs_lists(list_name_,data_) {
-    if ( data_ && data_.length>0 ) {
-      var template_data = [];
-      for (var d=0; d<data_.length; ++d) {
-        template_data.push({idx:1+d, name:data_[d]});
+
+
+  function setup_menus() {
+    function load_graphs_lists(list_name_,data_) {
+      if ( data_ && data_.length>0 ) {
+        var template_data = [];
+        for (var d=0; d<data_.length; ++d) {
+          template_data.push({idx:1+d, name:data_[d]});
+        }
+        $("#"+list_name_+"-container").append($.templates("#"+list_name_+"-template").render(template_data));
       }
-      $("#"+list_name_+"-container").append($.templates("#"+list_name_+"-template").render(template_data));
     }
+    var persistent = scent_ds.load(user,"persistent");
+    var favorites = persistent.favorites;
+    var dashboards = persistent.dashboards;
+    var recent = scent_ds.load(user,"recent");
+    load_graphs_lists("favorite",favorites);
+    load_graphs_lists("recent",recent);
+    load_graphs_lists("dashboard",dashboards);
   }
-  var persistent = scent_ds.load(user,"persistent");
-  var favorites = persistent.favorites;
-  var recent = scent_ds.load(user,"recent");
-  load_graphs_lists("favorite",favorites);
-  load_graphs_lists("recent",recent);
-
-  $(window).bind('hashchange', function () { //detect hash change
-    var hash = window.location.hash.slice(1); //hash to string (= "myanchor")
-    //do sth here, hell yeah!
-  });
-
 
   function build_graph_cell(parent_,idx_) {
     var template = $.templates("#chart-template");
@@ -323,13 +323,39 @@ function app() {
     });
   }
 
+
+  function setup_router() {
+
+    var router = new Grapnel();
+
+    router.get('alert/:category', function(req){
+      var category = req.params.category;
+      console.log("alert",category);
+      //
+    });
+
+    router.get('graph/:id', function(req){
+      var id = req.params.id;
+      console.log("graph",id);
+    });
+
+    router.get('dashboard/:id', function(req){
+      var id = req.params.id;
+      console.log("dashboard",id);
+    });
+
+  }
+
+
   // call init functions
 
 
   run_tests();
   setup_charts();
+  setup_menus();
   setup_alerts_menu();
   setup_search_keys();
+  setup_router();
   update_alerts();
 
 

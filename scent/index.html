@@ -108,8 +108,10 @@
                 <i class="fa fa-angle-left pull-right"></i>
               </a>
               <ul class="treeview-menu active">
-                <li><a href="#dashboard-1"><i class="fa fa-circle-o"></i> Dashboard 1</a></li>
-                <li><a href="#dashboard-2"><i class="fa fa-circle-o"></i> Dashboard 2</a></li>
+                <div id="dashboard-container"></div>
+                <script id="dashboard-template" type="text/x-jsrender">
+                  <li><a href="#dashboard/{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+                </script>
               </ul>
             </li>
             <li class="treeview">
@@ -121,7 +123,7 @@
               <ul class="treeview-menu">
                 <div id="favorite-container"></div>
                 <script id="favorite-template" type="text/x-jsrender">
-                  <li><a href="#{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+                  <li><a href="#/graph/{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
                 </script>
               </ul>
             </li>
@@ -134,7 +136,7 @@
               <ul class="treeview-menu">
                 <div id="recent-container"></div>
                 <script id="recent-template" type="text/x-jsrender">
-                  <li><a href="#{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+                  <li><a href="#/graph/{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
                 </script>
               </ul>
             </li>
@@ -143,7 +145,7 @@
             <div id="alerts-menu-container"></div>
             <script id="alerts-menu-template" type="text/x-jsrender">
             <li>
-              <a href="#alert-{{:name}}">
+              <a href="#alert/{{:name}}">
                 <i class="fa fa-circle-o text-{{:indicator}}"></i> {{:Name}}</a>
                 <small class="label pull-right bg-{{:color}}" id="alert-menu-{{:name}}"></small>
             </li>
@@ -232,7 +234,7 @@
                   <h3 class="box-title">{{:title}}</h3>
                 </div><!-- /.box-header -->
                 <div class="box-body">
-                  <table id="alert-{{:type}}" class="table table-bordered table-striped">
+                  <table id="alertx-{{:type}}" class="table table-bordered table-striped">
                     <thead>
                       <tr>
                         {{if type==="anomaly"}}
@@ -299,6 +301,7 @@
     <script src="./plugins/datatables/dataTables.bootstrap.js" type="text/javascript"></script>
     <script src="./plugins/storage/jquery.storageapi.min.js" type="text/javascript"></script>
     <script src="./plugins/qunit-1.17.1.js" type="text/javascript"></script>
+    <script src="./plugins/grapnel.min.js" type="text/javascript"></script>
     <script src="./plugins/Bootstrap-3-Typeahead-3.1.0/bootstrap3-typeahead.min.js" type="text/javascript"></script>
     <!-- Datasource -->
     <script src="./datasource.js" type="text/javascript"></script>
