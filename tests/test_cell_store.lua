@@ -4,6 +4,7 @@ require "tests.strict"
 
 module( "test_cell_store", lunit.testcase,package.seeall )
 
+p.set_pack_lib("bits")
 function empty_cell(cell_)
   for i=1,4 do
     if cell_[i] then return false end
@@ -44,3 +45,5 @@ function test_many_writes()
     assert_equal("hell",cs.read(i,1),i)
   end
 end
+
+--verbose_log(true)

@@ -30,6 +30,7 @@ popd
 sudo luarocks install copas 1.1.6-1
 sudo luarocks install lpack
 sudo luarocks install luaposix
+sudo luarocks install bitlib
 sudo luarocks install lightningmdb
 
 # TODO:
