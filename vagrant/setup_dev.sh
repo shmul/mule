@@ -11,16 +11,20 @@ sudo locale-gen UTF-8 || :
 sudo apt-get update -y
 sudo apt-get install -y curl python-software-properties python g++ make unzip lua5.1 luarocks wget software-properties-common openjdk-6-jre nginx git autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev
 
+if [ ! -f /usr/local/lib/liblmdb.so ]
+then
 : Installing Lightningmdb:
 : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-mkdir installs
-pushd installs
-git clone https://gitorious.org/mdb/mdb.git
-cd mdb/libraries/liblmdb/
-make
-sudo make install
-sudo ldconfig # we need to rebuild the cache to have libmdb.so discoverable
-popd
+  mkdir -p ~/installs
+  pushd ~/installs
+  git clone https://gitorious.org/mdb/mdb.git
+  cd mdb/libraries/liblmdb/
+  make
+  sudo make install
+  sudo ldconfig # we need to rebuild the cache to have libmdb.so discoverable
+  popd
+fi;
+
 
 : Installing rocks:
 : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,23 +51,25 @@ then
   echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
   source ~/.bash_profile
 
-  git clone https://github.com/sstephenson/ruby-build.git
-  cd ruby-build
+  pushd ~/ruby-build
+  git clone https://github.com/sstephenson/ruby-build.git .
   sudo ./install.sh
   rbenv install 2.2.0
   rbenv global 2.2.0
+  popd
 fi
 
 if ! which sencha
 then
   : Installing Sencha cmd:
   : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  cd /tmp
+  pushd /tmp
   rm -f SenchaCmd-3.1.2.342-linux-x64.run.zip SenchaCmd-3.1.2.342-linux-x64.run
   wget http://cdn.sencha.com/cmd/3.1.2.342/SenchaCmd-3.1.2.342-linux-x64.run.zip
   unzip SenchaCmd-3.1.2.342-linux-x64.run.zip
   chmod +x SenchaCmd-3.1.2.342-linux-x64.run
   bash -l -c "/tmp/SenchaCmd-3.1.2.342-linux-x64.run --mode unattended"
+  popd
 fi
 
 : Setting up Nginx
