@@ -1,4 +1,3 @@
-
 function app() {
   var user = "Shmul the mule";
 
@@ -68,72 +67,6 @@ function app() {
   }
 
   // --- application functions
-  function load_graph(name_,target_,label_,no_modal_) {
-    function callback(raw_data_) {
-      var data = [];
-      var m = 0;
-      for (var rw in raw_data_) {
-        var dt = raw_data_[rw][2];
-        var v = raw_data_[rw][0];
-        if ( dt>100000 ) {
-          data.push({x:dt, y:v});
-        }
-      };
-      data.sort(function(a,b) { return a.x-b.x });
-
-      var markers = [{
-        'date': new Date('2014-05-01T00:00:00.000Z'),
-        'label': 'Anomaly'
-      }];
-
-      var graph = new Rickshaw.Graph( {
-        element: document.querySelector(target_),
-        renderer: 'line',
-        series: [ {
-          color: 'steelblue',
-          name: '', // this is required to shoosh the 'undefined in the tooltop'
-          data: data
-        } ]
-      } );
-
-      const ticksTreatment = 'glow';
-      var x_axis = new Rickshaw.Graph.Axis.Time( {
-	      graph: graph,
-	      ticksTreatment: ticksTreatment,
-	      timeFixture: new Rickshaw.Fixtures.Time.Local()
-      } );
-      var y_axis = new Rickshaw.Graph.Axis.Y( {
-        graph: graph,
-        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        ticksTreatment: ticksTreatment
-      } );
-      graph.render();
-      /*
-        var annotator = new Rickshaw.Graph.Annotate({
-        graph: graph,
-        element: document.querySelector(target_+'-timeline')
-        });
-        annotator.add(1423785600,"hello cruel world");
-		    annotator.update();
-      */
-      $(label_).text(name_);
-
-      if ( !no_modal_ ) {
-        $(target_).on('click', function() {
-          load_graph(name_,"#modal-body","#modal-label",true);
-          var el = $("#modal-target");
-          $("#modal-target").modal('show');
-        });
-        // cleanup
-        $('#modal-target').on('hidden.bs.modal', function (e) {
-          $("#modal-body").html("");
-        });
-      }
-    }
-    scent_ds.graph(name_,callback);
-  }
-
-
   function setup_alerts_menu() {
     var template_data = [
       {Name: "Critical", name: "critical", indicator: "danger", color: "red"},
@@ -225,11 +158,15 @@ function app() {
         $("#alert-container").empty();
         $("#alert-container").html($.templates("#alert-template").render(template_data));
         $("#alert-"+tr.type).dataTable({order: [[ 2, "desc" ]]});
+        $("#alert-box").show();
       }
     });
   }
 
-
+  function teardown_alerts() {
+    $("#alert-container").empty();
+    $("#alert-box").hide();
+  }
 
   function setup_menus() {
     function load_graphs_lists(list_name_,data_) {
@@ -238,7 +175,7 @@ function app() {
         for (var d=0; d<data_.length; ++d) {
           template_data.push({idx:1+d, name:data_[d]});
         }
-        $("#"+list_name_+"-container").append($.templates("#"+list_name_+"-template").render(template_data));
+        $("#"+list_name_+"-container").empty().append($.templates("#"+list_name_+"-template").render(template_data));
       }
     }
     scent_ds.load(user,"persistent",function(persistent_) {
@@ -252,24 +189,103 @@ function app() {
       load_graphs_lists("recent",recent_);
     });
   }
+  function load_graph(name_,target_,label_,no_modal_) {
+    function callback(raw_data_) {
+      var data = [];
+      var m = 0;
+      for (var rw in raw_data_) {
+        var dt = raw_data_[rw][2];
+        var v = raw_data_[rw][0];
+        if ( dt>100000 ) {
+          data.push({x:dt, y:v});
+        }
+      };
+      data.sort(function(a,b) { return a.x-b.x });
 
-  function build_graph_cell(parent_,idx_) {
-    var template = $.templates("#chart-template");
-    $(parent_).append(template.render([{idx:idx_}]));
-    return "chart-"+idx_;
+      var markers = [{
+        'date': new Date('2014-05-01T00:00:00.000Z'),
+        'label': 'Anomaly'
+      }];
+
+      var graph = new Rickshaw.Graph( {
+        element: document.querySelector(target_),
+        renderer: 'line',
+        series: [ {
+          color: 'steelblue',
+          name: '', // this is required to shoosh the 'undefined in the tooltop'
+          data: data
+        } ]
+      } );
+
+      const ticksTreatment = 'glow';
+      var x_axis = new Rickshaw.Graph.Axis.Time( {
+	      graph: graph,
+	      ticksTreatment: ticksTreatment,
+	      timeFixture: new Rickshaw.Fixtures.Time.Local()
+      } );
+      var y_axis = new Rickshaw.Graph.Axis.Y( {
+        graph: graph,
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        ticksTreatment: ticksTreatment
+      } );
+      graph.render();
+
+      /*
+        var annotator = new Rickshaw.Graph.Annotate({
+        graph: graph,
+        element: document.querySelector(target_+'-timeline')
+        });
+        annotator.add(1423785600,"hello cruel world");
+		    annotator.update();
+      */
+      $(label_).text(name_);
+
+      if ( !no_modal_ ) {
+        $(target_).on('click', function() {
+          load_graph(name_,"#modal-body","#modal-label",true);
+          var el = $("#modal-target");
+          $("#modal-target").modal('show');
+        });
+        // cleanup
+        $('#modal-target').on('hidden.bs.modal', function (e) {
+          $("#modal-body").html("");
+        });
+      }
+    }
+    scent_ds.graph(name_,callback);
   }
 
-  function setup_charts() {
+
+
+  function setup_charts(id) {
+    $("#charts-container").empty();
+    $("#charts-title").text(id);
+
+    var template = $.templates("#chart-template");
+    var template_data = [];
     for (i=1; i<=6; ++i) {
-      var name = build_graph_cell($("#charts-container"),i);
+      template_data.push({idx: i});
+    }
+    var d = template.render(template_data)
+    $("#charts-container").append(d);
+    for (i=1; i<=6; ++i) {
+      var name = "chart-"+i;
       var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
       load_graph(g,"#"+name,"#"+name+"-label");
     }
+    $("#charts-box").show();
 
+    $("#modal-wide").empty();
     $(".modal-wide").on("show.bs.modal", function() {
       var height = $(window).height();
       $(this).find(".modal-body").css("max-height", height);
     });
+
+  }
+
+  function teardown_charts() {
+    $("#charts-container").empty();
+    $("#charts-box").hide();
   }
 
   function setup_search_keys() {
@@ -358,27 +374,56 @@ function app() {
     });
   }
 
-
+  function set_title(title_) {
+    $("title").text("Scent of a Mule | "+title_);
+    $("#page-title").text(title_);
+    $("#qunit > a").text(title_);
+  }
   function setup_router() {
 
     var router = new Grapnel();
 
-    router.get('alert/:category', function(req){
+    function globals() {
+      setup_menus();
+      setup_alerts_menu();
+      setup_search_keys();
+      update_alerts(); // with no selected category it just updates the count
+    }
+
+    router.get(/(index.html)?/, function(req) {
+      set_title("");
       var category = req.params.category;
+      globals();
+      teardown_alerts();
+      teardown_charts();
+    });
+
+    router.get('alert/:category', function(req) {
+      set_title("Alert");
+      var category = req.params.category;
+      globals();
+      teardown_charts();
       update_alerts(category);
     });
 
-    router.get('graph/:id', function(req){
+    router.get('graph/:id', function(req) {
+      globals();
+      set_title("Graph");
+      teardown_alerts();
+      teardown_charts();
       var id = req.params.id;
     });
 
-    router.get('dashboard/:id', function(req){
+    router.get('dashboard/:id', function(req) {
+      set_title("Dashboard");
+      globals();
       var id = req.params.id;
+      teardown_alerts();
+      setup_charts(id);
     });
 
     router.on('navigate', function(event){
       console.log('URL changed to %s', this.fragment.get());
-      $("#alert-container").empty();
     });
   }
 
@@ -387,13 +432,7 @@ function app() {
 
 
   run_tests();
-  setup_charts();
-  setup_menus();
-  setup_alerts_menu();
-  setup_search_keys();
   setup_router();
-  update_alerts();
-
 
 }
 
