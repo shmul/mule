@@ -18,25 +18,29 @@ function app() {
     return m;
   }
 
-  function mule_config() {
-    return jQuery.extend(true,{},scent_ds.config());
+  function mule_config(callback_) {
+    scent_ds.config(function(conf_) {
+      callback_(jQuery.extend(true,{},conf_));
+    });
   }
 
-  function generate_other_graphs(graph_) {
-    var m = graph_.match(/^([\w\-]+)\./);
-    if ( !m || !m[1] ) { return null; }
-    var c = mule_config()[m[1]];
-    if ( !c ) { return null; }
-    var gs = graph_split(graph_);
-    if ( !gs ) { return null; }
-    var i = c.indexOf(gs[1]+":"+gs[2]);
-    if ( i!=-1 ) {
-      c.splice(i,1);
-    }
-    for (var j=0; j<c.length; ++j) {
-      c[j] = gs[0]+";"+c[j];
-    }
-    return c;
+  function generate_other_graphs(graph_,callback_) {
+    mule_config(function(conf_) {
+      var m = graph_.match(/^([\w\-]+)\./);
+      if ( !m || !m[1] ) { callback_(); }
+      var c = conf_[m[1]];
+      if ( !c ) { callback_(); }
+      var gs = graph_split(graph_);
+      if ( !gs ) { callback_(); }
+      var i = c.indexOf(gs[1]+":"+gs[2]);
+      if ( i!=-1 ) {
+        c.splice(i,1);
+      }
+      for (var j=0; j<c.length; ++j) {
+        c[j] = gs[0]+";"+c[j];
+      }
+      callback_(c);
+    });
   }
 
   function graph_refresh_time(graph_) {
@@ -65,67 +69,70 @@ function app() {
 
   // --- application functions
   function load_graph(name_,target_,label_,no_modal_) {
-    var raw_data = scent_ds.graph(name_);
-    var data = [];
-    var m = 0;
-    for (var rw in raw_data) {
-      var dt = raw_data[rw][2];
-      var v = raw_data[rw][0];
-      if ( dt>100000 ) {
-        data.push({x:dt, y:v});
+    function callback(raw_data_) {
+      var data = [];
+      var m = 0;
+      for (var rw in raw_data_) {
+        var dt = raw_data_[rw][2];
+        var v = raw_data_[rw][0];
+        if ( dt>100000 ) {
+          data.push({x:dt, y:v});
+        }
+      };
+      data.sort(function(a,b) { return a.x-b.x });
+
+      var markers = [{
+        'date': new Date('2014-05-01T00:00:00.000Z'),
+        'label': 'Anomaly'
+      }];
+
+      var graph = new Rickshaw.Graph( {
+        element: document.querySelector(target_),
+        renderer: 'line',
+        series: [ {
+          color: 'steelblue',
+          name: '', // this is required to shoosh the 'undefined in the tooltop'
+          data: data
+        } ]
+      } );
+
+      const ticksTreatment = 'glow';
+      var x_axis = new Rickshaw.Graph.Axis.Time( {
+	      graph: graph,
+	      ticksTreatment: ticksTreatment,
+	      timeFixture: new Rickshaw.Fixtures.Time.Local()
+      } );
+      var y_axis = new Rickshaw.Graph.Axis.Y( {
+        graph: graph,
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        ticksTreatment: ticksTreatment
+      } );
+      graph.render();
+      /*
+        var annotator = new Rickshaw.Graph.Annotate({
+        graph: graph,
+        element: document.querySelector(target_+'-timeline')
+        });
+        annotator.add(1423785600,"hello cruel world");
+		    annotator.update();
+      */
+      $(label_).text(name_);
+
+      if ( !no_modal_ ) {
+        $(target_).on('click', function() {
+          load_graph(name_,"#modal-body","#modal-label",true);
+          var el = $("#modal-target");
+          $("#modal-target").modal('show');
+        });
+        // cleanup
+        $('#modal-target').on('hidden.bs.modal', function (e) {
+          $("#modal-body").html("");
+        });
       }
-    };
-    data.sort(function(a,b) { return a.x-b.x });
-
-    var markers = [{
-      'date': new Date('2014-05-01T00:00:00.000Z'),
-      'label': 'Anomaly'
-    }];
-
-    var graph = new Rickshaw.Graph( {
-      element: document.querySelector(target_),
-      renderer: 'line',
-      series: [ {
-        color: 'steelblue',
-        name: '', // this is required to shoosh the 'undefined in the tooltop'
-        data: data
-      } ]
-    } );
-
-    const ticksTreatment = 'glow';
-    var x_axis = new Rickshaw.Graph.Axis.Time( {
-	    graph: graph,
-	    ticksTreatment: ticksTreatment,
-	    timeFixture: new Rickshaw.Fixtures.Time.Local()
-    } );
-    var y_axis = new Rickshaw.Graph.Axis.Y( {
-      graph: graph,
-      tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-      ticksTreatment: ticksTreatment
-    } );
-    graph.render();
-    /*
-      var annotator = new Rickshaw.Graph.Annotate({
-      graph: graph,
-      element: document.querySelector(target_+'-timeline')
-      });
-      annotator.add(1423785600,"hello cruel world");
-		  annotator.update();
-    */
-    $(label_).text(name_);
-
-    if ( !no_modal_ ) {
-      $(target_).on('click', function() {
-        load_graph(name_,"#modal-body","#modal-label",true);
-        var el = $("#modal-target");
-        $("#modal-target").modal('show');
-      });
-      // cleanup
-      $('#modal-target').on('hidden.bs.modal', function (e) {
-        $("#modal-body").html("");
-      });
     }
+    scent_ds.graph(name_,callback);
   }
+
 
   function setup_alerts_menu() {
     var template_data = [
@@ -139,85 +146,87 @@ function app() {
   }
 
   function update_alerts(category_to_show_) {
-    var raw_data = scent_ds.alerts();
-    // 0-critical, 1-warning, 2-anomaly, 3-Stale, 4-Normal
-    const lookup = {
-      0: { title: "Critical", type: "critical"},
-      1: { title: "Warning", type: "warning"},
-      2: { title: "Anomaly", type: "anomaly"},
-      3: { title: "Stale", type: "stale"},
-      4: { title: "Normal", type: "normal"},
-      critical: 0,
-      warning: 1,
-      anomaly: 2,
-      stale: 3,
-      normal: 4
-    }
+    scent_ds.alerts(function(raw_data_) {
 
-    var date_format = d3.time.format("%Y-%M-%d:%H%M%S");
-    var alerts = [[],[],[],[],[]];
-    for (n in raw_data) {
-      var current = raw_data[n];
-      var idx = -1;
-      switch ( current[7] ) {
-      case "CRITICAL LOW":
-      case "CRITICAL HIGH": idx = 0; break;
-      case "WARNING LOW":
-      case "WARNING HIGH": idx = 1; break;
-      case "stale": idx = 3; break;
-      case "NORMAL": idx = 4; break;
+      // 0-critical, 1-warning, 2-anomaly, 3-Stale, 4-Normal
+      const lookup = {
+        0: { title: "Critical", type: "critical"},
+        1: { title: "Warning", type: "warning"},
+        2: { title: "Anomaly", type: "anomaly"},
+        3: { title: "Stale", type: "stale"},
+        4: { title: "Normal", type: "normal"},
+        critical: 0,
+        warning: 1,
+        anomaly: 2,
+        stale: 3,
+        normal: 4
       }
-      if ( idx!=-1 ) {
-        alerts[idx].push([n,current]);
-      }
-    }
-    var anomalies = raw_data["anomalies"];
-    for (n in anomalies) {
-      alerts[2].push([n,anomalies[n]]);
-    }
 
-    var template_data = [];
-    var category_idx = lookup[category_to_show_];
-    for (var i=0; i<5; ++i) {
-      var len = alerts[i].length;
-      var tr = lookup[i];
-      $("#alert-menu-"+tr.type).text(len);
-      if ( i!=category_idx ) {
-        continue;
-      }
-      var d = [];
-      for (var j=0; j<len; ++j) {
-        if ( i==2 ) { //anomalies
-          var cur = alerts[i][j][1];
-          cur.sort();
-          d.push({
-            graph : alerts[i][j][0],
-            time : date_format(new Date(cur[0]*1000)),
-            type : "anomaly" // this is needed for jsrender's predicate in the loop
-          });
-        } else {
-          var cur = alerts[i][j][1];
-          d.push({
-            graph : alerts[i][j][0],
-            time : date_format(new Date(cur[8]*1000)),
-            value : cur[6],
-            crit_high : cur[3],
-            warn_high : cur[2],
-            warn_low : cur[1],
-            crit_low : cur[0],
-            stale : cur[5],
-          });
+      var date_format = d3.time.format("%Y-%M-%d:%H%M%S");
+      var alerts = [[],[],[],[],[]];
+      for (n in raw_data_) {
+        var current = raw_data_[n];
+        var idx = -1;
+        switch ( current[7] ) {
+        case "CRITICAL LOW":
+        case "CRITICAL HIGH": idx = 0; break;
+        case "WARNING LOW":
+        case "WARNING HIGH": idx = 1; break;
+        case "stale": idx = 3; break;
+        case "NORMAL": idx = 4; break;
+        }
+        if ( idx!=-1 ) {
+          alerts[idx].push([n,current]);
         }
       }
-      template_data.push({title:tr.title,type:tr.type,records:d});
-    }
+      var anomalies = raw_data_["anomalies"];
+      for (n in anomalies) {
+        alerts[2].push([n,anomalies[n]]);
+      }
 
-    var tr = lookup[category_idx];
-    if ( tr ) {
-      $("#alert-container").empty();
-      $("#alert-container").html($.templates("#alert-template").render(template_data));
-      $("#alert-"+tr.type).dataTable();
-    }
+      var template_data = [];
+      var category_idx = lookup[category_to_show_];
+      for (var i=0; i<5; ++i) {
+        var len = alerts[i].length;
+        var tr = lookup[i];
+        $("#alert-menu-"+tr.type).text(len);
+        if ( i!=category_idx ) {
+          continue;
+        }
+        var d = [];
+        for (var j=0; j<len; ++j) {
+          if ( i==2 ) { //anomalies
+            var cur = alerts[i][j][1];
+            cur.sort();
+            d.push({
+              graph : alerts[i][j][0],
+              time : date_format(new Date(cur[0]*1000)),
+              type : "anomaly" // this is needed for jsrender's predicate in the loop
+            });
+          } else {
+            var cur = alerts[i][j][1];
+            d.push({
+              graph : alerts[i][j][0],
+              time : date_format(new Date(cur[8]*1000)),
+              value : cur[6],
+              crit_high : cur[3],
+              warn_high : cur[2],
+              warn_low : cur[1],
+              crit_low : cur[0],
+              stale : cur[5],
+            });
+          }
+        }
+        template_data.push({title:tr.title,type:tr.type,records:d});
+      }
+
+      var tr = lookup[category_idx];
+      if ( tr ) {
+        $("#alert-container").empty();
+        $("#alert-container").html($.templates("#alert-template").render(template_data));
+        $("#alert-"+tr.type).dataTable();
+      }
+    });
   }
 
 
@@ -232,13 +241,16 @@ function app() {
         $("#"+list_name_+"-container").append($.templates("#"+list_name_+"-template").render(template_data));
       }
     }
-    var persistent = scent_ds.load(user,"persistent");
-    var favorites = persistent.favorites;
-    var dashboards = persistent.dashboards;
-    var recent = scent_ds.load(user,"recent");
-    load_graphs_lists("favorite",favorites);
-    load_graphs_lists("recent",recent);
-    load_graphs_lists("dashboard",dashboards);
+    scent_ds.load(user,"persistent",function(persistent_) {
+      var favorites = persistent_.favorites;
+      var dashboards = persistent_.dashboards;
+      load_graphs_lists("favorite",favorites);
+      load_graphs_lists("dashboard",dashboards);
+    });
+
+    scent_ds.load(user,"recent",function(recent_) {
+      load_graphs_lists("recent",recent_);
+    });
   }
 
   function build_graph_cell(parent_,idx_) {
@@ -267,12 +279,20 @@ function app() {
     });
     $("#search-keys-input").typeahead({
       source:function (query,process) {
-        if ( !this.scent_keys ) {
-          this.scent_keys = string_set_add_array({},scent_ds.key(""));
-        } else if ( query[query.length-1]=='.') {
-          string_set_add_array(this.scent_keys,scent_ds.key(query));
+        function callback(keys_) {
+          if ( !this.scent_keys ) {
+            this.scent_keys = string_set_add_array({},keys_);
+          } else if ( query[query.length-1]=='.') {
+            string_set_add_array(this.scent_keys,keys_);
+          }
+          process(string_set_keys(this.scent_keys));
         }
-        process(string_set_keys(this.scent_keys));
+
+        if ( !this.scent_keys ) {
+          scent_ds.key("",callback);
+        } else if ( query[query.length-1]=='.') {
+          scent_ds.key(query,callback);
+        }
       },
       minLength: 0,
       items: 'all',
@@ -289,47 +309,52 @@ function app() {
       assert.equal(timeunit_to_seconds("1d"),60*60*24);
       assert.deepEqual(graph_split("brave.frontend;1d:2y"),["brave.frontend","1d","2y"]);
       assert.deepEqual(graph_split("event.buka_mr_result;1h:90d"),["event.buka_mr_result","1h","90d"]);
-      assert.deepEqual(generate_other_graphs("kashmir_report_db_storer.sql_queries;1h:90d"),
-                       ["kashmir_report_db_storer.sql_queries;5m:3d","kashmir_report_db_storer.sql_queries;1d:2y"]);
-      assert.deepEqual(generate_other_graphs("malware_signature.foo.bar;1h:90d"),
-                       ["malware_signature.foo.bar;1d:2y"]);
-      assert.deepEqual(generate_other_graphs("malware_signature.foo.bar;60d:90y"),
-                       ["malware_signature.foo.bar;1h:90d","malware_signature.foo.bar;1d:2y"]);
+      generate_other_graphs("kashmir_report_db_storer.sql_queries;1h:90d",
+                            function(actual_) {
+                              assert.deepEqual(actual_,
+                                               ["kashmir_report_db_storer.sql_queries;5m:3d",
+                                                "kashmir_report_db_storer.sql_queries;1d:2y"]);
+                            });
+
+      generate_other_graphs("malware_signature.foo.bar;1h:90d",
+                            function(actual_) {
+                              assert.deepEqual(actual_,
+                                               ["malware_signature.foo.bar;1d:2y"]);
+                            });
+
+      generate_other_graphs("malware_signature.foo.bar;60d:90y",
+                            function(actual_) {
+                              assert.deepEqual(actual_,
+                                               ["malware_signature.foo.bar;1h:90d","malware_signature.foo.bar;1d:2y"]);
+                            });
       assert.equal(graph_refresh_time("malware_signature.foo.bar;1h:90d"),3600);
       assert.equal(graph_refresh_time("kashmir_report_db_storer.sql_queries;5m:3d"),300);
     });
 
-    QUnit.test("key function", function( assert ) {
-      assert.deepEqual(scent_ds.key("brave"),[  "brave;1d:2y",
-                                                "brave;1h:90d",
-                                                "brave;5m:3d",
-                                                "brave.backend;1d:2y",
-                                                "brave.backend;1h:90d",
-                                                "brave.backend;5m:3d",
-                                                "brave.hrl_collect;1d:2y",
-                                                "brave.hrl_collect;1h:90d",
-                                                "brave.hrl_collect;5m:3d",
-                                                "brave.request;1d:2y",
-                                                "brave.request;1h:90d",
-                                                "brave.request;5m:3d",
-                                                "brave.frontend;1d:2y",
-                                                "brave.frontend;1h:90d",
-                                                "brave.frontend;5m:3d"]);
-      assert.deepEqual(scent_ds.key("brave."),[  "brave;1d:2y",
-                                                 "brave;1h:90d",
-                                                 "brave;5m:3d",
-                                                 "brave.backend;1d:2y",
-                                                 "brave.backend;1h:90d",
-                                                 "brave.backend;5m:3d",
-                                                 "brave.hrl_collect;1d:2y",
-                                                 "brave.hrl_collect;1h:90d",
-                                                 "brave.hrl_collect;5m:3d",
-                                                 "brave.request;1d:2y",
-                                                 "brave.request;1h:90d",
-                                                 "brave.request;5m:3d",
-                                                 "brave.frontend;1d:2y",
-                                                 "brave.frontend;1h:90d",
-                                                 "brave.frontend;5m:3d"]);
+    const expected = ["brave;1d:2y",
+                      "brave;1h:90d",
+                      "brave;5m:3d",
+                      "brave.backend;1d:2y",
+                      "brave.backend;1h:90d",
+                      "brave.backend;5m:3d",
+                      "brave.hrl_collect;1d:2y",
+                      "brave.hrl_collect;1h:90d",
+                      "brave.hrl_collect;5m:3d",
+                      "brave.request;1d:2y",
+                      "brave.request;1h:90d",
+                      "brave.request;5m:3d",
+                      "brave.frontend;1d:2y",
+                      "brave.frontend;1h:90d",
+                      "brave.frontend;5m:3d"];
+    scent_ds.key("brave",function(actual_) {
+      QUnit.test("key 1", function( assert ) {
+        assert.deepEqual(actual_,expected);
+      });
+    });
+    scent_ds.key("brave.",function(actual_) {
+      QUnit.test("key 2", function( assert ) {
+        assert.deepEqual(actual_,expected);
+      });
     });
   }
 
