@@ -11,6 +11,17 @@ sudo locale-gen UTF-8 || :
 sudo apt-get update -y
 sudo apt-get install -y curl python-software-properties python g++ make unzip lua5.1 luarocks wget software-properties-common openjdk-6-jre nginx git autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev
 
+: Installing Lightningmdb:
+: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+mkdir installs
+pushd installs
+git clone https://gitorious.org/mdb/mdb.git
+cd mdb/libraries/liblmdb/
+make
+sudo make install
+sudo ldconfig # we need to rebuild the cache to have libmdb.so discoverable
+popd
+
 : Installing rocks:
 : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sudo luarocks install copas 1.1.6-1
