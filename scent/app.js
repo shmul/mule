@@ -1,5 +1,7 @@
 function app() {
   var user = "Shmul the mule";
+    var router = new Grapnel();
+
 
   const TIME_UNITS = {s:1, m:60, h:3600, d:3600*24, w:3600*24*7, y:3600*24*365};
   function timeunit_to_seconds(timeunit_) {
@@ -67,6 +69,10 @@ function app() {
   }
 
   // --- application functions
+  function box_header(type_,title_) {
+    $("#"+type_+"-box-header-container").empty().html($.templates("#box-header-template").render([{name:""+type_+"",title:title_}]));
+  }
+
   function setup_alerts_menu() {
     var template_data = [
       {Name: "Critical", name: "critical", indicator: "danger", color: "red"},
@@ -158,6 +164,7 @@ function app() {
         $("#alert-container").empty();
         $("#alert-container").html($.templates("#alert-template").render(template_data));
         $("#alert-"+tr.type).dataTable({order: [[ 2, "desc" ]]});
+        box_header("alert",tr.title);
         $("#alert-box").show();
       }
     });
@@ -189,7 +196,7 @@ function app() {
       load_graphs_lists("recent",recent_);
     });
   }
-  function load_graph(name_,target_,label_,no_modal_) {
+  function load_graph(name_,target_,no_modal_) {
     function callback(raw_data_) {
       var data = [];
       var m = 0;
@@ -238,11 +245,10 @@ function app() {
         annotator.add(1423785600,"hello cruel world");
 		    annotator.update();
       */
-      $(label_).text(name_);
 
       if ( !no_modal_ ) {
         $(target_).on('click', function() {
-          load_graph(name_,"#modal-body","#modal-label",true);
+          load_graph(name_,"#modal-body",true);
           var el = $("#modal-target");
           $("#modal-target").modal('show');
         });
@@ -259,7 +265,6 @@ function app() {
 
   function setup_charts(id) {
     $("#charts-container").empty();
-    $("#charts-title").text(id);
 
     var template = $.templates("#chart-template");
     var template_data = [];
@@ -271,8 +276,9 @@ function app() {
     for (i=1; i<=6; ++i) {
       var name = "chart-"+i;
       var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
-      load_graph(g,"#"+name,"#"+name+"-label");
+      load_graph(g,"#"+name);
     }
+    box_header("charts",id);
     $("#charts-box").show();
 
     $("#modal-wide").empty();
@@ -290,7 +296,7 @@ function app() {
 
   function setup_search_keys() {
     $("#search-form").submit(function( event ) {
-      alert( $("#search-keys-input").val() );
+      router.navigate('/graph/'+$("#search-keys-input").val());
       event.preventDefault();
     });
     $("#search-keys-input").typeahead({
@@ -314,6 +320,15 @@ function app() {
       items: 'all',
     });
 
+  }
+
+  function setup_graph(name_) {
+    $("#graph-box").show();
+    box_header("graph",name_);
+  }
+
+  function teardown_graph() {
+    $("#graph-box").hide();
   }
 
   function run_tests() {
@@ -379,9 +394,8 @@ function app() {
     $("#page-title").text(title_);
     $("#qunit > a").text(title_);
   }
-  function setup_router() {
 
-    var router = new Grapnel();
+  function setup_router() {
 
     function globals() {
       setup_menus();
@@ -396,6 +410,7 @@ function app() {
       globals();
       teardown_alerts();
       teardown_charts();
+      teardown_graph();
     });
 
     router.get('alert/:category', function(req) {
@@ -403,6 +418,7 @@ function app() {
       var category = req.params.category;
       globals();
       teardown_charts();
+      teardown_graph();
       update_alerts(category);
     });
 
@@ -412,6 +428,7 @@ function app() {
       teardown_alerts();
       teardown_charts();
       var id = req.params.id;
+      setup_graph(id);
     });
 
     router.get('dashboard/:id', function(req) {
@@ -419,6 +436,7 @@ function app() {
       globals();
       var id = req.params.id;
       teardown_alerts();
+      teardown_graph();
       setup_charts(id);
     });
 
@@ -431,7 +449,7 @@ function app() {
   // call init functions
 
 
-  run_tests();
+//  run_tests();
   setup_router();
 
 }
