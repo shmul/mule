@@ -224,7 +224,7 @@ function app() {
       if ( tr ) {
         $("#alert-container").empty();
         $("#alert-container").html($.templates("#alert-template").render(template_data));
-        $("#alert-"+tr.type).dataTable();
+        $("#alert-"+tr.type).dataTable({order: [[ 2, "desc" ]]});
       }
     });
   }
