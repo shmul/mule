@@ -39,7 +39,7 @@ function scent_ds_mockup (ready_) {
   }
   function config(callback_) {
     delayed(function() {
-      return fixtures["config"];
+      callback_(fixtures["config"]);
     });
   }
 

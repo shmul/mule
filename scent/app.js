@@ -98,8 +98,8 @@ function app() {
   }
 
   // --- application functions
-  function box_header(type_,title_) {
-    $("#"+type_+"-box-header-container").html($.templates("#box-header-template").render([{name:""+type_+"",title:title_}]));
+  function box_header(type_,title_,links_,favorite_) {
+    $("#"+type_+"-box-header-container").html($.templates("#box-header-template").render([{name: ""+type_+"", title: title_, links: links_,favorite: favorite_}]));
   }
 
   function setup_alerts_menu() {
@@ -386,7 +386,38 @@ function app() {
   function setup_graph(name_) {
     $("#graph-box").show();
     load_graph(name_,"#graph",true);
-    box_header("graph",name_);
+    generate_other_graphs(name_,function(others_) {
+      var links = [];
+      for (var i in others_) {
+        var rp = others_[i].match(/^[\w\.\-]+;(\d\w+:\d\w+)$/);
+        links.push({href: others_[i], rp: rp[1]});
+      }
+      scent_ds.load(user,"persistent",function(persistent_) {
+        var favorites = persistent_.favorites;
+        var idx = favorites.indexOf(name_);
+        var favorite = idx==-1 ? "fa-star-o" : "fa-star";
+        box_header("graph",name_,links,favorite);
+
+        $("#graph-favorite").click(function(e) {
+          // we should re-read the persistent data
+          scent_ds.load(user,"persistent",function(persistent_) {
+            var favorites = persistent_.favorites;
+            var idx = favorites.indexOf(name_);
+
+            if ( idx==-1 ) { // we need to add to favorites
+              favorites.push(name_);
+              $(e.target).attr("class","fa fa-star");
+            } else {
+              favorites.splice(idx,1);
+              $(e.target).attr("class","fa fa-star-o");
+            }
+            scent_ds.save(user,"persistent",persistent_,function() {
+              setup_menus();
+            });
+          });
+        });
+      });
+    });
   }
 
   function teardown_graph() {

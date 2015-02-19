@@ -190,8 +190,15 @@
         <section class="content">
           <script id="box-header-template" type="text/x-jsrender">
             <div class="box-header with-border">
-              <h3 class="box-title" id="{{:name}}-title">{{:title}}</h3>
+              <h3 class="box-title" id="{{:name}}-title">{{:title}}
+                {{for links}}
+                  &nbsp;|&nbsp;<a href="#graph/{{:href}}">{{:rp}}</a>
+                {{/for}}
+              </h3>
               <div class="box-tools pull-right">
+                {{if favorite}}
+                  <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite"><i id="graph-favorite" class="fa {{:favorite}}"></i></button>
+                  {{/if}}
                 <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fa fa-minus"></i></button>
                 <button class="btn btn-box-tool" data-widget="remove" data-toggle="tooltip" title="Remove"><i class="fa fa-times"></i></button>
               </div>
