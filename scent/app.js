@@ -225,6 +225,7 @@ function app() {
       load_graphs_lists("recent",recent_);
     });
   }
+
   function load_graph(name_,target_,no_modal_) {
     function callback(raw_data_) {
       var data = new Array();
@@ -238,7 +239,7 @@ function app() {
       };
       data.sort(function(a,b) { return a.x-b.x });
 
-      var x_tick_format = graph_step_in_seconds(name_)<3600 ? "%d(%a) %H:%M" : "%b %d";
+      var x_tick_format = graph_step_in_seconds(name_)<3600 ? "%d(%a) %H:%M" : "%b %d"; //'%Y/%m/%d-%H:%M:%S'
 
       nv.addGraph(function() {
         var gr = nv.models.lineChart().options({
@@ -246,14 +247,14 @@ function app() {
           duration: 50,
           useInteractiveGuideline: true,
           showLegend: false,
-          useInteractiveGuideline: true
+          useInteractiveGuideline: true,
         });
 
         gr.xAxis
           .tickFormat(function(d) {
             return d3.time.format(x_tick_format)(new Date(d*1000))
           });
-        '%Y/%m/%d-%H:%M:%S'
+
 
 //        gr.xScale(d3.time.scale.utc());
         gr.yAxis.tickFormat(formatKMBT);
@@ -267,8 +268,7 @@ function app() {
 
       if ( !no_modal_ ) {
         $(target_).on('click', function() {
-          load_graph(name_,"#modal-body",true);
-          var el = $("#modal-target");
+          load_graph(name_,"#modal-graph",true);
           $("#modal-target").modal('show');
         });
         // cleanup
@@ -344,6 +344,7 @@ function app() {
   function setup_graph(name_) {
     $("#graph-box").show();
     box_header("graph",name_);
+    load_graph(name_,"#graph",true);
   }
 
   function teardown_graph() {

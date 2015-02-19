@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title></title>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
-    <link href="./plugins/bootstrap/bootstrap.3.3.1.min.css" rel="stylesheet" type="text/css" />
+    <link href="./plugins/bootstrap-3.3.2/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/font-awesome-4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
     <!-- Ionicons -->
     <link href="./plugins/ionicons.2.0.0.min.css" rel="stylesheet" type="text/css" />
@@ -59,13 +59,13 @@
                   </li>
                   <!-- Menu Body -->
                   <li class="user-body">
-                    <div class="col-xs-4 text-center">
+                    <div class="col-md-4 text-center">
                       <a href="#">Just</a>
                     </div>
-                    <div class="col-xs-4 text-center">
+                    <div class="col-md-4 text-center">
                       <a href="#">a</a>
                     </div>
-                    <div class="col-xs-4 text-center">
+                    <div class="col-md-4 text-center">
                       <a href="#">Menu</a>
                     </div>
                   </li>
@@ -173,9 +173,13 @@
                 <h4 class="modal-title" id="modal-label" >Modal title</h4>
               </div>
               <div class="modal-body" id="modal-body">
+                <div class="row">
+                  <div id="modal-graph" class='col-md-8 with-3d-shadow'>
+                    <svg></svg>
+                  </div>
+                </div>
               </div>
-              <div class="modal-footer">
-              </div>
+              <div class="modal-footer"></div>
             </div><!-- /.modal-content -->
           </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
@@ -195,30 +199,28 @@
          <div class="box" id="graph-box">
            <div id="graph-box-header-container"></div>
 
-           <div class="box-body">
-             <div class="row" id="graph-container"></div>
-             <script id="graph-template" type="text/x-jsrender">
-             <div class="col-md-12">
-               <div class="box box-primary">
-                 <div class="box-header">
-                   <h3 id="graph-label" class="box-title"></h3>
-                 </div>
-                 <div class="box-body" id="graph-body-container">
-                   <div id="graph"></div>
-                   <div id="graph-timeline"></div>
-                   <div id="graph-slider"></div>
-                   <div id="graph-footer"></div>
+           <div class="box-body container-fluid" id="graph-container">
+             <div class="row">
+               <div class="col-md-12">
+                 <div class="box box-primary">
+                   <div class="box-header">
+                     <h3 id="graph-label" class="box-title"></h3>
+                   </div>
+                   <div class="box-body" id="graph-body-container">
+                     <div id="graph" class='with-3d-shadow'>
+                       <svg></svg>
+                     </div>
+                   </div>
                  </div>
                </div>
              </div>
-             </script>
            </div>
          </div>
 
           <div class="box" id="charts-box">
             <div id="charts-box-header-container"></div>
 
-            <div class="box-body">
+            <div class="box-body container-fluid">
               <div class="row" id="charts-container"></div>
               <script id="chart-template" type="text/x-jsrender">
                 <div class="col-md-4">
@@ -227,9 +229,10 @@
                       <h3 class="box-title">{{:name}}</h3>
                     </div>
                     <div class="box-body" id="chart-{{:idx}}-container">
-<div id="chart-{{:idx}}" class='with-3d-shadow with-transitions'>
-    <svg></svg>
-</div>                    </div><!-- /.box-body-->
+                    <div id="chart-{{:idx}}" class='with-3d-shadow'>
+                      <svg></svg>
+                    </div>
+                    </div><!-- /.box-body-->
                   </div><!-- /.box -->
                 </div><!-- /.col -->
             </script>
@@ -293,7 +296,7 @@
     </div><!-- ./wrapper -->
 
     <script src="./plugins/jquery.2.1.1.min.js"></script>
-    <script src="./plugins/bootstrap/bootstrap.3.2.0.min.js" type="text/javascript"></script>
+    <script src="./plugins/bootstrap-3.3.2/js/bootstrap.min.js" type="text/javascript"></script>
     <!-- SlimScroll -->
     <script src="./plugins/slimScroll/jquery.slimScroll.min.js" type="text/javascript"></script>
     <!-- AdminLTE App -->
