@@ -19,10 +19,30 @@
 }
 
 /* nv.d3 */
-svg {
+.tall-graph {
     display: block;
     margin: 0px;
     padding: 5px;
-    height: 100%;
-    width: 100%!important;;
+    width: 100%;
+    height:800px;
+}
+
+.medium-graph {
+    display: block;
+    margin: 0px;
+    padding: 5px;
+    width: 100%;
+    height:600px;
+}
+
+.small-graph {
+    display: block;
+    margin: 0px;
+    padding: 5px;
+    width: 100%;
+    height:400px;
+}
+
+.alert-graph-name {
+    cursor: pointer;
 }

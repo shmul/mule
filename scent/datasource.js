@@ -46,7 +46,7 @@ function scent_ds_mockup (ready_) {
   function graph(graph_name_,callback_) {
     delayed(function() {
       var gr = fixtures["graph"];
-      callback_(gr[graph_name_]);
+      callback_(gr[graph_name_] || gr["event_processor_us;1d:2y"]);
     });
   }
 
@@ -94,11 +94,15 @@ function scent_ds_mockup (ready_) {
     delayed(function() {
       if (key_=="persistent" ) {
         $.localStorage.set(user_+".persistent",data_);
-        callback_();
+        if ( callback_ ) {
+          callback_();
+        }
         return;
       }
       $.sessionStorage.set(user_+"."+key_,data_);
-      callback_();
+      if ( callback_ ) {
+        callback_();
+      }
     });
   }
 

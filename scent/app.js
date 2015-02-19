@@ -1,6 +1,6 @@
 function app() {
   var user = "Shmul the mule";
-    var router = new Grapnel();
+  var router = new Grapnel();
 
   // from Rickshaw
   function formatKMBT(y) {
@@ -99,7 +99,7 @@ function app() {
 
   // --- application functions
   function box_header(type_,title_) {
-    $("#"+type_+"-box-header-container").empty().html($.templates("#box-header-template").render([{name:""+type_+"",title:title_}]));
+    $("#"+type_+"-box-header-container").html($.templates("#box-header-template").render([{name:""+type_+"",title:title_}]));
   }
 
   function setup_alerts_menu() {
@@ -188,12 +188,25 @@ function app() {
         template_data.push({title:tr.title,type:tr.type,records:d});
       }
 
+      function alert_graph_name_click(e) {
+          var graph = $(e.target).text();
+          load_graph(graph,"#graph",true);
+          $("#graph-box").show();
+          e.stopPropagation();
+      }
+      function set_click_behavior() {
+        $(".alert-graph-name").click(alert_graph_name_click);
+      }
       var tr = lookup[category_idx];
       if ( tr ) {
         $("#alert-container").empty();
         $("#alert-container").html($.templates("#alert-template").render(template_data));
-        $("#alert-"+tr.type).dataTable({order: [[ 2, "desc" ]]});
+        var dt = $("#alert-"+tr.type).dataTable({order: [[ 2, "desc" ]]});
+        set_click_behavior();
+        dt.on('draw',set_click_behavior);
         box_header("alert",tr.title);
+
+        $(".alert-graph-name").click(alert_graph_name_click);
         $("#alert-box").show();
       }
     });
@@ -221,8 +234,57 @@ function app() {
       load_graphs_lists("dashboard",dashboards);
     });
 
+    $("#dashboard-form").submit(function(e) {
+      var name = $("#dashboard-input").val();
+      $("#dashboard-input").val('');
+      scent_ds.load(user,"persistent",function(persistent_) {
+        var dashboards = persistent_.dashboards;
+        if ( name && dashboards && name.length>0 && dashboards.indexOf(name)==-1 ) {
+          persistent_.dashboards.push(name);
+          scent_ds.save(user,"persistent",persistent_);
+          load_graphs_lists("dashboard",dashboards);
+        }
+      });
+      e.stopPropagation();
+    });
+
     scent_ds.load(user,"recent",function(recent_) {
       load_graphs_lists("recent",recent_);
+    });
+  }
+
+  function nv_graph(name_,data_,target_,with_focus_) {
+    var x_tick_format = graph_step_in_seconds(name_)<3600 ? "%d(%a) %H:%M" : "%b %d"; //'%Y/%m/%d-%H:%M:%S'
+
+    nv.addGraph(function() {
+      var model = with_focus_ ? nv.models.lineWithFocusChart : nv.models.lineChart;
+      var gr = model().options({
+        transitionDuration: 50,
+        duration: 50,
+        useInteractiveGuideline: true,
+        showLegend: false,
+        useInteractiveGuideline: true,
+      });
+
+      function x_format(d) {
+        return d3.time.format(x_tick_format)(new Date(d*1000));
+      }
+
+      gr.xAxis.tickFormat(x_format);
+      //        gr.xScale(d3.time.scale.utc());
+      gr.yAxis.tickFormat(formatKMBT);
+      //        gr.y2Axis.tickFormat(d3.format(',.2f'));
+
+      if ( with_focus_ ) {
+        gr.x2Axis.tickFormat(x_format);
+        gr.y2Axis.tickFormat(formatKMBT);
+      }
+
+      d3.select(target_+' svg')
+        .datum([{key:name_, values:data_}])
+        .call(gr);
+      nv.utils.windowResize(gr.update);
+      return gr;
     });
   }
 
@@ -239,35 +301,9 @@ function app() {
       };
       data.sort(function(a,b) { return a.x-b.x });
 
-      var x_tick_format = graph_step_in_seconds(name_)<3600 ? "%d(%a) %H:%M" : "%b %d"; //'%Y/%m/%d-%H:%M:%S'
-
-      nv.addGraph(function() {
-        var gr = nv.models.lineChart().options({
-          transitionDuration: 50,
-          duration: 50,
-          useInteractiveGuideline: true,
-          showLegend: false,
-          useInteractiveGuideline: true,
-        });
-
-        gr.xAxis
-          .tickFormat(function(d) {
-            return d3.time.format(x_tick_format)(new Date(d*1000))
-          });
-
-
-//        gr.xScale(d3.time.scale.utc());
-        gr.yAxis.tickFormat(formatKMBT);
-//        gr.y2Axis.tickFormat(d3.format(',.2f'));
-        d3.select(target_+' svg')
-          .datum([{key:name_, values:data}])
-          .call(gr);
-        nv.utils.windowResize(gr.update);
-        return gr;
-      });
-
+      nv_graph(name_,data,target_,no_modal_);
       if ( !no_modal_ ) {
-        $(target_).on('click', function() {
+        $(target_).click(function(e) {
           load_graph(name_,"#modal-graph",true);
           $("#modal-target").modal('show');
         });
@@ -315,8 +351,14 @@ function app() {
 
   function setup_search_keys() {
     $("#search-form").submit(function( event ) {
-      router.navigate('/graph/'+$("#search-keys-input").val());
+      var name = $("#search-keys-input").val();
+      $("#search-keys-input").blur();
       event.preventDefault();
+      if ( name.length>0 ) {
+        // this is kind of ugly - the form reset generates another empty submit
+        router.navigate('graph/'+name);
+      }
+      $("#search-form").trigger("reset");
     });
     $("#search-keys-input").typeahead({
       source:function (query,process) {
@@ -343,8 +385,8 @@ function app() {
 
   function setup_graph(name_) {
     $("#graph-box").show();
-    box_header("graph",name_);
     load_graph(name_,"#graph",true);
+    box_header("graph",name_);
   }
 
   function teardown_graph() {
