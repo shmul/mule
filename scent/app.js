@@ -2,6 +2,30 @@ function app() {
   var user = "Shmul the mule";
     var router = new Grapnel();
 
+  // from Rickshaw
+  function formatKMBT(y) {
+    var abs_y = Math.abs(y);
+	  if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(1) + "T" }
+    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(1) + "B" }
+    if (abs_y >= 1000000)    { return (y / 1000000).toFixed(1) + "M" }
+    if (abs_y >= 1000)       { return (y / 1000).toFixed(1) + "K" }
+    if (abs_y < 1 && y > 0)  { return y.toFixed(1) }
+    if (abs_y === 0)         { return '' }
+    return y;
+  };
+
+  function formatBase1024KMGTP(y) {
+    var abs_y = Math.abs(y);
+    if (abs_y >= 1125899906842624)  { return (y / 1125899906842624).toFixed(1) + "P" }
+    if (abs_y >= 1099511627776){ return (y / 1099511627776).toFixed(1) + "T" }
+    if (abs_y >= 1073741824)   { return (y / 1073741824).toFixed(1) + "G" }
+    if (abs_y >= 1048576)      { return (y / 1048576).toFixed(1) + "M" }
+    if (abs_y >= 1024)         { return (y / 1024).toFixed(1) + "K" }
+    if (abs_y < 1 && y > 0)    { return y.toFixed(2) }
+    if (abs_y === 0)           { return '' }
+    return y;
+  };
+
 
   const TIME_UNITS = {s:1, m:60, h:3600, d:3600*24, w:3600*24*7, y:3600*24*365};
   function timeunit_to_seconds(timeunit_) {
@@ -19,6 +43,11 @@ function app() {
     return m;
   }
 
+  function graph_step_in_seconds(graph_) {
+    var gs = graph_split(graph_);
+    if ( !gs ) { return null; }
+    return timeunit_to_seconds(gs[1]);
+  }
   function mule_config(callback_) {
     scent_ds.config(function(conf_) {
       callback_(jQuery.extend(true,{},conf_));
@@ -198,7 +227,7 @@ function app() {
   }
   function load_graph(name_,target_,no_modal_) {
     function callback(raw_data_) {
-      var data = [];
+      var data = new Array();
       var m = 0;
       for (var rw in raw_data_) {
         var dt = raw_data_[rw][2];
@@ -209,42 +238,32 @@ function app() {
       };
       data.sort(function(a,b) { return a.x-b.x });
 
-      var markers = [{
-        'date': new Date('2014-05-01T00:00:00.000Z'),
-        'label': 'Anomaly'
-      }];
+      var x_tick_format = graph_step_in_seconds(name_)<3600 ? "%d(%a) %H:%M" : "%b %d";
 
-      var graph = new Rickshaw.Graph( {
-        element: document.querySelector(target_),
-        renderer: 'line',
-        series: [ {
-          color: 'steelblue',
-          name: '', // this is required to shoosh the 'undefined in the tooltop'
-          data: data
-        } ]
-      } );
-
-      const ticksTreatment = 'glow';
-      var x_axis = new Rickshaw.Graph.Axis.Time( {
-	      graph: graph,
-	      ticksTreatment: ticksTreatment,
-	      timeFixture: new Rickshaw.Fixtures.Time.Local()
-      } );
-      var y_axis = new Rickshaw.Graph.Axis.Y( {
-        graph: graph,
-        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        ticksTreatment: ticksTreatment
-      } );
-      graph.render();
-
-      /*
-        var annotator = new Rickshaw.Graph.Annotate({
-        graph: graph,
-        element: document.querySelector(target_+'-timeline')
+      nv.addGraph(function() {
+        var gr = nv.models.lineChart().options({
+          transitionDuration: 50,
+          duration: 50,
+          useInteractiveGuideline: true,
+          showLegend: false,
+          useInteractiveGuideline: true
         });
-        annotator.add(1423785600,"hello cruel world");
-		    annotator.update();
-      */
+
+        gr.xAxis
+          .tickFormat(function(d) {
+            return d3.time.format(x_tick_format)(new Date(d*1000))
+          });
+        '%Y/%m/%d-%H:%M:%S'
+
+//        gr.xScale(d3.time.scale.utc());
+        gr.yAxis.tickFormat(formatKMBT);
+//        gr.y2Axis.tickFormat(d3.format(',.2f'));
+        d3.select(target_+' svg')
+          .datum([{key:name_, values:data}])
+          .call(gr);
+        nv.utils.windowResize(gr.update);
+        return gr;
+      });
 
       if ( !no_modal_ ) {
         $(target_).on('click', function() {
@@ -269,14 +288,14 @@ function app() {
     var template = $.templates("#chart-template");
     var template_data = [];
     for (i=1; i<=6; ++i) {
-      template_data.push({idx: i});
+      var name = "chart-"+i;
+      var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
+      template_data.push({idx: i,name:g});
     }
     var d = template.render(template_data)
     $("#charts-container").append(d);
     for (i=1; i<=6; ++i) {
-      var name = "chart-"+i;
-      var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
-      load_graph(g,"#"+name);
+      load_graph(template_data[i-1].name,"#chart-"+i);
     }
     box_header("charts",id);
     $("#charts-box").show();

@@ -14,7 +14,7 @@
     <!-- AdminLTE Skins. Choose a skin from the css/skins
           folder instead of downloading all of them to reduce the load. -->
     <link href="./plugins/AdminLTE/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css" />
-    <link href="./plugins/rickshaw/rickshaw.min.css" rel="stylesheet" type="text/css" />
+    <link href="./plugins/nvd3/nv.d3.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/qunit-1.17.1.css" rel="stylesheet" type="text/css" />
     <link href="./scent.css" rel="stylesheet" type="text/css" />
 
@@ -227,11 +227,9 @@
                       <h3 class="box-title">{{:name}}</h3>
                     </div>
                     <div class="box-body" id="chart-{{:idx}}-container">
-                      <div id="chart-{{:idx}}"></div>
-                      <div id="chart-{{:idx}}-timeline"></div>
-                      <div id="chart-{{:idx}}-slider"></div>
-                      <div id="chart-{{:idx}}-footer"></div>
-                    </div><!-- /.box-body-->
+<div id="chart-{{:idx}}" class='with-3d-shadow with-transitions'>
+    <svg></svg>
+</div>                    </div><!-- /.box-body-->
                   </div><!-- /.box -->
                 </div><!-- /.col -->
             </script>
@@ -301,8 +299,6 @@
     <!-- AdminLTE App -->
     <script src="./plugins/AdminLTE/js/app.min.js" type="text/javascript"></script>
     <!-- metrics graphics -->
-    <script src="./plugins/d3/d3.min.js" type="text/javascript"></script>
-    <script src="./plugins/rickshaw/rickshaw.js" type="text/javascript"></script>
     <!-- jsrender -->
     <script src="./plugins/jsrender/jsrender.js" type="text/javascript"></script>
     <script src="./plugins/datatables/jquery.dataTables.js" type="text/javascript"></script>
@@ -311,6 +307,8 @@
     <script src="./plugins/qunit-1.17.1.js" type="text/javascript"></script>
     <script src="./plugins/grapnel.min.js" type="text/javascript"></script>
     <script src="./plugins/Bootstrap-3-Typeahead-3.1.0/bootstrap3-typeahead.min.js" type="text/javascript"></script>
+    <script src="./plugins/d3/d3.js" type="text/javascript"></script>
+    <script src="./plugins/nvd3/nv.d3.js" type="text/javascript"></script>
     <!-- Datasource -->
     <script src="./datasource.js" type="text/javascript"></script>
     <!-- app -->

@@ -1,19 +1,28 @@
 .modal.modal-wide .modal-dialog {
-  width: 90%;
+    width: 90%;
 }
 .modal-wide .modal-body {
-  overflow-y: auto;
+    overflow-y: auto;
 }
 
 #modal-target .modal-body { margin-bottom: 900px }
 
 
 /* override some AdminLTE
-*/
+ */
 .sidebar-menu .treeview-menu  li > a {
-  padding: 5px 5px 5px 15px;
-  display: block;
-  font-size: 14px;
-  white-space: nowrap;
-  text-overflow: clip;
+    padding: 5px 5px 5px 15px;
+    display: block;
+    font-size: 14px;
+    white-space: nowrap;
+    text-overflow: clip;
+}
+
+/* nv.d3 */
+svg {
+    display: block;
+    margin: 0px;
+    padding: 0px;
+    height: 100%;
+    width: 100%;
 }
