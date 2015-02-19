@@ -56,7 +56,7 @@ function app() {
 
   function generate_other_graphs(graph_,callback_) {
     mule_config(function(conf_) {
-      var m = graph_.match(/^([\w\-]+)\./);
+      var m = graph_.match(/^([\w\-]+)(\.|;)/);
       if ( !m || !m[1] ) { callback_(); }
       var c = conf_[m[1]];
       if ( !c ) { callback_(); }
@@ -386,6 +386,19 @@ function app() {
   function setup_graph(name_) {
     $("#graph-box").show();
     load_graph(name_,"#graph",true);
+
+    // update the recent list
+    scent_ds.load(user,"recent",function(recent_) {
+      var idx = recent_.indexOf(name_);
+      if ( idx!=-1 ) {
+        recent_.splice(idx,1);
+      }
+      recent_.unshift(name_);
+      recent_.length = Math.min(recent_.length,10);
+      scent_ds.save(user,"recent",recent_);
+      setup_menus();
+    });
+
     generate_other_graphs(name_,function(others_) {
       var links = [];
       for (var i in others_) {
