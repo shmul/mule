@@ -192,7 +192,12 @@
             <div class="box-header with-border">
               <h3 class="box-title" id="{{:name}}-title">{{:title}}
                 {{for links}}
-                  &nbsp;|&nbsp;<a href="#graph/{{:href}}">{{:rp}}</a>
+                  &nbsp;|&nbsp;
+                  {{if current}}
+                    <span style="background-color: lightblue">{{:rp}}</span>
+                  {{else}}
+                    <a href="#graph/{{:href}}">{{:rp}}</a>
+                  {{/if}}
                 {{/for}}
               </h3>
               <div class="box-tools pull-right">

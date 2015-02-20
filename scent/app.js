@@ -54,7 +54,7 @@ function app() {
     });
   }
 
-  function generate_other_graphs(graph_,callback_) {
+  function generate_all_graphs(graph_,callback_) {
     mule_config(function(conf_) {
       var m = graph_.match(/^([\w\-]+)(\.|;)/);
       if ( !m || !m[1] ) { callback_(); }
@@ -62,14 +62,17 @@ function app() {
       if ( !c ) { callback_(); }
       var gs = graph_split(graph_);
       if ( !gs ) { callback_(); }
-      var i = c.indexOf(gs[1]+":"+gs[2]);
-      if ( i!=-1 ) {
-        c.splice(i,1);
-      }
+      var selected_index = c.indexOf(gs[1]+":"+gs[2]);
       for (var j=0; j<c.length; ++j) {
         c[j] = gs[0]+";"+c[j];
       }
-      callback_(c);
+      // sort based on step
+      c.sort(function(a,b) {
+        var step_a = a.match(/;(\d+\w+)/);
+        var step_b = b.match(/;(\d+\w+)/);
+        return timeunit_to_seconds(step_a[1])-timeunit_to_seconds(step_b[1]);
+      });
+      callback_(c,selected_index);
     });
   }
 
@@ -428,17 +431,19 @@ function app() {
       setup_menus();
     });
 
-    generate_other_graphs(name_,function(others_) {
+    generate_all_graphs(name_,function(pairs_) {
       var links = [];
-      for (var i in others_) {
-        var rp = others_[i].match(/^[\w\.\-]+;(\d\w+:\d\w+)$/);
-        links.push({href: others_[i], rp: rp[1]});
+      for (var i in pairs_) {
+        var rp = pairs_[i].match(/^[\w\.\-]+;(\d\w+:\d\w+)$/);
+        var current = name_.indexOf(pairs_[i])!=-1;
+        links.push({href: pairs_[i], rp: rp[1], current: current});
       }
       scent_ds.load(user,"persistent",function(persistent_) {
         var favorites = persistent_.favorites;
         var idx = favorites.indexOf(name_);
         var favorite = idx==-1 ? "fa-star-o" : "fa-star";
-        box_header("graph",name_,links,favorite);
+        var metric = graph_split(name_)[0];
+        box_header("graph",metric,links,favorite);
 
         $("#graph-favorite").click(function(e) {
           // we should re-read the persistent data
@@ -475,24 +480,25 @@ function app() {
       assert.equal(timeunit_to_seconds("1d"),60*60*24);
       assert.deepEqual(graph_split("brave.frontend;1d:2y"),["brave.frontend","1d","2y"]);
       assert.deepEqual(graph_split("event.buka_mr_result;1h:90d"),["event.buka_mr_result","1h","90d"]);
-      generate_other_graphs("kashmir_report_db_storer.sql_queries;1h:90d",
+      generate_all_graphs("kashmir_report_db_storer.sql_queries;1h:90d",
                             function(actual_) {
                               assert.deepEqual(actual_,
                                                ["kashmir_report_db_storer.sql_queries;5m:3d",
+                                                "kashmir_report_db_storer.sql_queries;1h:90d",
                                                 "kashmir_report_db_storer.sql_queries;1d:2y"]);
                             });
 
-      generate_other_graphs("malware_signature.foo.bar;1h:90d",
-                            function(actual_) {
-                              assert.deepEqual(actual_,
-                                               ["malware_signature.foo.bar;1d:2y"]);
-                            });
+      generate_all_graphs("malware_signature.foo.bar;1h:90d",
+                          function(actual_) {
+                            assert.deepEqual(actual_,
+                                             ["malware_signature.foo.bar;1d:2y"]);
+                          });
 
-      generate_other_graphs("malware_signature.foo.bar;60d:90y",
-                            function(actual_) {
-                              assert.deepEqual(actual_,
-                                               ["malware_signature.foo.bar;1h:90d","malware_signature.foo.bar;1d:2y"]);
-                            });
+      generate_all_graphs("malware_signature.foo.bar;60d:90y",
+                          function(actual_) {
+                            assert.deepEqual(actual_,
+                                             ["malware_signature.foo.bar;1h:90d","malware_signature.foo.bar;1d:2y"]);
+                          });
       assert.equal(graph_refresh_time("malware_signature.foo.bar;1h:90d"),3600);
       assert.equal(graph_refresh_time("kashmir_report_db_storer.sql_queries;5m:3d"),300);
     });
@@ -584,7 +590,7 @@ function app() {
   // call init functions
 
 
-//  run_tests();
+  run_tests();
   setup_router();
 
 }
