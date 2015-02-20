@@ -253,7 +253,7 @@ function app() {
     });
   }
 
-  function nv_graph(name_,data_,target_,with_focus_) {
+  function nv_graph(name_,data_,alerts_,anomalies_,target_,with_focus_) {
     var x_tick_format = graph_step_in_seconds(name_)<3600 ? "%d(%a) %H:%M" : "%b %d"; //'%Y/%m/%d-%H:%M:%S'
 
     nv.addGraph(function() {
@@ -262,7 +262,8 @@ function app() {
         transitionDuration: 50,
         duration: 50,
         useInteractiveGuideline: true,
-        showLegend: false,
+        showLegend: alerts_!=null,
+        interactive: true,
         useInteractiveGuideline: true,
       });
 
@@ -270,18 +271,45 @@ function app() {
         return d3.time.format(x_tick_format)(new Date(d*1000));
       }
 
+      function flat_line(data_,fixed_value_) {
+        var ar = new Array(data_.length);
+        for (var i in data_) {
+          ar[i] = {x: data_[i].x, y: fixed_value_};
+        }
+        return ar;
+      }
       gr.xAxis.tickFormat(x_format);
-      //        gr.xScale(d3.time.scale.utc());
       gr.yAxis.tickFormat(formatKMBT);
-      //        gr.y2Axis.tickFormat(d3.format(',.2f'));
 
       if ( with_focus_ ) {
         gr.x2Axis.tickFormat(x_format);
         gr.y2Axis.tickFormat(formatKMBT);
       }
-
+      var chart_data = [{key:name_, values:data_}];
+      if ( with_focus_ ) { // TODO - remove. Just for tests
+        alerts_=[11000000,13000000,22000000,30000000];
+        anomalies_ = [data_[data_.length-3].x,data_[data_.length-5].x,data_[data_.length-1].x];
+      }
+      if ( alerts_ ) {
+        const levels = [["Critical Low","orangered"],
+                        ["Warning Low","orange"],
+                        ["Warning High","orange"],
+                         ["Critical High","orangered"]];
+        for (var l in levels) {
+          chart_data.push({key: levels[l][0], color: levels[l][1],
+                           values: flat_line(data_,alerts_[l])});
+        }
+      }
+      if ( anomalies_ && anomalies_.length>0 ) {
+        var av = [];
+        for (a in anomalies_) {
+          av.push({x:anomalies_[a], y:0});
+        }
+        chart_data.push({key: "anomalies", color: "black",
+                         values: av, shape: "circle", size:100});
+      }
       d3.select(target_+' svg')
-        .datum([{key:name_, values:data_}])
+        .datum(chart_data)
         .call(gr);
       nv.utils.windowResize(gr.update);
       return gr;
@@ -300,8 +328,9 @@ function app() {
         }
       };
       data.sort(function(a,b) { return a.x-b.x });
-
-      nv_graph(name_,data,target_,no_modal_);
+      var alerts = raw_data_.alerts || [];
+      var anomalies = [];
+      nv_graph(name_,data,alerts,anomalies,target_,no_modal_);
       if ( !no_modal_ ) {
         $(target_).click(function(e) {
           load_graph(name_,"#modal-graph",true);
