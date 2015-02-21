@@ -279,10 +279,12 @@ function app() {
         }
         if ( !persistent_.dashboards[name] ) {
           persistent_.dashboards[name] = [];
-          scent_ds.save(user,"persistent",persistent_);
+          scent_ds.save(user,"persistent",persistent_,function() {
+            load_graphs_lists("dashboard",persistent_.dashboards);
+            router.navigate('dashboard/'+name);
+          });
         }
         $("#dashboard-add").val('');
-        load_graphs_lists("dashboard",persistent_.dashboards);
       });
       return false;
     });
