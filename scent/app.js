@@ -394,6 +394,31 @@ function app() {
   function setup_charts(id) {
     $("#charts-container").empty();
 
+    function add_to_dashboard(graph_) {
+      scent_ds.load(user,"persistent",function(persistent_) {
+        var id = $("#charts-title").text().trim();
+        var dashboard = persistent_.dashboards[id];
+        if ( dashboard.indexOf(graph_)==-1 ) {
+          dashboard.push(graph_);
+          scent_ds.save(user,"persistent",persistent_);
+          setup_charts(id);
+        }
+      });
+    }
+
+    function remove_from_dashboard(graph_) {
+      scent_ds.load(user,"persistent",function(persistent_) {
+        var id = $("#charts-title").text().trim();
+        var idx = persistent_.dashboards[id].indexOf(graph_);
+        if ( idx!=-1 ) {
+          persistent_.dashboards[id].splice(idx,1);
+          scent_ds.save(user,"persistent",persistent_,function() {
+            setup_charts(id);
+          });
+        }
+      });
+    }
+
     scent_ds.load(user,"persistent",function(persistent_) {
       var dashboard = persistent_.dashboards[id];
       if ( !dashboard ) {
@@ -411,18 +436,14 @@ function app() {
       for (var i in dashboard) {
         load_graph(template_data[i].name,"#chart-"+i);
       }
-
-      function add_to_dashboard(graph_) {
-        scent_ds.load(user,"persistent",function(persistent_) {
-          var id = $("#charts-title").text().trim();
-          var dashboard = persistent_.dashboards[id];
-          if ( dashboard.indexOf(graph_)==-1 ) {
-            dashboard.push(graph_);
-            scent_ds.save(user,"persistent",persistent_);
-            setup_charts(id);
+      $(".chart-remove").click(function(e) {
+        var graph = $(e.target).attr("data-target");
+        bootbox.confirm("Are you sure you want to remove '"+graph+"' from the dashboard?", function(result) {
+          if ( result ) {
+            remove_from_dashboard(graph);
           }
         });
-      }
+      });
 
       box_header("charts",id,[],false,add_to_dashboard);
       $("#charts-box").show();

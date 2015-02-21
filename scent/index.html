@@ -269,6 +269,9 @@
                   <div class="box box-primary">
                     <div class="box-header">
                       <h3 class="box-title">{{:name}}</h3>
+                      <div class="box-tools pull-right">
+                       <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove"><i data-target="{{:name}}" class="chart-remove fa fa-minus"></i></button>
+                      </div>
                     </div>
                     <div class="box-body" id="chart-{{:idx}}-container">
                     <div id="chart-{{:idx}}" class='with-3d-shadow'>
@@ -354,6 +357,7 @@
     <script src="./plugins/Bootstrap-3-Typeahead-3.1.0/bootstrap3-typeahead.min.js" type="text/javascript"></script>
     <script src="./plugins/d3/d3.js" type="text/javascript"></script>
     <script src="./plugins/nvd3/nv.d3.js" type="text/javascript"></script>
+    <script src="./plugins/bootbox-4.3.0.js" type="text/javascript"></script>
     <!-- Datasource -->
     <script src="./datasource.js" type="text/javascript"></script>
     <!-- app -->
