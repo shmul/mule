@@ -4,17 +4,21 @@ function scent_ds_mockup (ready_) {
   var fixtures_scripts = ["config","key","graph","alert"];
   var fixtures = {};
   const user = "Shmul the mule";
+  ns=$.initNamespaceStorage('mule: ');
 
   save(user,"recent",
        ["brave.backend;1d:2y",
         "event.activation_failed;5m:3d",
         "kashmir_report_db_storer;5m:3d"],function() {});
-  save(user,"persistent",
-       {favorites:["event.bho_blocked_blacklisted;1h:90d",
-                   "event.browser_apc_detected;1h:90d",
-                   "event.buka_mr_result;1d:2y"],
-        dashboards:{},
-       },function() {});
+  var v = $.localStorage.get(user);
+  if ( !v ) {
+    save(user,"persistent",
+         {favorites:["event.bho_blocked_blacklisted;1h:90d",
+                     "event.browser_apc_detected;1h:90d",
+                     "event.buka_mr_result;1d:2y"],
+          dashboards:{},
+         },function() {});
+  }
 
   function load_fixture(name_,path_) {
     $.ajax({

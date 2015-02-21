@@ -214,10 +214,10 @@ function app() {
       }
 
       function alert_graph_name_click(e) {
-          var graph = $(e.target).text();
-          load_graph(graph,"#graph",true);
-          $("#graph-box").show();
-          e.stopPropagation();
+        var graph = $(e.target).attr("data-target");
+        setup_graph(graph); //        load_graph(graph,"#graph",false);
+        $("#graph-box").show();
+        e.stopPropagation();
       }
       function set_click_behavior() {
         $(".alert-graph-name").click(alert_graph_name_click);
@@ -322,7 +322,7 @@ function app() {
     });
   }
 
-  function load_graph(name_,target_,no_modal_) {
+  function load_graph(name_,target_,with_focus_) {
     function callback(raw_data_) {
       var data = new Array();
       var m = 0;
@@ -335,17 +335,7 @@ function app() {
       };
       data.sort(function(a,b) { return a.date-b.date });
 
-      draw_graph(name_,[data],target_,no_modal_);
-      if ( !no_modal_ ) {
-        $(target_).click(function(e) {
-          load_graph(name_,"#modal-graph",true);
-          $("#modal-target").modal('show');
-        });
-        // cleanup
-        $('#modal-target').on('hidden.bs.modal', function (e) {
-          $("#modal-body").html("");
-        });
-      }
+      draw_graph(name_,[data],target_,with_focus_);
     }
     scent_ds.graph(name_,callback);
   }
@@ -406,14 +396,27 @@ function app() {
         });
       });
 
+      $(".chart-show-modal").click(function(e) {
+        var graph = $(e.target).closest(".small-graph").attr("data-target");
+        $("#modal-target").modal('show');
+        // cleanup
+        $('#modal-target').on('hidden.bs.modal', function (e) {
+          //$("#modal-body").html("");
+        });
+
+        load_graph(graph,"#modal-graph",false);
+      });
+
+
       box_header("charts",id,[],false,add_to_dashboard);
       $("#charts-box").show();
-
-      $("#modal-wide").empty();
+/*
+      $(".modal-wide").empty();
       $(".modal-wide").on("shown.bs.modal", function() {
         var height = $(window).height();
         $(this).find(".modal-body").css("max-height", height);
       });
+*/
     });
   }
 
@@ -460,7 +463,7 @@ function app() {
 
   function setup_graph(name_) {
     $("#graph-box").show();
-    load_graph(name_,"#graph",true);
+    load_graph(name_,"#graph",false);
 
     // update the recent list
     scent_ds.load(user,"recent",function(recent_) {
@@ -474,13 +477,14 @@ function app() {
       setup_menus();
     });
 
-    generate_all_graphs(name_,function(pairs_) {
+    function set_header(pairs_) {
       var links = [];
       for (var i in pairs_) {
         var rp = pairs_[i].match(/^[\w\.\-]+;(\d\w+:\d\w+)$/);
         var current = name_.indexOf(pairs_[i])!=-1;
         links.push({href: pairs_[i], rp: rp[1], current: current});
       }
+
       scent_ds.load(user,"persistent",function(persistent_) {
         var favorites = persistent_.favorites;
         var idx = favorites.indexOf(name_);
@@ -507,7 +511,9 @@ function app() {
           });
         });
       });
-    });
+    }
+
+    generate_all_graphs(name_,set_header);
   }
 
   function teardown_graph() {
