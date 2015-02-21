@@ -297,66 +297,28 @@ function app() {
     $("#sidebar-search-container").empty().append($.templates("#search-form-template").render(template_data));
   }
 
-  function nv_graph(name_,data_,alerts_,anomalies_,target_,with_focus_) {
-    var x_tick_format = graph_step_in_seconds(name_)<3600 ? "%d(%a) %H:%M" : "%b %d"; //'%Y/%m/%d-%H:%M:%S'
+  function draw_graph(name_,data_,target_,with_focus_) {
+    // TODO use with_focus_ to add zoom buttons
+    var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
+    var rollover_value_format = d3.format(",d");
 
-    nv.addGraph(function() {
-      var model = with_focus_ ? nv.models.lineWithFocusChart : nv.models.lineChart;
-      var gr = model().options({
-        transitionDuration: 50,
-        duration: 50,
-        useInteractiveGuideline: true,
-        showLegend: alerts_!=null,
-        interactive: true,
-        useInteractiveGuideline: true,
-      });
-
-      function x_format(d) {
-        return d3.time.format(x_tick_format)(new Date(d*1000));
+    MG.data_graphic({
+      data: data_,
+      // TODO For some reason this breaks the chart:
+      // missing_is_zero: true,
+      full_width: true,
+      full_height: true,
+      bottom: 40,
+      area: false,
+      xax_count: 10,
+      target: target_,
+      interpolate: "basic",
+      legend: [name_],
+      legend_target: ".legend",
+      mouseover: function(d, i) {
+         d3.select(target_ + " svg .mg-active-datapoint")
+           .text(rollover_date_format(d.date) + ": " + name_ + " " + rollover_value_format(d.value));
       }
-
-      function flat_line(data_,fixed_value_) {
-        var ar = new Array(data_.length);
-        for (var i in data_) {
-          ar[i] = {x: data_[i].x, y: fixed_value_};
-        }
-        return ar;
-      }
-      gr.xAxis.tickFormat(x_format);
-      gr.yAxis.tickFormat(formatKMBT);
-
-      if ( with_focus_ ) {
-        gr.x2Axis.tickFormat(x_format);
-        gr.y2Axis.tickFormat(formatKMBT);
-      }
-      var chart_data = [{key:name_, values:data_}];
-      if ( with_focus_ ) { // TODO - remove. Just for tests
-//        alerts_=[11000000,13000000,22000000,30000000];
-        //        anomalies_ = [data_[data_.length-3].x,data_[data_.length-5].x,data_[data_.length-1].x];
-      }
-      if ( alerts_ && alerts_.length>0 ) {
-        const levels = [["Critical Low","orangered"],
-                        ["Warning Low","orange"],
-                        ["Warning High","orange"],
-                         ["Critical High","orangered"]];
-        for (var l in levels) {
-          chart_data.push({key: levels[l][0], color: levels[l][1],
-                           values: flat_line(data_,alerts_[l])});
-        }
-      }
-      if ( anomalies_ && anomalies_.length>0 ) {
-        var av = [];
-        for (a in anomalies_) {
-          av.push({x:anomalies_[a], y:0});
-        }
-        chart_data.push({key: "anomalies", color: "black",
-                         values: av, shape: "circle", size:100});
-      }
-      d3.select(target_+' svg')
-        .datum(chart_data)
-        .call(gr);
-      nv.utils.windowResize(gr.update);
-      return gr;
     });
   }
 
@@ -368,13 +330,12 @@ function app() {
         var dt = raw_data_[rw][2];
         var v = raw_data_[rw][0];
         if ( dt>100000 ) {
-          data.push({x:dt, y:v});
+          data.push({date: new Date(dt * 1000), value: v});
         }
       };
-      data.sort(function(a,b) { return a.x-b.x });
-      var alerts = raw_data_.alerts || [];
-      var anomalies = [];
-      nv_graph(name_,data,alerts,anomalies,target_,no_modal_);
+      data.sort(function(a,b) { return a.date-b.date });
+
+      draw_graph(name_,[data],target_,no_modal_);
       if ( !no_modal_ ) {
         $(target_).click(function(e) {
           load_graph(name_,"#modal-graph",true);

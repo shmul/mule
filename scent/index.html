@@ -14,7 +14,7 @@
     <!-- AdminLTE Skins. Choose a skin from the css/skins
           folder instead of downloading all of them to reduce the load. -->
     <link href="./plugins/AdminLTE/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css" />
-    <link href="./plugins/nvd3/nv.d3.min.css" rel="stylesheet" type="text/css" />
+    <link href="./plugins/metricsgraphics/metricsgraphics.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/qunit-1.17.1.css" rel="stylesheet" type="text/css" />
     <link href="./scent.css" rel="stylesheet" type="text/css" />
 
@@ -182,8 +182,7 @@
               </div>
               <div class="modal-body" id="modal-body">
                 <div class="row">
-                  <div id="modal-graph" class='col-md-12 with-3d-shadow'>
-                    <svg class="tall-graph"></svg>
+                  <div id="modal-graph" class="col-md-12 with-3d-shadow tall-graph">
                   </div>
                 </div>
               </div>
@@ -235,9 +234,10 @@
                      <h3 id="graph-label" class="box-title"></h3>
                    </div>
                    <div class="box-body" id="graph-body-container">
-                     <div id="graph" class='with-3d-shadow'>
-                       <svg class="tall-graph"></svg>
+                     <div id="graph" class="with-3d-shadow tall-graph">
                      </div>
+                    <div class="legend">
+                    </div>
                    </div>
                  </div>
                </div>
@@ -274,8 +274,7 @@
                       </div>
                     </div>
                     <div class="box-body" id="chart-{{:idx}}-container">
-                    <div id="chart-{{:idx}}" class='with-3d-shadow'>
-                      <svg class="small-graph"></svg>
+                    <div id="chart-{{:idx}}" class="with-3d-shadow small-graph">
                     </div>
                     </div><!-- /.box-body-->
                   </div><!-- /.box -->
@@ -358,6 +357,7 @@
     <script src="./plugins/d3/d3.js" type="text/javascript"></script>
     <script src="./plugins/nvd3/nv.d3.js" type="text/javascript"></script>
     <script src="./plugins/bootbox-4.3.0.js" type="text/javascript"></script>
+    <script src="./plugins/metricsgraphics/metricsgraphics.js" type="text/javascript"></script>
     <!-- Datasource -->
     <script src="./datasource.js" type="text/javascript"></script>
     <!-- app -->
