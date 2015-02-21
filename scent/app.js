@@ -101,8 +101,30 @@ function app() {
   }
 
   // --- application functions
-  function box_header(type_,title_,links_,favorite_) {
-    $("#"+type_+"-box-header-container").html($.templates("#box-header-template").render([{name: ""+type_+"", title: title_, links: links_,favorite: favorite_}]));
+  function box_header(type_,title_,links_,favorite_,add_callback_) {
+    var template_data = [{name: ""+type_+"", title: title_, links: links_}];
+    if ( add_callback_ ) {
+      template_data[0].add = true;
+    }
+    if ( favorite_ ) {
+      template_data[0].favorite = true;
+    }
+    $("#"+type_+"-box-header-container").html($.templates("#box-header-template").render(template_data));
+    if ( add_callback_ ) {
+      $("#charts-add-modal").on('shown.bs.modal',function(e) {
+        var template_data = [{class: "form",
+                              form_id: "charts-search-form",
+                              input_id: "charts-search-input",
+                              add: true
+                             }];
+        $("#charts-add-modal-form-container").empty().append($.templates("#search-form-template").render(template_data));
+        setup_search_keys("#charts-search-form","#charts-search-input",
+                          function(name_) {
+                            $("#charts-add-modal").modal('hide');
+                            add_callback_(name_);
+                          });
+      });
+    }
   }
 
   function setup_alerts_menu() {
@@ -221,39 +243,58 @@ function app() {
   }
 
   function setup_menus() {
+
     function load_graphs_lists(list_name_,data_) {
-      if ( data_ && data_.length>0 ) {
-        var template_data = [];
+      if ( !data_ ) { return; }
+      var template_data = [];
+      if ( Array.isArray(data_) ) {
         for (var d=0; d<data_.length; ++d) {
           template_data.push({idx:1+d, name:data_[d]});
         }
-        $("#"+list_name_+"-container").empty().append($.templates("#"+list_name_+"-template").render(template_data));
+      } else {
+        var i = 0;
+        for (var d in data_) {
+          ++i;
+          template_data.push({idx:i, name:d});
+        }
+        template_data.sort(function(a,b) {
+          return a.name.localeCompare(b.name);
+        });
       }
+      $("#"+list_name_+"-container").empty().append($.templates("#"+list_name_+"-template").render(template_data));
     }
+
     scent_ds.load(user,"persistent",function(persistent_) {
-      var favorites = persistent_.favorites;
-      var dashboards = persistent_.dashboards;
-      load_graphs_lists("favorite",favorites);
-      load_graphs_lists("dashboard",dashboards);
+      load_graphs_lists("favorite",persistent_.favorites);
+      load_graphs_lists("dashboard",persistent_.dashboards);
     });
 
     $("#dashboard-form").submit(function(e) {
-      var name = $("#dashboard-input").val();
-      $("#dashboard-input").val('');
-      scent_ds.load(user,"persistent",function(persistent_) {
-        var dashboards = persistent_.dashboards;
-        if ( name && dashboards && name.length>0 && dashboards.indexOf(name)==-1 ) {
-          persistent_.dashboards.push(name);
-          scent_ds.save(user,"persistent",persistent_);
-          load_graphs_lists("dashboard",dashboards);
-        }
-      });
+      var name = $("#dashboard-add").val();
+      e.preventDefault();
       e.stopPropagation();
+      scent_ds.load(user,"persistent",function(persistent_) {
+        if ( !persistent_.dashboards ) {
+          persistent_.dashboards = {};
+        }
+        if ( !persistent_.dashboards[name] ) {
+          persistent_.dashboards[name] = [];
+          scent_ds.save(user,"persistent",persistent_);
+        }
+        $("#dashboard-add").val('');
+        load_graphs_lists("dashboard",persistent_.dashboards);
+      });
+      return false;
     });
 
     scent_ds.load(user,"recent",function(recent_) {
       load_graphs_lists("recent",recent_);
     });
+    var template_data = [{class: "sidebar-form",
+                          form_id: "sidebar-search-form",
+                          input_id: "search-keys-input"
+                         }];
+    $("#sidebar-search-container").empty().append($.templates("#search-form-template").render(template_data));
   }
 
   function nv_graph(name_,data_,alerts_,anomalies_,target_,with_focus_) {
@@ -290,10 +331,10 @@ function app() {
       }
       var chart_data = [{key:name_, values:data_}];
       if ( with_focus_ ) { // TODO - remove. Just for tests
-        alerts_=[11000000,13000000,22000000,30000000];
-        anomalies_ = [data_[data_.length-3].x,data_[data_.length-5].x,data_[data_.length-1].x];
+//        alerts_=[11000000,13000000,22000000,30000000];
+        //        anomalies_ = [data_[data_.length-3].x,data_[data_.length-5].x,data_[data_.length-1].x];
       }
-      if ( alerts_ ) {
+      if ( alerts_ && alerts_.length>0 ) {
         const levels = [["Critical Low","orangered"],
                         ["Warning Low","orange"],
                         ["Warning High","orange"],
@@ -353,27 +394,45 @@ function app() {
   function setup_charts(id) {
     $("#charts-container").empty();
 
-    var template = $.templates("#chart-template");
-    var template_data = [];
-    for (i=1; i<=6; ++i) {
-      var name = "chart-"+i;
-      var g = i%2==0 ? "brave;5m:3d" : "kashmir_report_db_storer;1d:2y";
-      template_data.push({idx: i,name:g});
-    }
-    var d = template.render(template_data)
-    $("#charts-container").append(d);
-    for (i=1; i<=6; ++i) {
-      load_graph(template_data[i-1].name,"#chart-"+i);
-    }
-    box_header("charts",id);
-    $("#charts-box").show();
+    scent_ds.load(user,"persistent",function(persistent_) {
+      var dashboard = persistent_.dashboards[id];
+      if ( !dashboard ) {
+        // TODO - flash an error and exit
+        return;
+      }
 
-    $("#modal-wide").empty();
-    $(".modal-wide").on("show.bs.modal", function() {
-      var height = $(window).height();
-      $(this).find(".modal-body").css("max-height", height);
+      var template = $.templates("#chart-template");
+      var template_data = [];
+      for (var i in dashboard) {
+        template_data.push({idx: i,name:dashboard[i]});
+      }
+      var d = template.render(template_data)
+      $("#charts-container").append(d);
+      for (var i in dashboard) {
+        load_graph(template_data[i].name,"#chart-"+i);
+      }
+
+      function add_to_dashboard(graph_) {
+        scent_ds.load(user,"persistent",function(persistent_) {
+          var id = $("#charts-title").text().trim();
+          var dashboard = persistent_.dashboards[id];
+          if ( dashboard.indexOf(graph_)==-1 ) {
+            dashboard.push(graph_);
+            scent_ds.save(user,"persistent",persistent_);
+            setup_charts(id);
+          }
+        });
+      }
+
+      box_header("charts",id,[],false,add_to_dashboard);
+      $("#charts-box").show();
+
+      $("#modal-wide").empty();
+      $(".modal-wide").on("shown.bs.modal", function() {
+        var height = $(window).height();
+        $(this).find(".modal-body").css("max-height", height);
+      });
     });
-
   }
 
   function teardown_charts() {
@@ -381,18 +440,20 @@ function app() {
     $("#charts-box").hide();
   }
 
-  function setup_search_keys() {
-    $("#search-form").submit(function( event ) {
-      var name = $("#search-keys-input").val();
-      $("#search-keys-input").blur();
-      event.preventDefault();
+  function setup_search_keys(form_,input_,callback_) {
+    $(form_).submit(function(e) {
+      var name = $(input_).val();
+      $(input_).blur();
+      e.preventDefault();
+      e.stopPropagation();
       if ( name.length>0 ) {
         // this is kind of ugly - the form reset generates another empty submit
-        router.navigate('graph/'+name);
+        callback_(name);
       }
-      $("#search-form").trigger("reset");
+      $(form_).trigger("reset");
+      return false;
     });
-    $("#search-keys-input").typeahead({
+    $(input_).typeahead({
       source:function (query,process) {
         function callback(keys_) {
           if ( !this.scent_keys ) {
@@ -541,7 +602,10 @@ function app() {
     function globals() {
       setup_menus();
       setup_alerts_menu();
-      setup_search_keys();
+      setup_search_keys("#sidebar-search-form","#search-keys-input",
+                        function(name_) {
+                          router.navigate('graph/'+name_);
+                        });
       update_alerts(); // with no selected category it just updates the count
     }
 
@@ -590,7 +654,7 @@ function app() {
   // call init functions
 
 
-  run_tests();
+//  run_tests();
   setup_router();
 
 }

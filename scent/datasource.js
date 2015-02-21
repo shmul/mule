@@ -13,7 +13,7 @@ function scent_ds_mockup (ready_) {
        {favorites:["event.bho_blocked_blacklisted;1h:90d",
                    "event.browser_apc_detected;1h:90d",
                    "event.buka_mr_result;1d:2y"],
-        dashboards:["events","general"]
+        dashboards:{},
        },function() {});
 
   function load_fixture(name_,path_) {
