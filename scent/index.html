@@ -93,14 +93,14 @@
         <section class="sidebar">
           <!-- search form -->
           <script id="search-form-template" type="text/x-jsrender">
-          <form action="#" class="{{:class}}" id="{{:form_id}}">
-            <div class="input-group">
-              <input id="{{:input_id}}" type="text"" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
+           <form action="#" class="{{:class}}" id="{{:form_id}}">
+             <div class="input-group">
+              <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
               {{if add}}
                 <button type="submit" class="btn btn-primary btn-flat">Add</button>
               {{/if}}
-            </div>
-          </form>
+             </div>
+           </form>
           </script>
           <!-- /.search form - TODO add something here-->
           <!-- sidebar menu: : style can be found in sidebar.less -->
@@ -217,8 +217,11 @@
                     <i id="graph-favorite" class="fa {{:favorite}}"></i>
                   </button>
                 {{/if}}
-                <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fa fa-minus"></i></button>
-                <button class="btn btn-box-tool" data-widget="remove" data-toggle="tooltip" title="Remove"><i class="fa fa-times"></i></button>
+                {{if trash}}
+                  <button class="btn btn-box-tool" data-toggle="tooltip" title="Delete" data-target="{{:title}}">
+                    <i id="charts-delete" class="fa fa-trash"></i>
+                  </button>
+                {{/if}}
               </div>
             </div>
          </script>
