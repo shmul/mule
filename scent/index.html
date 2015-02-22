@@ -97,7 +97,9 @@
              <div class="input-group">
               <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
               {{if add}}
-                <button type="submit" class="btn btn-primary btn-flat">Add</button>
+                <span class="input-group-btn">
+                 <button type="submit" class="btn btn-primary btn-flat">Add</button>
+                </span>
               {{/if}}
              </div>
            </form>
@@ -114,7 +116,12 @@
               <ul class="treeview-menu active">
                 <div id="dashboard-container"></div>
                 <script id="dashboard-template" type="text/x-jsrender">
-                  <li><a href="#dashboard/{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+                 <li>
+                   <a href="#dashboard/{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}
+                 <i data-target="{{:name}}" data-toggle="tooltip" title="Delete" class="dashboard-delete pull-right fa fa-trash"></i>
+                 </a>
+                </script>
+                 </li>
                 </script>
                 <form action="#" class="sidebar-form" id="dashboard-form">
                   <input id="dashboard-add" type="text" class="form-control" placeholder="Add dashboard">
@@ -215,11 +222,6 @@
                 {{if favorite}}
                   <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite">
                     <i id="graph-favorite" class="fa {{:favorite}}"></i>
-                  </button>
-                {{/if}}
-                {{if trash}}
-                  <button class="btn btn-box-tool" data-toggle="tooltip" title="Delete" data-target="{{:title}}">
-                    <i id="charts-delete" class="fa fa-trash"></i>
                   </button>
                 {{/if}}
               </div>

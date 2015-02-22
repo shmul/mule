@@ -102,8 +102,6 @@ function app() {
 
   // --- application functions
   function box_header(options_) {
-    //    type_,title_,links_,favorite_,add_callback_)
-
     var template_data = [{name: ""+options_.type+"",
                           title: options_.title,
                           links: options_.links}];
@@ -111,13 +109,10 @@ function app() {
       template_data[0].add = true;
     }
     if ( options_.favorite ) {
-      template_data[0].favorite = true;
+      template_data[0].favorite = options_.favorite;
     }
     if ( options_.close ) {
       template_data[0].close = true;
-    }
-    if ( options_.delete_callback ) {
-      template_data[0].trash = true;
     }
 
     $("#"+options_.type+"-box-header-container").html($.templates("#box-header-template").render(template_data));
@@ -138,14 +133,7 @@ function app() {
     }
 
     if ( options_.delete_callback ) {
-      $("#charts-delete").click(function(e) {
-        var name = $(e.target).parent().attr("data-target");
-        bootbox.confirm("Are you sure you want to delete the dashboard '"+name+"' ?", function(result) {
-          if ( result ) {
-            options_.delete_callback(name);
-          }
-        });
-      });
+
     }
   }
 
@@ -308,7 +296,29 @@ function app() {
         }
         $("#dashboard-add").val('');
       });
+
       return false;
+    });
+
+    function delete_dashboard(name_) {
+      scent_ds.load(user,"persistent",function(persistent_) {
+        if ( persistent_.dashboards[name_] ) {
+          delete persistent_.dashboards[name_];
+          scent_ds.save(user,"persistent",persistent_,function() {
+            router.navigate('/');
+          });
+        }
+      });
+    }
+
+
+    $(".dashboard-delete").click(function(e) {
+      var name = $(e.target).attr("data-target");
+      bootbox.confirm("Are you sure you want to delete the dashboard '"+name+"' ?", function(result) {
+        if ( result ) {
+          options_.delete_callback(name);
+        }
+      });
     });
 
     scent_ds.load(user,"recent",function(recent_) {
@@ -394,17 +404,6 @@ function app() {
       });
     }
 
-    function delete_dashboard(name_) {
-      scent_ds.load(user,"persistent",function(persistent_) {
-        if ( persistent_.dashboards[name_] ) {
-          delete persistent_.dashboards[name_];
-          scent_ds.save(user,"persistent",persistent_,function() {
-            router.navigate('/');
-          });
-        }
-      });
-    }
-
     scent_ds.load(user,"persistent",function(persistent_) {
       var dashboard = persistent_.dashboards[id];
       if ( !dashboard ) {
@@ -443,8 +442,7 @@ function app() {
       });
 
 
-      box_header({type: "charts",title: id,add_callback: add_to_dashboard,
-                  delete_callback: delete_dashboard});
+      box_header({type: "charts",title: id,add_callback: add_to_dashboard});
       $("#charts-box").show();
 /*
       $(".modal-wide").empty();
