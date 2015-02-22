@@ -208,7 +208,11 @@
                   {{if current}}
                     <span style="background-color: lightblue">{{:rp}}</span>
                   {{else}}
-                    <a href="#graph/{{:href}}">{{:rp}}</a>
+                    {{if inner_navigation}}
+                      <a data-target="{{:href}}" class="inner-navigation">{{:rp}}</a>
+                      {{else}}
+                      <a href="#graph/{{:href}}">{{:rp}}</a>
+                      {{/if}}
                   {{/if}}
                 {{/for}}
               </h3>
@@ -228,7 +232,45 @@
             </div>
          </script>
 
-         <div class="box" id="graph-box">
+          <div class="box" id="alert-box">
+            <div id="alert-box-header-container"></div>
+
+            <div class="box-body" id="alert-container"></div>
+            <script id="alert-template" type="text/x-jsrender">
+                <div class="box-body">
+                  <table id="alert-{{:type}}" class="table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        {{if type==="anomaly"}}
+                        <th>Graph</th><th>Time</th>
+                        {{else}}
+                        <th>Graph</th><th>Time</th><th>Value</th>
+                        <th>Critical high</th><th>Warning high</th>
+                        <th>Warning low</th><th>Critical low</th>
+                        <th>Stale</th>
+                        {{/else}}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {{for records}}
+                      <tr>
+                        {{if type==="anomaly"}}
+                        <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td>
+                        {{else}}
+                        <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td><td>{{:value}}</td>
+                        <td>{{:crit_high}}</td><td>{{:warn_high}}</td>
+                        <td>{{:warn_low}}</td><td>{{:crit_low}}</td>
+                        <td>{{:stale}}</td>
+                        {{/else}}
+                      </tr>
+                      {{/for}}
+                    </tbody>
+                  </table>
+                </div><!-- /.box-body -->
+            </script>
+          </div><!-- /.box -->
+
+          <div class="box" id="graph-box">
            <div id="graph-box-header-container"></div>
 
            <div class="box-body container-fluid" id="graph-container">
@@ -239,7 +281,7 @@
                      <h3 id="graph-label" class="box-title"></h3>
                    </div>
                    <div class="box-body">
-                     <div id="graph" class="with-3d-shadow tall-graph">
+                     <div id="graph" class="with-3d-shadow">
                      </div>
                      <div class="legend">
                     </div>
@@ -286,44 +328,6 @@
                 </div><!-- /.col -->
             </script>
             </div><!-- /.box-body -->
-          </div><!-- /.box -->
-
-          <div class="box" id="alert-box">
-            <div id="alert-box-header-container"></div>
-
-            <div class="box-body" id="alert-container"></div>
-            <script id="alert-template" type="text/x-jsrender">
-                <div class="box-body">
-                  <table id="alert-{{:type}}" class="table table-bordered table-striped">
-                    <thead>
-                      <tr>
-                        {{if type==="anomaly"}}
-                        <th>Graph</th><th>Time</th>
-                        {{else}}
-                        <th>Graph</th><th>Time</th><th>Value</th>
-                        <th>Critical high</th><th>Warning high</th>
-                        <th>Warning low</th><th>Critical low</th>
-                        <th>Stale</th>
-                        {{/else}}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {{for records}}
-                      <tr>
-                        {{if type==="anomaly"}}
-                        <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td>
-                        {{else}}
-                        <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td><td>{{:value}}</td>
-                        <td>{{:crit_high}}</td><td>{{:warn_high}}</td>
-                        <td>{{:warn_low}}</td><td>{{:crit_low}}</td>
-                        <td>{{:stale}}</td>
-                        {{/else}}
-                      </tr>
-                      {{/for}}
-                    </tbody>
-                  </table>
-                </div><!-- /.box-body -->
-            </script>
           </div><!-- /.box -->
 
           <div class="box-footer">

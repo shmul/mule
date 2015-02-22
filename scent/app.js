@@ -225,7 +225,8 @@ function app() {
 
       function alert_graph_name_click(e) {
         var graph = $(e.target).attr("data-target");
-        setup_graph(graph); //        load_graph(graph,"#graph",false);
+        setup_graph(graph,true);
+        $("#graph").removeClass("tall-graph").addClass("medium-graph");
         $("#graph-box").show();
         e.stopPropagation();
       }
@@ -495,8 +496,9 @@ function app() {
 
   }
 
-  function setup_graph(name_) {
+  function setup_graph(name_,inner_navigation_) {
     $("#graph-box").show();
+    $("#graph").removeClass("medium-graph").addClass("tall-graph");
     load_graph(name_,"#graph",false);
 
     // update the recent list
@@ -517,7 +519,7 @@ function app() {
       for (var i in pairs_) {
         var rp = pairs_[i].match(/^[\w\.\-]+;(\d\w+:\d\w+)$/);
         var current = name_.indexOf(pairs_[i])!=-1;
-        links.push({href: pairs_[i], rp: rp[1], current: current});
+        links.push({href: pairs_[i], rp: rp[1], current: current, inner_navigation: inner_navigation_});
       }
 
       scent_ds.load(user,"persistent",function(persistent_) {
@@ -528,6 +530,10 @@ function app() {
 
         box_header({type: "graph", title: metric,
                     links: links,favorite: favorite});
+        $(".inner-navigation").click(function(e) {
+          var graph = $(e.target).attr("data-target");
+          setup_graph(graph,true);
+        });
 
         $("#graph-favorite").click(function(e) {
           // we should re-read the persistent data
