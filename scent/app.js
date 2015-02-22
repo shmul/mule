@@ -225,8 +225,7 @@ function app() {
 
       function alert_graph_name_click(e) {
         var graph = $(e.target).attr("data-target");
-        setup_graph(graph,true);
-        $("#graph").removeClass("tall-graph").addClass("medium-graph");
+        setup_graph(graph,"medium-graph",true);
         $("#graph-box").show();
         e.stopPropagation();
       }
@@ -496,9 +495,15 @@ function app() {
 
   }
 
-  function setup_graph(name_,inner_navigation_) {
+  function setup_graph(name_,graph_class_,inner_navigation_) {
     $("#graph-box").show();
-    $("#graph").removeClass("medium-graph").addClass("tall-graph");
+
+    if ( graph_class_=="tall-graph" ) {
+      $("#graph").removeClass("medium-graph").addClass("tall-graph");
+    } else if ( graph_class_=="medium-graph" ) {
+      $("#graph").removeClass("tall-graph").addClass("medium-graph");
+    }
+
     load_graph(name_,"#graph",false);
 
     // update the recent list
@@ -532,7 +537,7 @@ function app() {
                     links: links,favorite: favorite});
         $(".inner-navigation").click(function(e) {
           var graph = $(e.target).attr("data-target");
-          setup_graph(graph,true);
+          setup_graph(graph,"medium-graph",true);
         });
 
         $("#graph-favorite").click(function(e) {
@@ -664,7 +669,7 @@ function app() {
       teardown_alerts();
       teardown_charts();
       var id = req.params.id;
-      setup_graph(id);
+      setup_graph(id,"tall-graph");
     });
 
     router.get('dashboard/:id', function(req) {
