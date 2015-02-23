@@ -239,58 +239,66 @@
           <div class="box" id="alert-box">
             <div id="alert-box-header-container"></div>
 
-            <div class="box-body" id="alert-container"></div>
+            <div class="box-body container-fluid" id="alert-container"></div>
             <script id="alert-template" type="text/x-jsrender">
-                <div class="box-body">
-                  <table id="alert-{{:type}}" class="table table-bordered table-striped">
-                    <thead>
-                      <tr>
-                        {{if type==="anomaly"}}
-                        <th>Graph</th><th>Time</th>
-                        {{else}}
-                        <th>Graph</th><th>Time</th><th>Value</th>
-                        <th>Critical high</th><th>Warning high</th>
-                        <th>Warning low</th><th>Critical low</th>
-                        <th>Stale</th>
-                        {{/else}}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {{for records}}
-                      <tr>
-                        {{if type==="anomaly"}}
-                        <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td>
-                        {{else}}
-                        <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td><td>{{:value}}</td>
-                        <td>{{:crit_high}}</td><td>{{:warn_high}}</td>
-                        <td>{{:warn_low}}</td><td>{{:crit_low}}</td>
-                        <td>{{:stale}}</td>
-                        {{/else}}
-                      </tr>
-                      {{/for}}
-                    </tbody>
-                  </table>
-                </div><!-- /.box-body -->
+              <div class="box-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <table id="alert-{{:type}}" class="table table-bordered table-striped">
+                      <thead>
+                        <tr>
+                          {{if type==="anomaly"}}
+                          <th>Graph</th><th>Time</th>
+                          {{else}}
+                          <th>Graph</th>
+                          <th>Value</th>
+                          <th>Period</th>
+                          <th>Stale</th>
+                          {{/else}}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {{for records}}
+                        <tr>
+                          {{if type==="anomaly"}}
+                            <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td>
+                          {{else}}
+                            <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:value}}</td>
+                            <td>{{:period}}</td>
+                            <td>{{:stale}}</td>
+                          {{/else}}
+                        </tr>
+                        {{/for}}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div id="alert-graph-container" class="col-md-8">
+                  </div>
+                </div>
+              </div>
             </script>
           </div><!-- /.box -->
+
+          <script id="graph-template" type="text/x-jsrender">
+            <div class="box box-primary">
+              <div class="box-header">
+                <h3 id="graph-label" class="box-title"></h3>
+              </div>
+              <div class="box-body">
+                <div id="graph" class="with-3d-shadow {{:klass}}">
+                </div>
+                <div class="legend">
+                </div>
+              </div>
+            </div>
+          </script>
 
           <div class="box" id="graph-box">
            <div id="graph-box-header-container"></div>
 
-           <div class="box-body container-fluid" id="graph-container">
+           <div class="box-body container-fluid">
              <div class="row">
-               <div class="col-md-12">
-                 <div class="box box-primary">
-                   <div class="box-header">
-                     <h3 id="graph-label" class="box-title"></h3>
-                   </div>
-                   <div class="box-body">
-                     <div id="graph" class="with-3d-shadow">
-                     </div>
-                     <div class="legend">
-                    </div>
-                   </div>
-                 </div>
+               <div id="graph-container" class="col-md-12">
                </div>
              </div>
            </div>
@@ -324,7 +332,7 @@
                        <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove"><i data-target="{{:name}}" class="chart-remove fa fa-minus"></i></button>
                       </div>
                     </div>
-                    <div class="box-body" id="chart-{{:idx}}-container">
+                    <div class="box-body">
                       <div id="chart-{{:idx}}" class="with-3d-shadow small-graph chart-show-modal" data-target="{{:name}}">
                     </div>
                     </div><!-- /.box-body-->

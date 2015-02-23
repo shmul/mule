@@ -212,6 +212,7 @@ function app() {
               graph : alerts[i][j][0],
               time : date_format(new Date(cur[8]*1000)),
               value : cur[6],
+              period : cur[4],
               crit_high : cur[3],
               warn_high : cur[2],
               warn_low : cur[1],
@@ -225,8 +226,7 @@ function app() {
 
       function alert_graph_name_click(e) {
         var graph = $(e.target).attr("data-target");
-        setup_graph(graph,"medium-graph",true);
-        $("#graph-box").show();
+        show_graph(graph,"#alert-graph-container","medium-graph",true);
         e.stopPropagation();
       }
       function set_click_behavior() {
@@ -236,7 +236,7 @@ function app() {
       if ( tr ) {
         $("#alert-container").empty();
         $("#alert-container").html($.templates("#alert-template").render(template_data));
-        var dt = $("#alert-"+tr.type).dataTable({order: [[ 2, "desc" ]]});
+        var dt = $("#alert-"+tr.type).dataTable({iDisplayLength: 10,order: [[ 2, "desc" ]]});
         set_click_behavior();
         dt.on('draw',set_click_behavior);
         box_header({type: "alert", title: tr.title});
@@ -495,14 +495,9 @@ function app() {
 
   }
 
-  function setup_graph(name_,graph_class_,inner_navigation_) {
-    $("#graph-box").show();
+  function show_graph(name_,graph_container_,graph_class_,inner_navigation_) {
 
-    if ( graph_class_=="tall-graph" ) {
-      $("#graph").removeClass("medium-graph").addClass("tall-graph");
-    } else if ( graph_class_=="medium-graph" ) {
-      $("#graph").removeClass("tall-graph").addClass("medium-graph");
-    }
+    $(graph_container_).html($.templates("#graph-template").render([{klass: graph_class_}]));
 
     load_graph(name_,"#graph",false);
 
@@ -537,7 +532,7 @@ function app() {
                     links: links,favorite: favorite});
         $(".inner-navigation").click(function(e) {
           var graph = $(e.target).attr("data-target");
-          setup_graph(graph,"medium-graph",true);
+          show_graph(graph,"#alert-graph-container","medium-graph",true);
         });
 
         $("#graph-favorite").click(function(e) {
@@ -562,6 +557,11 @@ function app() {
     }
 
     generate_all_graphs(name_,set_header);
+  }
+
+  function setup_graph(name_) {
+    show_graph(name_,"#graph-container","tall-graph");
+    $("#graph-box").show();
   }
 
   function teardown_graph() {
@@ -629,7 +629,7 @@ function app() {
 
   function set_title(title_) {
     $("title").text("Scent of a Mule | "+title_);
-    $("#page-title").text(title_);
+    //$("#page-title").text(title_);
     $("#qunit > a").text(title_);
   }
 
@@ -669,7 +669,7 @@ function app() {
       teardown_alerts();
       teardown_charts();
       var id = req.params.id;
-      setup_graph(id,"tall-graph");
+      setup_graph(id);
     });
 
     router.get('dashboard/:id', function(req) {
