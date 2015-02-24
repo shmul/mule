@@ -110,7 +110,7 @@ function app() {
  */
 
   // --- application functions
-  function box_header(options_) {
+  function graph_box_header(container_,options_) {
     var template_data = [{name: ""+options_.type+"",
                           title: options_.title,
                           links: options_.links}];
@@ -124,7 +124,7 @@ function app() {
       template_data[0].close = true;
     }
 
-    $("#"+options_.type+"-box-header-container").html($.templates("#box-header-template").render(template_data));
+    $(container_).html($.templates("#graph-box-header-template").render(template_data));
     if ( options_.add_callback ) {
       $("#charts-add-modal").on('shown.bs.modal',function(e) {
         var template_data = [{class: "form",
@@ -141,9 +141,6 @@ function app() {
       });
     }
 
-    if ( options_.delete_callback ) {
-
-    }
   }
 
   function setup_menu_alerts() {
@@ -515,12 +512,7 @@ function app() {
 
   }
 
-  function show_graph(name_,graph_container_,graph_class_,inner_navigation_) {
-
-    $(graph_container_).html($.templates("#graph-template").render([{klass: graph_class_}]));
-
-    load_graph(name_,"#graph",false);
-
+  function push_graph_to_recent(name_) {
     // update the recent list
     scent_ds.load(user,"recent",function(recent_) {
       var idx = recent_.indexOf(name_);
@@ -533,13 +525,16 @@ function app() {
       // we don't updated the recent list as it seems to mess with the sidebar search form
       // and it might very well wait for the next refresh
     });
+  }
 
-    function set_header(pairs_) {
+  function setup_graph_header(name_,graph_header_container_,graph_body_) {
+
+    generate_all_graphs(name_,function(pairs_) {
       var links = [];
       for (var i in pairs_) {
         var rp = pairs_[i].match(/^[\w\.\-]+;(\d\w+:\d\w+)$/);
         var current = name_.indexOf(pairs_[i])!=-1;
-        links.push({href: pairs_[i], rp: rp[1], current: current, inner_navigation: inner_navigation_});
+        links.push({href: pairs_[i], rp: rp[1], current: current, inner_navigation: graph_body_!=null});
       }
 
       scent_ds.load(user,"persistent",function(persistent_) {
@@ -548,11 +543,12 @@ function app() {
         var favorite = idx==-1 ? "fa-star-o" : "fa-star";
         var metric = graph_split(name_)[0];
 
-        box_header({type: "graph", title: metric,
-                    links: links,favorite: favorite});
+        graph_box_header(graph_header_container_,{type: "graph", title: metric,
+                                                  links: links,favorite: favorite});
+
         $(".inner-navigation").click(function(e) {
           var graph = $(e.target).attr("data-target");
-          show_graph(graph,"#alert-graph-container","medium-graph",true);
+          load_graph(graph,graph_body_);
         });
 
         $("#graph-favorite").click(function(e) {
@@ -574,13 +570,19 @@ function app() {
           });
         });
       });
-    }
+    });
 
-    generate_all_graphs(name_,set_header);
   }
 
+
   function setup_graph(name_) {
-    show_graph(name_,"#graph-container","tall-graph");
+    $("#graph-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
+
+    load_graph(name_,".graph-body",false);
+    setup_graph_header(name_,".graph-header");
+    push_graph_to_recent(name_);
+
+    //show_graph(name_,"#graph-container","tall-graph");
     $("#graph-box").show();
   }
 
