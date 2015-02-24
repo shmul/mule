@@ -99,6 +99,15 @@ function app() {
   function string_set_keys(set_) {
     return $.map(set_ || {},function(key_,idx_) { return idx_; });
   }
+/*
+  search form - common to all, with variations
+  box header - specific to box type
+  graph box header - common to all
+  graph content - common to all, with variations in graph layout
+  alert box - common to all alerts
+  charts - specific header, embeds common graphs
+
+ */
 
   // --- application functions
   function box_header(options_) {
@@ -137,7 +146,7 @@ function app() {
     }
   }
 
-  function setup_alerts_menu() {
+  function setup_menu_alerts() {
     var template_data = [
       {Name: "Critical", name: "critical", indicator: "danger", color: "red"},
       {Name: "Warning", name: "warning", indicator: "warning", color: "orange"},
@@ -213,10 +222,12 @@ function app() {
               time : date_format(new Date(cur[8]*1000)),
               value : cur[6],
               period : cur[4],
+              /*
               crit_high : cur[3],
               warn_high : cur[2],
               warn_low : cur[1],
               crit_low : cur[0],
+              */
               stale : cur[5],
             });
           }
@@ -224,33 +235,30 @@ function app() {
         template_data.push({title:tr.title,type:tr.type,records:d});
       }
 
-      function alert_graph_name_click(e) {
-        var graph = $(e.target).attr("data-target");
-        show_graph(graph,"#alert-graph-container","medium-graph",true);
-        e.stopPropagation();
-      }
       function set_click_behavior() {
-        $(".alert-graph-name").click(alert_graph_name_click);
+        $(".alert-graph-name").click(function(e) {
+          var graph = $(e.target).attr("data-target");
+          show_graph(graph,"#alert-graph-container","medium-graph",true);
+          e.stopPropagation();
+        });
       }
+
       var tr = lookup[category_idx];
       if ( tr ) {
-        $("#alert-container").empty();
-        $("#alert-container").html($.templates("#alert-template").render(template_data));
+        $("#alert-box").show();
+        $("#alert-table-container").empty().html($.templates("#alert-table-template").render(template_data));
         var dt = $("#alert-"+tr.type).dataTable({iDisplayLength: 15,
                                                  aLengthMenu: [ 15, 30, 60 ],
                                                  order: [[ 2, "desc" ]]});
         set_click_behavior();
         dt.on('draw',set_click_behavior);
-        box_header({type: "alert", title: tr.title});
+        $("#alert-title").text(tr.title);
 
-        $(".alert-graph-name").click(alert_graph_name_click);
-        $("#alert-box").show();
       }
     });
   }
 
   function teardown_alerts() {
-    $("#alert-container").empty();
     $("#alert-box").hide();
   }
 
@@ -649,7 +657,7 @@ function app() {
 
     function globals() {
       setup_menus();
-      setup_alerts_menu();
+      setup_menu_alerts();
       setup_search_keys("#sidebar-search-form","#search-keys-input",
                         function(name_) {
                           router.navigate('graph/'+name_);

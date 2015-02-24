@@ -86,28 +86,148 @@
       </header>
 
       <!-- =============================================== -->
+      <div id="templates" class="hide">
+        <script id="search-form-template" type="text/x-jsrender">
+          <form action="#" class="{{:class}}" id="{{:form_id}}">
+            <div class="input-group">
+              <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
+              {{if add}}
+              <span class="input-group-btn">
+                <button type="submit" class="btn btn-primary btn-flat">Add</button>
+              </span>
+              {{else}}
+              <span class="input-group-btn">
+                <button type='submit' name='seach' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
+              </span>
+              {{/if}}
+            </div>
+          </form>
+        </script>
 
+        <script id="dashboard-template" type="text/x-jsrender">
+          <li>
+            <a href="#dashboard/{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}
+              <i data-target="{{:name}}" data-toggle="tooltip" title="Delete" class="dashboard-delete pull-right fa fa-trash"></i>
+            </a>
+          </li>
+        </script>
+
+        <script id="favorite-template" type="text/x-jsrender">
+         <li><a href="#graph/{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+        </script>
+
+        <script id="recent-template" type="text/x-jsrender">
+         <li><a href="#graph/{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+        </script>
+
+        <script id="alerts-menu-template" type="text/x-jsrender">
+          <li>
+            <a href="#alert/{{:name}}">
+              <i class="fa fa-circle-o text-{{:indicator}}"></i> {{:Name}}</a>
+            <small class="label pull-right bg-{{:color}}" id="alert-menu-{{:name}}"></small>
+          </li>
+        </script>
+
+        <script id="alert-table-template" type="text/x-jsrender">
+          <table id="alert-{{:type}}" class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                {{if type==="anomaly"}}
+                <th>Graph</th><th>Time</th>
+                {{else}}
+                <th>Graph</th>
+                <th>Value</th>
+                <th>Period</th>
+                <th>Stale</th>
+                {{/else}}
+              </tr>
+            </thead>
+            <tbody>
+              {{for records}}
+              <tr>
+                {{if type==="anomaly"}}
+                  <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td>
+                {{else}}
+                  <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:value}}</td>
+                  <td>{{:period}}</td>
+                  <td>{{:stale}}</td>
+                {{/else}}
+              </tr>
+              {{/for}}
+            </tbody>
+          </table>
+        </script>
+
+        <script id="graph-template" type="text/x-jsrender">
+          <div class="box box-primary">
+            <div class="box-header">
+              <h3 class="graph-label" class="box-title"></h3>
+            </div>
+            <div class="box-body">
+              <div class="graph-body with-3d-shadow {{:klass}}"></div>
+              <div class="legend"></div>
+            </div>
+          </div>
+        </script>
+
+        <script id="graph-box-header-template" type="text/x-jsrender">
+          <div class="box-header with-border">
+            <h3 class="box-title" id="{{:name}}-title">{{:title}}
+              {{for links}}
+                &nbsp;|&nbsp;
+                {{if current}}
+                  <span style="background-color: lightblue">{{:rp}}</span>
+                {{else}}
+                  {{if inner_navigation}}
+                    <a data-target="{{:href}}" class="inner-navigation">{{:rp}}</a>
+                  {{else}}
+                    <a href="#graph/{{:href}}">{{:rp}}</a>
+                  {{/if}}
+                {{/if}}
+              {{/for}}
+            </h3>
+
+            <div class="box-tools pull-right">
+              {{if add}}
+                <button class="btn btn-box-tool" data-toggle="modal" title="Add" data-target="#charts-add-modal">
+                  <i id="charts-add" class="fa fa-plus"></i>
+                </button>
+              {{/if}}
+
+              {{if favorite}}
+                <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite">
+                  <i id="graph-favorite" class="fa {{:favorite}}"></i>
+                </button>
+              {{/if}}
+            </div>
+          </div>
+        </script>
+
+        <script id="chart-graph-template" type="text/x-jsrender">
+          <div class="col-md-4">
+            <div class="box box-primary">
+              <div class="box-header">
+                <h3 class="box-title"><strong>{{:name}}</strong></h3>
+                <div class="box-tools pull-right">
+                  <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove"><i data-target="{{:name}}" class="chart-remove fa fa-minus"></i></button>
+                </div>
+              </div>
+              <div class="box-body">
+                <div id="chart-{{:idx}}" class="with-3d-shadow small-graph chart-show-modal" data-target="{{:name}}">
+                </div>
+              </div><!-- /.box-body-->
+            </div><!-- /.box -->
+          </div><!-- /.col -->
+        </script>
+
+    </div> <!-- ./templates -->
+
+    </div>
       <!-- Left side column. contains the sidebar -->
       <aside class="main-sidebar">
         <!-- sidebar: style can be found in sidebar.less -->
         <section class="sidebar">
           <!-- search form -->
-          <script id="search-form-template" type="text/x-jsrender">
-           <form action="#" class="{{:class}}" id="{{:form_id}}">
-             <div class="input-group">
-           <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
-              {{if add}}
-                <span class="input-group-btn">
-                 <button type="submit" class="btn btn-primary btn-flat">Add</button>
-                </span>
-              {{else}}
-                <span class="input-group-btn">
-                 <button type='submit' name='seach' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
-                </span>
-              {{/if}}
-             </div>
-           </form>
-          </script>
           <!-- /.search form - TODO add something here-->
           <!-- sidebar menu: : style can be found in sidebar.less -->
           <ul class="sidebar-menu">
@@ -119,14 +239,6 @@
               </a>
               <ul class="treeview-menu active">
                 <div id="dashboard-container"></div>
-                <script id="dashboard-template" type="text/x-jsrender">
-                 <li>
-                   <a href="#dashboard/{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}
-                 <i data-target="{{:name}}" data-toggle="tooltip" title="Delete" class="dashboard-delete pull-right fa fa-trash"></i>
-                 </a>
-                </script>
-                 </li>
-                </script>
                 <form action="#" class="sidebar-form" id="dashboard-form">
                   <input id="dashboard-add" type="text" class="form-control" placeholder="Add dashboard">
                 </form>
@@ -140,9 +252,6 @@
               </a>
               <ul class="treeview-menu">
                 <div id="favorite-container"></div>
-                <script id="favorite-template" type="text/x-jsrender">
-                  <li><a href="#graph/{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
-                </script>
               </ul>
             </li>
             <li class="treeview">
@@ -153,21 +262,11 @@
               </a>
               <ul class="treeview-menu">
                 <div id="recent-container"></div>
-                <script id="recent-template" type="text/x-jsrender">
-                  <li><a href="#graph/{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
-                </script>
               </ul>
             </li>
             <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
             <li class="header">ALERTS</li>
             <div id="alerts-menu-container"></div>
-            <script id="alerts-menu-template" type="text/x-jsrender">
-            <li>
-              <a href="#alert/{{:name}}">
-                <i class="fa fa-circle-o text-{{:indicator}}"></i> {{:Name}}</a>
-                <small class="label pull-right bg-{{:color}}" id="alert-menu-{{:name}}"></small>
-            </li>
-            </script>
          </ul>
         </section>
         <!-- /.sidebar -->
@@ -204,94 +303,24 @@
 
 
         <section class="content">
-          <script id="box-header-template" type="text/x-jsrender">
-            <div class="box-header with-border">
-              <h3 class="box-title" id="{{:name}}-title">{{:title}}
-                {{for links}}
-                  &nbsp;|&nbsp;
-                  {{if current}}
-                    <span style="background-color: lightblue">{{:rp}}</span>
-                  {{else}}
-                    {{if inner_navigation}}
-                      <a data-target="{{:href}}" class="inner-navigation">{{:rp}}</a>
-                      {{else}}
-                      <a href="#graph/{{:href}}">{{:rp}}</a>
-                      {{/if}}
-                  {{/if}}
-                {{/for}}
-              </h3>
-              <div class="box-tools pull-right">
-                {{if add}}
-                <button class="btn btn-box-tool" data-toggle="modal" title="Add" data-target="#charts-add-modal">
-                  <i id="charts-add" class="fa fa-plus"></i>
-                </button>
-                {{/if}}
-
-                {{if favorite}}
-                  <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite">
-                    <i id="graph-favorite" class="fa {{:favorite}}"></i>
-                  </button>
-                {{/if}}
-              </div>
-            </div>
-         </script>
 
           <div class="box" id="alert-box">
-            <div id="alert-box-header-container"></div>
+            <div class="box-header with-border">
+              <h3 class="box-title"><strong id="alert-title"></strong></h3>
 
-            <div class="box-body container-fluid" id="alert-container"></div>
-            <script id="alert-template" type="text/x-jsrender">
-              <div class="box-body">
-                <div class="row">
-                  <div class="col-md-4">
-                    <table id="alert-{{:type}}" class="table table-bordered table-striped">
-                      <thead>
-                        <tr>
-                          {{if type==="anomaly"}}
-                          <th>Graph</th><th>Time</th>
-                          {{else}}
-                          <th>Graph</th>
-                          <th>Value</th>
-                          <th>Period</th>
-                          <th>Stale</th>
-                          {{/else}}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {{for records}}
-                        <tr>
-                          {{if type==="anomaly"}}
-                            <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td>
-                          {{else}}
-                            <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:value}}</td>
-                            <td>{{:period}}</td>
-                            <td>{{:stale}}</td>
-                          {{/else}}
-                        </tr>
-                        {{/for}}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div id="alert-graph-container" class="col-md-8">
-                  </div>
-                </div>
-              </div>
-            </script>
-          </div><!-- /.box -->
-
-          <script id="graph-template" type="text/x-jsrender">
-            <div class="box box-primary">
-              <div class="box-header">
-                <h3 id="graph-label" class="box-title"></h3>
-              </div>
-              <div class="box-body">
-                <div id="graph" class="with-3d-shadow {{:klass}}">
-                </div>
-                <div class="legend">
-                </div>
+              <div class="box-tools pull-right">
               </div>
             </div>
-          </script>
+
+            <div class="box-body container-fluid" id="alert-container">
+              <div class="row">
+                <div id="alert-table-container" class="col-md-4">
+                </div>
+                <div id="alert-graph-container" class="col-md-8">
+                </div>
+              </div>
+            </div><!-- /.box -->
+          </div>
 
           <div class="box" id="graph-box">
            <div id="graph-box-header-container"></div>
@@ -323,22 +352,6 @@
 
             <div class="box-body container-fluid">
               <div class="row" id="charts-container"></div>
-              <script id="chart-template" type="text/x-jsrender">
-                <div class="col-md-4">
-                  <div class="box box-primary">
-                    <div class="box-header">
-                      <h3 class="box-title"><strong>{{:name}}</strong></h3>
-                      <div class="box-tools pull-right">
-                       <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove"><i data-target="{{:name}}" class="chart-remove fa fa-minus"></i></button>
-                      </div>
-                    </div>
-                    <div class="box-body">
-                      <div id="chart-{{:idx}}" class="with-3d-shadow small-graph chart-show-modal" data-target="{{:name}}">
-                    </div>
-                    </div><!-- /.box-body-->
-                  </div><!-- /.box -->
-                </div><!-- /.col -->
-            </script>
             </div><!-- /.box-body -->
           </div><!-- /.box -->
 
