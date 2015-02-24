@@ -5,9 +5,6 @@
     overflow-y: auto;
 }
 
-#modal-target .modal-body { margin-bottom: 900px }
-
-
 /* override some AdminLTE
  */
 .sidebar-menu .treeview-menu  li > a {

@@ -336,6 +336,8 @@ function app() {
     var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
     var rollover_value_format = d3.format(",d");
 
+    var x_axis_ticks_count = ($(target_).hasClass("tall-graph")) ? 10 : 5;
+
     MG.data_graphic({
       data: data_,
       // TODO For some reason this breaks the chart:
@@ -344,7 +346,7 @@ function app() {
       full_height: true,
       bottom: 40,
       area: false,
-      xax_count: 10,
+      xax_count: x_axis_ticks_count,
       target: target_,
       interpolate: "basic",
       legend: [name_],
@@ -359,7 +361,6 @@ function app() {
   function load_graph(name_,target_,with_focus_) {
     function callback(raw_data_) {
       var data = new Array();
-      var m = 0;
       for (var rw in raw_data_) {
         var dt = raw_data_[rw][2];
         var v = raw_data_[rw][0];
@@ -432,13 +433,17 @@ function app() {
 
       $(".chart-show-modal").click(function(e) {
         var graph = $(e.target).closest(".small-graph").attr("data-target");
-        $("#modal-target").modal('show');
-        // cleanup
-        $('#modal-target').on('hidden.bs.modal', function (e) {
-          //$("#modal-body").html("");
+
+        $('#modal-target').on('shown.bs.modal', function (e) {
+          load_graph(graph,"#modal-graph",false);
         });
 
-        load_graph(graph,"#modal-graph",false);
+        // cleanup
+        $('#modal-target').on('hidden.bs.modal', function (e) {
+          $("#modal-graph").html("");
+        });
+
+        $("#modal-target").modal('show');
       });
 
 
