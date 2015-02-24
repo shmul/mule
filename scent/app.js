@@ -236,7 +236,9 @@ function app() {
       if ( tr ) {
         $("#alert-container").empty();
         $("#alert-container").html($.templates("#alert-template").render(template_data));
-        var dt = $("#alert-"+tr.type).dataTable({iDisplayLength: 10,order: [[ 2, "desc" ]]});
+        var dt = $("#alert-"+tr.type).dataTable({iDisplayLength: 15,
+                                                 aLengthMenu: [ 15, 30, 60 ],
+                                                 order: [[ 2, "desc" ]]});
         set_click_behavior();
         dt.on('draw',set_click_behavior);
         box_header({type: "alert", title: tr.title});
