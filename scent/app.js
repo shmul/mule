@@ -479,21 +479,26 @@ function app() {
       $(form_).trigger("reset");
       //return false;
     });
+    var context = {};
+
     $(input_).typeahead({
-      source:function (query,process) {
+      source :function (query,process) {
         function callback(keys_) {
-          if ( !this.scent_keys ) {
-            this.scent_keys = string_set_add_array({},keys_);
-          } else if ( query[query.length-1]=='.') {
-            string_set_add_array(this.scent_keys,keys_);
+          if ( !context.scent_keys ) {
+            context.scent_keys = string_set_add_array({},keys_);
+          } else if ( context.query[context.query.length-1]=='.') {
+            string_set_add_array(context.scent_keys,keys_);
           }
-          process(string_set_keys(this.scent_keys));
+          process(string_set_keys(context.scent_keys));
         }
 
-        if ( !this.scent_keys ) {
+        context.query = query;
+        if ( !context.scent_keys ) {
           scent_ds.key("",callback);
         } else if ( query[query.length-1]=='.') {
           scent_ds.key(query,callback);
+        } else {
+          return string_set_keys(context.scent_keys);
         }
       },
       minLength: 0,
