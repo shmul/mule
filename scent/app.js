@@ -235,7 +235,11 @@ function app() {
       function set_click_behavior() {
         $(".alert-graph-name").click(function(e) {
           var graph = $(e.target).attr("data-target");
-          show_graph(graph,"#alert-graph-container","medium-graph",true);
+          $("#alert-graph-container").empty().html($.templates("#graph-template").render([{klass: "medium-graph"}]));
+
+          load_graph(graph,".graph-body",false);
+          setup_graph_header(graph,".graph-header",".graph-body");
+
           e.stopPropagation();
         });
       }
@@ -257,6 +261,8 @@ function app() {
 
   function teardown_alerts() {
     $("#alert-box").hide();
+    $("#alert-table-container").empty();
+    $("#alert-graph-container").empty();
   }
 
   function setup_menus() {
@@ -549,6 +555,7 @@ function app() {
         $(".inner-navigation").click(function(e) {
           var graph = $(e.target).attr("data-target");
           load_graph(graph,graph_body_);
+          setup_graph_header(graph,graph_header_container_,graph_body_);
         });
 
         $("#graph-favorite").click(function(e) {
