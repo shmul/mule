@@ -356,6 +356,9 @@ function app() {
            .text(rollover_date_format(d.date) + ": " + name_ + " " + rollover_value_format(d.value));
       }
     });
+
+    // Fix overlapping labels in x-axis
+    d3.selectAll('.mg-year-marker text').attr('transform', 'translate(0, 8)');
   }
 
   function load_graph(name_,target_,with_focus_) {
