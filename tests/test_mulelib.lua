@@ -1080,6 +1080,23 @@ function test_hits_provided()
   for_each_db("./tests/temp/test_find_keys",helper)
 end
 
+function test_factor()
+  local function helper(m)
+    m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 8 10 4")
+    m.process("Johnston.Emilia.Sweet-Nuthin 5 300 100")
+
+
+    local gr = m.graph("Johnston.Morfin.Jamal.Marcela.Emilia",{level=1,in_memory=true,factor=10})
+    assert(arrays_equal({0.8,4,0},gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"][1]))
+    gr = m.graph("Johnston.Morfin.Jamal.Marcela.Emilia",{level=1,in_memory=true})
+    assert(arrays_equal({8,4,0},gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"][1]))
+    gr = m.graph("Johnston.Emilia.Sweet-Nuthin",{level=1,count=1,in_memory=true,factor=100})
+    assert(arrays_equal({0.05,100,0},gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"][1]))
+  end
+  for_each_db("./tests/temp/test_find_keys",helper)
+
+end
 
 --verbose_log(true)
 --profiler.start("profiler.out")

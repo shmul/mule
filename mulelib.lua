@@ -171,11 +171,17 @@ function sequence(db_,name_)
     local date = os.date
     local readable = opts_.readable
     local average = opts_.stat=="average"
+    local factor = opts_.factor and tonumber(opts_.factor) or nil
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
       if not skip_empty_ or sum~=0 or hits~=0 or timestamp~=0 then
-        local value = average and (sum/hits) or sum
+        local value = sum
+        if average then
+          value = average and (sum/hits)
+        elseif factor then
+          value = sum/factor
+        end
         slot_cb_(value,hits,readable and date("%y%m%d:%H%M%S",timestamp) or timestamp)
       end
     end
@@ -533,6 +539,7 @@ function mule(db_)
                    timestamps=timestamps,
                    sorted=is_true(options_.sorted),
                    stat=options_.stat,
+                   factor=options_.factor,
                    skip_empty=true}
     local sequences_generator = immediate_metrics
     local alerts = is_true(options_.alerts)
