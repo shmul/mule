@@ -27,6 +27,9 @@ function app() {
   };
 
 
+  function graph_to_id(graph_) {
+    return graph_.replace(/[;:]/g,"_");
+  }
   const TIME_UNITS = {s:1, m:60, h:3600, d:3600*24, w:3600*24*7, y:3600*24*365};
   function timeunit_to_seconds(timeunit_) {
     var m = timeunit_.match(/^(\d+)(\w)$/);
@@ -48,6 +51,7 @@ function app() {
     if ( !gs ) { return null; }
     return timeunit_to_seconds(gs[1]);
   }
+
   function mule_config(callback_) {
     scent_ds.config(function(conf_) {
       callback_(jQuery.extend(true,{},conf_));
@@ -57,11 +61,11 @@ function app() {
   function generate_all_graphs(graph_,callback_) {
     mule_config(function(conf_) {
       var m = graph_.match(/^([\w\-]+)(\.|;)/);
-      if ( !m || !m[1] ) { callback_(); }
+      if ( !m || !m[1] ) { return callback_(); }
       var c = conf_[m[1]];
-      if ( !c ) { callback_(); }
+      if ( !c ) { return callback_(); }
       var gs = graph_split(graph_);
-      if ( !gs ) { callback_(); }
+      if ( !gs || gs.length==0 ) { return callback_(); }
       var selected_index = c.indexOf(gs[1]+":"+gs[2]);
       for (var j=0; j<c.length; ++j) {
         c[j] = gs[0]+";"+c[j];
@@ -99,21 +103,20 @@ function app() {
   function string_set_keys(set_) {
     return $.map(set_ || {},function(key_,idx_) { return idx_; });
   }
-/*
-  search form - common to all, with variations
-  box header - specific to box type
-  graph box header - common to all
-  graph content - common to all, with variations in graph layout
-  alert box - common to all alerts
-  charts - specific header, embeds common graphs
+  /*
+    search form - common to all, with variations
+    box header - specific to box type
+    graph box header - common to all
+    graph content - common to all, with variations in graph layout
+    alert box - common to all alerts
+    charts - specific header, embeds common graphs
 
- */
+  */
 
   // --- application functions
   function graph_box_header(container_,options_) {
-    var template_data = [{name: ""+options_.type+"",
-                          title: options_.title,
-                          links: options_.links}];
+    var template_data = [{}];
+    jQuery.extend(template_data[0],options_);
     if ( options_.add_callback ) {
       template_data[0].add = true;
     }
@@ -123,24 +126,7 @@ function app() {
     if ( options_.close ) {
       template_data[0].close = true;
     }
-
     $(container_).html($.templates("#graph-box-header-template").render(template_data));
-    if ( options_.add_callback ) {
-      $("#charts-add-modal").on('shown.bs.modal',function(e) {
-        var template_data = [{class: "form",
-                              form_id: "charts-search-form",
-                              input_id: "charts-search-input",
-                              add: true
-                             }];
-        $("#charts-add-modal-form-container").empty().append($.templates("#search-form-template").render(template_data));
-        setup_search_keys("#charts-search-form","#charts-search-input",
-                          function(name_) {
-                            $("#charts-add-modal").modal('hide');
-                            options_.add_callback(name_);
-                          });
-      });
-    }
-
   }
 
   function setup_menu_alerts() {
@@ -220,10 +206,10 @@ function app() {
               value : cur[6],
               period : cur[4],
               /*
-              crit_high : cur[3],
-              warn_high : cur[2],
-              warn_low : cur[1],
-              crit_low : cur[0],
+                crit_high : cur[3],
+                warn_high : cur[2],
+                warn_low : cur[1],
+                crit_low : cur[0],
               */
               stale : cur[5],
             });
@@ -236,9 +222,9 @@ function app() {
         $(".alert-graph-name").click(function(e) {
           var graph = $(e.target).attr("data-target");
           $("#alert-graph-container").empty().html($.templates("#graph-template").render([{klass: "medium-graph"}]));
-
+          $("#alert-graph-container").attr("data-graph",graph);
           load_graph(graph,".graph-body",false);
-          setup_graph_header(graph,".graph-header",".graph-body");
+          setup_graph_header(graph,".graph-header",true);
 
           e.stopPropagation();
         });
@@ -365,8 +351,8 @@ function app() {
       legend: [name_],
       legend_target: ".legend",
       mouseover: function(d, i) {
-         d3.select(target_ + " svg .mg-active-datapoint")
-           .text(rollover_date_format(d.date) + ": " + name_ + " " + rollover_value_format(d.value));
+        d3.select(target_ + " svg .mg-active-datapoint")
+          .text(rollover_date_format(d.date) + ": " + name_ + " " + rollover_value_format(d.value));
       }
     });
   }
@@ -390,8 +376,7 @@ function app() {
 
 
 
-  function setup_charts(id) {
-    $("#charts-container").empty();
+  function setup_charts(dashboard_name) {
 
     function add_to_dashboard(graph_) {
       scent_ds.load(user,"persistent",function(persistent_) {
@@ -419,30 +404,27 @@ function app() {
     }
 
     scent_ds.load(user,"persistent",function(persistent_) {
-      var dashboard = persistent_.dashboards[id];
+      var dashboard = persistent_.dashboards[dashboard_name];
       if ( !dashboard ) {
         // TODO - flash an error and exit
         return;
       }
+      $("#charts-container").empty();
 
-      var template = $.templates("#chart-template");
-      var template_data = [];
       for (var i in dashboard) {
-        template_data.push({idx: i,name:dashboard[i]});
+        var name = dashboard[i];
+        $("#charts-container").append($.templates("#chart-graph-template").render([{index: i,
+                                                                                    name: name}]));
       }
-      var d = template.render(template_data)
-      $("#charts-container").append(d);
+
       for (var i in dashboard) {
-        load_graph(template_data[i].name,"#chart-"+i);
+        var name = dashboard[i];
+        var id = "chart-"+i+"-container";
+        $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
+        load_graph(name,"#"+id+" .graph-body",true);
+        setup_graph_header(name,"#"+id+" .graph-header",true);
       }
-      $(".chart-remove").click(function(e) {
-        var graph = $(e.target).attr("data-target");
-        bootbox.confirm("Are you sure you want to remove '"+graph+"' from the dashboard?", function(result) {
-          if ( result ) {
-            remove_from_dashboard(graph);
-          }
-        });
-      });
+
 
       $(".chart-show-modal").click(function(e) {
         var graph = $(e.target).closest(".small-graph").attr("data-target");
@@ -459,17 +441,25 @@ function app() {
         $("#modal-target").modal('show');
       });
 
-
-      box_header({type: "charts",title: id,add_callback: add_to_dashboard});
-      $("#charts-box").show();
-/*
-      $(".modal-wide").empty();
-      $(".modal-wide").on("shown.bs.modal", function() {
-        var height = $(window).height();
-        $(this).find(".modal-body").css("max-height", height);
-      });
-*/
     });
+
+    $("#charts-title").text(dashboard_name);
+
+    $("#charts-add-modal").on('shown.bs.modal',function(e) {
+      var template_data = [{class: "form",
+                            form_id: "charts-search-form",
+                            input_id: "charts-search-input",
+                            add: true
+                           }];
+      $("#charts-add-modal-form-container").empty().append($.templates("#search-form-template").render(template_data));
+      setup_search_keys("#charts-search-form","#charts-search-input",
+                        function(name_) {
+                          $("#charts-add-modal").modal('hide');
+                          options_.add_callback(name_);
+                        });
+    });
+
+    $("#charts-box").show();
   }
 
   function teardown_charts() {
@@ -533,43 +523,57 @@ function app() {
     });
   }
 
-  function setup_graph_header(name_,graph_header_container_,graph_body_) {
+  function setup_graph_header(name_,graph_header_container_,inner_navigation_) {
 
     generate_all_graphs(name_,function(pairs_) {
       var links = [];
       for (var i in pairs_) {
         var rp = pairs_[i].match(/^[\w\.\-]+;(\d\w+:\d\w+)$/);
         var current = name_.indexOf(pairs_[i])!=-1;
-        links.push({href: pairs_[i], rp: rp[1], current: current, inner_navigation: graph_body_!=null});
+        links.push({href: pairs_[i], rp: rp[1], current: current, inner_navigation: inner_navigation_});
       }
 
       scent_ds.load(user,"persistent",function(persistent_) {
         var favorites = persistent_.favorites;
         var idx = favorites.indexOf(name_);
         var favorite = idx==-1 ? "fa-star-o" : "fa-star";
-        var metric = graph_split(name_)[0];
+        var metric = graph_split(name_);
 
-        graph_box_header(graph_header_container_,{type: "graph", title: metric,
+        if ( !metric ) {
+          //TODO display an alert
+          return;
+        }
+        metric = metric[0];
+        graph_box_header(graph_header_container_,{type: "graph", title: metric, graph: name_,
                                                   links: links,favorite: favorite});
 
         $(".inner-navigation").click(function(e) {
-          var graph = $(e.target).attr("data-target");
-          load_graph(graph,graph_body_);
-          setup_graph_header(graph,graph_header_container_,graph_body_);
+          e.stopPropagation();
+          var href = $(e.target).attr("data-graph"); // this is the graph to be shown
+          var container = $(e.target).closest(".graph-container");
+          var graph = $(container[0]).attr("data-graph"); // this is the existing graph
+          var container_id = "#"+$(container[0]).attr("id");
+          console.log('inner navigation %s', graph);
+          load_graph(href,container_id+" .graph-body");
+          setup_graph_header(href,container_id+" .graph-header",true);
         });
 
-        $("#graph-favorite").click(function(e) {
+
+        $(".graph-favorite").click(function(e) {
+          e.stopPropagation();
+          var container = $(e.target).closest(".graph-container");
+          var graph = $(container[0]).attr("data-graph");
           // we should re-read the persistent data
           scent_ds.load(user,"persistent",function(persistent_) {
             var favorites = persistent_.favorites;
-            var idx = favorites.indexOf(name_);
-
+            var idx = favorites.indexOf(graph);
+            console.log('favorite %s %s', graph, favorites);
             if ( idx==-1 ) { // we need to add to favorites
-              favorites.push(name_);
-              $(e.target).attr("class","fa fa-star");
+              favorites.push(graph);
+              $(e.target).attr("class","graph-favorite fa fa-star");
             } else {
               favorites.splice(idx,1);
-              $(e.target).attr("class","fa fa-star-o");
+              $(e.target).attr("class","graph-favorire fa fa-star-o");
             }
             scent_ds.save(user,"persistent",persistent_,function() {
               setup_menus();
@@ -577,20 +581,18 @@ function app() {
           });
         });
       });
+
     });
 
   }
 
 
   function setup_graph(name_) {
-    $("#graph-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
-
-    load_graph(name_,".graph-body",false);
-    setup_graph_header(name_,".graph-header");
-    push_graph_to_recent(name_);
-
-    //show_graph(name_,"#graph-container","tall-graph");
+    $(".graph-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
+    load_graph(name_,"#graph-box .graph-body",false);
+    setup_graph_header(name_,"#graph-box .graph-header",false);
     $("#graph-box").show();
+    push_graph_to_recent(name_);
   }
 
   function teardown_graph() {
@@ -606,13 +608,18 @@ function app() {
       assert.equal(timeunit_to_seconds("1d"),60*60*24);
       assert.deepEqual(graph_split("brave.frontend;1d:2y"),["brave.frontend","1d","2y"]);
       assert.deepEqual(graph_split("event.buka_mr_result;1h:90d"),["event.buka_mr_result","1h","90d"]);
+
+      generate_all_graphs("no.such.graph:1h:90d",
+                          function(actual_){
+                            assert.deepEqual(actual_,[]);
+                          });
       generate_all_graphs("kashmir_report_db_storer.sql_queries;1h:90d",
-                            function(actual_) {
-                              assert.deepEqual(actual_,
-                                               ["kashmir_report_db_storer.sql_queries;5m:3d",
-                                                "kashmir_report_db_storer.sql_queries;1h:90d",
-                                                "kashmir_report_db_storer.sql_queries;1d:2y"]);
-                            });
+                          function(actual_) {
+                            assert.deepEqual(actual_,
+                                             ["kashmir_report_db_storer.sql_queries;5m:3d",
+                                              "kashmir_report_db_storer.sql_queries;1h:90d",
+                                              "kashmir_report_db_storer.sql_queries;1d:2y"]);
+                          });
 
       generate_all_graphs("malware_signature.foo.bar;1h:90d",
                           function(actual_) {
@@ -719,7 +726,7 @@ function app() {
   // call init functions
 
 
-//  run_tests();
+  //run_tests();
   setup_router();
 
 }

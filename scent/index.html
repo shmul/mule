@@ -158,27 +158,16 @@
           </table>
         </script>
 
-        <script id="graph-template" type="text/x-jsrender">
-          <div class="box box-primary">
-            <div class="box-header graph-header">
-            </div>
-            <div class="box-body">
-              <div class="graph-body with-3d-shadow {{:klass}}"></div>
-              <div class="legend"></div>
-            </div>
-          </div>
-        </script>
-
         <script id="graph-box-header-template" type="text/x-jsrender">
-          <div class="box-header with-border">
-            <h3 class="box-title" id="{{:name}}-title">{{:title}}
+          <div class="box-header with-border" data-graph="{{:graph}}">
+            <h3 class="box-title">{{:title}}
               {{for links}}
                 &nbsp;|&nbsp;
                 {{if current}}
                   <span style="background-color: lightblue">{{:rp}}</span>
                 {{else}}
                   {{if inner_navigation}}
-                    <a data-target="{{:href}}" class="inner-navigation">{{:rp}}</a>
+                    <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
                   {{else}}
                     <a href="#graph/{{:href}}">{{:rp}}</a>
                   {{/if}}
@@ -186,37 +175,32 @@
               {{/for}}
             </h3>
 
-            <div class="box-tools pull-right">
-              {{if add}}
-                <button class="btn btn-box-tool" data-toggle="modal" title="Add" data-target="#charts-add-modal">
-                  <i id="charts-add" class="fa fa-plus"></i>
-                </button>
-              {{/if}}
 
+            <div class="box-tools pull-right">
               {{if favorite}}
                 <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite">
-                  <i id="graph-favorite" class="fa {{:favorite}}"></i>
+                  <i class="graph-favorite fa {{:favorite}}"></i>
                 </button>
               {{/if}}
             </div>
           </div>
         </script>
 
+        <script id="graph-template" type="text/x-jsrender">
+          <div class="box box-primary">
+            <div class="box-header graph-header">
+            </div>
+            <div class="box-body">
+              <div class="with-3d-shadow graph-body {{:klass}}"></div>
+              <div class="legend"></div>
+            </div>
+          </div>
+        </script>
+
+        <!-- just a data holder to make the template generation code easier without closure hacks -->
         <script id="chart-graph-template" type="text/x-jsrender">
-          <div class="col-md-4">
-            <div class="box box-primary">
-              <div class="box-header">
-                <h3 class="box-title"><strong>{{:name}}</strong></h3>
-                <div class="box-tools pull-right">
-                  <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove"><i data-target="{{:name}}" class="chart-remove fa fa-minus"></i></button>
-                </div>
-              </div>
-              <div class="box-body">
-                <div id="chart-{{:idx}}" class="with-3d-shadow small-graph chart-show-modal" data-target="{{:name}}">
-                </div>
-              </div><!-- /.box-body-->
-            </div><!-- /.box -->
-          </div><!-- /.col -->
+         <div id="chart-{{:index}}-container" data-graph="{{:graph}}" class="graph-container col-md-4">
+         </div>
         </script>
 
     </div> <!-- ./templates -->
@@ -315,18 +299,16 @@
               <div class="row">
                 <div id="alert-table-container" class="col-md-4">
                 </div>
-                <div id="alert-graph-container" class="col-md-8">
+                <div id="alert-graph-container" data-graph="graph-name-will-come-here" class="graph-container col-md-8">
                 </div>
               </div>
             </div><!-- /.box -->
           </div>
 
           <div class="box" id="graph-box">
-           <div id="graph-box-header-container"></div>
-
            <div class="box-body container-fluid">
              <div class="row">
-               <div id="graph-container" class="col-md-12">
+               <div data-graph="" class="graph-container col-md-12">
                </div>
              </div>
            </div>
@@ -347,12 +329,21 @@
               </div>
             </div>
 
-            <div id="charts-box-header-container"></div>
+            <div class="box-header with-border">
+              <h3 class="box-title"><strong id="charts-title"></strong></h3>
+
+              <div class="box-tools pull-right">
+                <button class="btn btn-box-tool" data-toggle="modal" title="Add" data-target="#charts-add-modal">
+                  <i id="charts-add" class="fa fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
 
             <div class="box-body container-fluid">
-              <div class="row" id="charts-container"></div>
-            </div><!-- /.box-body -->
-          </div><!-- /.box -->
+              <div class="row" id="charts-container">
+              </div><!-- /.box-body -->
+            </div><!-- /.box -->
 
           <div class="box-footer">
             Just a Footer
