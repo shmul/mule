@@ -205,12 +205,6 @@ function app() {
               time : date_format(new Date(cur[8]*1000)),
               value : cur[6],
               period : cur[4],
-              /*
-                crit_high : cur[3],
-                warn_high : cur[2],
-                warn_low : cur[1],
-                crit_low : cur[0],
-              */
               stale : cur[5],
             });
           }
@@ -389,7 +383,7 @@ function app() {
     add_upper_and_lower_bounds(data_);
   }
 
-  function draw_graph(name_,data_,target_,with_focus_) {
+  function draw_graph(name_,data_,baselines_,target_,with_focus_) {
     // TODO use with_focus_ to add zoom buttons
     var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
     var rollover_value_format = d3.format(",d");
@@ -410,6 +404,7 @@ function app() {
       show_confidence_band: ["lower", "upper"],
       legend: [name_],
       legend_target: ".legend",
+      baselines: baselines_,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
           .text(rollover_date_format(d.date) + ": " + name_ + " " + rollover_value_format(d.value));
@@ -422,19 +417,37 @@ function app() {
 
   function load_graph(name_,target_,with_focus_) {
     function callback(raw_data_) {
-      var data = new Array();
-      for (var rw in raw_data_) {
-        var dt = raw_data_[rw][2];
-        var v = raw_data_[rw][0];
-        if ( dt>100000 ) {
-          data.push({date: new Date(dt * 1000), value: v});
-        }
-      };
-      data.sort(function(a,b) { return a.date-b.date });
-      add_bounds(data)
+      scent_ds.alerts(function(alerts_) {
+        var data = new Array();
+        for (var rw in raw_data_) {
+          var dt = raw_data_[rw][2];
+          var v = raw_data_[rw][0];
+          if ( dt>100000 ) {
+            data.push({date: new Date(dt * 1000), value: v});
+          }
+        };
+        data.sort(function(a,b) { return a.date-b.date });
 
-      draw_graph(name_,[data],target_,with_focus_);
+        add_bounds(data);
+        var graph_alerts = alerts_[name_];
+        var baselines = [];
+        if ( graph_alerts ) {
+          baselines = [
+            { value: graph_alerts[0],
+              label: "critical low" },
+            { value: graph_alerts[1],
+              label: "warning low" },
+            { value: graph_alerts[2],
+              label: "warning high" },
+            { value: graph_alerts[3],
+              label: "critical high" },
+            ]
+        }
+        draw_graph(name_,[data],baselines,target_,with_focus_);
+      });
+
     }
+
     scent_ds.graph(name_,callback);
   }
 
