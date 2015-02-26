@@ -7,12 +7,11 @@ module( "test_mule", lunit.testcase, package.seeall )
 
 
 local function db(p)
-  return "./tests/temp/"..p.."_mdb"
+  return test_directory()..p.."_mdb"
 end
 
 local function new_db(p)
-  os.execute("rm -rf "..db(p))
-  os.execute("mkdir -p "..db(p))
+  create_test_directory(p.."_mdb")
   return db(p)
 end
 

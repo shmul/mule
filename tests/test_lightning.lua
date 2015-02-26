@@ -5,14 +5,12 @@ require "helpers"
 module( "lightning_mdb", lunit.testcase,package.seeall )
 
 local function lightning_mdb_factory(name_,num_pages_)
-  local dir = name_.."_mdb"
-  os.execute("rm -rf "..dir)
-  os.execute("mkdir -p "..dir)
+  local dir = create_test_directory(name_.."_mdb")
   return l.lightning_mdb(dir,false,num_pages_)
 end
 
 function test_meta()
-  local db = lightning_mdb_factory("./tests/temp/l_meta")
+  local db = lightning_mdb_factory("l_meta")
   db.put("metadata=hello","cruel world")
   assert_equal("cruel world",db.get("metadata=hello"))
   assert_nil(db.get("hello"))
@@ -34,7 +32,7 @@ end
 
 function test_payload()
   local function helper(num_pages_,count_,index_)
-    local db = lightning_mdb_factory("./tests/temp/l_payload."..index_,num_pages_)
+    local db = lightning_mdb_factory("l_payload."..index_,num_pages_)
     for i=1,count_ do
       db.put(tostring(i),tostring(i))
     end
@@ -58,7 +56,7 @@ end
 
 
 function test_matchingkeys()
-  local db = lightning_mdb_factory("./tests/temp/l_matchingkeys")
+  local db = lightning_mdb_factory("l_matchingkeys")
   local count = 10
   for i=count*2,0,-1 do
     db.put(string.format("%04d",i),i,true,true)

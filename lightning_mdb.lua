@@ -104,9 +104,8 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     local e = lightningmdb.env_create()
     local _,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
-    _,err = e:open(full_path,
-                   lightningmdb.MDB_NOTLS+(read_only_ and lightningmdb.MDB_RDONLY or (lightningmdb.MDB_MAPASYNC + lightningmdb.MDB_WRITEMAP)),
-                   420) -- 420 is the open mode
+    local flags = lightningmdb.MDB_NOTLS+(read_only_ and lightningmdb.MDB_RDONLY or (lightningmdb.MDB_MAPASYNC + lightningmdb.MDB_WRITEMAP))
+    _,err = e:open(full_path,flags,420) -- 420 is the open mode
     if err then
       loge("new_env_factory failed",err)
       return nil

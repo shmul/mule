@@ -823,6 +823,12 @@ function noblock_wait_for_children()
   end
 end
 
+function block_wait_for_children()
+  if posix then
+    posix.wait(-1,0)
+  end
+end
+
 
 function update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
   -- it is assumed both timestamps are already normalized
@@ -1033,4 +1039,21 @@ end
 function special_key(key_)
   local find = string.find
   return 1==find(key_,"metadata=",1,true) or 1==find(key_,"kvs=",1,true)
+end
+
+function test_directory()
+  return IN_SLASH_TMP and "/tmp/mule_tests/" or "./tests/temp/"
+end
+
+function create_test_directory(name_)
+  local dir = test_directory()..name_
+  os.execute("rm -rf "..dir)
+  os.execute("mkdir -p "..dir)
+  return dir
+end
+
+function clean_test_file(file_)
+  local f = (IN_SLASH_TMP and "/tmp/mule_tests/" or "./tests/temp/")..file_
+  os.remove(f)
+  return f
 end

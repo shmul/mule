@@ -78,6 +78,7 @@ local function save_and_close(m,db,readonly_)
   end
   logi("closing")
   db.close()
+  block_wait_for_children()
   m = nil
 end
 

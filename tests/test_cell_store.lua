@@ -4,6 +4,7 @@ require "tests.strict"
 
 module( "test_cell_store", lunit.testcase,package.seeall )
 
+p.set_pack_lib("bits")
 function empty_cell(cell_)
   for i=1,4 do
     if cell_[i] then return false end
@@ -12,7 +13,7 @@ function empty_cell(cell_)
 end
 
 function test_read_write()
-  local f = "./tests/temp/read_write.txt"
+  local f = clean_test_file("read_write.txt")
   os.remove(f)
   local cs = c.cell_store(f,100,10,4)
   assert_not_nil(cs)
@@ -31,7 +32,7 @@ function test_read_write()
 end
 
 function test_many_writes()
-  local f = "./tests/temp/many_writes.txt"
+  local f = clean_test_file("many_writes.txt")
   os.remove(f)
   local cs = c.cell_store(f,100,10,4)
   assert_not_nil(cs)
@@ -44,3 +45,5 @@ function test_many_writes()
     assert_equal("hell",cs.read(i,1),i)
   end
 end
+
+--verbose_log(true)

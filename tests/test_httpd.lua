@@ -7,9 +7,8 @@ local p = require "purepack"
 
 local function column_db_factory(name_)
   p.set_pack_lib("bits")
-  os.execute("rm -rf "..name_.."_cdb")
-  os.execute("mkdir -p "..name_.."_cdb")
-  return cdb.column_db(name_.."_cdb")
+  local dir = create_test_directory(name_.."_cdb")
+  return cdb.column_db(dir)
 end
 
 
@@ -29,7 +28,7 @@ local function fake_send(response_)
 end
 
 function test_alerts()
-  local db = column_db_factory("./tests/temp/alerts")
+  local db = column_db_factory("alerts")
   local m = mule(db)
   local res = {}
 
@@ -128,7 +127,7 @@ function test_alerts()
 end
 
 function test_kvs()
-  local db = column_db_factory("./tests/temp/kvs")
+  local db = column_db_factory("kvs")
   local m = mule(db)
   local res = {}
 
