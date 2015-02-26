@@ -330,6 +330,65 @@ function app() {
     $("#sidebar-search-container").html($.templates("#search-form-template").render(template_data));
   }
 
+  // Add a .smoothed_value property to each datum using Double-Exponential Smoothing.
+  function add_double_exponential_smoothed(data_) {
+    var alpha = 0.6;
+    var gamma = 0.5;
+    var datum, prev_datum;
+    data_[0].smoothed_value = data_[0].value;
+    var b = data_[1].value - data_[0].value;
+    for (var i = 1; i < data_.length; i++) {
+      datum = data_[i];
+      prev_datum = data_[i - 1];
+      datum.smoothed_value = alpha * datum.value + (1 - alpha) * (prev_datum.smoothed_value + b);
+      b = gamma * (datum.smoothed_value - prev_datum.smoothed_value) + (1 - gamma) * b;
+    }
+  }
+
+  function add_interval_days(date_, days_) {
+    var res = new Date(date_);
+    res.setDate(res.getDate() + days_);
+    return res;
+  }
+
+  // Add .upper and .lower properties to each datum. These are calculated by
+  // looking at the smoothed value of a data point 7 days before that and
+  // adding/subtracting 10%.
+  function add_upper_and_lower_bounds(data_) {
+    var compare_interval_days = 7;
+    var border_ratio = 0.10; // 10% boundary from each side
+    var fake_border_ratio = 0.01 // 1% boundary for the first 7 days
+
+    var minimal_time_for_bounds = add_interval_days(data_[0].date, compare_interval_days);
+    var i = 0;
+    while (data_[i].date < minimal_time_for_bounds) {
+      i++;
+    }
+    var compare_interval_data_points = i;
+
+    for (var i = 0; i < data_.length; i++) {
+      if (i < compare_interval_data_points) {
+        // Fake boundaries
+        data_[i].upper = data_[i].value;
+        data_[i].lower = data_[i].value;
+      } else {
+        var compare_datum = data_[i - compare_interval_data_points];
+        if (compare_datum && compare_datum.smoothed_value) {
+          data_[i].upper = compare_datum.smoothed_value * (1 + border_ratio);
+          data_[i].lower = compare_datum.smoothed_value * (1 - border_ratio);
+        } else {
+          data_[i].upper = data_[i - 1].upper;
+          data_[i].lower = data_[i - 1].lower;
+        }
+      }
+    }
+  }
+
+  function add_bounds(data_) {
+    add_double_exponential_smoothed(data_);
+    add_upper_and_lower_bounds(data_);
+  }
+
   function draw_graph(name_,data_,target_,with_focus_) {
     // TODO use with_focus_ to add zoom buttons
     var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
@@ -348,6 +407,7 @@ function app() {
       xax_count: x_axis_ticks_count,
       target: target_,
       interpolate: "basic",
+      show_confidence_band: ["lower", "upper"],
       legend: [name_],
       legend_target: ".legend",
       mouseover: function(d, i) {
@@ -355,6 +415,9 @@ function app() {
           .text(rollover_date_format(d.date) + ": " + name_ + " " + rollover_value_format(d.value));
       }
     });
+
+    // Fix overlapping labels in x-axis
+    d3.selectAll('.mg-year-marker text').attr('transform', 'translate(0, 8)');
   }
 
   function load_graph(name_,target_,with_focus_) {
@@ -368,6 +431,7 @@ function app() {
         }
       };
       data.sort(function(a,b) { return a.date-b.date });
+      add_bounds(data)
 
       draw_graph(name_,[data],target_,with_focus_);
     }
