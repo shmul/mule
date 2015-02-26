@@ -36,11 +36,9 @@ function scent_ds_mockup (ready_) {
   }
 
   function delayed(func_) {
-    setTimeout(function() {
-      return func_();
-    },100);
-
+    $.doTimeout(100,func_);
   }
+
   function config(callback_) {
     delayed(function() {
       callback_(fixtures["config"]);

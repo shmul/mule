@@ -746,6 +746,18 @@ function app() {
     $("#qunit > a").text(title_);
   }
 
+  function refresh_loaded_graphs() {
+    $(".graph-body").each(function(idx_,obj_) {
+      var container = $(obj_).closest(".graph-container");
+      var graph = $(container[0]).attr("data-graph");
+      if ( graph_split(graph) ) {
+        load_graph(graph,obj_); // TODO - the with_focus_ param is ignored but it shouldn't
+        console.log('refresh_loaded_graphs: %s',graph);
+      }
+    });
+
+  }
+
   function setup_router() {
 
     function globals() {
@@ -805,7 +817,7 @@ function app() {
 
   //run_tests();
   setup_router();
-
+  $.doTimeout(60*1000,refresh_loaded_graphs);
 }
 
 
