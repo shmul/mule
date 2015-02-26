@@ -30,6 +30,7 @@ function app() {
   function graph_to_id(graph_) {
     return graph_.replace(/[;:]/g,"_");
   }
+
   const TIME_UNITS = {s:1, m:60, h:3600, d:3600*24, w:3600*24*7, y:3600*24*365};
   function timeunit_to_seconds(timeunit_) {
     var m = timeunit_.match(/^(\d+)(\w)$/);
@@ -321,7 +322,7 @@ function app() {
                           form_id: "sidebar-search-form",
                           input_id: "search-keys-input"
                          }];
-    $("#sidebar-search-container").html($.templates("#search-form-template").render(template_data));
+    $("#sidebar-search-container").empty().html($.templates("#search-form-template").render(template_data));
   }
 
   // Add a .smoothed_value property to each datum using Double-Exponential Smoothing.
@@ -452,7 +453,6 @@ function app() {
   }
 
 
-
   function setup_charts(dashboard_name) {
 
     function add_to_dashboard(graph_) {
@@ -512,7 +512,7 @@ function app() {
 
         // cleanup
         $('#modal-target').on('hidden.bs.modal', function (e) {
-          $("#modal-graph").html("");
+          $("#modal-graph").empty();
         });
 
         $("#modal-target").modal('show');
@@ -665,7 +665,7 @@ function app() {
 
 
   function setup_graph(name_) {
-    $(".graph-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
+    $(".graph-container").empty().html($.templates("#graph-template").render([{klass: "tall-graph"}]));
     load_graph(name_,"#graph-box .graph-body",false);
     setup_graph_header(name_,"#graph-box .graph-header",false);
     $("#graph-box").show();
