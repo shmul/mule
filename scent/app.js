@@ -235,7 +235,6 @@ function app() {
         set_click_behavior();
         dt.on('draw',set_click_behavior);
         $("#alert-title").text(tr.title);
-
       }
     });
   }
@@ -416,6 +415,15 @@ function app() {
     d3.selectAll('.mg-year-marker text').attr('transform', 'translate(0, 8)');
   }
 
+  function remove_spinner(anchor_) {
+    var box_body = $(anchor_).closest(".box-body")[0];
+        $(box_body).find(".overlay").remove();
+  }
+  function add_spinner(anchor_) {
+    var box_body = $(anchor_).closest(".box-body")[0];
+    $(box_body).append('<div class="overlay"><i class="fa fa-refresh fa-spin"></i></div>');
+  }
+
   function load_graph(name_,target_,with_focus_) {
     function callback(raw_data_) {
       scent_ds.alerts(function(alerts_) {
@@ -445,10 +453,11 @@ function app() {
             ]
         }
         draw_graph(name_,[data],baselines,target_,with_focus_);
+        remove_spinner(target_);
       });
 
     }
-
+    add_spinner(target_);
     scent_ds.graph(name_,callback);
   }
 

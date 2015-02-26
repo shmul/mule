@@ -1,4 +1,5 @@
 // all data items on the page come from here. We can work in mockup or real world mode
+const NOP = function() {}
 
 function scent_ds_mockup () {
   var fixtures_scripts = ["config","key","graph","alert"];
@@ -124,17 +125,34 @@ function scent_ds() {
   var ns = $;//$.initNamespaceStorage('mule: ');
   const user = "Shmul the mule";
   const mule_server = "http://v2.mule.trusteer.net/mule/api";
+  var cache = new Cache(100);
 
   function delayed(func_) {
     $.doTimeout(2,func_);
   }
 
-  function mule_get(resource_,callback_) {
+  function mule_get(resource_,callback_,cache_period_) {
+    var cached =cache.getItem(resource_);
+    if ( cached ) {
+      //console.log("cache hit: %s",resource_);
+      delayed(callback_(cached));
+      return;
+    }
+
     $.ajax({
       url: mule_server+resource_,
       async: true,
       dataType: 'json',
       success: function (response_) {
+        if ( cache_period_ ) {
+          cache.setItem(resource_,response_.data,{expirationAbsolute: null,
+                                                  expirationSliding: cache_period_,
+                                                  priority: Cache.Priority.HIGH,
+                                                  callback: function(k, v) {
+                                                    //console.log("cache remove: %s",k);
+                                                  }
+                                                 });
+        }
         callback_(response_.data);
       },
       error: function(xhr_,internal_error_,http_status_) {
@@ -144,21 +162,21 @@ function scent_ds() {
   }
 
   function config(callback_) {
-    mule_get("/config",callback_);
+    mule_get("/config",callback_,120);
   }
 
   function graph(graph_,callback_) {
     mule_get("/graph/"+graph_,function(data_) {
       callback_(data_[graph_]);
-    });
+    },30);
   }
 
   function key(key_,callback_) {
-    mule_get("/key/"+key_+"?level=1",callback_);
+    mule_get("/key/"+key_+"?level=1",callback_,60);
   }
 
   function alerts(callback_) {
-    mule_get("/alert",callback_);
+    mule_get("/alert",callback_,60);
   }
 
   // if key == "persistent" the data is taken from the server, otherwise session storage
