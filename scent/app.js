@@ -358,15 +358,15 @@ function app() {
     var compare_interval_days = 7;
     var border_ratio = 0.10; // 10% boundary from each side
     var fake_border_ratio = 0.01 // 1% boundary for the first 7 days
-
+    var len = data_.length
     var minimal_time_for_bounds = add_interval_days(data_[0].date, compare_interval_days);
     var i = 0;
-    while (data_[i].date < minimal_time_for_bounds) {
+    while (i<len && data_[i].date < minimal_time_for_bounds) {
       i++;
     }
     var compare_interval_data_points = i;
 
-    for (var i = 0; i < data_.length; i++) {
+    for (var i = 0; i < len; i++) {
       if (i < compare_interval_data_points) {
         // Fake boundaries
         data_[i].upper = data_[i].value;
