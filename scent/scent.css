@@ -46,6 +46,11 @@
     font-size: 1.5rem;
 }
 
+/* Hide the verical line on every Jan 1st */
+.mg-year-marker line {
+    display: none;
+}
+
 /* Horizontally center the legend */
 .legend {
   margin: 1em auto;
