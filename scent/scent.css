@@ -41,7 +41,8 @@
     height:400px;
 }
 
-.mg-x-axis text, .mg-y-axis text, .mg-histogram .axis text, .mg-active-datapoint {
+.mg-x-axis text, .mg-y-axis text, .mg-histogram .axis text,
+.mg-active-datapoint, .mg-baselines text {
     font-size: 1.5rem;
 }
 
