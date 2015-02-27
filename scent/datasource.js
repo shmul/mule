@@ -1,7 +1,7 @@
 // all data items on the page come from here. We can work in mockup or real world mode
 const NOP = function() {}
 
-function scent_ds_mockup () {
+function mule_mockup () {
   var fixtures_scripts = ["config","key","graph","alert"];
   var fixtures = {};
   const user = "Shmul the mule";
@@ -121,7 +121,7 @@ function scent_ds_mockup () {
 
 };
 
-function scent_ds() {
+function mule_ds() {
   var ns = $;//$.initNamespaceStorage('mule: ');
   const user = "Shmul the mule";
   const mule_server = "http://v2.mule.trusteer.net/mule/api";
@@ -218,5 +218,4 @@ function scent_ds() {
 
 }
 
-//scent_ds = scent_ds_mockup();
-scent_ds = scent_ds();
+scent_ds = /\/test\//.test(location.href) ? mule_mockup() : mule_ds();
