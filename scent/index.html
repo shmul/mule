@@ -122,9 +122,9 @@
 
         <script id="alerts-menu-template" type="text/x-jsrender">
           <li>
-            <a href="#alert/{{:name}}">
-              <i class="fa fa-circle-o text-{{:indicator}}"></i> {{:Name}}</a>
-            <small class="label pull-right bg-{{:color}}" id="alert-menu-{{:name}}"></small>
+            <a href="#alert/{{:type}}">
+              <i class="fa fa-circle-o text-{{:indicator}}"></i> {{:title}}</a>
+            <small class="label pull-right bg-{{:color}}" id="alert-menu-{{:type}}"></small>
           </li>
         </script>
 
@@ -164,7 +164,7 @@
               {{for links}}
                 &nbsp;|&nbsp;
                 {{if current}}
-                  <span style="background-color: lightblue">{{:rp}}</span>
+                  <span class ="bg-light-blue">{{:rp}}</span>
                 {{else}}
                   {{if inner_navigation}}
                     <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
@@ -173,7 +173,10 @@
                   {{/if}}
                 {{/if}}
               {{/for}}
-            </h3>
+              {{if alerted }}
+                &nbsp;&nbsp;<span class="center bg-{{:color}}">{{:alerted}}</span>
+               {{/if}}
+             </h3>
 
 
             <div class="box-tools pull-right">

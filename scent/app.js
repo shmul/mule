@@ -53,6 +53,36 @@ function app() {
     return timeunit_to_seconds(gs[1]);
   }
 
+  function alert_index(alert_string_) {
+    switch ( alert_string_ ) {
+    case "CRITICAL LOW":
+    case "CRITICAL HIGH": return 0;
+    case "WARNING LOW":
+    case "WARNING HIGH": return 1;
+    case "stale": return 3;
+    case "NORMAL": return 4;
+    }
+    return -1;
+  }
+
+  function alert_category(alert_) {
+    const lookup = {
+      0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
+      1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
+      2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "blue"},
+      3: { title: "Stale", type: "stale", indicator: "info", color: "light-blue"},
+      4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
+
+      critical: 0,
+      warning: 1,
+      anomaly: 2,
+      stale: 3,
+      normal: 4
+    }
+
+    return lookup[alert_];
+  }
+
   function mule_config(callback_) {
     scent_ds.config(function(conf_) {
       callback_(jQuery.extend(true,{},conf_));
@@ -131,13 +161,10 @@ function app() {
   }
 
   function setup_menu_alerts() {
-    var template_data = [
-      {Name: "Critical", name: "critical", indicator: "danger", color: "red"},
-      {Name: "Warning", name: "warning", indicator: "warning", color: "orange"},
-      {Name: "Anomaly", name: "anomaly", indicator: "info", color: "blue"},
-      {Name: "Stale", name: "stale", indicator: "info", color: "light-blue"},
-      {Name: "Normal", name: "normal", indicator: "success", color: "green"}
-    ];
+    var template_data = [];
+    for (var i=0; i<5; ++i) {
+      template_data.push(alert_category(i));
+    }
     $("#alerts-menu-container").html($.templates("#alerts-menu-template").render(template_data));
   }
 
@@ -145,33 +172,13 @@ function app() {
     scent_ds.alerts(function(raw_data_) {
 
       // 0-critical, 1-warning, 2-anomaly, 3-Stale, 4-Normal
-      const lookup = {
-        0: { title: "Critical", type: "critical"},
-        1: { title: "Warning", type: "warning"},
-        2: { title: "Anomaly", type: "anomaly"},
-        3: { title: "Stale", type: "stale"},
-        4: { title: "Normal", type: "normal"},
-        critical: 0,
-        warning: 1,
-        anomaly: 2,
-        stale: 3,
-        normal: 4
-      }
 
       var date_format = d3.time.format("%Y-%M-%d:%H%M%S");
       var alerts = [[],[],[],[],[]];
       for (n in raw_data_) {
         var current = raw_data_[n];
-        var idx = -1;
-        switch ( current[7] ) {
-        case "CRITICAL LOW":
-        case "CRITICAL HIGH": idx = 0; break;
-        case "WARNING LOW":
-        case "WARNING HIGH": idx = 1; break;
-        case "stale": idx = 3; break;
-        case "NORMAL": idx = 4; break;
-        }
-        if ( idx!=-1 ) {
+        var idx = alert_index(current[7]);
+        if ( idx>=0 ) {
           alerts[idx].push([n,current]);
         }
       }
@@ -181,10 +188,10 @@ function app() {
       }
 
       var template_data = [];
-      var category_idx = lookup[category_to_show_];
+      var category_idx = alert_category(category_to_show_);
       for (var i=0; i<5; ++i) {
         var len = alerts[i].length;
-        var tr = lookup[i];
+        var tr = alert_category(i);
         $("#alert-menu-"+tr.type).text(len);
         if ( i!=category_idx ) {
           continue;
@@ -225,7 +232,7 @@ function app() {
         });
       }
 
-      var tr = lookup[category_idx];
+      var tr = alert_category(category_idx);
       if ( tr ) {
         $("#alert-box").show();
         $("#alert-table-container").empty().html($.templates("#alert-table-template").render(template_data));
@@ -616,6 +623,7 @@ function app() {
       for (var i in pairs_) {
         var rp = pairs_[i].match(/^[\w\.\-]+;(\d\w+:\d\w+)$/);
         var current = name_.indexOf(pairs_[i])!=-1;
+
         links.push({href: pairs_[i], rp: rp[1], current: current, inner_navigation: inner_navigation_});
       }
 
@@ -629,47 +637,57 @@ function app() {
           //TODO display an alert
           return;
         }
-        metric = metric[0];
-        graph_box_header(graph_header_container_,{type: "graph", title: metric, graph: name_,
-                                                  links: links,favorite: favorite});
 
-        $(".inner-navigation").click(function(e) {
-          e.stopPropagation();
-          var href = $(e.target).attr("data-graph"); // this is the graph to be shown
-          var container = $(e.target).closest(".graph-container");
-          var graph = $(container[0]).attr("data-graph"); // this is the existing graph
-          var container_id = "#"+$(container[0]).attr("id");
-          console.log('inner navigation %s', graph);
-          load_graph(href,container_id+" .graph-body");
-          setup_graph_header(href,container_id+" .graph-header",true);
-        });
-
-
-        $(".graph-favorite").click(function(e) {
-          e.stopPropagation();
-          var container = $(e.target).closest(".graph-container");
-          var graph = $(container[0]).attr("data-graph");
-          // we should re-read the persistent data
-          scent_ds.load(user,"persistent",function(persistent_) {
-            var favorites = persistent_.favorites;
-            var idx = favorites.indexOf(graph);
-            console.log('favorite %s %s', graph, favorites);
-            if ( idx==-1 ) { // we need to add to favorites
-              favorites.push(graph);
-              $(e.target).attr("class","graph-favorite fa fa-star");
-            } else {
-              favorites.splice(idx,1);
-              $(e.target).attr("class","graph-favorire fa fa-star-o");
+        scent_ds.alerts(function(alerts_) {
+          var ac = {};
+          if ( alerts_[name_] ) {
+            var idx = alert_index(alerts_[name_][7]);
+            if ( idx>=0 ) {
+              ac = alert_category(idx);
             }
-            scent_ds.save(user,"persistent",persistent_,function() {
-              setup_menus();
+          }
+
+          metric = metric[0];
+          graph_box_header(graph_header_container_,{type: "graph", title: metric, graph: name_,
+                                                    links: links,favorite: favorite, alerted: ac.title, color: ac.color});
+
+          $(".inner-navigation").click(function(e) {
+            e.stopPropagation();
+            var href = $(e.target).attr("data-graph"); // this is the graph to be shown
+            var container = $(e.target).closest(".graph-container");
+            var graph = $(container[0]).attr("data-graph"); // this is the existing graph
+            var container_id = "#"+$(container[0]).attr("id");
+            console.log('inner navigation %s', graph);
+            load_graph(href,container_id+" .graph-body");
+            setup_graph_header(href,container_id+" .graph-header",true);
+          });
+
+
+          $(".graph-favorite").click(function(e) {
+            e.stopPropagation();
+            var container = $(e.target).closest(".graph-container");
+            var graph = $(container[0]).attr("data-graph");
+            // we should re-read the persistent data
+            scent_ds.load(user,"persistent",function(persistent_) {
+              var favorites = persistent_.favorites;
+              var idx = favorites.indexOf(graph);
+              console.log('favorite %s %s', graph, favorites);
+              if ( idx==-1 ) { // we need to add to favorites
+                favorites.push(graph);
+                $(e.target).attr("class","graph-favorite fa fa-star");
+              } else {
+                favorites.splice(idx,1);
+                $(e.target).attr("class","graph-favorire fa fa-star-o");
+              }
+              scent_ds.save(user,"persistent",persistent_,function() {
+                setup_menus();
+              });
             });
           });
         });
+
       });
-
     });
-
   }
 
 
