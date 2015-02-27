@@ -225,7 +225,7 @@ function app() {
           var graph = $(e.target).attr("data-target");
           $("#alert-graph-container").empty().html($.templates("#graph-template").render([{klass: "medium-graph"}]));
           $("#alert-graph-container").attr("data-graph",graph);
-          load_graph(graph,".graph-body",false);
+          load_graph(graph,".graph-body","#alert-graph-container .timerange-slider");
           setup_graph_header(graph,".graph-header",true);
 
           e.stopPropagation();
@@ -390,16 +390,19 @@ function app() {
     add_upper_and_lower_bounds(data_);
   }
 
-  function draw_graph(name_,data_,baselines_,target_,with_focus_) {
-    // TODO use with_focus_ to add zoom buttons
+  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,target_) {
     var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
     var rollover_value_format = d3.format(",d");
 
     var x_axis_ticks_count = ($(target_).hasClass("tall-graph")) ? 10 : 5;
 
+    var from_element = Math.floor(data_.length * from_percent_ / 100);
+    var to_element = Math.ceil(data_.length * to_percent_ / 100);
+    var sliced_data = data_.slice(from_element, to_element + 1);
+
     MG.data_graphic({
-      data: data_,
-      // TODO For some reason this breaks the chart:
+      data: [sliced_data],
+      // This breaks the chart because MetricsGraphics assumes the samples resolution is 1 day
       // missing_is_zero: true,
       full_width: true,
       full_height: true,
@@ -431,7 +434,22 @@ function app() {
     $(box_body).append('<div class="overlay"><i class="fa fa-refresh fa-spin"></i></div>');
   }
 
-  function load_graph(name_,target_,with_focus_) {
+  function setup_slider(slider_target, on_slider_change_callback) {
+    var slider_element = $(slider_target);
+    var timer_id;
+    slider_element.slider().on("slide", function (e) {
+      var from_to = slider_element.data("slider").getValue();
+      if (timer_id) {
+        clearTimeout(timer_id);
+        timer_id = null;
+      }
+      timer_id = setTimeout(function() {
+        on_slider_change_callback(from_to[0], from_to[1]);
+      }, 1000)
+    });
+  }
+
+  function load_graph(name_,target_,slider_target_) {
     function callback(raw_data_) {
       scent_ds.alerts(function(alerts_) {
         var data = new Array();
@@ -459,7 +477,12 @@ function app() {
               label: "critical high" },
             ]
         }
-        draw_graph(name_,[data],baselines,target_,with_focus_);
+        draw_graph(name_,data,0,100,baselines,target_);
+        if (slider_target_) {
+          setup_slider(slider_target_, function (new_from, new_to) {
+            draw_graph(name_,data,new_from,new_to,baselines,target_);
+          });
+        }
         remove_spinner(target_);
       });
 
@@ -467,7 +490,6 @@ function app() {
     add_spinner(target_);
     scent_ds.graph(name_,callback);
   }
-
 
   function setup_charts(dashboard_name) {
 
@@ -514,7 +536,7 @@ function app() {
         var name = dashboard[i];
         var id = "chart-"+i+"-container";
         $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
-        load_graph(name,"#"+id+" .graph-body",true);
+        load_graph(name,"#"+id+" .graph-body", null) // ,"#"+id+" .timerange-slider");
         setup_graph_header(name,"#"+id+" .graph-header",true);
       }
 
@@ -523,7 +545,7 @@ function app() {
         var graph = $(e.target).closest(".small-graph").attr("data-target");
 
         $('#modal-target').on('shown.bs.modal', function (e) {
-          load_graph(graph,"#modal-graph",false);
+          load_graph(graph,"#modal-graph",null);
         });
 
         // cleanup
@@ -658,7 +680,7 @@ function app() {
             var graph = $(container[0]).attr("data-graph"); // this is the existing graph
             var container_id = "#"+$(container[0]).attr("id");
             console.log('inner navigation %s', graph);
-            load_graph(href,container_id+" .graph-body");
+            load_graph(href,container_id+" .graph-body",null);
             setup_graph_header(href,container_id+" .graph-header",true);
           });
 
@@ -693,7 +715,7 @@ function app() {
 
   function setup_graph(name_) {
     $(".graph-container").empty().html($.templates("#graph-template").render([{klass: "tall-graph"}]));
-    load_graph(name_,"#graph-box .graph-body",false);
+    load_graph(name_,"#graph-box .graph-body","#graph-box .timerange-slider");
     setup_graph_header(name_,"#graph-box .graph-header",false);
     $("#graph-box").show();
     push_graph_to_recent(name_);
@@ -778,7 +800,7 @@ function app() {
       var container = $(obj_).closest(".graph-container");
       var graph = $(container[0]).attr("data-graph");
       if ( graph_split(graph) ) {
-        load_graph(graph,obj_); // TODO - the with_focus_ param is ignored but it shouldn't
+        load_graph(graph,obj_,null);
         console.log('refresh_loaded_graphs: %s',graph);
       }
     });

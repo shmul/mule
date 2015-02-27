@@ -51,6 +51,16 @@
     display: none;
 }
 
+.timerange-slider-section {
+  padding: 0 4em;
+}
+.timerange-slider-section .slider {
+  width: 100%;
+}
+.timerange-slider {
+  display: none;
+}
+
 /* Horizontally center the legend */
 .legend {
   margin: 1em auto;
