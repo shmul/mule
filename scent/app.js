@@ -409,6 +409,8 @@ function app() {
       bottom: 40,
       area: false,
       xax_count: x_axis_ticks_count,
+      x_extended_ticks: true,
+      y_extended_ticks: true,
       target: target_,
       interpolate: "basic",
       show_confidence_band: ["lower", "upper"],
