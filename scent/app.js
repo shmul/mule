@@ -157,6 +157,9 @@ function app() {
     if ( options_.close ) {
       template_data[0].close = true;
     }
+    if ( options_.full ) {
+      template_data[0].full = true;
+    }
     $(container_).html($.templates("#graph-box-header-template").render(template_data));
   }
 
@@ -673,7 +676,8 @@ function app() {
 
           metric = metric[0];
           graph_box_header(graph_header_container_,{type: "graph", title: metric, graph: name_,
-                                                    links: links,favorite: favorite, alerted: ac.title, color: ac.color});
+                                                    links: links,favorite: favorite, alerted: ac.title, color: ac.color,
+                                                    full: !!inner_navigation_});
 
           $(".inner-navigation").click(function(e) {
             e.stopPropagation();
@@ -681,9 +685,11 @@ function app() {
             var container = $(e.target).closest(".graph-container");
             var graph = $(container[0]).attr("data-graph"); // this is the existing graph
             var container_id = "#"+$(container[0]).attr("id");
+            var graph_view = $(container[0]).find(".graph-view");
             console.log('inner navigation %s', graph);
             load_graph(href,container_id+" .graph-body",null);
             setup_graph_header(href,container_id+" .graph-header",true);
+            graph_view.parent().attr("href","#/graph/"+href);
           });
 
 

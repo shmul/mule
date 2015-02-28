@@ -181,6 +181,11 @@
 
 
             <div class="box-tools pull-right">
+              {{if full}}
+                <button class="btn btn-box-tool" data-toggle="tooltip" title="View">
+                  <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
+                </button>
+              {{/if}}
               {{if favorite}}
                 <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite">
                   <i class="graph-favorite fa {{:favorite}}"></i>
