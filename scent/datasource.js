@@ -211,7 +211,7 @@ function mule_ds() {
     mule_get("/key/"+key_+"?level=1",
              function(keys_) {
                return key_impl(keys_,key_,callback_);
-             },60);
+             },300);
   }
 
   function alerts(callback_) {
