@@ -425,7 +425,7 @@ function app() {
       baselines: baselines_,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
-          .text(rollover_date_format(d.date) + ": " + name_ + " " + rollover_value_format(d.value));
+          .text(rollover_date_format(d.date) + " " + rollover_value_format(d.value));
       }
     });
 
