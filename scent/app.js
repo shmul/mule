@@ -490,17 +490,22 @@ function app() {
               label: "critical high" },
             ]
         }
-        draw_graph(name_,data,0,100,baselines,target_);
-        if (slider_target_) {
-          setup_slider(slider_target_, function (new_from, new_to) {
-            draw_graph(name_,data,new_from,new_to,baselines,target_);
-          });
+        try {
+          draw_graph(name_,data,0,100,baselines,target_);
+          if (slider_target_) {
+            setup_slider(slider_target_, function (new_from, new_to) {
+              draw_graph(name_,data,new_from,new_to,baselines,target_);
+            });
+          }
+        } catch(e) {
+          console.log(e.stack);
         }
         remove_spinner(target_);
       });
 
     }
     add_spinner(target_);
+    $.doTimeout(30*1000,function() { remove_spinner(target_); }); // to make sure we get it off at some point
     scent_ds.graph(name_,callback);
   }
 
