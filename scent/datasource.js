@@ -122,10 +122,11 @@ function mule_mockup () {
 };
 
 function mule_ds() {
-  var ns = $;//$.initNamespaceStorage('mule: ');
+  var ns = $.initNamespaceStorage('mule');
   const user = "Shmul the mule";
   const mule_server = "http://v2.mule.trusteer.net/mule/api";
   var cache = new Cache(100);
+
 
   function delayed(func_) {
     $.doTimeout(2,func_);
@@ -172,7 +173,28 @@ function mule_ds() {
   }
 
   function key(key_,callback_) {
-    mule_get("/key/"+key_+"?level=1",callback_,60);
+    if (key_[key_.length-1]=='.' ) {
+      key_ = key_.slice(0,key_.length-1);
+    }
+    mule_get("/key/"+key_+"?level=1",
+             function(keys_) {
+               var k = $.map(keys_,function(element,index) {return index});
+               var rv = []
+               if ( key_=="" ) { // no dots -> bring top level only
+                 $.each(k,function(idx,e) {
+                   if ( /^[\w-]+;/.test(e) )
+                     rv.push(e);
+                 });
+               } else {
+                 var normalized_input = key_[key_.length-1]=='.' ? key_ : key_+".";
+                 var re = new RegExp("^" + key_+"[\\w;:-]*");
+                 $.each(k,function(idx,e) {
+                   if ( re.test(e) )
+                     rv.push(e);
+                 });
+               }
+               callback_(rv);
+             },60);
   }
 
   function alerts(callback_) {
@@ -183,10 +205,14 @@ function mule_ds() {
   // is used
   function load(user_,key_,callback_) {
     delayed(function() {
-      if (key_=="persistent" ) {
-        callback_(ns.localStorage.get(user_+".persistent"));
-      } else {
-        callback_(ns.sessionStorage.get(user_+"."+key_));
+      try {
+        if (key_=="persistent" ) {
+          callback_(ns.localStorage.get(user_+".persistent"));
+        } else {
+          callback_(ns.sessionStorage.get(user_+"."+key_));
+        }
+      } catch(e){
+        callback_(null);
       }
     });
   }

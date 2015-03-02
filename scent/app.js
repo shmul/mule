@@ -89,6 +89,25 @@ function app() {
     });
   }
 
+  function load_persistent(callback_) {
+    scent_ds.load(user,"persistent",function(persistent_) {
+      if ( !persistent_ ) {
+        persistent_ = { dashboards: {},
+                        favorites: [] };
+      }
+      callback_(persistent_);
+    });
+  }
+
+  function load_recent(callback_) {
+    scent_ds.load(user,"recent",function(recent_) {
+      if ( !recent_ ) {
+        recent_ = [];
+      }
+      callback_(recent_);
+    });
+  }
+
   function generate_all_graphs(graph_,callback_) {
     mule_config(function(conf_) {
       var m = graph_.match(/^([\w\-]+)(\.|;)/);
@@ -161,6 +180,8 @@ function app() {
       template_data[0].full = true;
     }
     $(container_).html($.templates("#graph-box-header-template").render(template_data));
+    var graph_container = ($(container_).closest(".graph-container"))[0];
+    $(graph_container).attr("data-graph",template_data[0].graph);
   }
 
   function setup_menu_alerts() {
@@ -277,7 +298,7 @@ function app() {
       $("#"+list_name_+"-container").empty().append($.templates("#"+list_name_+"-template").render(template_data));
     }
 
-    scent_ds.load(user,"persistent",function(persistent_) {
+    load_persistent(function(persistent_) {
       load_graphs_lists("favorite",persistent_.favorites);
       load_graphs_lists("dashboard",persistent_.dashboards);
     });
@@ -286,10 +307,7 @@ function app() {
       var name = $("#dashboard-add").val();
       e.preventDefault();
       e.stopPropagation();
-      scent_ds.load(user,"persistent",function(persistent_) {
-        if ( !persistent_.dashboards ) {
-          persistent_.dashboards = {};
-        }
+      load_persistent(function(persistent_) {
         if ( !persistent_.dashboards[name] ) {
           persistent_.dashboards[name] = [];
           scent_ds.save(user,"persistent",persistent_,function() {
@@ -304,7 +322,7 @@ function app() {
     });
 
     function delete_dashboard(name_) {
-      scent_ds.load(user,"persistent",function(persistent_) {
+      load_persistent(function(persistent_) {
         if ( persistent_.dashboards[name_] ) {
           delete persistent_.dashboards[name_];
           scent_ds.save(user,"persistent",persistent_,function() {
@@ -324,7 +342,7 @@ function app() {
       });
     });
 
-    scent_ds.load(user,"recent",function(recent_) {
+    load_recent(function(recent_) {
       load_graphs_lists("recent",recent_);
     });
     var template_data = [{class: "sidebar-form",
@@ -336,6 +354,9 @@ function app() {
 
   // Add a .smoothed_value property to each datum using Double-Exponential Smoothing.
   function add_double_exponential_smoothed(data_) {
+    if ( data_.length<2 ) { // can happen with extra short graphs
+      return;
+    }
     var alpha = 0.6;
     var gamma = 0.5;
     var datum, prev_datum;
@@ -456,6 +477,11 @@ function app() {
 
   function load_graph(name_,target_,slider_target_) {
     function callback(raw_data_) {
+      if ( !raw_data_ || raw_data_.length==0 ) {
+        // TODO - show an alert
+        return;
+      }
+
       scent_ds.alerts(function(alerts_) {
         var data = new Array();
         for (var rw in raw_data_) {
@@ -499,7 +525,7 @@ function app() {
   function setup_charts(dashboard_name) {
 
     function add_to_dashboard(graph_) {
-      scent_ds.load(user,"persistent",function(persistent_) {
+      load_persistent(function(persistent_) {
         var id = $("#charts-title").text().trim();
         var dashboard = persistent_.dashboards[id];
         if ( dashboard.indexOf(graph_)==-1 ) {
@@ -511,7 +537,7 @@ function app() {
     }
 
     function remove_from_dashboard(graph_) {
-      scent_ds.load(user,"persistent",function(persistent_) {
+      load_persistent(function(persistent_) {
         var id = $("#charts-title").text().trim();
         var idx = persistent_.dashboards[id].indexOf(graph_);
         if ( idx!=-1 ) {
@@ -523,7 +549,7 @@ function app() {
       });
     }
 
-    scent_ds.load(user,"persistent",function(persistent_) {
+    load_persistent(function(persistent_) {
       var dashboard = persistent_.dashboards[dashboard_name];
       if ( !dashboard ) {
         // TODO - flash an error and exit
@@ -575,7 +601,7 @@ function app() {
       setup_search_keys("#charts-search-form","#charts-search-input",
                         function(name_) {
                           $("#charts-add-modal").modal('hide');
-                          options_.add_callback(name_);
+                          add_to_dashboard(name_);
                         });
     });
 
@@ -630,7 +656,7 @@ function app() {
 
   function push_graph_to_recent(name_) {
     // update the recent list
-    scent_ds.load(user,"recent",function(recent_) {
+    load_recent(function(recent_) {
       var idx = recent_.indexOf(name_);
       if ( idx!=-1 ) {
         recent_.splice(idx,1);
@@ -654,7 +680,7 @@ function app() {
         links.push({href: pairs_[i], rp: rp[1], current: current, inner_navigation: inner_navigation_});
       }
 
-      scent_ds.load(user,"persistent",function(persistent_) {
+      load_persistent(function(persistent_) {
         var favorites = persistent_.favorites;
         var idx = favorites.indexOf(name_);
         var favorite = idx==-1 ? "fa-star-o" : "fa-star";
@@ -698,7 +724,7 @@ function app() {
             var container = $(e.target).closest(".graph-container");
             var graph = $(container[0]).attr("data-graph");
             // we should re-read the persistent data
-            scent_ds.load(user,"persistent",function(persistent_) {
+            load_persistent(function(persistent_) {
               var favorites = persistent_.favorites;
               var idx = favorites.indexOf(graph);
               console.log('favorite %s %s', graph, favorites);
