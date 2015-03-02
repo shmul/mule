@@ -1,6 +1,53 @@
 // all data items on the page come from here. We can work in mockup or real world mode
 const NOP = function() {}
 
+function string_set_keys(set_) {
+  return $.map(set_ || {},function(key_,idx_) { return idx_; });
+}
+
+
+function string_set_add(set_,key_) {
+  set_ = set_ || {};
+  set_[key_] = true;
+  return set_;
+}
+
+function string_set_add_array(set_,keys_) {
+  set_ = set_ || {};
+  $.each(keys_,function(idx,k) {
+    set_[k] = true;
+  });
+  return set_;
+}
+
+function key_impl(initial_,key_,callback_) {
+  var k = $.map(initial_,function(element,index) {return index});
+  var rv = {};
+  var add_rp = /;$/.test(key_);
+
+  function push_key(e) {
+    if ( add_rp )
+      rv[e] = true;
+    else
+      rv[e.replace(/;.+$/,"")] = true;
+  }
+
+  if ( key_=="" ) { // no dots -> bring top level only
+    $.each(k,function(idx,e) {
+      if ( /^[\w-]+;/.test(e) )
+        push_key(e);
+    });
+  } else {
+    var re = new RegExp("^" + key_+"[\\w;:-]*");
+    $.each(k,function(idx,e) {
+      if ( re.test(e) )
+        push_key(e);
+    });
+  }
+
+  callback_(string_set_keys(rv).sort());
+}
+
 function mule_mockup () {
   var fixtures_scripts = ["config","key","graph","alert"];
   var fixtures = {};
@@ -56,22 +103,7 @@ function mule_mockup () {
   function key(key_,callback_) {
     delayed(function() {
       var all_keys = fixtures["key"];
-      var k = $.map(all_keys,function(element,index) {return index});
-      var rv = []
-      if ( key_=="" ) { // no dots -> bring top level only
-        $.each(k,function(idx,e) {
-          if ( /^[\w-]+;/.test(e) )
-            rv.push(e);
-        });
-      } else {
-        var normalized_input = key_[key_.length-1]=='.' ? key_ : key_+".";
-        var re = new RegExp("^" + key_+"[\\w;:-]*");
-        $.each(k,function(idx,e) {
-          if ( re.test(e) )
-            rv.push(e);
-        });
-      }
-      callback_(rv);
+      key_impl(all_keys,key_,callback_);
     });
   }
 
@@ -178,22 +210,7 @@ function mule_ds() {
     }
     mule_get("/key/"+key_+"?level=1",
              function(keys_) {
-               var k = $.map(keys_,function(element,index) {return index});
-               var rv = []
-               if ( key_=="" ) { // no dots -> bring top level only
-                 $.each(k,function(idx,e) {
-                   if ( /^[\w-]+;/.test(e) )
-                     rv.push(e);
-                 });
-               } else {
-                 var normalized_input = key_[key_.length-1]=='.' ? key_ : key_+".";
-                 var re = new RegExp("^" + key_+"[\\w;:-]*");
-                 $.each(k,function(idx,e) {
-                   if ( re.test(e) )
-                     rv.push(e);
-                 });
-               }
-               callback_(rv);
+               return key_impl(keys_,key_,callback_);
              },60);
   }
 

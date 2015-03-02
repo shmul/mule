@@ -135,24 +135,6 @@ function app() {
     if ( !gs) { return null; }
     return timeunit_to_seconds(gs[1]);
   }
-
-  function string_set_add(set_,key_) {
-    set_ = set_ || {};
-    set_[key_] = true;
-    return set_;
-  }
-
-  function string_set_add_array(set_,keys_) {
-    set_ = set_ || {};
-    $.each(keys_,function(idx,k) {
-      set_[k] = true;
-    });
-    return set_;
-  }
-
-  function string_set_keys(set_) {
-    return $.map(set_ || {},function(key_,idx_) { return idx_; });
-  }
   /*
     search form - common to all, with variations
     box header - specific to box type
@@ -633,7 +615,7 @@ function app() {
         function callback(keys_) {
           if ( !context.scent_keys ) {
             context.scent_keys = string_set_add_array({},keys_);
-          } else if ( context.query[context.query.length-1]=='.') {
+          } else if ( /[\.;]$/.test(context.query) ) {
             string_set_add_array(context.scent_keys,keys_);
           }
           process(string_set_keys(context.scent_keys));
@@ -642,7 +624,7 @@ function app() {
         context.query = query;
         if ( !context.scent_keys ) {
           scent_ds.key("",callback);
-        } else if ( query[query.length-1]=='.') {
+        } else if ( /[\.;]$/.test(context.query) ) {
           scent_ds.key(query,callback);
         } else {
           return string_set_keys(context.scent_keys);
