@@ -189,6 +189,11 @@
                   <i class="graph-favorite fa {{:favorite}}"></i>
                 </button>
               {{/if}}
+              {{if remove}}
+                <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove">
+                  <i class="graph-remove fa fa-trash"></i>
+                </button>
+              {{/if}}
             </div>
           </div>
         </script>
@@ -318,7 +323,7 @@
           <div class="box" id="graph-box">
            <div class="box-body container-fluid">
              <div class="row">
-               <div data-graph="" class="graph-container col-md-12">
+               <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
                </div>
              </div>
            </div>

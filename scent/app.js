@@ -523,17 +523,25 @@ function app() {
       });
     }
 
-    function remove_from_dashboard(graph_) {
-      load_persistent(function(persistent_) {
-        var id = $("#charts-title").text().trim();
-        var idx = persistent_.dashboards[id].indexOf(graph_);
-        if ( idx!=-1 ) {
-          persistent_.dashboards[id].splice(idx,1);
-          scent_ds.save(user,"persistent",persistent_,function() {
-            setup_charts(id);
-          });
-        }
-      });
+    function graph_remove_callback(e) {
+      e.stopPropagation();
+      var container = $(e.target).closest(".graph-container");
+      var graph = $(container[0]).attr("data-graph");
+      bootbox.confirm("Are you sure you want to remove the graph '"+graph+"' ?",
+                      function(result) {
+                        if ( result ) {
+                          load_persistent(function(persistent_) {
+                            var id = $("#charts-title").text().trim();
+                            var idx = persistent_.dashboards[id].indexOf(graph);
+                            if ( idx!=-1 ) {
+                              persistent_.dashboards[id].splice(idx,1);
+                              scent_ds.save(user,"persistent",persistent_,function() {
+                                setup_charts(id);
+                              });
+                            }
+                          });
+                        }
+                      });
     }
 
     load_persistent(function(persistent_) {
@@ -555,7 +563,7 @@ function app() {
         var id = "chart-"+i+"-container";
         $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
         load_graph(name,"#"+id+" .graph-body", null) // ,"#"+id+" .timerange-slider");
-        setup_graph_header(name,"#"+id+" .graph-header",true);
+        setup_graph_header(name,"#"+id+" .graph-header",true,graph_remove_callback);
       }
 
 
@@ -591,6 +599,7 @@ function app() {
                           add_to_dashboard(name_);
                         });
     });
+
 
     $("#charts-box").show();
   }
@@ -665,7 +674,7 @@ function app() {
     });
   }
 
-  function setup_graph_header(name_,graph_header_container_,inner_navigation_) {
+  function setup_graph_header(name_,graph_header_container_,inner_navigation_,remove_callback_) {
 
     generate_all_graphs(name_,function(pairs_) {
       var links = [];
@@ -699,7 +708,7 @@ function app() {
           metric = metric[0];
           graph_box_header(graph_header_container_,{type: "graph", title: metric, graph: name_,
                                                     links: links,favorite: favorite, alerted: ac.title, color: ac.color,
-                                                    full: !!inner_navigation_});
+                                                    full: !!inner_navigation_, remove: !!remove_callback_});
 
           $(".inner-navigation").click(function(e) {
             e.stopPropagation();
@@ -736,6 +745,10 @@ function app() {
               });
             });
           });
+
+          if ( remove_callback_ ) {
+            $(".graph-remove").click(remove_callback_);
+          }
         });
 
       });
@@ -826,13 +839,17 @@ function app() {
   }
 
   function refresh_loaded_graphs() {
-    $(".graph-body").each(function(idx_,obj_) {
-      var container = $(obj_).closest(".graph-container");
-      var graph = $(container[0]).attr("data-graph");
-      if ( graph_split(graph) ) {
-        load_graph(graph,obj_,null);
-        console.log('refresh_loaded_graphs: %s',graph);
-      }
+    $.doTimeout(60*1000,function() {
+      $(".graph-body").each(function(idx_,obj_) {
+        var container = ($(obj_).closest(".graph-container"))[0];
+        var graph = $(container).attr("data-graph");
+        var slider = $(obj_).siblings(".slider");
+        if ( graph_split(graph) ) {
+          load_graph(graph,"#"+$(container).attr('id'),slider.length>0 ? "#graph-box .timerange-slider" : null);
+          console.log('refresh_loaded_graphs: %s',graph);
+        }
+      });
+      return true;
     });
 
   }
@@ -865,6 +882,7 @@ function app() {
       teardown_charts();
       teardown_graph();
       update_alerts(category);
+      refresh_loaded_graphs();
     });
 
     router.get('graph/:id', function(req) {
@@ -874,6 +892,7 @@ function app() {
       teardown_charts();
       var id = req.params.id;
       setup_graph(id);
+      refresh_loaded_graphs();
     });
 
     router.get('dashboard/:id', function(req) {
@@ -883,6 +902,7 @@ function app() {
       teardown_alerts();
       teardown_graph();
       setup_charts(id);
+      refresh_loaded_graphs();
     });
 
     router.on('navigate', function(event){
@@ -896,7 +916,6 @@ function app() {
 
   //run_tests();
   setup_router();
-  $.doTimeout(60*1000,refresh_loaded_graphs);
 }
 
 
