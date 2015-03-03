@@ -176,6 +176,7 @@ function mule_ds() {
       url: mule_server+resource_,
       async: true,
       dataType: 'json',
+      timeout: 20*1000,
       success: function (response_) {
         if ( cache_period_ ) {
           cache.setItem(resource_,response_.data,{expirationAbsolute: null,
