@@ -68,6 +68,19 @@ function test_alerts()
   assert(string.find(res.headers,'201',1,true))
   assert_nil(res.body)
 
+  -- testing idempotent
+  res = request("PUT","alert/beer.ale;5m:12h","critical_high=100&warning_high=80&warning_low=20&critical_low=0&stale=6m&period=10m")
+  assert(string.find(res.headers,'201',1,true))
+  assert_nil(res.body)
+
+  res = request("GET","alert/beer.ale;5m:12h")
+  assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,0,"stale"',1,true))
+
+  -- testing idempotent once more to see that the state didn't change
+  res = request("PUT","alert/beer.ale;5m:12h","critical_high=100&warning_high=80&warning_low=20&critical_low=0&stale=6m&period=10m")
+  assert(string.find(res.headers,'201',1,true))
+  assert_nil(res.body)
+
   res = request("GET","alert/beer.ale;5m:12h")
   assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,0,"stale"',1,true))
 
@@ -82,6 +95,15 @@ function test_alerts()
   res = request("GET","alert/beer.ale;5m:12h")
   assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,32,"NORMAL"',1,true))
 
+  -- testing idempotent once again
+  res = request("PUT","alert/beer.ale;5m:12h","critical_high=100&warning_high=80&warning_low=20&critical_low=0&stale=6m&period=10m")
+  assert(string.find(res.headers,'201',1,true))
+  assert(string.find(res.headers,'Location: ./beer.ale;5m:12h',1,true))
+  assert_nil(res.body)
+
+  res = request("GET","alert/beer.ale;5m:12h")
+  assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,32,"NORMAL"',1,true))
+
   res = request("DELETE","alert/beer.ale;5m:12h")
   assert(string.find(res.headers,'204'))
 
@@ -90,6 +112,7 @@ function test_alerts()
 
   res = request("PUT","alert/beer.ale.brown;5m:12h","critical_high=18&warning_high=16&warning_low=8&critical_low=4&stale=6m&period=10m")
   assert(string.find(res.headers,'201',1,true))
+  assert(string.find(res.headers,'Location: ./beer.ale.brown;5m:12h',1,true))
   assert_nil(res.body)
 
   res = request("GET","alert")
@@ -101,6 +124,7 @@ function test_alerts()
 
   res = request("PUT","alert/beer.ale.pale;5m:12h","critical_high=100&warning_high=80&warning_low=3&critical_low=-1&stale=6m&period=10m")
   m.process("beer.ale.pale 1 "..os.time())
+  assert(string.find(res.headers,'Location: ./beer.ale.pale;5m:12h',1,true))
   res = request("GET","alert")
 
   assert(string.find(res.body,'"beer.ale.pale;5m:12h": [-1,3,80,100,600,360,1,"WARNING LOW"',1,true))

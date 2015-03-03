@@ -143,7 +143,11 @@ end
 
 local function alert_crud_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="PUT" then
-    return mule_.alert_set(resource_,qs_params(content_))=="" and 201 or 400
+    local rv = mule_.alert_set(resource_,qs_params(content_))
+    if rv=="" then
+      return 201,{{"Location","./"..resource_}}
+    end
+    return 400
   elseif req_.verb=="DELETE" then
     return mule_.alert_remove(resource_)
   elseif req_.verb=="GET" then
@@ -204,7 +208,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     return send_(standard_response(200,nil,CORS))
   end
   logi("send_response - handling",req_.url)
-  local handler_result = with_mule_(
+  local handler_result,extra_headers = with_mule_(
     function(mule_)
       table.remove(segments,1)
       local decoded_segments = {}
@@ -217,7 +221,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
                      qs,content_)
     end)
 
-  local function response_continuation(rv,blocking_)
+  local function response_continuation(rv,blocking_,extra_headers_)
     if handler_name=="stop" then
       logw("stopping, using: ",qs.token)
       stop_cond_(qs.token)
@@ -232,15 +236,16 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     end
 
     if not rv or (type(rv)=="string" and #rv==0) then
-      return send_(standard_response(204),nil,blocking_)
+      return send_(standard_response(204,nil,extra_headers_),nil,blocking_)
     elseif type(rv)=="number" then
-      return send_(standard_response(rv),nil,blocking_)
+      return send_(standard_response(rv,nil,extra_headers_),nil,blocking_)
     end
 
     if qs.jsonp then
       rv = string.format("%s(%s)",qs.jsonp,rv)
     end
-    return send_(standard_response(200,rv,{CONTENT_TYPE_JSON}),rv,blocking_)
+
+    return send_(standard_response(200,rv,table.insert(extra_headers_ or {},{CONTENT_TYPE_JSON})),rv,blocking_)
   end
 
   if type(handler_result)=="function" then
@@ -254,7 +259,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     end
     return
   end
-  response_continuation(handler_result,false)
+  response_continuation(handler_result,false,extra_headers)
 end
 
 
