@@ -603,6 +603,9 @@ function app() {
   function setup_search_keys(form_,input_,callback_) {
     $(form_).submit(function(e) {
       var name = $(input_).val();
+      if ( !graph_split(name) ) {
+        return false;
+      }
       $(input_).blur();
       e.preventDefault();
       e.stopPropagation();
@@ -617,19 +620,25 @@ function app() {
 
     $(input_).typeahead({
       source :function (query,process) {
+        var add_button = ($(input_).parent().find("[type=submit]"))[0];
+        var original = $(add_button).html();
+
         function callback(keys_) {
           if ( !context.scent_keys ) {
             context.scent_keys = string_set_add_array({},keys_);
           } else if ( /[\.;]$/.test(context.query) ) {
             string_set_add_array(context.scent_keys,keys_);
           }
+          $(add_button).html(original);
           process(string_set_keys(context.scent_keys));
         }
 
         context.query = query;
         if ( !context.scent_keys ) {
+          $(add_button).html('<i class="fa fa-spinner"></i>');
           scent_ds.key("",callback);
         } else if ( /[\.;]$/.test(context.query) ) {
+          $(add_button).html('<i class="fa fa-spinner"></i>');
           scent_ds.key(query,callback);
         } else {
           return string_set_keys(context.scent_keys);
