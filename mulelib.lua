@@ -809,6 +809,28 @@ function mule(db_)
       _state = ""
     }
 
+    local function compare_with_existing()
+      if not _alerts[resource_] then
+        return false
+      end
+      local fields = {
+        "_critical_low",
+        "_warning_low",
+        "_warning_high",
+        "_critical_high",
+        "_period",
+        "_stale"
+      }
+      local existing = _alerts[resource_]
+
+      for _,f in ipairs(fields) do
+        if new_alert[f]~=existing[f] then
+          return false
+        end
+      end
+      return true
+    end
+
     if not (metric and step and period and
               new_alert._critical_low and new_alert._warning_low and
               new_alert._critical_high and new_alert._warning_high and
@@ -817,8 +839,15 @@ function mule(db_)
       return nil
     end
 
-    _alerts[resource_] = new_alert
+    -- idempotent is king
+    if compare_with_existing() then
+      return ""
+    end
 
+    _alerts[resource_] = new_alert
+    -- we now force a check to fill in the current state
+    local seq = sequence(_db,resource_)
+    alert_check(seq,time_now())
     logi("set alert",resource_,t2s(_alerts[resource_]))
     save(true)
     return ""

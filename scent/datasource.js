@@ -176,6 +176,7 @@ function mule_ds() {
       url: mule_server+resource_,
       async: true,
       dataType: 'json',
+      timeout: 20*1000,
       success: function (response_) {
         if ( cache_period_ ) {
           cache.setItem(resource_,response_.data,{expirationAbsolute: null,
@@ -211,7 +212,7 @@ function mule_ds() {
     mule_get("/key/"+key_+"?level=1",
              function(keys_) {
                return key_impl(keys_,key_,callback_);
-             },60);
+             },300);
   }
 
   function alerts(callback_) {

@@ -91,16 +91,14 @@
         <script id="search-form-template" type="text/x-jsrender">
           <form action="#" class="{{:class}}" id="{{:form_id}}">
             <div class="input-group">
-              <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
-              {{if add}}
-              <span class="input-group-btn">
-                <button type="submit" class="btn btn-primary btn-flat">Add</button>
+             <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
+               <span class="input-group-btn">
+               {{if add}}
+                 <button type="submit" class="btn btn-primary btn-flat">Add</button>
+               {{else}}
+                 <button type='submit' name='seach' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
+               {{/if}}
               </span>
-              {{else}}
-              <span class="input-group-btn">
-                <button type='submit' name='seach' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
-              </span>
-              {{/if}}
             </div>
           </form>
         </script>
@@ -189,6 +187,11 @@
               {{if favorite}}
                 <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite">
                   <i class="graph-favorite fa {{:favorite}}"></i>
+                </button>
+              {{/if}}
+              {{if remove}}
+                <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove">
+                  <i class="graph-remove fa fa-trash"></i>
                 </button>
               {{/if}}
             </div>
@@ -320,7 +323,7 @@
           <div class="box" id="graph-box">
            <div class="box-body container-fluid">
              <div class="row">
-               <div data-graph="" class="graph-container col-md-12">
+               <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
                </div>
              </div>
            </div>
