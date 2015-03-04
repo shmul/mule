@@ -244,8 +244,9 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     if qs.jsonp then
       rv = string.format("%s(%s)",qs.jsonp,rv)
     end
-
-    return send_(standard_response(200,rv,table.insert(extra_headers_ or {},{CONTENT_TYPE_JSON})),rv,blocking_)
+    local headers = extra_headers_ or {}
+    table.insert(headers,CONTENT_TYPE_JSON)
+    return send_(standard_response(200,rv,headers),rv,blocking_)
   end
 
   if type(handler_result)=="function" then
