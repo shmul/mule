@@ -46,6 +46,7 @@ function test_alerts()
   end
 
   res = request("GET","alert")
+  assert(string.find(res.headers,'Content-Type: application/json',1,true))
   assert(string.find(res.body,'"data": {"anomalies": {}}',1,true))
 
   res = request("POST","alert")
@@ -66,6 +67,7 @@ function test_alerts()
 
   res = request("PUT","alert/beer.ale;5m:12h","critical_high=100&warning_high=80&warning_low=20&critical_low=0&stale=6m&period=10m")
   assert(string.find(res.headers,'201',1,true))
+  assert_nil(string.find(res.headers,'Content-Type: application/json',1,true))
   assert_nil(res.body)
 
   -- testing idempotent
@@ -75,7 +77,7 @@ function test_alerts()
 
   res = request("GET","alert/beer.ale;5m:12h")
   assert(string.find(res.body,'"data": {"beer.ale;5m:12h": [0,20,80,100,600,360,0,"stale"',1,true))
-
+  assert(string.find(res.headers,'Content-Type: application/json',1,true))
   -- testing idempotent once more to see that the state didn't change
   res = request("PUT","alert/beer.ale;5m:12h","critical_high=100&warning_high=80&warning_low=20&critical_low=0&stale=6m&period=10m")
   assert(string.find(res.headers,'201',1,true))
@@ -170,18 +172,20 @@ function test_kvs()
 
   res = request("GET","kvs/ttb")
   assert_nil(res.body)
+  assert_nil(string.find(res.headers,'Content-Type: application/json',1,true))
 
   res = request("POST","kvs/ttb","it's so heavy")
   assert(string.find(res.headers,'201',1,true))
 
   res = request("GET","kvs/ttb")
   assert_equal("it's so heavy",res.body)
-
+  assert(string.find(res.headers,'Content-Type: application/json',1,true))
   res = request("PUT","kvs/ttb","yes it is")
   assert(string.find(res.headers,'201',1,true))
 
   res = request("PUT","kvs/band","i know")
   assert(string.find(res.headers,'201',1,true))
+  assert_nil(string.find(res.headers,'Content-Type: application/json',1,true))
 
   res = request("GET","kvs/ttb")
   assert_equal("yes it is",res.body)

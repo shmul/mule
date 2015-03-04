@@ -205,10 +205,12 @@
             <div class="box-body">
               <div class="with-3d-shadow graph-body {{:klass}}"></div>
               <div class="legend"></div>
+              {{if slider}}
               <div class="timerange-slider-section">
                 <input id="" type="text" class="timerange-slider" value="" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="[0,100]"/>
               </div>
-            </div>
+              {{/if}}
+              </div>
           </div>
         </script>
 
@@ -395,7 +397,7 @@
     <script src="./plugins/Bootstrap-3-Typeahead-3.1.0/bootstrap3-typeahead.min.js" type="text/javascript"></script>
     <script src="./plugins/d3/d3.min.js" type="text/javascript"></script>
     <script src="./plugins/bootbox-4.3.0.min.js" type="text/javascript"></script>
-    <script src="./plugins/metricsgraphics/metricsgraphics.min.js" type="text/javascript"></script>
+    <script src="./plugins/metricsgraphics/metricsgraphics.js" type="text/javascript"></script>
     <script src="./plugins/jquery.ba-dotimeout.min.js" type="text/javascript"></script>
     <script src="./plugins/cache.js" type="text/javascript"></script>
     <script src="./plugins/bootstrap-slider/bootstrap-slider.min.js" type="text/javascript"></script>
