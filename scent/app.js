@@ -443,6 +443,35 @@ function app() {
     $(box_body).append('<div class="overlay"><i class="fa fa-refresh fa-spin"></i></div>');
   }
 
+  function get_center_pos(width, top) {
+    // top is empty when creating a new notification and is set when recentering
+    if (!top) {
+      top = 30;
+      // this part is needed to avoid notification stacking on top of each other
+      $('.ui-pnotify').each(function() {
+        top += $(this).outerHeight() + 20;
+      });
+    }
+
+    return {
+      "top": top,
+      "left": ($(window).width() / 2) - (width / 2)
+    }
+  }
+
+  function notify(title_,text_) {
+    new PNotify({
+      title: title_,
+      text: text_,
+      type: 'notice',
+      styling: 'fontawesome',
+      width: "390px",
+      before_open: function(PNotify) {
+        PNotify.get().css(get_center_pos(PNotify.get().width()));
+      },
+    });
+  }
+
   function setup_slider(slider_target, on_slider_change_callback) {
     var slider_element = $(slider_target);
     var timer_id;
@@ -461,7 +490,7 @@ function app() {
   function load_graph(name_,target_,slider_) {
     function callback(raw_data_) {
       if ( !raw_data_ || raw_data_.length==0 ) {
-        // TODO - show an alert
+        notify('Unable to load graph','No data for "'+name_+'".');
         remove_spinner(target_);
         return;
       }
@@ -550,7 +579,7 @@ function app() {
     load_persistent(function(persistent_) {
       var dashboard = persistent_.dashboards[dashboard_name];
       if ( !dashboard ) {
-        // TODO - flash an error and exit
+        notify('Rrrr. Something went wrong','Can\'t find dashboard "'+dashboard_name+'".');
         return;
       }
       $("#charts-container").html("");
@@ -695,7 +724,7 @@ function app() {
         var metric = graph_split(name_);
 
         if ( !metric ) {
-          //TODO display an alert
+          notify('Rrrr. Something went wrong','Can\'t find such a metric "'+name_+'".');
           return;
         }
 
@@ -858,6 +887,14 @@ function app() {
 
   }
 
+  function setup_pnotify() {
+    $(window).resize(function() {
+      $(".ui-pnotify").each(function() {
+        $(this).css(get_center_pos($(this).width(), $(this).position().top))
+      });
+    });
+  }
+
   function setup_router() {
 
     function globals() {
@@ -916,7 +953,7 @@ function app() {
 
 
   // call init functions
-
+  setup_pnotify();
 
   //run_tests();
   setup_router();
