@@ -1051,7 +1051,7 @@ function mule(db_)
     end
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
-      local adjusted_timestamp,sum = seq.update(timestamp_,hits_ or 1,sum,replace)
+      local adjusted_timestamp,sum = seq.update(timestamp_,tonumber(hits_) or 1,sum,replace)
       -- it might happen that we try to update a too old timestamp. In such a case
       -- the update function returns null
       if adjusted_timestamp then
