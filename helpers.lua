@@ -982,7 +982,7 @@ function random_table_region(table_,region_size_,table_size_)
 
   -- why bother with randomness? to avoid starvation
   if region_size_ and en>region_size_ then
-    st = math.random(en-region_size_)
+    st = math.random(math.max(en-region_size_,1))
     en = st+region_size_
   end
   return size,st,en
