@@ -49,14 +49,16 @@ then
   git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
   echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
   echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
-  source ~/.bash_profile
 
+  mkdir -p ~/ruby-build
   pushd ~/ruby-build
   git clone https://github.com/sstephenson/ruby-build.git .
   sudo ./install.sh
   rbenv install 2.2.0
   rbenv global 2.2.0
   popd
+
+  source ~/.bash_profile
 fi
 
 if ! which sencha
