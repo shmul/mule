@@ -362,64 +362,26 @@ function mule(db_)
             table.insert(metric_rps,{fm,rps})
           end
         end
+        local seqs = {}
+        local insert = table.insert
         for m in metric_hierarchy(metric_) do
           for _,frp in ipairs(metric_rps) do
             if is_prefix(m,frp[1]) then
               for _,rp in ipairs(frp[2]) do
-                coroutine.yield(name(m,rp[1],rp[2]),m)
+                insert(seqs,{name(m,rp[1],rp[2]),m})
               end
             end
           end
         end
+        for _,s in ipairs(seqs) do
+          coroutine.yield(s[1],s[2])
+        end
     end)
   end
 
-
-
-  local function gc(resource_,options_)
-    local garbage = {}
-    local str = strout("","\n")
-    local format = string.format
-    local col = collectionout(str,"[","]")
-    local timestamp = tonumber(options_.timestamp)
-
-    col.head()
-
-    each_metric(_db,resource_,nil,
-                function(seq)
-                  if seq.latest_timestamp()<timestamp then
-                    col.elem(format("\"%s\"",seq.name()))
-                    garbage[#garbage+1] = seq.name()
-                  end
-    end)
-    col.tail()
-
-    if options_.force then
-      for _,name in ipairs(garbage) do
-        _sequences.out(name)
-      end
-    end
-
-    return wrap_json(str)
-  end
-
-
-  local function dump(resource_,options_)
-    local str = options_.to_str and strout("") or stdout("")
-    local serialize_opts = {all_slots=true,skip_empty=true,dont_cache=true} -- caching kills us when dumping large DBs
-
-    each_metric(_db,resource_,nil,
-                function(seq)
-                  seq.serialize(serialize_opts,
-                                function()
-                                  str.write(seq.name())
-                                end,
-                                function(sum,hits,timestamp)
-                                  str.write(" ",sum," ",hits," ",timestamp)
-                  end)
-                  str.write("\n")
-    end)
-    return str
+  local function update_rank(rank_timestamp_,rank_,timestamp_,value_,name_,step_)
+    local ts,rk,same_ts = update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
+    return ts,rk
   end
 
 
@@ -481,6 +443,96 @@ function mule(db_)
     return alert
   end
 
+  local function flush_cache_of_sequence(name_,sparse_)
+    sparse_ = sparse_  or _updated_sequences[name_]
+    if not sparse_ then return nil end
+
+    local seq = sequence(_db,name_)
+    local now = time_now()
+    for j,sl in ipairs(sparse_.slots()) do
+      local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
+                                                sl._hits==nil)
+      if adjusted_timestamp and sum then
+        _hints[name_] = _hints[name_] or {}
+        if not _hints[name_]._rank_ts then
+          _hints[name_]._rank = 0
+          _hints[name_]._rank_ts = 0
+        end
+        _hints[name_]._rank_ts,_hints[name_]._rank = update_rank(
+          _hints[name_]._rank_ts,_hints[name_]._rank,
+          adjusted_timestamp,sum,name_,seq.step())
+      end
+      alert_check(seq,now)
+    end
+    _updated_sequences[name_] = nil
+  end
+
+  local function flush_cache(max_,step_)
+    _flush_cache_logger()
+
+    -- we now update the real sequences
+    local num_processed = 0
+    local size,st,en = random_table_region(_updated_sequences,max_)
+    if size==0 then return false end
+
+    for n,s in iterate_table(_updated_sequences,st,en) do
+      flush_cache_of_sequence(n,s)
+      num_processed = num_processed + 1
+    end
+    if num_processed==0 then return false end
+    -- returns true if there are more items to process
+    return _updated_sequences and next(_updated_sequences)~=nil
+  end
+
+
+
+  local function gc(resource_,options_)
+    local garbage = {}
+    local str = strout("","\n")
+    local format = string.format
+    local col = collectionout(str,"[","]")
+    local timestamp = tonumber(options_.timestamp)
+
+    col.head()
+
+    each_metric(_db,resource_,nil,
+                function(seq)
+                  if seq.latest_timestamp()<timestamp then
+                    col.elem(format("\"%s\"",seq.name()))
+                    garbage[#garbage+1] = seq.name()
+                  end
+    end)
+    col.tail()
+
+    if options_.force then
+      for _,name in ipairs(garbage) do
+        _sequences.out(name)
+      end
+    end
+
+    return wrap_json(str)
+  end
+
+
+  local function dump(resource_,options_)
+    local str = options_.to_str and strout("") or stdout("")
+    local serialize_opts = {all_slots=true,skip_empty=true,dont_cache=true} -- caching kills us when dumping large DBs
+
+    each_metric(_db,resource_,nil,
+                function(seq)
+                  seq.serialize(serialize_opts,
+                                function()
+                                  str.write(seq.name())
+                                end,
+                                function(sum,hits,timestamp)
+                                  str.write(" ",sum," ",hits," ",timestamp)
+                  end)
+                  str.write("\n")
+    end)
+    return str
+  end
+
+
   local function output_anomalies(names_)
     local str = strout("","\n")
     local format = string.format
@@ -520,11 +572,6 @@ function mule(db_)
     col.elem(format("\"anomalies\": %s",output_anomalies(ans).get_string()))
     col.tail()
     return str
-  end
-
-  local function update_rank(rank_timestamp_,rank_,timestamp_,value_,name_,step_)
-    local ts,rk,same_ts = update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
-    return ts,rk
   end
 
   local function graph(resource_,options_)
@@ -579,6 +626,7 @@ function mule(db_)
       end
 
       for seq in sequences_generator(db_,m,level) do
+        flush_cache_of_sequence(seq)
         if in_memory then
           local current = {}
           seq.serialize(
@@ -691,47 +739,6 @@ function mule(db_)
     return wrap_json(str)
   end
 
-
-  local function flush_cache_of_sequence(name_,sparse_)
-    sparse_ = sparse_  or _updated_sequences[name_]
-    if not sparse_ then return nil end
-
-    local seq = sequence(_db,name_)
-    local now = time_now()
-    for j,sl in ipairs(sparse_.slots()) do
-      local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
-                                                sl._hits==nil)
-      if adjusted_timestamp and sum then
-        _hints[name_] = _hints[name_] or {}
-        if not _hints[name_]._rank_ts then
-          _hints[name_]._rank = 0
-          _hints[name_]._rank_ts = 0
-        end
-        _hints[name_]._rank_ts,_hints[name_]._rank = update_rank(
-          _hints[name_]._rank_ts,_hints[name_]._rank,
-          adjusted_timestamp,sum,name_,seq.step())
-      end
-      alert_check(seq,now)
-    end
-    _updated_sequences[name_] = nil
-  end
-
-  local function flush_cache(max_,step_)
-    _flush_cache_logger()
-
-    -- we now update the real sequences
-    local num_processed = 0
-    local size,st,en = random_table_region(_updated_sequences,max_)
-    if size==0 then return false end
-
-    for n,s in iterate_table(_updated_sequences,st,en) do
-      flush_cache_of_sequence(n,s)
-      num_processed = num_processed + 1
-    end
-    if num_processed==0 then return false end
-    -- returns true if there are more items to process
-    return _updated_sequences and next(_updated_sequences)~=nil
-  end
 
   local function kvs_put(key_,value_)
     return _db.put("kvs="..key_,value_,true)
@@ -1047,6 +1054,9 @@ function mule(db_)
     sum = tonumber(sum)
     if not metric_ or #metric_>MAX_METRIC_LEN or not sum_ or not timestamp_ then
       logw("update_line - bad params",metric_,sum_,timestamp_)
+      return
+    end
+    if sum==0 then -- don't bother to update
       return
     end
     for n,m in get_sequences(metric_) do

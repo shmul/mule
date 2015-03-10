@@ -772,7 +772,7 @@ function test_pale()
     assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamp="1360800000"}),"274,244",1,true))
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361127300"}),"1526,756",1,true))
     m.process("./tests/fixtures/pale.mule")
-    m.flush_cache()
+--    m.flush_cache()
     assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamp="1361300362"}),"19,11",1,true))
 
     assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
@@ -785,10 +785,10 @@ end
 function test_key()
   local function helper(db)
     local m = mule(db)
-    m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
+    m.configure(table_itr({"beer 5m:48h 1h:30d 1d:3y"}))
 
     m.process("./tests/fixtures/pale.mule")
-    repeat until not m.flush_cache()
+    m.flush_cache()
     assert(m.key("beer",{})==m.key("beer",{level=0}))
 
     -- there are 61 unique keys in pale.mule all are beer.pale sub keys
@@ -801,7 +801,8 @@ function test_key()
     }
     for i,t in ipairs(tests) do
       local g = m.graph("beer",{level=t[1],count=1000})
-      assert_equal(t[2]+1,#split(g,";"),i)
+      local count = #split(g,";")-1
+      assert_equal(t[2],count,i..": "..g)
     end
 
     local all_keys = string.match(m.key("beer",{level=4}),"%{(.+)%}")
@@ -857,7 +858,7 @@ function test_stacked()
     m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
     m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
     m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
-    repeat until not m.flush_cache()
+--    repeat until not m.flush_cache()
     local level1 = m.graph("Johnston.Morfin",{level=1})
     local level2 = m.graph("Johnston.Morfin",{level=2})
 
@@ -938,7 +939,7 @@ function test_caching()
     m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
     assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=1}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[10,2,0]]\n}\n}'))
     assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=2}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[10,2,0]]\n,"Johnston.Morfin.%w+;1m:1h": [[10,2,0]]\n}\n}'))
-    MAX_CACHE_SIZE = 1
+    --MAX_CACHE_SIZE = 1
     m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
     m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
     assert_equal(string.find(m.graph("Johnston.Morfin.Jamal",{level=1,count=1}),'{"version": 3,\n"data": {"Johnston.Morfin.%w+;1h:12h": [[15,3,0]]\n}\n}'))
@@ -1069,11 +1070,12 @@ function test_hits_provided()
   local function helper(m)
     m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
     m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 8 10 4")
+    m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 8 10 4")
     m.process("Johnston.Emilia.Sweet-Nuthin 50 300 100")
     local gr = m.graph("Johnston.Morfin.Jamal.Marcela.Emilia",{level=1,in_memory=true,stat="average"})
-    assert(arrays_equal({2,4,0},gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"][1]))
+    assert(arrays_equal({2,8,0},gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"][1]))
     gr = m.graph("Johnston.Morfin.Jamal.Marcela.Emilia",{level=1,in_memory=true})
-    assert(arrays_equal({8,4,0},gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"][1]))
+    assert(arrays_equal({16,8,0},gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"][1]))
     gr = m.graph("Johnston.Emilia.Sweet-Nuthin",{level=1,count=1,in_memory=true,stat="average"})
     assert(arrays_equal({0.5,100,0},gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"][1]))
   end
@@ -1098,5 +1100,20 @@ function test_factor()
 
 end
 
+function test_same_prefix()
+  local function helper(m)
+    m.configure(table_itr({"beer 60s:12h 1h:30d","bee 1h:30d"}))
+    m.process("beer.ale.pale 7 4")
+
+    local gr = m.graph("beer",{})
+    assert(string.find(gr,'"beer;1h:30d": [[14,2,0]]',1,true)) -- both bee and beer define 1h:30d
+    assert(string.find(gr,'"beer;1m:12h": [[7,1,0]]',1,true))
+    gr = m.graph("beer.ale.pale",{})
+    assert(string.find(gr,'"beer.ale.pale;1h:30d": [[14,2,0]]',1,true)) -- both bee and beer define 1h:30d
+    assert(string.find(gr,'"beer.ale.pale;1m:12h": [[7,1,0]]',1,true))
+    assert_nil(string.find(gr,'"beer;1m:1d": [[7,1,0]]',1,true))
+  end
+  for_each_db("./tests/temp/test_same_prefix",helper)
+end
 --verbose_log(true)
 --profiler.start("profiler.out")
