@@ -363,18 +363,17 @@ function mule(db_)
           end
         end
         local seqs = {}
-        local insert = table.insert
         for m in metric_hierarchy(metric_) do
           for _,frp in ipairs(metric_rps) do
             if is_prefix(m,frp[1]) then
               for _,rp in ipairs(frp[2]) do
-                insert(seqs,{name(m,rp[1],rp[2]),m})
+                seqs[name(m,rp[1],rp[2])] = m
               end
             end
           end
         end
-        for _,s in ipairs(seqs) do
-          coroutine.yield(s[1],s[2])
+        for n,m in pairs(seqs) do
+          coroutine.yield(n,m)
         end
     end)
   end

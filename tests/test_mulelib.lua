@@ -1106,10 +1106,10 @@ function test_same_prefix()
     m.process("beer.ale.pale 7 4")
 
     local gr = m.graph("beer",{})
-    assert(string.find(gr,'"beer;1h:30d": [[14,2,0]]',1,true)) -- both bee and beer define 1h:30d
+    assert(string.find(gr,'"beer;1h:30d": [[7,1,0]]',1,true)) -- both bee and beer define 1h:30d
     assert(string.find(gr,'"beer;1m:12h": [[7,1,0]]',1,true))
     gr = m.graph("beer.ale.pale",{})
-    assert(string.find(gr,'"beer.ale.pale;1h:30d": [[14,2,0]]',1,true)) -- both bee and beer define 1h:30d
+    assert(string.find(gr,'"beer.ale.pale;1h:30d": [[7,1,0]]',1,true)) -- both bee and beer define 1h:30d
     assert(string.find(gr,'"beer.ale.pale;1m:12h": [[7,1,0]]',1,true))
     assert_nil(string.find(gr,'"beer;1m:1d": [[7,1,0]]',1,true))
   end
