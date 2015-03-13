@@ -387,6 +387,26 @@ function test_export_configuration()
   for_each_db("test_export_configuration",helper)
 end
 
+function test_factories_out()
+  local function helper(m)
+    m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
+    assert(string.find(m.export_configuration(),'"beer.ale": ["1m:12h" ,"1h:30d" ]',1,true))
+
+    local fo = m.factories_out("beer.wheat")
+    assert(string.find(fo,'"beer.wheat": ["10m:1y" ]',1,true))
+    assert(string.find(m.export_configuration(),'"beer.wheat": ["10m:1y" ]',1,true))
+
+    -- now really remove (with force)
+    fo = m.factories_out("beer.wheat",{force=true})
+    assert(string.find(fo,'"beer.wheat": ["10m:1y" ]',1,true))
+    assert_nil(string.find(m.export_configuration(),'"beer.wheat": ["10m:1y" ]',1,true))
+
+    -- just to verify that we don't crash on non-existing factories
+    m.factories_out("wine")
+  end
+  for_each_db("test_factories_out",helper)
+end
+
 function test_process_in_memory()
   local function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))

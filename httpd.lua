@@ -130,10 +130,24 @@ local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   end
 end
 
+local function gc_handler(mule_,handler_,req_,resource_,qs_params_,content_)
+  if req_.verb=="DELETE" then
+    logd("DELETE: calling",handler_)
+    return mule_.gc(resource_,qs_params_)
+  else
+    logw("Only GET/POST can be used")
+    return 405
+  end
+end
+
+
 local function config_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="POST" then
     logd("calling",handler_)
     return mule_.configure(lines_without_comments(string_lines(content_))) and 200 or 400
+  elseif req_.verb=="DELETE" then
+    logd("DELETE: calling",handler_)
+    return mule_.factories_out(resource_,qs_params_)
   elseif req_.verb=="GET" then
     logd("calling",handler_)
     return mule_.export_configuration()
@@ -173,6 +187,7 @@ end
 
 local handlers = { key = generic_get_handler,
                    graph = graph_handler,
+                   gc = gc_handler,
                    latest = generic_get_handler,
                    slot = generic_get_handler,
                    fdi = generic_get_handler,
