@@ -885,7 +885,7 @@ function app() {
 
   function refresh_loaded_graphs() {
     notified_graphs = {}; // we reset the list of graphs on which we've already notified
-    $.doTimeout(60*1000,function() {
+    $.doTimeout(1000*60,function() {
       $(".graph-body").each(function(idx_,obj_) {
         var container = ($(obj_).closest(".graph-container"))[0];
         var container_box = ($(container).closest(".box"))[0];
