@@ -1,6 +1,7 @@
 function app() {
   var user = "Shmul the mule";
   var router = new Grapnel();
+  var notified_graphs = {};
 
   // from Rickshaw
   function formatKMBT(y) {
@@ -436,7 +437,7 @@ function app() {
 
   function remove_spinner(anchor_) {
     var box_body = $(anchor_).closest(".box-body")[0];
-        $(box_body).find(".overlay").remove();
+    $(box_body).find(".overlay").remove();
   }
   function add_spinner(anchor_) {
     var box_body = $(anchor_).closest(".box-body")[0];
@@ -490,7 +491,10 @@ function app() {
   function load_graph(name_,target_,slider_) {
     function callback(raw_data_) {
       if ( !raw_data_ || raw_data_.length==0 ) {
-        notify('Unable to load graph','No data for "'+name_+'".');
+        if ( !notified_graphs[name_] ) {
+          notify('Unable to load graph','No data for "'+name_+'".');
+          notified_graphs[name_] = true;
+        }
         remove_spinner(target_);
         return;
       }
@@ -524,10 +528,12 @@ function app() {
         try {
           draw_graph(name_,data,0,100,baselines,target_);
           if (slider_) {
-            var slider_target = ($(target_).parent().find(" .timerange-slider"))[0];
-            setup_slider(slider_target, function (new_from, new_to) {
-              draw_graph(name_,data,new_from,new_to,baselines,target_);
-            });
+            var slider_target = ($(target_).parent().find(" .timerange-slider"));
+            if ( slider_target.length==1 ) {
+              setup_slider(slider_target[0], function (new_from, new_to) {
+                draw_graph(name_,data,new_from,new_to,baselines,target_);
+              });
+            }
           }
         } catch(e) {
           console.log(e.stack);
@@ -723,11 +729,6 @@ function app() {
         var favorite = idx==-1 ? "fa-star-o" : "fa-star";
         var metric = graph_split(name_);
 
-        if ( !metric ) {
-          notify('Rrrr. Something went wrong','Can\'t find such a metric "'+name_+'".');
-          return;
-        }
-
         scent_ds.alerts(function(alerts_) {
           var ac = {};
           if ( alerts_[name_] ) {
@@ -737,10 +738,24 @@ function app() {
             }
           }
 
+          if ( !metric ) {
+            if ( !notified_graphs[name_] ) {
+              notify('Rrrr. Something went wrong','Can\'t find such a metric "'+name_+'".');
+              notified_graphs[name_] = true;
+            }
+            metric = [name_];
+          }
           metric = metric[0];
           graph_box_header(graph_header_container_,{type: "graph", title: metric, graph: name_,
                                                     links: links,favorite: favorite, alerted: ac.title, color: ac.color,
                                                     full: !!inner_navigation_, remove: !!remove_callback_});
+          if ( remove_callback_ ) {
+            $(".graph-remove").click(remove_callback_);
+          }
+
+          if ( notified_graphs[name_] ) {
+            return;
+          }
 
           $(".inner-navigation").click(function(e) {
             e.stopPropagation();
@@ -779,9 +794,6 @@ function app() {
             });
           });
 
-          if ( remove_callback_ ) {
-            $(".graph-remove").click(remove_callback_);
-          }
         });
 
       });
@@ -790,7 +802,7 @@ function app() {
 
 
   function setup_graph(name_) {
-    $(".graph-container").html($.templates("#graph-template").render([{klass: "tall-graph",slider: true}]));
+    $("#graph-box-container").html($.templates("#graph-template").render([{klass: "tall-graph",slider: true}]));
     load_graph(name_,"#graph-box .graph-body",true);
     setup_graph_header(name_,"#graph-box .graph-header",false);
     $("#graph-box").show();
@@ -872,9 +884,14 @@ function app() {
   }
 
   function refresh_loaded_graphs() {
+    notified_graphs = {}; // we reset the list of graphs on which we've already notified
     $.doTimeout(60*1000,function() {
       $(".graph-body").each(function(idx_,obj_) {
         var container = ($(obj_).closest(".graph-container"))[0];
+        var container_box = ($(container).closest(".box"))[0];
+        if ( $(container_box).css("display")=="none" ) {
+          return;
+        }
         var graph = $(container).attr("data-graph");
         var slider = $(obj_).siblings(".slider");
         if ( graph_split(graph) ) {

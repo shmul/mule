@@ -200,7 +200,7 @@ function mule_ds() {
   }
 
   function graph(graph_,callback_) {
-    mule_get("/graph/"+graph_,function(data_) {
+    mule_get("/graph/"+graph_+"?filter=latest",function(data_) {
       callback_(data_[graph_]);
     },30);
   }

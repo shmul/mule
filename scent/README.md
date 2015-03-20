@@ -36,13 +36,13 @@ DONE css in the left bar - the padding of the items I generate are messed. I pro
 
 chart:
 - DONE add the other graphs links
-- display an error message if the graph has no data
+- DONE display an error message if the graph has no data
 - when a graph is refereshed add an affect
 
 
 DONE search over keys should merge the retention pairs until ; is added
 
-search over keys should add a spinner when fetching data
+DONE search over keys should add a spinner when fetching data
 
 DONE the collaps/close buttons per box don't function. Probably due to the header template
 
@@ -63,9 +63,9 @@ DONE use data-targets where possible
 
 DONE use data-target instead of href for links (http://getbootstrap.com/javascript/ look for "To keep URLs intact ")
 
-switch to bootbox where possible
+DONE switch to bootbox where possible
 
-when clicking a graph in an alert table - scroll to top
+NO NEED when clicking a graph in an alert table - scroll to top
 
 a piechart-like implementation.
 
