@@ -51,7 +51,7 @@
                 </a>
                 <ul class="dropdown-menu">
                   <li>
-                    <ul id="sidebar-search-container" class="menu">
+                    <ul id="topnav-search-container" class="menu">
                     </ul>
                   </li>
                 </ul>
@@ -312,6 +312,18 @@
         <!-- Main content -->
         <section class="content">
 
+          <div class="box" id="main-search-box">
+            <div class="box-header with-border">
+              <h3 class="box-title">Search for keys (use '.' and ';' to get subkeys)</h3>
+            </div>
+            <div class="box-body container-fluid">
+              <div class="row">
+                <div id="main-search-container" class="col-md-8 col-md-offset-2">
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="box" id="alert-box">
             <div class="box-header with-border">
               <h3 class="box-title"><strong id="alert-title"></strong></h3>
@@ -331,13 +343,13 @@
           </div>
 
           <div class="box" id="graph-box">
-           <div class="box-body container-fluid">
-             <div class="row">
-               <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
-               </div>
-             </div>
-           </div>
-         </div>
+            <div class="box-body container-fluid">
+              <div class="row">
+                <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div class="box" id="charts-box">
             <div class="modal fade" id="charts-add-modal" tabindex="-1" role="dialog" aria-hidden="true">

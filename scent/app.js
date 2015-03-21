@@ -332,10 +332,10 @@ function app() {
       load_graphs_lists("recent",recent_);
     });
     var template_data = [{class: "",//"sidebar-form",
-                          form_id: "sidebar-search-form",
+                          form_id: "topnav-search-form",
                           input_id: "search-keys-input"
                          }];
-    $("#sidebar-search-container").empty().html($.templates("#search-form-template").render(template_data));
+    $("#topnav-search-container").empty().html($.templates("#search-form-template").render(template_data));
   }
 
   // Add a .smoothed_value property to each datum using Double-Exponential Smoothing.
@@ -816,6 +816,22 @@ function app() {
     $("#graph-box").hide();
   }
 
+  function setup_main_search() {
+    var template_data = [{class: "",//"sidebar-form",
+                          form_id: "main-search-form",
+                          input_id: "main-search-keys-input"
+                         }];
+    $("#main-search-container").empty().html($.templates("#search-form-template").render(template_data));
+    setup_search_keys("#main-search-form","#main-search-keys-input",
+                      function(name_) {
+                        router.navigate('graph/'+name_);
+                      });
+  }
+
+  function teardown_main_search() {
+    $("#main-search-box").hide();
+  }
+
   function run_tests() {
     QUnit.config.hidepassed = true;
     $(".content-wrapper").prepend("<div id='qunit'></div>");
@@ -936,7 +952,7 @@ function app() {
     function globals() {
       setup_menus();
       setup_menu_alerts();
-      setup_search_keys("#sidebar-search-form","#search-keys-input",
+      setup_search_keys("#topnav-search-form","#search-keys-input",
                         function(name_) {
                           router.navigate('graph/'+name_);
                         });
@@ -947,6 +963,7 @@ function app() {
       set_title("");
       var category = req.params.category;
       globals();
+      setup_main_search();
       teardown_alerts();
       teardown_charts();
       teardown_graph();
@@ -956,6 +973,7 @@ function app() {
       set_title("Alert");
       var category = req.params.category;
       globals();
+      teardown_main_search();
       teardown_charts();
       teardown_graph();
       update_alerts(category);
@@ -965,6 +983,7 @@ function app() {
     router.get('graph/:id', function(req) {
       set_title("Graph");
       globals();
+      teardown_main_search();
       teardown_alerts();
       teardown_charts();
       var id = req.params.id;
@@ -976,6 +995,7 @@ function app() {
       set_title("Dashboard");
       globals();
       var id = req.params.id;
+      teardown_main_search();
       teardown_alerts();
       teardown_graph();
       setup_charts(id);
