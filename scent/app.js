@@ -286,6 +286,17 @@ function app() {
     load_persistent(function(persistent_) {
       load_graphs_lists("favorite",persistent_.favorites);
       load_graphs_lists("dashboard",persistent_.dashboards);
+
+      $(".dashboard-delete").click(function(e) {
+        var name = $(e.target).attr("data-target");
+        bootbox.confirm("Are you sure you want to delete the dashboard '"+name+"' ?", function(result) {
+          if ( result ) {
+            delete_dashboard(name);
+          }
+        });
+      });
+
+
     });
 
     $("#dashboard-form").submit(function(e) {
@@ -316,16 +327,6 @@ function app() {
         }
       });
     }
-
-
-    $(".dashboard-delete").click(function(e) {
-      var name = $(e.target).attr("data-target");
-      bootbox.confirm("Are you sure you want to delete the dashboard '"+name+"' ?", function(result) {
-        if ( result ) {
-          options_.delete_callback(name);
-        }
-      });
-    });
 
     load_recent(function(recent_) {
       load_graphs_lists("recent",recent_);
