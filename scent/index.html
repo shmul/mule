@@ -38,13 +38,75 @@
           <!-- Sidebar toggle button-->
           <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
             <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
           </a>
+
+
           <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav" id="alerts-menu-container">
+            </ul>
             <ul class="nav navbar-nav">
-              <!-- User Account: style can be found in dropdown.less -->
+              <li class="dropdown messages-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Search">
+                  <i class="fa fa-search"></i>
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <ul id="sidebar-search-container" class="menu">
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+
+              <li class="dropdown messages-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Favorites">
+                  <i class="fa fa-star-o"></i>
+                  <span id="favorite-count" class="label label-success"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li class="header">Favorites</li>
+                  <li>
+                    <ul id="favorite-container" class="menu">
+                    </ul>
+                  </li>
+                  <li class="footer"><a href="#">Scroll down to see all</a></li>
+                </ul>
+              </li>
+
+              <li class="dropdown messages-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Dashboards">
+                  <i class="fa fa-dashboard"></i>
+                  <span id="dashboard-count" class="label label-success"></span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li class="header">Dashboards</li>
+                  <li>
+                    <ul id="dashboard-container" class="menu">
+                    </ul>
+                  </li>
+                  <li class="footer">
+                    <form action="#" id="dashboard-form">
+                      <input id="dashboard-add" type="text" class="form-control" placeholder="Add dashboard">
+                    </form>
+                  </li>
+                </ul>
+              </li>
+
+              <li class="dropdown messages-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Recent">
+                  <i class="fa fa-history"></i>
+                </a>
+                <ul class="dropdown-menu">
+                  <li class="header">Recent</li>
+                  <li>
+                    <ul id="recent-container" class="menu">
+                    </ul>
+                  </li>
+                  <li class="footer">
+                    <li class="footer"><a href="#">Scroll down to see all</a></li>
+                  </li>
+                </ul>
+              </li>
+
               <li class="dropdown user user-menu">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                   <img src="./img/muser.png" class="user-image" alt="User Image"/>
@@ -106,25 +168,26 @@
 
         <script id="dashboard-template" type="text/x-jsrender">
           <li>
-            <a href="#dashboard/{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}
+            <a href="#dashboard/{{:name}}">{{:name}}
               <i data-target="{{:name}}" data-toggle="tooltip" title="Delete" class="dashboard-delete pull-right fa fa-trash"></i>
             </a>
           </li>
         </script>
 
         <script id="favorite-template" type="text/x-jsrender">
-         <li><a href="#graph/{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+          <li><a href="#graph/{{:name}}" title="{{:name}}">{{:name}}</a></li>
         </script>
 
         <script id="recent-template" type="text/x-jsrender">
-         <li><a href="#graph/{{:name}}" title="{{:name}}"><i class="fa fa-circle-o"></i> {{:name}}</a></li>
+         <li><a href="#graph/{{:name}}" title="{{:name}}">{{:name}}</a></li>
         </script>
 
         <script id="alerts-menu-template" type="text/x-jsrender">
-          <li>
-            <a href="#alert/{{:type}}">
-              <i class="fa fa-circle-o text-{{:indicator}}"></i> {{:title}}</a>
-            <small class="label pull-right bg-{{:color}}" id="alert-menu-{{:type}}"></small>
+         <li class="dropdown" title="{{:title}}">
+           <a href="#alert/{{:type}}">
+             {{:title}}
+             <span class="badge bg-{{:color}}" id="alert-menu-{{:type}}"></span>
+             </a>
           </li>
         </script>
 
@@ -160,7 +223,7 @@
 
         <script id="graph-box-header-template" type="text/x-jsrender">
           <div class="box-header with-border" data-graph="{{:graph}}">
-            <h3 class="box-title">{{:title}}
+            <small class="box-title">{{:title}}
               {{for links}}
                 &nbsp;|&nbsp;
                 {{if current}}
@@ -176,7 +239,7 @@
               {{if alerted }}
                 &nbsp;&nbsp;<span class="center bg-{{:color}}">{{:alerted}}</span>
                {{/if}}
-             </h3>
+           </small>
 
 
             <div class="box-tools pull-right">
@@ -221,53 +284,17 @@
          </div>
         </script>
 
-    </div> <!-- ./templates -->
+      </div> <!-- ./templates -->
 
-    </div>
       <!-- Left side column. contains the sidebar -->
       <aside class="main-sidebar">
         <!-- sidebar: style can be found in sidebar.less -->
-        <section class="sidebar">
+        <section class="sidebar" >
           <!-- search form -->
           <!-- /.search form - TODO add something here-->
           <!-- sidebar menu: : style can be found in sidebar.less -->
           <ul class="sidebar-menu">
-            <div id="sidebar-search-container"></div>
-            <li class="treeview">
-              <a href="#">
-                <i class="fa fa-dashboard"></i> <span>Dashboard</span>
-                <i class="fa fa-angle-left pull-right"></i>
-              </a>
-              <ul class="treeview-menu active">
-                <div id="dashboard-container"></div>
-                <form action="#" class="sidebar-form" id="dashboard-form">
-                  <input id="dashboard-add" type="text" class="form-control" placeholder="Add dashboard">
-                </form>
-              </ul>
-            </li>
-            <li class="treeview">
-              <a href="#">
-                <i class="fa fa-star-o"></i>
-                <span>Favorites</span>
-                <i class="fa fa-angle-left pull-right"></i>
-              </a>
-              <ul class="treeview-menu">
-                <div id="favorite-container"></div>
-              </ul>
-            </li>
-            <li class="treeview">
-              <a href="#">
-                <i class="fa fa-history"></i>
-                <span>Recent</span>
-                <i class="fa fa-angle-left pull-right"></i>
-              </a>
-              <ul class="treeview-menu">
-                <div id="recent-container"></div>
-              </ul>
-            </li>
             <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
-            <li class="header">ALERTS</li>
-            <div id="alerts-menu-container"></div>
          </ul>
         </section>
         <!-- /.sidebar -->
@@ -283,26 +310,6 @@
         </section>
 
         <!-- Main content -->
-        <!-- Modal -->
-        <div id="modal-target" class="modal modal-wide fade">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="modal-label" >Modal title</h4>
-              </div>
-              <div class="modal-body" id="modal-body">
-                <div id="modal-graph" class="with-3d-shadow tall-graph">
-                </div>
-                <div class="legend">
-                </div>
-              </div>
-              <div class="modal-footer"></div>
-            </div><!-- /.modal-content -->
-          </div><!-- /.modal-dialog -->
-        </div><!-- /.modal -->
-
-
         <section class="content">
 
           <div class="box" id="alert-box">
@@ -377,7 +384,8 @@
       </div>
       <!-- TODO - open an overlay of phish youtube -->
       <!-- Look here http://stackoverflow.com/questions/18622508/bootstrap-3-and-youtube-in-modal -->
-      <strong>Scent of a mule, you better watch out where <a href="https://www.youtube.com/watch?v=qBkhao0DEhU">you go</a></strong>
+      <strong><a href="#" id="scent-of-a-mule"">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule"">you go</a></strong>
+
     </footer>
     </div><!-- ./wrapper -->
 

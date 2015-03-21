@@ -280,6 +280,7 @@ function app() {
         });
       }
       $("#"+list_name_+"-container").empty().append($.templates("#"+list_name_+"-template").render(template_data));
+      //$("#"+list_name_+"-count").text(template_data.length);
     }
 
     load_persistent(function(persistent_) {
@@ -329,7 +330,7 @@ function app() {
     load_recent(function(recent_) {
       load_graphs_lists("recent",recent_);
     });
-    var template_data = [{class: "sidebar-form",
+    var template_data = [{class: "",//"sidebar-form",
                           form_id: "sidebar-search-form",
                           input_id: "search-keys-input"
                          }];
@@ -467,6 +468,7 @@ function app() {
       type: 'notice',
       styling: 'fontawesome',
       width: "390px",
+      delay: 3000,
       before_open: function(PNotify) {
         PNotify.get().css(get_center_pos(PNotify.get().width()));
       },
@@ -767,7 +769,7 @@ function app() {
             var slider = $(container_id+" .timerange-slider-section");
             console.log('inner navigation %s', graph);
             load_graph(href,container_id+" .graph-body",slider);
-            setup_graph_header(href,container_id+" .graph-header",true);
+            setup_graph_header(href,container_id+" .graph-header",true,remove_callback_);
             graph_view.parent().attr("href","#/graph/"+href);
           });
 
@@ -912,6 +914,22 @@ function app() {
     });
   }
 
+  function setup_footer() {
+    $("#scent-of-a-mule").click(function() {
+      bootbox.dialog({
+        title: "Phish | Scent of a Mule",
+        message: '<iframe width="560" height="315" src="https://www.youtube.com/embed/qBkhao0DEhU" frameborder="0" allowfullscreen></iframe>'
+      });
+    });
+
+    $("#govt-mule").click(function() {
+      bootbox.dialog({
+        title: "Gov't Mule | What is Hip",
+        message: '<iframe width="560" height="315" src="https://www.youtube.com/embed/lz29Fqbh3sE" frameborder="0" allowfullscreen></iframe>'
+      });
+    });
+  }
+
   function setup_router() {
 
     function globals() {
@@ -968,12 +986,14 @@ function app() {
     });
   }
 
+  setup_footer();
 
   // call init functions
   setup_pnotify();
 
   //run_tests();
   setup_router();
+
 }
 
 
