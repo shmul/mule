@@ -70,8 +70,8 @@ function app() {
     const lookup = {
       0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
       1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
-      2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "blue"},
-      3: { title: "Stale", type: "stale", indicator: "info", color: "light-blue"},
+      2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "yellow"},
+      3: { title: "Stale", type: "stale", indicator: "info", color: "maroon"},
       4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
 
       critical: 0,
