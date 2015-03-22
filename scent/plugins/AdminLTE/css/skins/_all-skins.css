@@ -47,7 +47,7 @@
 .skin-blue .main-header .logo {
   background-color: #367fa9;
   color: #ffffff;
-  border-bottom: 1px solid transparent;
+  border-bottom: 0px solid transparent;
 }
 .skin-blue .main-header .logo > a {
   color: #ffffff;
@@ -141,7 +141,7 @@
 .skin-blue.layout-top-nav .main-header > .logo {
   background-color: #3c8dbc;
   color: #ffffff;
-  border-bottom: 1px solid transparent;
+  border-bottom: 0px solid transparent;
 }
 .skin-blue.layout-top-nav .main-header > .logo > a {
   color: #ffffff;
@@ -154,8 +154,16 @@
  * -----------
  */
 /* skin-black navbar */
+.skin-black .main-header {
+  -webkit-box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.05);
+}
 .skin-black .main-header .navbar-toggle {
   color: #333;
+}
+.skin-black .main-header .navbar-brand {
+  color: #333;
+  border-right: 1px solid #eee;
 }
 .skin-black .main-header > .navbar {
   background-color: #ffffff;
@@ -197,7 +205,7 @@
 .skin-black .main-header > .logo {
   background-color: #ffffff;
   color: #333333;
-  border-bottom: 1px solid transparent;
+  border-bottom: 0px solid transparent;
   border-right: 1px solid #eee;
 }
 .skin-black .main-header > .logo > a {
@@ -210,7 +218,7 @@
   .skin-black .main-header > .logo {
     background-color: #222222;
     color: #ffffff;
-    border-bottom: 1px solid transparent;
+    border-bottom: 0px solid transparent;
     border-right: none;
   }
   .skin-black .main-header > .logo > a {
@@ -219,11 +227,6 @@
   .skin-black .main-header > .logo:hover {
     background: #1f1f1f;
   }
-}
-.skin-black .main-header > .logo,
-.skin-black .main-header > .navbar {
-  -webkit-box-shadow: 2px 1px 2px rgba(0, 0, 0, 0.1);
-  box-shadow: 2px 1px 2px rgba(0, 0, 0, 0.1);
 }
 .skin-black .main-header li.user-header {
   background-color: #222;
@@ -360,7 +363,7 @@
 .skin-green .main-header .logo {
   background-color: #008d4c;
   color: #ffffff;
-  border-bottom: 1px solid transparent;
+  border-bottom: 0px solid transparent;
 }
 .skin-green .main-header .logo > a {
   color: #ffffff;
@@ -500,7 +503,7 @@
 .skin-red .main-header .logo {
   background-color: #d73925;
   color: #ffffff;
-  border-bottom: 1px solid transparent;
+  border-bottom: 0px solid transparent;
 }
 .skin-red .main-header .logo > a {
   color: #ffffff;
@@ -640,7 +643,7 @@
 .skin-yellow .main-header .logo {
   background-color: #e08e0b;
   color: #ffffff;
-  border-bottom: 1px solid transparent;
+  border-bottom: 0px solid transparent;
 }
 .skin-yellow .main-header .logo > a {
   color: #ffffff;
@@ -780,7 +783,7 @@
 .skin-purple .main-header .logo {
   background-color: #555299;
   color: #ffffff;
-  border-bottom: 1px solid transparent;
+  border-bottom: 0px solid transparent;
 }
 .skin-purple .main-header .logo > a {
   color: #ffffff;

@@ -492,20 +492,24 @@ function mule(db_)
     local col = collectionout(str,"[","]")
     local timestamp = tonumber(options_.timestamp)
 
-    col.head()
+    if not timestamp then
+      str.write("error: 'timestamp must be provided'");
+    else
+      col.head()
 
-    each_metric(_db,resource_,nil,
-                function(seq)
-                  if seq.latest_timestamp()<timestamp then
-                    col.elem(format("\"%s\"",seq.name()))
-                    garbage[#garbage+1] = seq.name()
-                  end
-    end)
-    col.tail()
+      each_metric(_db,resource_,nil,
+                  function(seq)
+                    if seq.latest_timestamp()<timestamp then
+                      col.elem(format("\"%s\"",seq.name()))
+                      garbage[#garbage+1] = seq.name()
+                    end
+      end)
+      col.tail()
 
-    if options_.force then
-      for _,name in ipairs(garbage) do
-        _sequences.out(name)
+      if options_.force then
+        for _,name in ipairs(garbage) do
+          _sequences.out(name)
+        end
       end
     end
 
@@ -1022,7 +1026,32 @@ function mule(db_)
     return wrap_json(str)
   end
 
+  local function factories_out(resource_,options_)
+    local str = strout("")
+    local format = string.format
+    local col = collectionout(str,"{","}")
+    local force = is_true(options_ and options_.force)
 
+    col.head()
+    for fm in split_helper(resource_,"/") do
+      local rps = _factories[fm]
+      if force then
+        _factories[fm] = nil
+      end
+      if rps then
+        local col1 = collectionout(str,"[","]\n")
+        col.elem(format("\"%s\": ",fm))
+        col1.head()
+        for _,v in ipairs(rps) do
+          col1.elem(format("\"%s:%s\" ",secs_to_time_unit(v[1]),secs_to_time_unit(v[2])))
+        end
+        col1.tail()
+      end
+    end
+    col.tail()
+    logi("factories_out",table_size(_factories))
+    return wrap_json(str)
+  end
 
   local function load()
     logi("load")
@@ -1219,6 +1248,7 @@ function mule(db_)
   return {
     configure = configure,
     export_configuration = export_configuration,
+    factories_out = factories_out,
     matching_sequences = matching_sequences,
     get_factories = function() return _factories end,
     reset = reset,
