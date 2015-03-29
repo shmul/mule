@@ -85,3 +85,15 @@ DONE alerts should be cached and automatically refreshed
 DONE I'm not sure the inner navigations highlighting work as expected.
 
 DONE Add loading indication to inner navigation
+
+display favorites, recent,
+
+display api (from Readme)
+
+add copy button to the graphs
+
+layout the top level keys
+
+use a tree? https://github.com/jonmiles/bootstrap-treeview
+
+carousel for alerts? http://www.jssor.com/bootstrap/bootstrap-carousel.html

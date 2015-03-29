@@ -165,7 +165,7 @@ local function alert_crud_handler(mule_,handler_,req_,resource_,qs_params_,conte
   elseif req_.verb=="DELETE" then
     return mule_.alert_remove(resource_)
   elseif req_.verb=="GET" then
-    return function() return mule_.alert(resource_) end
+    return mule_.alert(resource_)
   end
   return 405
 end

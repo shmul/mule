@@ -260,32 +260,32 @@ function app() {
     $("#alert-graph-container").empty();
   }
 
+  function load_graphs_lists(container_,template_,data_) {
+    if ( !data_ ) { return; }
+    var template_data = [];
+    if ( Array.isArray(data_) ) {
+      for (var d=0; d<data_.length; ++d) {
+        template_data.push({idx:1+d, name:data_[d]});
+      }
+    } else {
+      var i = 0;
+      for (var d in data_) {
+        ++i;
+        template_data.push({idx:i, name:d});
+      }
+      template_data.sort(function(a,b) {
+        return a.name.localeCompare(b.name);
+      });
+    }
+    $(container_).empty().append($.templates(template_).render(template_data));
+    //$("#"+list_name_+"-container").empty().append($.templates("#"+list_name_+"-template").render(template_data));
+  }
+
   function setup_menus() {
 
-    function load_graphs_lists(list_name_,data_) {
-      if ( !data_ ) { return; }
-      var template_data = [];
-      if ( Array.isArray(data_) ) {
-        for (var d=0; d<data_.length; ++d) {
-          template_data.push({idx:1+d, name:data_[d]});
-        }
-      } else {
-        var i = 0;
-        for (var d in data_) {
-          ++i;
-          template_data.push({idx:i, name:d});
-        }
-        template_data.sort(function(a,b) {
-          return a.name.localeCompare(b.name);
-        });
-      }
-      $("#"+list_name_+"-container").empty().append($.templates("#"+list_name_+"-template").render(template_data));
-      //$("#"+list_name_+"-count").text(template_data.length);
-    }
-
     load_persistent(function(persistent_) {
-      load_graphs_lists("favorite",persistent_.favorites);
-      load_graphs_lists("dashboard",persistent_.dashboards);
+      load_graphs_lists("#favorite-container","#favorite-template",persistent_.favorites);
+      load_graphs_lists("#dashboard-container","#dashboard-template",persistent_.dashboards);
 
       $(".dashboard-delete").click(function(e) {
         var name = $(e.target).attr("data-target");
@@ -307,7 +307,7 @@ function app() {
         if ( !persistent_.dashboards[name] ) {
           persistent_.dashboards[name] = [];
           scent_ds.save(user,"persistent",persistent_,function() {
-            load_graphs_lists("dashboard",persistent_.dashboards);
+            load_graphs_lists("#dashboard-container","#dashboard-template",persistent_.dashboards);
             router.navigate('dashboard/'+name);
           });
         }
@@ -329,7 +329,7 @@ function app() {
     }
 
     load_recent(function(recent_) {
-      load_graphs_lists("recent",recent_);
+      load_graphs_lists("#recent-container","#recent-template",recent_);
     });
     var template_data = [{class: "",//"sidebar-form",
                           form_id: "topnav-search-form",
@@ -816,7 +816,7 @@ function app() {
     $("#graph-box").hide();
   }
 
-  function setup_main_search() {
+  function setup_main() {
     var template_data = [{class: "",//"sidebar-form",
                           form_id: "main-search-form",
                           input_id: "main-search-keys-input"
@@ -826,10 +826,15 @@ function app() {
                       function(name_) {
                         router.navigate('graph/'+name_);
                       });
+    load_persistent(function(persistent_) {
+      load_graphs_lists("#main-favorite-container","#favorite-template",persistent_.favorites);
+      load_graphs_lists("#main-recent-container","#recent-template",persistent_.dashboards);
+    });
+    $("#main-box").show();
   }
 
-  function teardown_main_search() {
-    $("#main-search-box").hide();
+  function teardown_main() {
+    $("#main-box").hide();
   }
 
   function run_tests() {
@@ -963,7 +968,7 @@ function app() {
       set_title("");
       var category = req.params.category;
       globals();
-      setup_main_search();
+      setup_main();
       teardown_alerts();
       teardown_charts();
       teardown_graph();
@@ -973,7 +978,7 @@ function app() {
       set_title("Alert");
       var category = req.params.category;
       globals();
-      teardown_main_search();
+      teardown_main();
       teardown_charts();
       teardown_graph();
       update_alerts(category);
@@ -983,7 +988,7 @@ function app() {
     router.get('graph/:id', function(req) {
       set_title("Graph");
       globals();
-      teardown_main_search();
+      teardown_main();
       teardown_alerts();
       teardown_charts();
       var id = req.params.id;
@@ -995,7 +1000,7 @@ function app() {
       set_title("Dashboard");
       globals();
       var id = req.params.id;
-      teardown_main_search();
+      teardown_main();
       teardown_alerts();
       teardown_graph();
       setup_charts(id);
