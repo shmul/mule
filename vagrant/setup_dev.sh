@@ -54,8 +54,8 @@ then
   pushd ~/ruby-build
   git clone https://github.com/sstephenson/ruby-build.git .
   sudo ./install.sh
-  rbenv install 2.2.0
-  rbenv global 2.2.0
+  rbenv install 1.9.3-p551
+  rbenv global 1.9.3-p551
   popd
 
   source ~/.bash_profile
