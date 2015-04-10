@@ -992,8 +992,8 @@ function mule(db_)
 
   local function configure(configuration_lines_)
     for l in lines_without_comments(configuration_lines_) do
-      local items,type = parse_input_line(l)
-      if type then
+      local items,t = parse_input_line(l)
+      if t then
         logw("unexpexted type",type)
       else
         local metric = items[1]
@@ -1076,20 +1076,16 @@ function mule(db_)
 
 
   local function update_line(metric_,sum_,timestamp_,hits_)
-    local replace,sum = string.match(sum_ or "","(=?)(%d+)")
-    replace = replace=="="
-    timestamp_ = tonumber(timestamp_)
-    sum = tonumber(sum)
-    if not metric_ or #metric_>MAX_METRIC_LEN or not sum_ or not timestamp_ then
+    local timestamp,hits,sum,replace = legit_input_line(metric_,sum_,timestamp_,hits_)
+
+    if not timestamp then
       logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
-    if sum==0 then -- don't bother to update
-      return
-    end
+
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
-      local adjusted_timestamp,sum = seq.update(timestamp_,hits_ or 1,sum,replace)
+      local adjusted_timestamp,sum = seq.update(timestamp,hits,sum,replace)
       -- it might happen that we try to update a too old timestamp. In such a case
       -- the update function returns null
       if adjusted_timestamp then
@@ -1137,7 +1133,8 @@ function mule(db_)
 
   local function process_line(metric_line_,no_commands_)
     local function helper()
-      local items,type = parse_input_line(metric_line_)
+      local items,t = parse_input_line(metric_line_)
+
       if #items==0 then
         if #metric_line_>0 then
           logd("bad input",metric_line_)
@@ -1145,7 +1142,7 @@ function mule(db_)
         return nil
       end
 
-      if type=="command" then
+      if t=="command" then
         return not no_commands_ and command(items)
       end
       -- there are 2 line formats:
