@@ -264,18 +264,19 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     return send_(standard_response(200,rv,headers),rv,blocking_)
   end
 
-  if type(handler_result)=="function" then
-    local function continuation()
-      response_continuation(handler_result(),true)
-    end
-    if can_fork_ then
-      fork_and_exit(continuation)
-    else
-      continuation()
-    end
+  if type(handler_result)~="function" then
+    response_continuation(handler_result,false,extra_headers)
     return
   end
-  response_continuation(handler_result,false,extra_headers)
+
+  if can_fork_ then
+    fork_and_exit(function()
+        response_continuation(handler_result(),true)
+    end)
+    return
+  end
+
+  response_continuation(handler_result(),false)
 end
 
 
