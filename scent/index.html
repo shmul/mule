@@ -221,6 +221,30 @@
           </table>
         </script>
 
+        <script id="keys-table-template" type="text/x-jsrender">
+          <table id="keys-table" class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Graphs</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{for records}}
+              <tr>
+                <!-- td class="keys-table-key" data-target="#/{{:key}}">{{:key}}</td-->
+                <td><a href="#/{{:key}}">{{:key}}</a></td>
+                <td>
+                  {{for links}}
+                    <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
+                  {{/for}}
+                </td>
+              </tr>
+              {{/for}}
+            </tbody>
+          </table>
+        </script>
+
         <script id="graph-box-header-template" type="text/x-jsrender">
           <div class="box-header with-border" data-graph="{{:graph}}">
             <small class="box-title">{{:title}}
@@ -238,7 +262,7 @@
               {{/for}}
               {{if alerted }}
                 &nbsp;&nbsp;<span class="center bg-{{:color}}">{{:alerted}}</span>
-               {{/if}}
+              {{/if}}
            </small>
 
 
@@ -347,6 +371,20 @@
                   <div class="box-body container-fluid">
                     <ul id="main-favorite-container">
                     </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8 col-md-offset-2">
+                <div class="box">
+                  <div class="box-header with-border">
+                    <h3 class="box-title">Keys</h3>
+                  </div>
+                  <div class="box-body container-fluid">
+                    <div id="main-keys-container">
+                    </div>
                   </div>
                 </div>
               </div>

@@ -78,6 +78,10 @@
     cursor: pointer;
 }
 
+.keys-table-key {
+    cursor: pointer;
+}
+
 .inner-navigation {
     cursor: pointer;
 }

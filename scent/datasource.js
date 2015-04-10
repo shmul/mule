@@ -20,10 +20,10 @@ function string_set_add_array(set_,keys_) {
   return set_;
 }
 
-function key_impl(initial_,key_,callback_) {
+function key_impl(initial_,key_,callback_,raw_) {
   var k = $.map(initial_,function(element,index) {return index});
   var rv = {};
-  var add_rp = /;$/.test(key_);
+  var add_rp = /;$/.test(key_) || raw_;
 
   function push_key(e) {
     if ( add_rp )
@@ -100,10 +100,10 @@ function mule_mockup () {
     });
   }
 
-  function key(key_,callback_) {
+  function key(key_,callback_,raw_) {
     delayed(function() {
       var all_keys = fixtures["key"];
-      key_impl(all_keys,key_,callback_);
+      key_impl(all_keys,key_,callback_,raw_);
     });
   }
 
@@ -205,13 +205,13 @@ function mule_ds() {
     },30);
   }
 
-  function key(key_,callback_) {
+  function key(key_,callback_,raw_) {
     if (key_[key_.length-1]=='.' ) {
       key_ = key_.slice(0,key_.length-1);
     }
     mule_get("/key/"+key_+"?level=1",
              function(keys_) {
-               return key_impl(keys_,key_,callback_);
+               return key_impl(keys_,key_,callback_,raw_);
              },300);
   }
 
