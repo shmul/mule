@@ -435,6 +435,9 @@ function app() {
 
     // Fix overlapping labels in x-axis
     d3.selectAll('.mg-year-marker text').attr('transform', 'translate(0, 8)');
+
+    // Fix overlapping labels in baselines
+    d3.selectAll('.mg-baselines text').attr('dx', function (d,i) { return -i*60; });
   }
 
   function remove_spinner(anchor_) {
@@ -519,13 +522,13 @@ function app() {
         if ( graph_alerts ) {
           baselines = [
             { value: graph_alerts[0],
-              label: "critical low" },
+              label: "crit-low" },
             { value: graph_alerts[1],
-              label: "warning low" },
+              label: "warn-low" },
             { value: graph_alerts[2],
-              label: "warning high" },
+              label: "warn-high" },
             { value: graph_alerts[3],
-              label: "critical high" },
+              label: "crit-high" },
             ]
         }
         try {
