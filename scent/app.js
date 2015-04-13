@@ -408,7 +408,13 @@ function app() {
     var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
     var rollover_value_format = d3.format(",d");
 
-    var x_axis_ticks_count = ($(target_).hasClass("tall-graph")) ? 10 : 5;
+    if ($(target_).hasClass("tall-graph")) {
+      var use_small_fonts = false;
+      var x_axis_ticks_count = 10;
+    } else {
+      var use_small_fonts = true;
+      var x_axis_ticks_count = 5;
+    }
 
     var from_element = Math.floor(data_.length * from_percent_ / 100);
     var to_element = Math.ceil(data_.length * to_percent_ / 100);
@@ -431,6 +437,7 @@ function app() {
       legend: [name_],
       legend_target: ".legend",
       baselines: baselines_,
+      small_text: use_small_fonts,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
           .text(rollover_date_format(d.date) + " " + rollover_value_format(d.value));
@@ -439,6 +446,9 @@ function app() {
 
     // Fix overlapping labels in x-axis
     d3.selectAll(target_ + " svg .mg-year-marker text").attr("transform", "translate(0, 8)");
+
+    // .Use small fonts for baselines text, if needed
+    d3.selectAll(target_ + " svg .mg-baselines").classed("mg-baselines-small", use_small_fonts);
 
     // Fix overlapping labels in baselines
     d3.selectAll(target_ + " svg .mg-baselines text").attr("dx", function (d,i) { return -i*60; });
