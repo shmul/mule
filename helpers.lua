@@ -545,6 +545,21 @@ function parse_input_line(line_)
   return items
 end
 
+function legit_input_line(metric_,sum_,timestamp_,hits_)
+  local replace,sum = string.match(sum_ or "","(=?)(%d+)")
+  replace = replace=="="
+  timestamp_ = tonumber(timestamp_)
+  sum = tonumber(sum)
+
+  if not metric_ or #metric_>MAX_METRIC_LEN or not sum or not timestamp_ or (hits_ and not tonumber(hits_)) then
+    return
+  end
+  if sum==0 then -- don't bother to update
+    return
+  end
+  return timestamp_,tonumber(hits_) or 1,sum,replace
+end
+
 function metric_hierarchy(metric_)
   return coroutine.wrap(
     function()

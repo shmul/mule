@@ -9,7 +9,7 @@
         root.MG = factory(root.d3, root.jQuery);
       }
     }(this, function(d3, $) {
-    window.MG = {version: '2.2.1'};
+    window.MG = {version: '2.3.0'};
 
     var charts = {};
 
@@ -46,6 +46,7 @@
             small_text: false,            // coerces small text regardless of graphic size
             xax_count: 6,                 // number of x axis ticks
             xax_tick_length: 5,           // x axis tick length
+            xax_start_at_min: false,
             yax_count: 5,                 // number of y axis ticks
             yax_tick_length: 5,           // y axis tick length
             x_extended_ticks: false,      // extends x axis ticks across chart - useful for tall charts
@@ -85,9 +86,11 @@
             markers: null,                // sets the marker lines
             scalefns: {},
             scales: {},
+            show_year_markers: false,
             show_secondary_x_label: true,
             target: '#viz',
             interpolate: 'cardinal',       // interpolation method to use when rendering lines
+            interpolate_tension: 0.7,      // its range is from 0 to 1; increase if your data is irregular and you notice artifacts
             custom_line_color_map: [],     // allows arbitrary mapping of lines to colors, e.g. [2,3] will map line 1 to color 2 and line 2 to color 3
             max_data_size: null,           // explicitly specify the the max number of line series, for use with custom_line_color_map
             aggregate_rollover: false,     // links the lines in a multi-line chart
@@ -149,6 +152,7 @@
             missing_text: 'Data currently missing or unavailable',
             scalefns: {},
             scales: {},
+            show_tooltips: true,
             show_missing_background: true,
             interpolate: 'cardinal'
         };
@@ -1272,6 +1276,7 @@
         args.scales.X = (args.time_series)
             ? d3.time.scale()
             : d3.scale.linear();
+
         args.scales.X
             .domain([args.processed.min_x, args.processed.max_x])
             .range([args.left + args.buffer, args.width - args.right - args.buffer - args.additional_buffer]);
@@ -1451,9 +1456,7 @@
         g.append('text')
             .attr('class', 'label')
             .attr('x', function() {
-                return args.left + args.buffer
-                    + ((args.width - args.right - args.buffer)
-                        - (args.left + args.buffer)) / 2;
+                return (args.left + args.width - args.right) / 2;
             })
             .attr('y', (args.height - args.bottom / 2).toFixed(2))
             .attr('dy', '.50em')
@@ -1517,7 +1520,7 @@
             // a custom function if desired
             if(args.data[0][0][args.x_accessor] instanceof Date) {
                 return args.processed.main_x_time_format(d);
-            } if (typeof args.data[0][0][args.x_accessor] === 'number') {
+            } else if (typeof args.data[0][0][args.x_accessor] === 'number') {
                 if (d < 1.0) {
                     //don't scale tiny values
                     return args.xax_units + d3.round(d, args.decimals);
@@ -1533,17 +1536,32 @@
 
     function mg_add_x_ticks(g, args) {
         var last_i = args.scales.X.ticks(args.xax_count).length - 1;
+        var ticks = args.scales.X.ticks(args.xax_count);
+
+        //force min to be the first tick rather than the first element in ticks
+        if(args.xax_start_at_min) {
+            ticks[0] = args.processed.min_x;
+        }
 
         if (args.chart_type !== 'bar' && !args.x_extended_ticks && !args.y_extended_ticks) {
             //extend axis line across bottom, rather than from domain's min..max
             g.append('line')
-                .attr('x1',
-                    (args.concise === false || args.xax_count === 0)
-                        ? args.left + args.buffer
-                        : (args.scales.X(args.scales.X.ticks(args.xax_count)[0])).toFixed(2)
-                )
+                .attr('x1', function() {
+                    //start the axis line from the beginning, domain's min, or the auto-generated
+                    //ticks' first element, depending on whether xax_count is set to 0 or 
+                    //xax_start_at_min is set to true
+                    if (args.xax_count === 0) {
+                        return args.left + args.buffer;
+                    }
+                    else if (args.xax_start_at_min) {
+                        return args.scales.X(args.processed.min_x).toFixed(2)
+                    }
+                    else {
+                        return (args.scales.X(args.scales.X.ticks(args.xax_count)[0])).toFixed(2);
+                    }
+                })
                 .attr('x2',
-                    (args.concise === false || args.xax_count === 0)
+                    (args.xax_count === 0)
                         ? args.width - args.right - args.buffer
                         : (args.scales.X(args.scales.X.ticks(args.xax_count)[last_i])).toFixed(2)
                 )
@@ -1552,7 +1570,7 @@
         }
 
         g.selectAll('.mg-xax-ticks')
-            .data(args.scales.X.ticks(args.xax_count)).enter()
+            .data(ticks).enter()
                 .append('line')
                     .attr('x1', function(d) { return args.scales.X(d).toFixed(2); })
                     .attr('x2', function(d) { return args.scales.X(d).toFixed(2); })
@@ -1570,8 +1588,15 @@
     }
 
     function mg_add_x_tick_labels(g, args) {
+        var ticks = args.scales.X.ticks(args.xax_count);
+
+        //force min to be the first tick rather than the first element in ticks
+        if(args.xax_start_at_min) {
+            ticks[0] = args.processed.min_x;
+        }
+
         g.selectAll('.mg-xax-labels')
-            .data(args.scales.X.ticks(args.xax_count)).enter()
+            .data(ticks).enter()
                 .append('text')
                     .attr('x', function(d) { return args.scales.X(d).toFixed(2); })
                     .attr('y', (args.height - args.bottom + args.xax_tick_length * 7 / 3).toFixed(2))
@@ -1607,7 +1632,11 @@
 
             var years = secondary_function(args.processed.min_x, args.processed.max_x);
 
-            if (years.length === 0) {
+            //if xax_start_at_min is set
+            if (args.xax_start_at_min && years.length === 0) {
+                var first_tick = ticks[0];
+                years = [first_tick];
+            } else if (years.length === 0) {
                 var first_tick = args.scales.X.ticks(args.xax_count)[0];
                 years = [first_tick];
             }
@@ -1617,7 +1646,7 @@
                 .classed('mg-year-marker', true)
                 .classed('mg-year-marker-small', args.use_small_class);
 
-            if (time_frame === 'default') {
+            if (time_frame === 'default' && args.show_year_markers) {
                 g.selectAll('.mg-year-marker')
                     .data(years).enter()
                         .append('line')
@@ -1630,9 +1659,15 @@
             g.selectAll('.mg-year-marker')
                 .data(years).enter()
                     .append('text')
-                        .attr('x', function(d) { return args.scales.X(d).toFixed(2); })
+                        .attr('x', function(d, i) {
+                            if (args.xax_start_at_min && i == 0) {
+                                d = ticks[0];
+                            }
+
+                            return args.scales.X(d).toFixed(2);
+                        })
                         .attr('y', (args.height - args.bottom + args.xax_tick_length * 7 / 1.3).toFixed(2))
-                        .attr('dy', args.use_small_class ? -3 : 0)//(args.y_extended_ticks) ? 0 : 0 )
+                        .attr('dy', args.use_small_class ? -3 : 0)
                         .attr('text-anchor', 'middle')
                         .text(function(d) {
                             return yformat(d);
@@ -1729,6 +1764,9 @@
             title: null,
             description: null
         };
+
+        // If you pass in a dom element for args.target, the expectation
+        // of a string elsewhere will break.
 
         args = arguments[0];
         if (!args) { args = {}; }
@@ -1947,12 +1985,14 @@
                     });
         }
 
-        function preventOverlap (labels) {
-            if (labels.length == 1) {
+        function preventOverlap(labels) {
+            if (!labels || labels.length == 1) {
                 return;
             }
 
+            //see if each of our labels overlaps any of the other labels
             for (var i = 0; i < labels.length; i++) {
+                //if so, nudge it up a bit, if the label it intersects hasn't already been nudged
                 if (isOverlapping(labels[i], labels)) {
                     var node = d3.select(labels[i]);
                     var newY = +node.attr('y');
@@ -1974,7 +2014,6 @@
 
                 //check to see if this label overlaps with any of the other labels
                 var sibling_bbox = labels[i].getBoundingClientRect();
-
                 if (element_bbox.top === sibling_bbox.top && 
                         !(sibling_bbox.left > element_bbox.right || sibling_bbox.right < element_bbox.left)
                     ) {
@@ -1984,15 +2023,15 @@
             return false;
         }
 
-        function xPosition (d) {
+        function xPosition(d) {
             return args.scales.X(d[args.x_accessor]);
         }
 
-        function xPositionFixed (d) {
+        function xPositionFixed(d) {
             return xPosition(d).toFixed(2);
         }
 
-        function inRange (d) {
+        function inRange(d) {
             return (args.scales.X(d[args.x_accessor]) > args.buffer + args.left)
                 && (args.scales.X(d[args.x_accessor]) < args.width - args.buffer - args.right);
         }
@@ -2350,7 +2389,8 @@
                 .x(args.scalefns.xf)
                 .y0(args.scales.Y.range()[0])
                 .y1(args.scalefns.yf)
-                .interpolate(args.interpolate);
+                .interpolate(args.interpolate)
+                .tension(args.interpolate_tension);
 
             //confidence band
             var confidence_area;
@@ -2367,20 +2407,23 @@
                         var u = args.show_confidence_band[1];
                         return args.scales.Y(d[u]);
                     })
-                    .interpolate(args.interpolate);
+                    .interpolate(args.interpolate)
+                    .tension(args.interpolate_tension);
             }
 
             //main line
             var line = d3.svg.line()
                 .x(args.scalefns.xf)
                 .y(args.scalefns.yf)
-                .interpolate(args.interpolate);
+                .interpolate(args.interpolate)
+                .tension(args.interpolate_tension);
 
             //for animating line on first load
             var flat_line = d3.svg.line()
                 .x(args.scalefns.xf)
                 .y(function() { return args.scales.Y(data_median); })
-                .interpolate(args.interpolate);
+                .interpolate(args.interpolate)
+                .tension(args.interpolate_tension);
 
 
             //for building the optional legend
@@ -2785,7 +2828,6 @@
                     .on('mouseover')(args.data[0][0], 0);
             } else if (args.data.length > 1) {
                 //otherwise, trigger it for an appropriate line in a multi-line chart
-                //@todo this will only trigger one of the lines, even if there are more than one
                 for (var i = 0; i < args.data.length; i++) {
                     if (args.data[i].length == 1) {
                         svg.selectAll('.mg-voronoi .mg-line' + (i + 1) + '-color')
@@ -2855,8 +2897,8 @@
                         d[args.x_accessor] <= args.processed.max_x &&
                         d[args.y_accessor] >= args.processed.min_y &&
                         d[args.y_accessor] <= args.processed.max_y
-                    ){
-                        svg.selectAll('circle.mg-line-rollover-circle')
+                    ) {
+                        svg.selectAll('circle.mg-line-rollover-circle.mg-area' + d.line_id + '-color')
                             .attr('class', "")
                             .attr('class', 'mg-area' + d.line_id + '-color')
                             .classed('mg-line-rollover-circle', true)
@@ -3013,10 +3055,10 @@
                         });
                 }
 
-                //remove active datapoint text on mouse out, except if we have a single
-                svg.selectAll('circle.mg-line-rollover-circle')
+                //remove active datapoint text on mouse out, except if we have a single point
+                svg.selectAll('circle.mg-line-rollover-circle.mg-area' + (d.line_id) + '-color')
                     .style('opacity', function() {
-                            if (args.data.length == 1 && args.data[0].length == 1) {
+                            if (args.data[d.line_id - 1].length == 1) {
                                 return 1;
                             }
                             else {
@@ -3398,8 +3440,8 @@
                 }
 
                 //trigger mouseover on all points for this class name in .linked charts
-                if (args.linked && !globals.link) {
-                    globals.link = true;
+                if (args.linked && !MG.globals.link) {
+                    MG.globals.link = true;
 
                     //trigger mouseover on matching point in .linked charts
                     d3.selectAll('.mg-voronoi .path-' + i)
@@ -3438,8 +3480,8 @@
             var svg = mg_get_svg_child_of(args.target);
 
             return function(d,i) {
-                if (args.linked && globals.link) {
-                    globals.link = false;
+                if (args.linked && MG.globals.link) {
+                    MG.globals.link = false;
 
                     d3.selectAll('.mg-voronoi .path-' + i)
                         .each(function() {
@@ -4774,8 +4816,26 @@
     }
 
     function mg_strip_punctuation(s) {
-        var punctuationless = s.replace(/[^a-zA-Z0-9 _]+/g, '');
+        var processed_s;
+
+        if (typeof(s) == 'string') {
+            processed_s = s;
+        } else {
+            // args.target is 
+            if (s.id != '') {
+                processed_s = s.id;
+            } else if (args.target.className != '') {
+                processed_s = s.className;
+            } else if (args.target.nodeName !='') {
+                processed_s = s.nodeName;
+            } else {
+                console.warn('The specified target element ' + s + ' has no unique attributes.');
+            }
+        }
+
+        var punctuationless = processed_s.replace(/[^a-zA-Z0-9 _]+/g, '');
         var finalString = punctuationless.replace(/ +?/g, "");
+
         return finalString;
     }
 

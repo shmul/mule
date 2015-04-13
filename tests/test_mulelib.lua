@@ -1009,6 +1009,13 @@ function test_bad_input_lines()
   for_each_db("test_bad_input_lines",helper)
 end
 
+function test_concatenated_lines()
+  local line = "beer.ale.brown 27 1427502724 9beer.stout.1.total 19 1427392373"
+  local items,t = parse_input_line(line)
+
+  assert_nil(legit_input_line(items[1],items[2],items[3],items[4]))
+end
+
 function test_uniq_factories()
   local function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d 60s:12h 1h:30d 60s:12h 1h:30d","beer.ale 60s:24h"}))
@@ -1135,5 +1142,7 @@ function test_same_prefix()
   end
   for_each_db("./tests/temp/test_same_prefix",helper)
 end
+
+
 --verbose_log(true)
 --profiler.start("profiler.out")

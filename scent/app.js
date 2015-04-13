@@ -435,6 +435,9 @@ function app() {
 
     // Fix overlapping labels in x-axis
     d3.selectAll('.mg-year-marker text').attr('transform', 'translate(0, 8)');
+
+    // Fix overlapping labels in baselines
+    d3.selectAll('.mg-baselines text').attr('dx', function (d,i) { return -i*60; });
   }
 
   function remove_spinner(anchor_) {
@@ -519,13 +522,13 @@ function app() {
         if ( graph_alerts ) {
           baselines = [
             { value: graph_alerts[0],
-              label: "critical low" },
+              label: "crit-low" },
             { value: graph_alerts[1],
-              label: "warning low" },
+              label: "warn-low" },
             { value: graph_alerts[2],
-              label: "warning high" },
+              label: "warn-high" },
             { value: graph_alerts[3],
-              label: "critical high" },
+              label: "crit-high" },
             ]
         }
         try {
@@ -816,7 +819,7 @@ function app() {
     $("#graph-box").hide();
   }
 
-  function setup_main() {
+  function setup_main(key_) {
     var template_data = [{class: "",//"sidebar-form",
                           form_id: "main-search-form",
                           input_id: "main-search-keys-input"
@@ -830,6 +833,44 @@ function app() {
       load_graphs_lists("#main-favorite-container","#favorite-template",persistent_.favorites);
       load_graphs_lists("#main-recent-container","#recent-template",persistent_.dashboards);
     });
+
+
+    function populate_keys_table(keys_) {
+      var unified = {};
+      for (var i in keys_) {
+        var k = graph_split(keys_[i]);
+        var key = k[0];
+        if ( !unified[key] ) {
+          unified[key] = [];
+        }
+        var rp = k[1]+":"+k[2];
+        unified[key].push({href: keys_[i], rp: rp});
+      }
+      var records = [];
+      for (var i in unified) {
+        records.push({key: i, links: unified[i]});
+      }
+
+
+      function set_click_behavior() {
+        $(".keys-table-key").click(function(e) {
+          var key = $(e.target).attr("data-target");
+          scent_ds.key(key,populate_keys_table,true);
+          e.stopPropagation();
+        });
+      }
+
+      $("#main-keys-container").empty().html($.templates("#keys-table-template").render({records: records}));
+      var dt = $("#keys-table").DataTable({iDisplayLength: 15,
+                                           aLengthMenu: [ 15, 30, 60 ],
+                                           destroy: true,
+                                           order: [[ 2, "desc" ]]});
+      set_click_behavior();
+      dt.on('draw',set_click_behavior);
+    }
+
+    scent_ds.key(key_ || "",populate_keys_table,true);
+
     $("#main-box").show();
   }
 
@@ -964,11 +1005,10 @@ function app() {
       update_alerts(); // with no selected category it just updates the count
     }
 
-    router.get(/(index.html)?/, function(req) {
+    router.get(/(index.html)?\/?(.*)$/i, function(req) {
       set_title("");
-      var category = req.params.category;
       globals();
-      setup_main();
+      setup_main(req.params[1]);
       teardown_alerts();
       teardown_charts();
       teardown_graph();
