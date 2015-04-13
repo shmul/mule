@@ -400,6 +400,10 @@ function app() {
     add_upper_and_lower_bounds(data_);
   }
 
+  function on_graph_point_click(name_, date_, dt_, value_) {
+    console.log("on_graph_point_click: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
+  }
+
   function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,target_) {
     var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
     var rollover_value_format = d3.format(",d");
@@ -434,10 +438,16 @@ function app() {
     });
 
     // Fix overlapping labels in x-axis
-    d3.selectAll('.mg-year-marker text').attr('transform', 'translate(0, 8)');
+    d3.selectAll(target_ + " svg .mg-year-marker text").attr("transform", "translate(0, 8)");
 
     // Fix overlapping labels in baselines
-    d3.selectAll('.mg-baselines text').attr('dx', function (d,i) { return -i*60; });
+    d3.selectAll(target_ + " svg .mg-baselines text").attr("dx", function (d,i) { return -i*60; });
+
+    // Hook click events for the chart
+    d3.selectAll(target_ + " svg .mg-rollover-rect rect")
+      .on("click", function (d,i) {
+                     on_graph_point_click(name_, d.date, d.dt, d.value);
+                   });
   }
 
   function remove_spinner(anchor_) {
@@ -511,7 +521,7 @@ function app() {
           var dt = raw_data_[rw][2];
           var v = raw_data_[rw][0];
           if ( dt>100000 ) {
-            data.push({date: new Date(dt * 1000), value: v});
+            data.push({date: new Date(dt * 1000), value: v, dt: dt});
           }
         };
         data.sort(function(a,b) { return a.date-b.date });
