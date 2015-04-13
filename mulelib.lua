@@ -1082,6 +1082,9 @@ function mule(db_)
       logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
+    if sum==0 then -- don't bother to update
+      return
+    end
 
     for n,m in get_sequences(metric_) do
       local seq = _updated_sequences[n] or sparse_sequence(n)
