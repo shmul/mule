@@ -233,7 +233,7 @@ function app() {
           $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph",
                                                                                    slider: true}]));
           $("#alert-graph-container").attr("data-graph",graph);
-          load_graph(graph,".graph-body",".graph-body .timerange-slider");
+          load_graph(graph,".graph-body",true);
           setup_graph_header(graph,".graph-header",true);
 
           e.stopPropagation();
@@ -551,19 +551,29 @@ function app() {
               label: "crit-high" },
             ]
         }
-        try {
-          draw_graph(name_,data,0,100,baselines,target_);
-          if (slider_) {
-            var slider_target = ($(target_).parent().find(" .timerange-slider"));
-            if ( slider_target.length==1 ) {
+
+        var from_percent = 0;
+        var to_percent = 100;
+        if (slider_) {
+          var slider_target = $(target_).parent().find(".timerange-slider");
+          if (slider_target.length == 1) {
+            if (slider_target[0].value) {
+              // there's an existing slider - fetch its range
+              var from_to = slider_target[0].value.split(",");
+              from_percent = parseInt(from_to[0]);
+              to_percent = parseInt(from_to[1]);
+            } else {
+              // setup a new slider
               setup_slider(slider_target[0], function (new_from, new_to) {
                 draw_graph(name_,data,new_from,new_to,baselines,target_);
               });
             }
+          } else {
+            console.log("Error - someone asked for a slider but didn't provide a timerange-slider input");
           }
-        } catch(e) {
-          console.log(e.stack);
         }
+        draw_graph(name_,data,from_percent,to_percent,baselines,target_);
+
         remove_spinner(target_);
       });
 
@@ -978,9 +988,9 @@ function app() {
           return;
         }
         var graph = $(container).attr("data-graph");
-        var slider = $(obj_).siblings(".slider");
+        var slider = $(obj_).parent().find(".timerange-slider");
         if ( graph_split(graph) ) {
-          load_graph(graph,"#"+$(container).attr('id'),slider.length>0);
+          load_graph(graph,"#"+$(container).attr('id')+" .graph-body",slider.length>0);
           console.log('refresh_loaded_graphs: %s',graph);
         }
       });
