@@ -440,7 +440,7 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     -- trying to access one past the sequence size is interpreted as
     -- getting the latest index
     if node._size==idx_ then
-      node._latest = timestamp_ -- this is actually the index of the latest slots
+      node._latest = timestamp_ -- this is actually the index of the latest slot
       put_node(name_,node)
       return
     end

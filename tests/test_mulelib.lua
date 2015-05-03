@@ -227,6 +227,7 @@ function test_to_timestamp()
     {"31..2",60,0,{31,2}},
     {"now + latest - 1m..1",61,121,{122,1}},
     {"latest-1m..latest-1m",60,120,{60,60}},
+    {"now-10000..now",1430216100,1430215500,{1430206100,1430216100}},
   }
 
   for i,t in ipairs(tests) do

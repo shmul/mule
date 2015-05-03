@@ -71,10 +71,11 @@ a piechart-like implementation.
 
 DONE use nested templates - the all_links and favorites
 
-overcome the extra referesh of the alerts menu by caching the value (or a digest of it) and rendering only if needed
+DONE overcome the extra referesh of the alerts menu by caching the value (or a digest of it) and rendering only if needed
+
 reduce the flickering when switching between the all_links
 
-when adding a favorite/recent add a transition to the menu item (if it is opened)
+NO NEED when adding a favorite/recent add a transition to the menu item (if it is opened)
 
 DONE add an indication to the graph header if the graph is in an alert state
 
@@ -86,14 +87,20 @@ DONE I'm not sure the inner navigations highlighting work as expected.
 
 DONE Add loading indication to inner navigation
 
-display favorites, recent,
+DONE display favorites, recent,
 
 display api (from Readme)
 
 add copy button to the graphs
 
-layout the top level keys
+DONE layout the top level keys
 
-use a tree? https://github.com/jonmiles/bootstrap-treeview
+DONE use a tree? https://github.com/jonmiles/bootstrap-treeview
 
 carousel for alerts? http://www.jssor.com/bootstrap/bootstrap-carousel.html
+
+change the title of the main keys table to reflect the key being browsed. Use bread crumbs or split the top key into elements in order to do navigation.
+
+add a progress indication when navigating the keys table
+
+support annotations over the graph - use the key/value capabilities

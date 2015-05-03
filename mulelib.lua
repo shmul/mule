@@ -51,15 +51,16 @@ function sequence(db_,name_)
     return at(idx_,2)
   end
 
-  local function latest(idx_)
+  local function latest(latest_idx_)
     local pos = math.floor(_period/_step)
-    if not idx_ then
+    if not latest_idx_ then
       return at(pos,0)
     end
-    at(pos,0,idx_)
+    at(pos,0,latest_idx_)
   end
 
   local function latest_timestamp()
+    --print("latest_timestamp",latest())
     return get_timestamp(latest())
   end
 
@@ -85,7 +86,7 @@ function sequence(db_,name_)
 
     -- we need to check whether we should update the current slot
     -- or if are way ahead of the previous time the slot was updated
-    -- over-write its value
+    -- over-write its value. We rely on the invariant that timestamp should be <= adjusted_timestamp
     if adjusted_timestamp<timestamp then
       return
     end
@@ -172,6 +173,7 @@ function sequence(db_,name_)
     local readable = opts_.readable
     local average = opts_.stat=="average"
     local factor = opts_.factor and tonumber(opts_.factor) or nil
+    local format = string.format
 
     local function serialize_slot(idx_,skip_empty_,slot_cb_)
       local timestamp,hits,sum = at(idx_)
@@ -182,7 +184,10 @@ function sequence(db_,name_)
         elseif factor then
           value = sum/factor
         end
-        slot_cb_(value,hits,readable and date("%y%m%d:%H%M%S",timestamp) or timestamp)
+        if readable then
+          timestamp = format('"%s"',date("%y%m%d:%H%M%S",timestamp))
+        end
+        slot_cb_(value,hits,timestamp)
       end
     end
 
@@ -218,11 +223,17 @@ function sequence(db_,name_)
             if type(ts)=="number" then
               ts = {ts,ts+_step-1}
             end
+            local visited = {}
             for t = ts[1],ts[2],(ts[1]<ts[2] and _step or -_step) do
+              -- TODO : the range can be very large, like 0..1100000 and we'll be recycling through the same slots
+              -- over and over. We therefore cache the calculated indices and skip those we've seen.
               local idx,_ = calculate_idx(t,_step,_period)
-              local its = get_timestamp(idx)
-              if t-its<_period and (not min_timestamp or min_timestamp<its) then
-                serialize_slot(idx,true,slot_cb_)
+              if not visited[idx] then
+                local its = get_timestamp(idx)
+                if t-its<_period and (not min_timestamp or min_timestamp<its) then
+                  serialize_slot(idx,true,slot_cb_)
+                end
+                visited[idx] = true
               end
             end
           end
@@ -493,14 +504,14 @@ function mule(db_)
     local timestamp = tonumber(options_.timestamp)
 
     if not timestamp then
-      str.write("error: 'timestamp must be provided'");
+      str.write('{"error": "timestamp must be provided"}');
     else
       col.head()
 
       each_metric(_db,resource_,nil,
                   function(seq)
                     if seq.latest_timestamp()<timestamp then
-                      col.elem(format("\"%s\"",seq.name()))
+                      col.elem(format("\"%s\": %d",seq.name(),seq.latest_timestamp()))
                       garbage[#garbage+1] = seq.name()
                     end
       end)
@@ -652,7 +663,7 @@ function mule(db_)
               col1.head()
             end,
             function(sum,hits,timestamp)
-              col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+              col1.elem(format("[%d,%d,%s]",sum,hits,timestamp))
           end)
           col1.tail()
         end

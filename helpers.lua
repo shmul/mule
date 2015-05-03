@@ -517,7 +517,10 @@ end
 function to_timestamp_helper(expr_,now_,latest_)
   local interpolated = string.gsub(expr_,"(%l+)",{now=now_, latest=latest_})
   interpolated = string.gsub(interpolated,"(%w+)",parse_time_unit)
-  return string.match(interpolated,"^[%s%d%-%+]+$") and loadstring("return "..interpolated)() or nil
+  if not string.match(interpolated,"^[%s%d%-%+]+$") then
+    return nil
+  end
+  return math.abs(loadstring("return "..interpolated)())
 end
 
 function to_timestamp(expr_,now_,latest_)
@@ -973,7 +976,10 @@ function sparse_sequence(name_,slots_)
     set = set,
     update = update,
     find_by_index = find_by_index,
-    latest = function() return _latest_timestamp end,
+    latest = function() -- all over, "latest" refers to the index of the slot with the latest timestamp
+      local latest_idx,_ = calc_idx(_latest_timestamp)
+      return latest_idx
+    end,
     slots = function() return _slots end
          }
 end

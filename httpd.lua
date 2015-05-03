@@ -135,7 +135,7 @@ local function gc_handler(mule_,handler_,req_,resource_,qs_params_,content_)
     logd("DELETE: calling",handler_)
     return mule_.gc(resource_,qs_params_)
   else
-    logw("Only GET/POST can be used")
+    logw("Only DELETE can be used")
     return 405
   end
 end
