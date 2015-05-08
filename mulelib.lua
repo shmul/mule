@@ -43,14 +43,6 @@ function sequence(db_,name_)
     return at(idx_,0)
   end
 
-  local function get_hits(idx_)
-    return at(idx_,1)
-  end
-
-  local function get_sum(idx_)
-    return at(idx_,2)
-  end
-
   local function latest(latest_idx_)
     local pos = math.floor(_period/_step)
     if not latest_idx_ then
@@ -60,7 +52,6 @@ function sequence(db_,name_)
   end
 
   local function latest_timestamp()
-    --print("latest_timestamp",latest())
     return get_timestamp(latest())
   end
 
@@ -86,7 +77,7 @@ function sequence(db_,name_)
 
     -- we need to check whether we should update the current slot
     -- or if are way ahead of the previous time the slot was updated
-    -- over-write its value. We rely on the invariant that timestamp should be <= adjusted_timestamp
+    -- over-write its value. We rely on the invariant that timestamp should be >= adjusted_timestamp
     if adjusted_timestamp<timestamp then
       return
     end
