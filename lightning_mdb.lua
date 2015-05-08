@@ -398,13 +398,12 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return no_data()
     end
 
-    -- trying to access one past the cdb size is interpreted as
-    -- getting the latest index
-    if node._size==idx_ then
-      return node._latest
-    end
-
     if node._seq then
+      -- trying to access one past the size is interpreted as getting the latest index
+      if node._size==idx_ then
+        return node._seq.latest()
+      end
+
       local slot = node._seq.find_by_index(idx_)
       if not slot then
         return no_data()
@@ -413,6 +412,11 @@ function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         return slot._timestamp,slot._hits,slot._sum
       end
       return (offset_==0 and slot._timestamp) or (offset_==1 and slot._hits) or (offset_==2 and slot._sum)
+    end
+
+    -- trying to access one past the size is interpreted as getting the latest index
+    if node._size==idx_ then
+      return node._latest
     end
 
     local key,p,q = page_key(name_,idx_)
