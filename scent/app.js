@@ -233,7 +233,7 @@ function app() {
           $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph",
                                                                                    slider: true}]));
           $("#alert-graph-container").attr("data-graph",graph);
-          load_graph(graph,".graph-body",".graph-body .timerange-slider");
+          load_graph(graph,".graph-body",true);
           setup_graph_header(graph,".graph-header",true);
 
           e.stopPropagation();
@@ -400,11 +400,21 @@ function app() {
     add_upper_and_lower_bounds(data_);
   }
 
+  function on_graph_point_click(name_, date_, dt_, value_) {
+    console.log("on_graph_point_click: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
+  }
+
   function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,target_) {
     var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
     var rollover_value_format = d3.format(",d");
 
-    var x_axis_ticks_count = ($(target_).hasClass("tall-graph")) ? 10 : 5;
+    if ($(target_).hasClass("tall-graph")) {
+      var use_small_fonts = false;
+      var x_axis_ticks_count = 10;
+    } else {
+      var use_small_fonts = true;
+      var x_axis_ticks_count = 5;
+    }
 
     var from_element = Math.floor(data_.length * from_percent_ / 100);
     var to_element = Math.ceil(data_.length * to_percent_ / 100);
@@ -427,6 +437,7 @@ function app() {
       legend: [name_],
       legend_target: ".legend",
       baselines: baselines_,
+      small_text: use_small_fonts,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
           .text(rollover_date_format(d.date) + " " + rollover_value_format(d.value));
@@ -434,10 +445,19 @@ function app() {
     });
 
     // Fix overlapping labels in x-axis
-    d3.selectAll('.mg-year-marker text').attr('transform', 'translate(0, 8)');
+    d3.selectAll(target_ + " svg .mg-year-marker text").attr("transform", "translate(0, 8)");
+
+    // .Use small fonts for baselines text, if needed
+    d3.selectAll(target_ + " svg .mg-baselines").classed("mg-baselines-small", use_small_fonts);
 
     // Fix overlapping labels in baselines
-    d3.selectAll('.mg-baselines text').attr('dx', function (d,i) { return -i*60; });
+    d3.selectAll(target_ + " svg .mg-baselines text").attr("dx", function (d,i) { return -i*60; });
+
+    // Hook click events for the chart
+    d3.selectAll(target_ + " svg .mg-rollover-rect rect")
+      .on("click", function (d,i) {
+                     on_graph_point_click(name_, d.date, d.dt, d.value);
+                   });
   }
 
   function remove_spinner(anchor_) {
@@ -511,7 +531,7 @@ function app() {
           var dt = raw_data_[rw][2];
           var v = raw_data_[rw][0];
           if ( dt>100000 ) {
-            data.push({date: new Date(dt * 1000), value: v});
+            data.push({date: new Date(dt * 1000), value: v, dt: dt});
           }
         };
         data.sort(function(a,b) { return a.date-b.date });
@@ -531,19 +551,29 @@ function app() {
               label: "crit-high" },
             ]
         }
-        try {
-          draw_graph(name_,data,0,100,baselines,target_);
-          if (slider_) {
-            var slider_target = ($(target_).parent().find(" .timerange-slider"));
-            if ( slider_target.length==1 ) {
+
+        var from_percent = 0;
+        var to_percent = 100;
+        if (slider_) {
+          var slider_target = $(target_).parent().find(".timerange-slider");
+          if (slider_target.length == 1) {
+            if (slider_target[0].value) {
+              // there's an existing slider - fetch its range
+              var from_to = slider_target[0].value.split(",");
+              from_percent = parseInt(from_to[0]);
+              to_percent = parseInt(from_to[1]);
+            } else {
+              // setup a new slider
               setup_slider(slider_target[0], function (new_from, new_to) {
                 draw_graph(name_,data,new_from,new_to,baselines,target_);
               });
             }
+          } else {
+            console.log("Error - someone asked for a slider but didn't provide a timerange-slider input");
           }
-        } catch(e) {
-          console.log(e.stack);
         }
+        draw_graph(name_,data,from_percent,to_percent,baselines,target_);
+
         remove_spinner(target_);
       });
 
@@ -958,9 +988,9 @@ function app() {
           return;
         }
         var graph = $(container).attr("data-graph");
-        var slider = $(obj_).siblings(".slider");
+        var slider = $(obj_).parent().find(".timerange-slider");
         if ( graph_split(graph) ) {
-          load_graph(graph,"#"+$(container).attr('id'),slider.length>0);
+          load_graph(graph,"#"+$(container).attr('id')+" .graph-body",slider.length>0);
           console.log('refresh_loaded_graphs: %s',graph);
         }
       });
