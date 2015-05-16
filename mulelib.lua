@@ -145,6 +145,14 @@ function sequence(db_,name_)
       latest(idx)
     end
 
+    -- {{ debugging code
+    if name=="httpreq.kashmir_pinpoint.200.kashmir-euwest-pp-28a5;5m:3d" then
+      pcall(function()
+          logd("httpreq.kashmir_pinpoint",timestamp_,adjusted_timestamp,idx,latest(),at(idx))
+      end)
+    end
+    -- }}
+
     _seq_storage.save(_name)
     return adjusted_timestamp,sum
   end
