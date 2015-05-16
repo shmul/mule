@@ -351,6 +351,7 @@ end
 
 function mule(db_)
   local _factories = {}
+  local _sorted_factories
   local _alerts = {}
   local _anomalies = {} -- these do not persist as they can be recalulated
   local _db = db_
@@ -370,7 +371,10 @@ function mule(db_)
     for fm,rps in pairs(factories) do
       _factories[fm] = uniq_pairs(rps)
     end
+    _sorted_factories = keys(_factories)
+    table.sort(_sorted_factories)
   end
+
   local function add_factory(metric_,retentions_)
     metric_ = string.match(metric_,"^(.-)%.*$")
     for _,rp in ipairs(retentions_) do
@@ -396,10 +400,12 @@ function mule(db_)
     return coroutine.wrap(
       function()
         local metric_rps = {}
-        for fm,rps in pairs(_factories) do
-          if is_prefix(metric_,fm) then
-            table.insert(metric_rps,{fm,rps})
-          end
+        local idx = binarySearch(_sorted_factories,metric_)
+        if idx==0 then return end
+        while idx<=#_factories and is_prefix(metric_,_sorted_factories[idx]) do
+          local fm = _sorted_factories[idx]
+          table.insert(metric_rps,{fm,_factories[fm]})
+          idx = idx + 1
         end
         local seqs = {}
         for m in metric_hierarchy(metric_) do
@@ -982,6 +988,51 @@ function mule(db_)
     return wrap_json(str)
   end
 
+  local function merge_lines(sorted_file_,step_,period_,now_)
+    local last_metric,seq
+    local str = stdout("")
+    local format = string.format
+    local period = parse_time_unit(period_)
+
+    local function output_sequence(metric_,seq_)
+      for _,s in ipairs(seq_.slots()) do
+        str.write(metric_," ",s._sum," ",s._timestamp," ",s._hits,"\n")
+      end
+    end
+
+    function helper(f)
+      for l in f:lines() do
+        local items,t = parse_input_line(l)
+        if t=="command" then
+          logw("sorted_line - command in input file. ignoring",l)
+        else
+          if items[1]~=last_metric then
+            if seq then
+              output_sequence(last_metric,seq)
+            end
+            last_metric = items[1]
+            seq = sparse_sequence(format("%s;%s:%s",last_metric,step_,period_))
+          end
+
+          local timestamp,hits,sum,_ = legit_input_line(items[1],items[2],items[3],items[4])
+          if not timestamp then
+            logw("merge_lines - bad params",l)
+          elseif timestamp>now_-period then
+            seq.update(timestamp,hits,sum)
+          end
+        end
+
+      end
+
+      if seq then
+        output_sequence(seq)
+      end
+      return true
+    end
+
+    with_file(sorted_file_,helper)
+  end
+
   local function command(items_)
     local func = items_[1]
     local dispatch = {
@@ -1021,6 +1072,9 @@ function mule(db_)
       end,
       dump = function()
         return dump(items_[2],qs_params(items_[3]))
+      end,
+      merge_lines = function()
+        return merge_lines(items_[2],items_[3],items_[4],items_[5])
       end,
     }
 
@@ -1090,6 +1144,7 @@ function mule(db_)
     end
     col.tail()
     logi("factories_out",table_size(_factories))
+    uniq_factories()
     return wrap_json(str)
   end
 
@@ -1115,7 +1170,7 @@ function mule(db_)
   end
 
 
-  local function update_line(metric_,sum_,timestamp_,hits_)
+  local function update_line(metric_,sum_,timestamp_,hits_,now_)
     local timestamp,hits,sum,replace = legit_input_line(metric_,sum_,timestamp_,hits_)
 
     if not timestamp then
@@ -1127,12 +1182,19 @@ function mule(db_)
     end
 
     for n,m in get_sequences(metric_) do
-      local seq = _updated_sequences[n] or sparse_sequence(n)
-      local adjusted_timestamp,sum = seq.update(timestamp,hits,sum,replace)
-      -- it might happen that we try to update a too old timestamp. In such a case
-      -- the update function returns null
-      if adjusted_timestamp then
-        _updated_sequences[n] = seq
+      local skip = false
+      if now_ then
+        local metric,step,period = parse_name(n)
+        skip = timestamp_<now_-period
+      end
+      if not skip then
+        local seq = _updated_sequences[n] or sparse_sequence(n)
+        local adjusted_timestamp,sum = seq.update(timestamp,hits,sum,replace)
+        -- it might happen that we try to update a too old timestamp. In such a case
+        -- the update function returns null
+        if adjusted_timestamp then
+          _updated_sequences[n] = seq
+        end
       end
     end
   end

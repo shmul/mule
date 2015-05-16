@@ -483,19 +483,6 @@ function secs_to_time_unit(secs_)
 end
 
 
-function max_timestamp(size_,get_slot_)
-  local max = nil
-  local idx = 0
-  for i=1,size_ do
-    local current = get_slot_(i)
-    if not max or current._timestamp>max._timestamp then
-      max = current
-      idx = i
-    end
-  end
-  return idx
-end
-
 function is_prefix(metric_,prefix_)
   return prefix_=="*" or string.find(metric_,prefix_,1,true)==1
 end
@@ -882,15 +869,19 @@ end
 
 -- sparse sequences are expected to have very few (usually one) non empty slots, so we use
 -- a plain (non sorted) array
+function parse_name(name_)
+  local metric,step,period = string.match(name_,"^(.+);(%w+):(%w+)$")
+  step = parse_time_unit(step)
+  period = parse_time_unit(period)
+  return metric,step,period
+end
 
 function sparse_sequence(name_,slots_)
   local _metric,_step,_period
   local _slots = slots_ or {}
   local _latest_timestamp
 
-  _metric,_step,_period = string.match(name_,"^(.+);(%w+):(%w+)$")
-  _step = parse_time_unit(_step)
-  _period = parse_time_unit(_period)
+  _metric,_step,_period = parse_name(name_)
 
   -- we need to update the latest timestamp
   if slots_ then
@@ -1076,4 +1067,20 @@ function clean_test_file(file_)
   local f = (IN_SLASH_TMP and "/tmp/mule_tests/" or "./tests/temp/")..file_
   os.remove(f)
   return f
+end
+
+-- adapted from http://rosettacode.org/wiki/Binary_search#Lua but changed to return the item <= value
+function binarySearch (list,value)
+  local low = 1
+  local high = #list
+  local mid = 0
+  while low <= high do
+    mid = math.floor((low+high)/2)
+    if list[mid] > value then high = mid - 1
+    else if list[mid] < value then low = mid + 1
+         else return mid
+         end
+    end
+  end
+  return low-1
 end
