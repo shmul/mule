@@ -2,7 +2,6 @@ require "helpers"
 
 
 local lr = require "luarocks.require"
-local cp = require "copas"
 local ltn12 = require "ltn12"
 local url = require "socket.url"
 

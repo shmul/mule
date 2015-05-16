@@ -162,7 +162,7 @@ end
 
 local function usage()
   return [[
-        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] [-i <incoming-queue-path>] files....
+        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] [-i <incoming-queue-path>] [-m <key-prefix> (write all lightningmdb keys)] [-a <key-prefix> (write all lightningmdb keys and values)] files....
 
       If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
       Files are processed in order
@@ -230,10 +230,13 @@ function main(opts,out_)
     logi("configure",opts["c"])
     local rv = writable_mule(function(m)
                                return with_file(opts["c"],
-                                         function(f)
-                                           return m.configure(f:lines())
-                                         end)
-                             end)
+                                                function(f)
+                                                  return m.configure(f:lines())
+                                                end
+                               )
+                             end
+    )
+
     if not rv then
       loge("configure failed.")
       if not file_exists(opts["c"]) then
@@ -277,6 +280,21 @@ function main(opts,out_)
     out_.write(rv)
   end
 
+  if opts["m"] or opts["a"] then
+    local db = guess_db(opts["d"],true)
+    if not db then
+      logf("unable to guess db",db)
+    else
+      local function star(v_) return v_=="*" and "" or v_ end
+      if opts["m"] then
+        db.dump_keys(star(opts["m"]))
+      elseif opts["a"] then
+        db.dump_values(star(opts["a"]))
+      end
+      db:close()
+    end
+  end
+
   if opts["rest"] then
     writable_mule(function(m)
                     for i,f in ipairs(opts["rest"]) do
@@ -300,7 +318,7 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcnmtxRi")
+  opts = getopt(arg,"ldcnmtxRia")
   local rv = main(opts,stdout("\n"))
   logd("done")
   os.exit(rv and 0 or -1)

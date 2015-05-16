@@ -3,6 +3,7 @@ local url = require "socket.url"
 local pp = require "purepack"
 local posix_exists,posix = pcall(require,'posix')
 local stp_exists,stp = pcall(require,"StackTracePlus")
+require "conf"
 
 if not posix_exists or lunit then
 --  print("disabling posix")
@@ -976,6 +977,7 @@ function sparse_sequence(name_,slots_)
     set = set,
     update = update,
     find_by_index = find_by_index,
+    latest_timestamp = function() return _latest_timestamp end,
     latest = function() -- all over, "latest" refers to the index of the slot with the latest timestamp
       local latest_idx,_ = calc_idx(_latest_timestamp)
       return latest_idx

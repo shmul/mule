@@ -1,4 +1,4 @@
-module("trie",package.seeall)
+--module("trie",package.seeall)
 require "helpers"
 local p = require "purepack"
 
@@ -63,7 +63,7 @@ end
 local function traverse(self,path_,prefix_,sorted_,level_)
   local format = string.format
 
-  function helper(n,p_,l_)
+  local function helper(n,p_,l_)
     if n._eos then
       coroutine.yield(p_,n)
     end
@@ -112,7 +112,7 @@ end
 
 unpack = function(packed_)
   local self = p.unpack(packed_)
-  function helper(n)
+  local function helper(n)
     for _,v in pairs(n._children or {}) do
       copy_table(methods(),v)
       helper(v)

@@ -24,15 +24,21 @@ local function column_db_factory(name_)
   return cdb.column_db(dir)
 end
 
+
 local function lightning_db_factory(name_)
   p.set_pack_lib("lpack")
   local dir = create_test_directory(name_.."_mdb")
   return mdb.lightning_mdb(dir)
 end
 
+local function memory_db_factory(name_)
+  p.set_pack_lib("purepack")
+  return in_memory_db()
+end
+
 local function for_each_db(name_,func_,no_mule_)
   local dbs = {
-    in_memory_db(),
+    memory_db_factory(),
     lightning_db_factory(name_),
     column_db_factory(name_)
   }
@@ -790,6 +796,7 @@ function test_pale()
     m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
 
     m.process("./tests/fixtures/pale.dump")
+
     assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamp="1360800000"}),"274,244",1,true))
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361127300"}),"1526,756",1,true))
     m.process("./tests/fixtures/pale.mule")
@@ -1143,7 +1150,6 @@ function test_same_prefix()
   end
   for_each_db("./tests/temp/test_same_prefix",helper)
 end
-
 
 --verbose_log(true)
 --profiler.start("profiler.out")

@@ -51,8 +51,59 @@ function sequence(db_,name_)
     at(pos,0,latest_idx_)
   end
 
+  local function indices(sorted_)
+    if not sorted_ then
+      return coroutine.wrap(
+        function()
+          for i=1,(_period/_step) do
+            coroutine.yield(i-1)
+          end
+      end)
+    end
+    local array = {}
+    for i=1,(_period/_step) do
+      array[i] = {i-1,get_timestamp(i-1)}
+    end
+    table.sort(array, function(u,v) return u[2]<v[2] end)
+    return coroutine.wrap(
+      function()
+        for _,s in ipairs(array) do
+          coroutine.yield(s[1])
+        end
+    end)
+  end
+
+
+  local function find_latest()
+    local latest = 0
+    local latest_idx = 0
+    for s in indices() do
+      local timestamp,hits,sum = at(s)
+      if sum>latest then
+        latest = sum
+        latest_idx = s
+      end
+    end
+    return latest_idx,latest
+  end
+
+  local function fix_timestamp(latest_idx)
+    local new_latest_idx,new_latest = find_latest()
+    if new_latest>0 then
+      logw("latest_timestamp - fixing",name_,latest_idx,new_latest_idx,new_latest)
+      latest(new_latest_idx)
+    end
+    return new_latest
+  end
+
   local function latest_timestamp()
-    return get_timestamp(latest())
+    local latest_idx = latest()
+    if get_timestamp(latest_idx)>0 then
+      return get_timestamp(latest_idx)
+    end
+
+    -- fix_timestamp(latest_idx) -- enable to fix the latest timestamp
+    return get_timestamp(latest_idx)
   end
 
   local function reset()
@@ -81,15 +132,6 @@ function sequence(db_,name_)
     if adjusted_timestamp<timestamp then
       return
     end
-
-    -- chasing a bug {
-    if timestamp~=0 and ((adjusted_timestamp-timestamp) % _period)~=0 then
-      logw("update - seems like the wrong idx was calculated",name_,_period,idx,adjusted_timestamp,timestamp,hits,sum,timestamp_,sum_,hits_,replace_)
-      -- to override the faulty value
-      hits = 0
-      sum = 0
-    end
-    -- }
 
     if (not replace_) and adjusted_timestamp==timestamp and hits>0 then
       -- no need to worry about the latest here, as we have the same (adjusted) timestamp
@@ -122,28 +164,6 @@ function sequence(db_,name_)
     return j-1
   end
 
-
-  local function indices(sorted_)
-    if not sorted_ then
-      return coroutine.wrap(
-        function()
-          for i=1,(_period/_step) do
-            coroutine.yield(i-1)
-          end
-      end)
-    end
-    local array = {}
-    for i=1,(_period/_step) do
-      array[i] = {i-1,get_timestamp(i-1)}
-    end
-    table.sort(array, function(u,v) return u[2]<v[2] end)
-    return coroutine.wrap(
-      function()
-        for _,s in ipairs(array) do
-          coroutine.yield(s[1])
-        end
-    end)
-  end
 
   local function reset_to_timestamp(timestamp_)
     local _,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
@@ -216,7 +236,7 @@ function sequence(db_,name_)
             end
             local visited = {}
             for t = ts[1],ts[2],(ts[1]<ts[2] and _step or -_step) do
-              -- TODO : the range can be very large, like 0..1100000 and we'll be recycling through the same slots
+              -- the range can be very large, like 0..1100000 and we'll be recycling through the same slots
               -- over and over. We therefore cache the calculated indices and skip those we've seen.
               local idx,_ = calculate_idx(t,_step,_period)
               if not visited[idx] then
@@ -537,7 +557,6 @@ function mule(db_)
     return str
   end
 
-
   local function output_anomalies(names_)
     local str = strout("","\n")
     local format = string.format
@@ -679,7 +698,7 @@ function mule(db_)
   local function slot(resource_,options_)
     local str = strout("")
     local format = string.format
-    local opts = { timestamps={options_ and options_.timestamp} }
+    local opts = { timestamps={options_ and options_.timestamp},readable=is_true(options_.readable) }
     local col = collectionout(str,"{","}")
 
     col.head()
@@ -692,7 +711,7 @@ function mule(db_)
                                   col1.head()
                                 end,
                                 function(sum,hits,timestamp)
-                                  col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+                                  col1.elem(format("[%d,%d,%s]",sum,hits,timestamp))
                                 end
                   )
                   col1.tail()
@@ -704,8 +723,9 @@ function mule(db_)
     return wrap_json(str)
   end
 
-  local function latest(resource_)
-    return slot(resource_,{timestamp="latest"})
+  local function latest(resource_,opts_)
+    opts_ = opts_ or {}
+    return slot(resource_,{timestamp="latest",readable=is_true(opts_.readable)})
   end
 
 
@@ -746,7 +766,7 @@ function mule(db_)
 
 
   local function kvs_put(key_,value_)
-    return _db.put("kvs="..key_,value_,true)
+    return _db.put("kvs="..key_,value_)
   end
 
   local function kvs_get(key_)
@@ -759,10 +779,10 @@ function mule(db_)
 
   local function save(skip_flushing_)
     logi("save",table_size(_factories),table_size(_alerts),table_size(_hints))
-    _db.put("metadata=version",pp.pack(CURRENT_VERSION),true)
-    _db.put("metadata=factories",pp.pack(_factories),true)
-    _db.put("metadata=alerts",pp.pack(_alerts),true)
-    _db.put("metadata=hints",pp.pack({}),true) -- we don't save the hints but recalc them every time we start
+    _db.put("metadata=version",pp.pack(CURRENT_VERSION))
+    _db.put("metadata=factories",pp.pack(_factories))
+    _db.put("metadata=alerts",pp.pack(_alerts))
+    _db.put("metadata=hints",pp.pack({})) -- we don't save the hints but recalc them every time we start
     logi("save - flushing uncommited data",skip_flushing_)
     while not skip_flushing_ and flush_cache(UPDATE_AMOUNT) do
       -- nop
@@ -970,7 +990,7 @@ function mule(db_)
         })
       end,
       latest = function()
-        return latest(items_[2])
+        return latest(items_[2],{})
       end,
       slot = function()
         return slot(items_[2],{timestamp=items_[3]})

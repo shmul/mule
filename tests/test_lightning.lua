@@ -59,8 +59,9 @@ function test_matchingkeys()
   local db = lightning_mdb_factory("l_matchingkeys")
   local count = 10
   for i=count*2,0,-1 do
-    db.put(string.format("%04d",i),i,true,true)
+    db.native_put(string.format("%04d",i),i,true)
   end
+
   assert_equal("0000",db.search("000"))
 
   for _,prefix in ipairs({"000","001"}) do
