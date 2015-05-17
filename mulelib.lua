@@ -126,10 +126,21 @@ function sequence(db_,name_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
     local timestamp,hits,sum = at(idx)
 
+    local function debugging_helper(label_)
+      if _name=="httpreq.kashmir_pinpoint.200.kashmir-euwest-pp-66a5;5m:3d" then
+        pcall(function()
+            logd("debugging_helper",label_,timestamp_,adjusted_timestamp,idx,latest(),at(idx))
+        end)
+      end
+    end
+
     -- we need to check whether we should update the current slot
     -- or if are way ahead of the previous time the slot was updated
     -- over-write its value. We rely on the invariant that timestamp should be >= adjusted_timestamp
     if adjusted_timestamp<timestamp then
+      -- {{ debugging code
+      debugging_helper("past timestamp")
+      -- }}
       return
     end
 
@@ -143,15 +154,11 @@ function sequence(db_,name_)
     local lt = latest_timestamp()
     if adjusted_timestamp>lt then
       latest(idx)
+    else
+      -- {{ debugging code
+      debugging_helper("latest not updated")
+      -- }}
     end
-
-    -- {{ debugging code
-    if name=="httpreq.kashmir_pinpoint.200.kashmir-euwest-pp-28a5;5m:3d" then
-      pcall(function()
-          logd("httpreq.kashmir_pinpoint",timestamp_,adjusted_timestamp,idx,latest(),at(idx))
-      end)
-    end
-    -- }}
 
     _seq_storage.save(_name)
     return adjusted_timestamp,sum
