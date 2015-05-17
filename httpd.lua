@@ -4,7 +4,7 @@ require "helpers"
 local lr = require "luarocks.require"
 local ltn12 = require "ltn12"
 local url = require "socket.url"
-
+local copas = require "copas"
 
 local status_codes = {
   [200] = "200 OK",
