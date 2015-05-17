@@ -146,7 +146,7 @@ function sequence(db_,name_)
     end
 
     -- {{ debugging code
-    if name=="httpreq.kashmir_pinpoint.200.kashmir-euwest-pp-28a5;5m:3d" then
+    if _name=="httpreq.kashmir_pinpoint.200.kashmir-euwest-pp-66a5;5m:3d" then
       pcall(function()
           logd("httpreq.kashmir_pinpoint",timestamp_,adjusted_timestamp,idx,latest(),at(idx))
       end)
