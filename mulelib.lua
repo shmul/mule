@@ -156,7 +156,9 @@ function sequence(db_,name_)
       latest(idx)
     else
       -- {{ debugging code
-      debugging_helper("latest not updated")
+      if adjusted_timestamp<lt then      
+        debugging_helper("latest not updated")
+      end
       -- }}
     end
 
