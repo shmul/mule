@@ -546,14 +546,13 @@ function test_reset()
 
     assert(string.find(m.graph("beer.stout;1h:30d"),'[143,1,74858400]',1,true))
     assert(string.find(m.graph("beer.stout;1h:30d"),'[98,1,74854800]',1,true))
-    m.process(".reset beer.stout 74857920 false")
+    m.process(".reset beer.stout timestamp=74857920&force=false")
     assert(string.find(m.graph("beer.stout;1h:30d"),'[143,1,74858400]',1,true))
     assert(string.find(m.graph("beer.stout;1h:30d"),'[0,0,74854800]',1,true))
 
     assert_nil(string.find(m.graph("beer.stout;1h:30d"),'[98,1,74858400]',1,true))
     assert(non_empty_metrics(m.matching_sequences("beer")))
-
-    m.process(".reset beer.stout nil true 1")
+    m.process(".reset beer.stout force=true&level=1")
     assert(non_empty_metrics(m.matching_sequences("beer")))
 
     assert(empty_metrics(m.matching_sequences("beer.stout")))
@@ -561,7 +560,7 @@ function test_reset()
     assert(non_empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
 
 
-    m.process(".reset beer.ale nil true 2")
+    m.process(".reset beer.ale force=true&level=2")
     assert(non_empty_metrics(m.matching_sequences("beer")))
     assert(empty_metrics(m.matching_sequences("beer.ale")))
     assert(empty_metrics(m.matching_sequences("beer.ale.brown")))
@@ -580,7 +579,7 @@ function test_reset2()
     m.process(line)
     assert(string.find(m.graph("beer.stout.irish;5m:3d"),'[8,3,1418602500]',1,true))
     assert(string.find(m.graph("beer.stout.irish;5m:3d"),'[9,4,1418602800]',1,true))
-    m.process(".reset beer.stout.irish 1418602700 false 1")
+    m.process(".reset beer.stout.irish timestamp=1418602700&force=false&level=1")
     assert(string.find(m.graph("beer.stout.irish;5m:3d"),'[0,0,1418602500]',1,true))
     assert(string.find(m.graph("beer.stout.irish;5m:3d"),'[9,4,1418602800]',1,true))
 

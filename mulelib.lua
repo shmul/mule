@@ -156,7 +156,7 @@ function sequence(db_,name_)
       latest(idx)
     else
       -- {{ debugging code
-      if adjusted_timestamp<lt then      
+      if adjusted_timestamp<lt then
         debugging_helper("latest not updated")
       end
       -- }}
@@ -742,7 +742,8 @@ function mule(db_)
 
   local function latest(resource_,opts_)
     opts_ = opts_ or {}
-    return slot(resource_,{timestamp="latest",readable=is_true(opts_.readable)})
+    opts_.timestamp = "latest"
+    return slot(resource_,opts_)
   end
 
 
@@ -985,10 +986,10 @@ function mule(db_)
     local func = items_[1]
     local dispatch = {
       graph = function()
-        return graph(items_[2],{timestamp=items_[3]})
+        return graph(items_[2],qs_params(items_[3]))
       end,
       key = function()
-        return key(items_[2],{timestamp=items_[3]})
+        return key(items_[2],qs_params(items_[3]))
       end,
       alert = function()
         return alert(items_[2])
@@ -1007,19 +1008,19 @@ function mule(db_)
         })
       end,
       latest = function()
-        return latest(items_[2],{})
+        return latest(items_[2],qs_params(items_[3]))
       end,
       slot = function()
-        return slot(items_[2],{timestamp=items_[3]})
+        return slot(items_[2],qs_params(items_[3]))
       end,
       gc = function()
-        return gc(items_[2],{timestamp=items_[3],force=is_true(items_[4])})
+        return gc(items_[2],qs_params(items_[3]))
       end,
       reset = function()
-        return reset(items_[2],{timestamp=items_[3],force=is_true(items_[4]),level=tonumber(items_[5])})
+        return reset(items_[2],qs_params(items_[3]))
       end,
       dump = function()
-        return dump(items_[2],{to_str=is_true(items_[3])})
+        return dump(items_[2],qs_params(items_[3]))
       end,
     }
 
