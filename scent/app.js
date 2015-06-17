@@ -727,6 +727,9 @@ function app() {
           return string_set_keys(context.scent_keys);
         }
       },
+      afterSelect : function(query) {
+        //console.log('after select %s', query);
+      },
       minLength: 0,
       items: 'all',
     });
@@ -743,8 +746,6 @@ function app() {
       recent_.unshift(name_);
       recent_.length = Math.min(recent_.length,10);
       scent_ds.save(user,"recent",recent_);
-      // we don't updated the recent list as it seems to mess with the sidebar search form
-      // and it might very well wait for the next refresh
     });
   }
 
@@ -861,8 +862,12 @@ function app() {
                       });
     load_persistent(function(persistent_) {
       load_graphs_lists("#main-favorite-container","#favorite-template",persistent_.favorites);
-      load_graphs_lists("#main-recent-container","#recent-template",persistent_.dashboards);
     });
+
+    load_recent(function(recent_) {
+      load_graphs_lists("#main-recent-container","#recent-template",recent_);
+    });
+
 
 
     function populate_keys_table(keys_) {
@@ -1035,7 +1040,7 @@ function app() {
       update_alerts(); // with no selected category it just updates the count
     }
 
-    router.get(/(index.html)?\/?(.*)$/i, function(req) {
+    router.get(/^(index.html)?$/i, function(req) {
       set_title("");
       globals();
       setup_main(req.params[1]);
