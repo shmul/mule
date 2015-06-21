@@ -400,13 +400,15 @@ function mule(db_)
     return coroutine.wrap(
       function()
         local metric_rps = {}
-        local idx = binarySearch(_sorted_factories,metric_)
-        if idx==0 then return end
-        while idx<=#_factories and is_prefix(metric_,_sorted_factories[idx]) do
-          local fm = _sorted_factories[idx]
-          table.insert(metric_rps,{fm,_factories[fm]})
+        local idx = 1
+        while idx<=#_sorted_factories and _sorted_factories[idx]<=metric_ do
+          if is_prefix(metric_,_sorted_factories[idx]) then
+            local fm = _sorted_factories[idx]
+            table.insert(metric_rps,{fm,_factories[fm]})
+          end
           idx = idx + 1
         end
+
         local seqs = {}
         for m in metric_hierarchy(metric_) do
           for _,frp in ipairs(metric_rps) do
