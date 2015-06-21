@@ -537,15 +537,17 @@ function parse_input_line(line_)
 end
 
 function legit_input_line(metric_,sum_,timestamp_,hits_)
-  local replace,sum = string.match(sum_ or "","(=?)(%d+)")
-  replace = replace=="="
+  local typ,
+  sum = string.match(sum_ or "","([=%^]?)(%d+)")
+
+  if #typ==0 then typ = nil end
   timestamp_ = tonumber(timestamp_)
   sum = tonumber(sum)
 
   if not metric_ or #metric_>MAX_METRIC_LEN or not sum or not timestamp_ or (hits_ and not tonumber(hits_)) then
     return
   end
-  return timestamp_,tonumber(hits_) or 1,sum,replace
+  return timestamp_,tonumber(hits_) or 1,sum,typ
 end
 
 function metric_hierarchy(metric_)
@@ -880,6 +882,7 @@ function sparse_sequence(name_,slots_)
   local _metric,_step,_period
   local _slots = slots_ or {}
   local _latest_timestamp
+  local _type
 
   _metric,_step,_period = parse_name(name_)
 
@@ -946,16 +949,21 @@ function sparse_sequence(name_,slots_)
     return adjusted_timestamp,slot._sum
   end
 
-  local function update(timestamp_,hits_,sum_,replace_)
+  local function update(timestamp_,hits_,sum_,type_)
     local idx,adjusted_timestamp = calc_idx(timestamp_)
 
     if not idx then
       return nil
     end
     local slot = find_slot(adjusted_timestamp)
-    if replace_ then
-      slot._sum = sum_
-      slot._hits = nil -- we'll use this as an indication for replace
+    if type_ then
+      if type_=='=' then
+        slot._sum = sum_
+      elseif type_=='^' then
+        slot._sum = math.max(sum_,slot._sum)
+      end
+      slot._type = type_
+      slot._hits = slot._hits+hits_
     else
       slot._sum = slot._sum+sum_
       slot._hits = slot._hits+hits_

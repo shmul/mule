@@ -64,7 +64,10 @@ or
 e.g.
 
     beer.stout.irish 20 74857843
-impling 20 orders of `beer.stout.irish` in the given timestamp (measured in seconds - aka unix time). The value (i.e. 20) is usually added to the number already calculated for this timestamp, but if an equal sign `=` precends the value then it replaces the number rather than adding to it.
+impling 20 orders of `beer.stout.irish` in the given timestamp (measured in seconds - aka unix time). The value (i.e. 20) is usually added to the number already calculated for this timestamp. A couple of additional metric types are supported:
+# Gauge - if an equal sign `=` precedes the value then it replaces the number rather than adding to it
+# High water mark - if `^` preceds the value the maximal value will be used
+
 e.g.
 
     beer.stout.irish =32 74858041

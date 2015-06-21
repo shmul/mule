@@ -725,10 +725,18 @@ function test_update_only_relevant()
     assert(string.find(m.latest("beer.ale.burton;1m:12h"),"[32,1,60]",1,true))
 
     m.process("beer.ale =94 121")
+
     assert(string.find(m.slot("beer.ale;1m:12h",{timestamp="121"}),"[94,1,120]",1,true))
 
     m.process("beer.ale.burton =164 854")
     assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp="latest"}),"[164,1,840]",1,true))
+
+    m.process("beer.ale.burton ^90 854")
+    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp="latest"}),"[164,1,840]",1,true))
+
+    m.process("beer.ale.burton ^190 854")
+    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp="latest"}),"[190,1,840]",1,true))
+
   end
 
   for_each_db("update_only_relevant",helper)
@@ -1149,6 +1157,7 @@ function test_same_prefix()
   end
   for_each_db("./tests/temp/test_same_prefix",helper)
 end
+
 
 --verbose_log(true)
 --profiler.start("profiler.out")
