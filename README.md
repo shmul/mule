@@ -6,7 +6,7 @@ Mule is an RRD tool designed with simplicity of use in mind. Its main use case i
 * simple input format
 * can keep multiple sequences for the same metric with different retention settings.
 * metrics are organized in hierarchies. Sequences of parent nodes are automatically updated when their children are.
-* JSON interface which can be used for graph generation and threshold monitoring (by tools like nagios).
+* RESTful interface which can be used for graph generation and threshold monitoring (by tools like nagios).
 
 # Definitions
 
@@ -229,6 +229,8 @@ Simply stops the running http deamon. This is not meant to be secure by any mean
 Creates a backup of the db next to it. Returns the path.
 
 
+### Processing speed
+On a c3.2xlarge AWS instance with SSD in RAID 0, Mule peeked ~200 files per second, with an average file size of 3k, with average number of lines of 42 . The nginx based frontend easily handled writes of ~300 files per secondl
 
 ## Install
 
@@ -376,7 +378,7 @@ Mule is distributed under the Apache License, Version 2.0.
 ## Apache License
 
 (c) Copyright IBM Corp., 2010, 2015
-Shmulik Regev, shmulbox@gmail.com
+Shmulik Regev, Dan Carmon
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
