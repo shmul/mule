@@ -401,6 +401,31 @@ function app() {
 
   function on_graph_point_click(name_, date_, dt_, value_) {
     console.log("on_graph_point_click: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
+
+    function callback(raw_data_) {
+      if ( !raw_data_ || raw_data_.length==0 ) {
+        notify('Unable to load chart','No data for "'+name_+'".');
+        return;
+      }
+      var sorted_data = [];
+      $.each(raw_data_,function(name,value) {
+        if ( value[0] && name!=name_ ) {
+          sorted_data.push([name,value[0][0]]);
+        }
+      });
+      sorted_data.sort(function(a,b) { return b[1]-a[1]; });
+      // the data is sorted in descending order. Each element is [name,value]
+
+      var content = $.templates("#piechart-template").render([{}]);
+
+      bootbox.dialog({
+        title: name_ + " | " + date_,
+        message: content
+      });
+
+    }
+
+    scent_ds.piechart(name_,dt_,callback);
   }
 
   function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_) {
@@ -429,8 +454,6 @@ function app() {
       target: target_,
       interpolate: "basic",
       show_confidence_band: ["lower", "upper"],
-//      legend: [name_],
-//      legend_target: ".legend",
       baselines: baselines_,
       markers: markers_,
       small_text: use_small_fonts,
@@ -451,7 +474,7 @@ function app() {
 
     // Hook click events for the chart
     d3.selectAll(target_ + " svg .mg-rollover-rect rect")
-      .on("click", function (d,i) {
+      .on("dblclick", function (d,i) {
                      on_graph_point_click(name_, d.date, d.dt, d.value);
                    });
   }
@@ -675,13 +698,13 @@ function app() {
       source :function (query,process) {
         var add_button = ($(input_).parent().find("[type=submit]"))[0];
         var original = $(add_button).html();
-        console.log('in source', query,context.scent_keys);
+        //console.log('in source', query,context.scent_keys);
 
         function callback(keys_) {
           context.scent_keys = string_set_add_array(context.scent_keys || {},keys_);
           context.just_selected = false;
           $(add_button).html(original);
-          console.log('out source', context.scent_keys);
+          //console.log('out source', context.scent_keys);
           process(string_set_keys(context.scent_keys));
         }
 
@@ -702,7 +725,7 @@ function app() {
 
       afterSelect : function(query) {
         if ( !/;\d+\w:\d+\w$/.test(query) ) {
-          console.log('after select %s', query);
+          //console.log('after select %s', query);
           var ths = this;
           $.doTimeout(2,function() {
             context.just_selected = true;
@@ -977,7 +1000,7 @@ function app() {
         var graph = $(container).attr("data-graph");
         if ( graph_split(graph) ) {
           load_graph(graph,"#"+$(container).attr('id')+" .graph-body");
-          console.log('refresh_loaded_graphs: %s',graph);
+          //console.log('refresh_loaded_graphs: %s',graph);
         }
       });
       return true;

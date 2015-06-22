@@ -50,7 +50,7 @@ function key_impl(initial_,key_,callback_,raw_) {
 }
 
 function mule_mockup () {
-  var fixtures_scripts = ["config","key","graph","alert"];
+  var fixtures_scripts = ["config","key","graph","piechart","alert"];
   var fixtures = {};
   const user = "Shmul the mule";
   ns=$.initNamespaceStorage('mule: ');
@@ -101,6 +101,13 @@ function mule_mockup () {
     });
   }
 
+  function piechart(graph_name_,time_,callback_) {
+    delayed(function() {
+      var pc = fixtures["piechart"];
+      callback_(pc);
+    });
+  }
+
   function key(key_,callback_,raw_) {
     delayed(function() {
       var all_keys = fixtures["key"];
@@ -145,6 +152,7 @@ function mule_mockup () {
   return {
     config : config,
     graph : graph,
+    piechart : piechart,
     key : key,
     alerts : alerts,
     load: load,
@@ -206,6 +214,12 @@ function mule_ds() {
     },30);
   }
 
+  function piechart(graph_,time_,callback_) {
+    mule_get("/graph/"+graph_+"?count=100&level=1&timestamp="+time_,function(data_) {
+      callback_(data_);
+    },30);
+  }
+
   function key(key_,callback_,raw_) {
     if (key_[key_.length-1]=='.' ) {
       key_ = key_.slice(0,key_.length-1);
@@ -255,6 +269,7 @@ function mule_ds() {
   return {
     config : config,
     graph : graph,
+    piechart : piechart,
     key : key,
     alerts : alerts,
     load: load,

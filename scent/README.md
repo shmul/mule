@@ -53,7 +53,7 @@ NO NEED use zoom in - https://github.com/nvd3-community/nvd3/blob/gh-pages/examp
 add sparkline to the alerts tables - http://omnipotent.net/jquery.sparkline/#s-about
 
 
-thresholds, anomalies and expected
+DONE thresholds, anomalies and expected
 
 to delete a dashboard - support it from the dashboard main page
 
@@ -108,3 +108,5 @@ support annotations over the graph - use the key/value capabilities. Added indep
 to highlight the difference between latest and now, artificially add the now timestamp to the graph. This can be done by chaning the filter to "now" instead of the usual "latest"
 
 the metricsgraphics markers (for thresholds) are layed on top of each other.
+
+toggle confidence band
