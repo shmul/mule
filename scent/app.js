@@ -230,10 +230,9 @@ function app() {
       function set_click_behavior() {
         $(".alert-graph-name").click(function(e) {
           var graph = $(e.target).attr("data-target");
-          $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph",
-                                                                                   slider: true}]));
+          $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph"}]));
           $("#alert-graph-container").attr("data-graph",graph);
-          load_graph(graph,".graph-body",true);
+          load_graph(graph,".graph-body");
           setup_graph_header(graph,".graph-header",true);
 
           e.stopPropagation();
@@ -404,8 +403,8 @@ function app() {
     console.log("on_graph_point_click: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
   }
 
-  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,target_) {
-    var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
+  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_) {
+    var rollover_date_format = d3.time.format("%y-%m-%dT%H:%M");
     var rollover_value_format = d3.format(",d");
 
     if ($(target_).hasClass("tall-graph")) {
@@ -434,9 +433,10 @@ function app() {
       target: target_,
       interpolate: "basic",
       show_confidence_band: ["lower", "upper"],
-      legend: [name_],
-      legend_target: ".legend",
+//      legend: [name_],
+//      legend_target: ".legend",
       baselines: baselines_,
+      markers: markers_,
       small_text: use_small_fonts,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
@@ -499,22 +499,7 @@ function app() {
     });
   }
 
-  function setup_slider(slider_target, on_slider_change_callback) {
-    var slider_element = $(slider_target);
-    var timer_id;
-    slider_element.slider().on("slide", function (e) {
-      var from_to = slider_element.data("slider").getValue();
-      if (timer_id) {
-        clearTimeout(timer_id);
-        timer_id = null;
-      }
-      timer_id = setTimeout(function() {
-        on_slider_change_callback(from_to[0], from_to[1]);
-      }, 1000)
-    });
-  }
-
-  function load_graph(name_,target_,slider_) {
+  function load_graph(name_,target_) {
     function callback(raw_data_) {
       if ( !raw_data_ || raw_data_.length==0 ) {
         if ( !notified_graphs[name_] ) {
@@ -551,28 +536,10 @@ function app() {
               label: "crit-high" },
             ]
         }
-
+        var markers = []; //TODO - add anomalies
         var from_percent = 0;
         var to_percent = 100;
-        if (slider_) {
-          var slider_target = $(target_).parent().find(".timerange-slider");
-          if (slider_target.length == 1) {
-            if (slider_target[0].value) {
-              // there's an existing slider - fetch its range
-              var from_to = slider_target[0].value.split(",");
-              from_percent = parseInt(from_to[0]);
-              to_percent = parseInt(from_to[1]);
-            } else {
-              // setup a new slider
-              setup_slider(slider_target[0], function (new_from, new_to) {
-                draw_graph(name_,data,new_from,new_to,baselines,target_);
-              });
-            }
-          } else {
-            console.log("Error - someone asked for a slider but didn't provide a timerange-slider input");
-          }
-        }
-        draw_graph(name_,data,from_percent,to_percent,baselines,target_);
+        draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_);
 
         remove_spinner(target_);
       });
@@ -801,9 +768,8 @@ function app() {
             var graph = $(container).attr("data-graph"); // this is the existing graph
             var container_id = "#"+$(container).attr("id");
             var graph_view = $(container).find(".graph-view");
-            var slider = $(container_id+" .timerange-slider-section");
             console.log('inner navigation %s', graph);
-            load_graph(href,container_id+" .graph-body",slider);
+            load_graph(href,container_id+" .graph-body");
             setup_graph_header(href,container_id+" .graph-header",true,remove_callback_);
             graph_view.parent().attr("href","#/graph/"+href);
           });
@@ -839,8 +805,8 @@ function app() {
 
 
   function setup_graph(name_) {
-    $("#graph-box-container").html($.templates("#graph-template").render([{klass: "tall-graph",slider: true}]));
-    load_graph(name_,"#graph-box .graph-body",true);
+    $("#graph-box-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
+    load_graph(name_,"#graph-box .graph-body");
     setup_graph_header(name_,"#graph-box .graph-header",false);
     $("#graph-box").show();
     push_graph_to_recent(name_);
@@ -993,9 +959,8 @@ function app() {
           return;
         }
         var graph = $(container).attr("data-graph");
-        var slider = $(obj_).parent().find(".timerange-slider");
         if ( graph_split(graph) ) {
-          load_graph(graph,"#"+$(container).attr('id')+" .graph-body",slider.length>0);
+          load_graph(graph,"#"+$(container).attr('id')+" .graph-body");
           console.log('refresh_loaded_graphs: %s',graph);
         }
       });
