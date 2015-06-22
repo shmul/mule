@@ -415,12 +415,8 @@ function app() {
       var x_axis_ticks_count = 5;
     }
 
-    var from_element = Math.floor(data_.length * from_percent_ / 100);
-    var to_element = Math.ceil(data_.length * to_percent_ / 100);
-    var sliced_data = data_.slice(from_element, to_element + 1);
-
     MG.data_graphic({
-      data: [sliced_data],
+      data: data_,
       // This breaks the chart because MetricsGraphics assumes the samples resolution is 1 day
       // missing_is_zero: true,
       full_width: true,
@@ -536,7 +532,14 @@ function app() {
               label: "crit-high" },
             ]
         }
-        var markers = []; //TODO - add anomalies
+        var markers = [];
+        if ( alerts_.anomalies && alerts_.anomalies[name_] ) {
+          var dt = alerts_.anomalies[name_][0];
+          markers.push({
+            date : new Date(dt * 1000),
+            label: 'Anomaly'
+          });
+        }
         var from_percent = 0;
         var to_percent = 100;
         draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_);
