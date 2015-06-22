@@ -25,10 +25,10 @@ function key_impl(initial_,key_,callback_,raw_) {
   var rv = {};
   var add_rp = /;$/.test(key_) || raw_;
 
-  function push_key(e) {
-    if ( add_rp )
+  function push_key(e,dont_trim) {
+    if ( add_rp || dont_trim) {
       rv[e] = true;
-    else
+    } else
       rv[e.replace(/;.+$/,"")] = true;
   }
 
@@ -39,9 +39,10 @@ function key_impl(initial_,key_,callback_,raw_) {
     });
   } else {
     var re = new RegExp("^" + key_+"[\\w;:-]*");
+    var key_sc = key_+";";
     $.each(k,function(idx,e) {
       if ( re.test(e) )
-        push_key(e);
+        push_key(e,e.startsWith(key_sc));
     });
   }
 

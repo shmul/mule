@@ -103,7 +103,7 @@ change the title of the main keys table to reflect the key being browsed. Use br
 
 add a progress indication when navigating the keys table
 
-support annotations over the graph - use the key/value capabilities
+support annotations over the graph - use the key/value capabilities. Added independently of graphs and displayed over all the graphs based on a toggle.
 
 to highlight the difference between latest and now, artificially add the now timestamp to the graph. This can be done by chaning the filter to "now" instead of the usual "latest"
 

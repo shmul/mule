@@ -440,7 +440,7 @@ function app() {
       small_text: use_small_fonts,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
-          .text(rollover_date_format(d.date) + " " + rollover_value_format(d.value));
+          .text(rollover_date_format(d.date) + " | " + rollover_value_format(d.value));
       }
     });
 
@@ -672,32 +672,45 @@ function app() {
       source :function (query,process) {
         var add_button = ($(input_).parent().find("[type=submit]"))[0];
         var original = $(add_button).html();
+        console.log('in source', query,context.scent_keys);
 
         function callback(keys_) {
-          if ( !context.scent_keys ) {
-            context.scent_keys = string_set_add_array({},keys_);
-          } else if ( /[\.;]$/.test(context.query) ) {
-            string_set_add_array(context.scent_keys,keys_);
-          }
+          context.scent_keys = string_set_add_array(context.scent_keys || {},keys_);
+          context.just_selected = false;
           $(add_button).html(original);
+          console.log('out source', context.scent_keys);
           process(string_set_keys(context.scent_keys));
         }
 
         context.query = query;
-        if ( !context.scent_keys ) {
+        scent_ds.key(query,callback);
+
+        if ( !context.scent_keys || query.length==0 ) {
           $(add_button).html('<i class="fa fa-spinner"></i>');
           scent_ds.key("",callback);
-        } else if ( /[\.;]$/.test(context.query) ) {
+        } else if ( context.just_selected || /[\.;]$/.test(context.query) ) {
           $(add_button).html('<i class="fa fa-spinner"></i>');
           scent_ds.key(query,callback);
         } else {
           return string_set_keys(context.scent_keys);
         }
+
       },
+
       afterSelect : function(query) {
-        //console.log('after select %s', query);
+        if ( !/;\d+\w:\d+\w$/.test(query) ) {
+          console.log('after select %s', query);
+          var ths = this;
+          $.doTimeout(2,function() {
+            context.just_selected = true;
+            ths.lookup();
+          });
+        }
       },
+
       minLength: 0,
+      autoSelect: false,
+      showHintOnFocus: true,
       items: 'all',
     });
 
