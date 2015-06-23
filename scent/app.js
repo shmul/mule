@@ -218,7 +218,7 @@ function app() {
             var cur = alerts[i][j][1];
             d.push({
               graph : alerts[i][j][0],
-              time : date_format(new Date(cur[8]*1000)),
+              time : time_format(new Date(cur[8]*1000)),
               value : cur[6],
               period : cur[4],
               stale : cur[5],
