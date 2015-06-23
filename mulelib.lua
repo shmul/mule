@@ -103,6 +103,9 @@ function sequence(db_,name_)
     end
 
     -- fix_timestamp(latest_idx) -- enable to fix the latest timestamp
+    if latest_idx>0 then
+        logw("latest_timestamp is 0",_name,latest_idx)
+    end		       
     return get_timestamp(latest_idx)
   end
 
