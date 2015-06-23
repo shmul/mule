@@ -410,18 +410,38 @@ function app() {
       var sorted_data = [];
       $.each(raw_data_,function(name,value) {
         if ( value[0] && name!=name_ ) {
-          sorted_data.push([name,value[0][0]]);
+          sorted_data.push({label: name,value: value[0][0]});
         }
       });
-      sorted_data.sort(function(a,b) { return b[1]-a[1]; });
+      sorted_data.sort(function(a,b) { return b.value-a.value; });
       // the data is sorted in descending order. Each element is [name,value]
 
       var content = $.templates("#piechart-template").render([{}]);
 
+      function callback() {
+        MG.data_graphic({
+          data: sorted_data,
+          chart_type: 'bar',
+          x_accessor: 'value',
+          y_accessor: 'label',
+          //        baseline_accessor: 'baseline',
+          //        predictor_accessor: 'prediction',
+          width: 595,
+          right: 10,
+          target: '#piechart-graph-container',
+          animate_on_load: true,
+          x_axis: false,
+          small_text: true,
+          full_width: true
+        });
+      }
+
       bootbox.dialog({
-        title: name_ + " | " + date_,
-        message: content
+        title: name_ + " | " + d3.time.format("%y-%m-%dT%H:%M")(date_),
+        message: content,
+        size: 'medium'
       });
+      $.doTimeout(500,callback);
 
     }
 
@@ -632,22 +652,6 @@ function app() {
         load_graph(name,"#"+id+" .graph-body");
         setup_graph_header(name,"#"+id+" .graph-header",true,graph_remove_callback);
       }
-
-
-      $(".chart-show-modal").click(function(e) {
-        var graph = $(e.target).closest(".small-graph").attr("data-target");
-
-        $('#modal-target').on('shown.bs.modal', function (e) {
-          load_graph(graph,"#modal-graph");
-        });
-
-        // cleanup
-        $('#modal-target').on('hidden.bs.modal', function (e) {
-          $("#modal-graph").empty();
-        });
-
-        $("#modal-target").modal('show');
-      });
 
     });
 
