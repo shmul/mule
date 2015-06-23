@@ -28,6 +28,8 @@ function app() {
   };
 
 
+  var time_format = d3.time.format("%y-%m-%dT%H:%M");
+
   function graph_to_id(graph_) {
     return graph_.replace(/[;:]/g,"_");
   }
@@ -180,7 +182,6 @@ function app() {
 
       // 0-critical, 1-warning, 2-anomaly, 3-Stale, 4-Normal
 
-      var date_format = d3.time.format("%Y-%M-%d:%H%M%S");
       var alerts = [[],[],[],[],[]];
       for (n in raw_data_) {
         var current = raw_data_[n];
@@ -210,7 +211,7 @@ function app() {
             cur.sort();
             d.push({
               graph : alerts[i][j][0],
-              time : date_format(new Date(cur[0]*1000)),
+              time : time_format(new Date(cur[0]*1000)),
               type : "anomaly" // this is needed for jsrender's predicate in the loop
             });
           } else {
@@ -426,7 +427,7 @@ function app() {
       var content = $.templates("#piechart-container-template").render([{}]);
 
       bootbox.dialog({
-        title: name_ + " | " + d3.time.format("%y-%m-%dT%H:%M")(date_),
+        title: name_ + " | " + time_format(date_),
         message: content,
         size: 'large'
       });
@@ -445,7 +446,6 @@ function app() {
   }
 
   function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_) {
-    var rollover_date_format = d3.time.format("%y-%m-%dT%H:%M");
     var rollover_value_format = d3.format(",d");
 
     if ($(target_).hasClass("tall-graph")) {
@@ -459,7 +459,7 @@ function app() {
     MG.data_graphic({
       data: data_,
       // This breaks the chart because MetricsGraphics assumes the samples resolution is 1 day
-      // missing_is_zero: true,
+      //missing_is_zero: true,
       full_width: true,
       full_height: true,
       bottom: 40,
@@ -475,7 +475,7 @@ function app() {
       small_text: use_small_fonts,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
-          .text(rollover_date_format(d.date) + " | " + rollover_value_format(d.value));
+          .text(time_format(d.date) + " | " + rollover_value_format(d.value));
       }
     });
 
@@ -555,7 +555,8 @@ function app() {
           }
         };
         data.sort(function(a,b) { return a.date-b.date });
-
+        var now = new Date();
+        data.push({date: now, value: 0, dt: now});
         add_bounds(data);
         var graph_alerts = alerts_[name_];
         var baselines = [];
@@ -911,8 +912,8 @@ function app() {
       }
 
       $("#main-keys-container").empty().html($.templates("#keys-table-template").render({records: records}));
-      var dt = $("#keys-table").DataTable({iDisplayLength: 15,
-                                           aLengthMenu: [ 15, 30, 60 ],
+      var dt = $("#keys-table").DataTable({iDisplayLength: 40,
+                                           aLengthMenu: [ 20, 40, 60 ],
                                            destroy: true,
                                            order: [[ 2, "desc" ]]});
       set_click_behavior();

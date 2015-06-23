@@ -33,8 +33,7 @@
       <!-- header logo: style can be found in header.less -->
       <header class="main-header">
         <a href="./index.html" class="logo">
-          <b>Scent</b> of a <b>Mule</b>
-          <img src="./img/mule_hires.jpg" height="50%">
+          <img src="./img/mule_light_hires.png" height="100%">
         </a>
         <!-- Header Navbar: style can be found in header.less -->
         <nav class="navbar navbar-static-top" role="navigation">
@@ -225,7 +224,7 @@
         </script>
 
         <script id="keys-table-template" type="text/x-jsrender">
-          <table id="keys-table" class="table table-bordered table-striped">
+          <table id="keys-table" class="dataTable table-bordered table-striped compact">
             <thead>
               <tr>
                 <th>Key</th>
@@ -252,9 +251,10 @@
           <div class="box-header with-border" data-graph="{{:graph}}">
             <small class="box-title">
               <div class="{{:klass}}-header" >
-               {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
-               {{for links}}
-                &nbsp;|&nbsp;
+                {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
+                &nbsp;
+                {{for links}}
+                |
                 {{if current}}
                 <span class ="bg-light-blue">{{:rp}}</span>
                 {{else}}
@@ -355,7 +355,7 @@
         <section class="content">
           <div id="main-box">
             <div class="row">
-              <div class="col-md-8 col-md-offset-2">
+              <div class="col-md-6 col-md-offset-3">
                 <div class="box" id="main-search-box">
                   <div class="box-header with-border">
                     <h3 class="box-title">Search for keys (use '.' and ';' to get subkeys)</h3>
@@ -369,33 +369,7 @@
             </div>
 
             <div class="row">
-              <div class="col-md-4 col-md-offset-2">
-                <div class="box">
-                  <div class="box-header with-border">
-                    <h3 class="box-title">Recent</h3>
-                  </div>
-                  <div class="box-body container-fluid">
-                    <ul id="main-recent-container">
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <div class="box">
-                  <div class="box-header with-border">
-                    <h3 class="box-title">Favorite</h3>
-                  </div>
-                  <div class="box-body container-fluid">
-                    <ul id="main-favorite-container">
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-8 col-md-offset-2">
+              <div class="col-md-4 col-md-offset-3">
                 <div class="box">
                   <div class="box-header with-border">
                     <h3 class="box-title">Keys</h3>
@@ -406,6 +380,27 @@
                   </div>
                 </div>
               </div>
+              <div class="col-md-2">
+                <div class="box">
+                  <div class="box-header with-border">
+                    <h3 class="box-title">Recent</h3>
+                  </div>
+                  <div class="box-body container-fluid">
+                    <ul id="main-recent-container">
+                    </ul>
+                  </div>
+                </div>
+                <div class="box">
+                  <div class="box-header with-border">
+                    <h3 class="box-title">Favorite</h3>
+                  </div>
+                  <div class="box-body container-fluid">
+                    <ul id="main-favorite-container">
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
