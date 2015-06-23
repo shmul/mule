@@ -907,7 +907,7 @@ function app() {
         $(".keys-table-key").click(function(e) {
           var key = $(e.target).attr("data-target");
 
-          if ( key ) {
+          if ( key && key.length>0 ) {
             var metric_parts = key.split(".");
             var accum = [];
             for (var i in metric_parts) {
@@ -917,7 +917,8 @@ function app() {
             }
             metric_parts.unshift({ key: "", title:"[root]&nbsp;"});
             $("#main-keys-header-container").empty().html($.templates("#keys-table-header-template").render([{parts:metric_parts}]));
-          }
+          } else
+            $("#main-keys-header-container").empty();
 
           scent_ds.key(key,populate_keys_table,true);
           e.stopPropagation();
