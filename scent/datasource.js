@@ -25,10 +25,10 @@ function key_impl(initial_,key_,callback_,raw_) {
   var rv = {};
   var add_rp = /;$/.test(key_) || raw_;
 
-  function push_key(e) {
-    if ( add_rp )
+  function push_key(e,dont_trim) {
+    if ( add_rp || dont_trim) {
       rv[e] = true;
-    else
+    } else
       rv[e.replace(/;.+$/,"")] = true;
   }
 
@@ -39,9 +39,10 @@ function key_impl(initial_,key_,callback_,raw_) {
     });
   } else {
     var re = new RegExp("^" + key_+"[\\w;:-]*");
+    var key_sc = key_+";";
     $.each(k,function(idx,e) {
       if ( re.test(e) )
-        push_key(e);
+        push_key(e,e.startsWith(key_sc));
     });
   }
 
@@ -49,7 +50,7 @@ function key_impl(initial_,key_,callback_,raw_) {
 }
 
 function mule_mockup () {
-  var fixtures_scripts = ["config","key","graph","alert"];
+  var fixtures_scripts = ["config","key","graph","piechart","alert"];
   var fixtures = {};
   const user = "Shmul the mule";
   ns=$.initNamespaceStorage('mule: ');
@@ -100,6 +101,13 @@ function mule_mockup () {
     });
   }
 
+  function piechart(graph_name_,time_,callback_) {
+    delayed(function() {
+      var pc = fixtures["piechart"];
+      callback_(pc);
+    });
+  }
+
   function key(key_,callback_,raw_) {
     delayed(function() {
       var all_keys = fixtures["key"];
@@ -144,6 +152,7 @@ function mule_mockup () {
   return {
     config : config,
     graph : graph,
+    piechart : piechart,
     key : key,
     alerts : alerts,
     load: load,
@@ -200,8 +209,14 @@ function mule_ds() {
   }
 
   function graph(graph_,callback_) {
-    mule_get("/graph/"+graph_+"?filter=latest",function(data_) {
+    mule_get("/graph/"+graph_+"?filter=now",function(data_) {
       callback_(data_[graph_]);
+    },30);
+  }
+
+  function piechart(graph_,time_,callback_) {
+    mule_get("/graph/"+graph_+"?count=100&level=1&timestamp="+time_,function(data_) {
+      callback_(data_);
     },30);
   }
 
@@ -254,6 +269,7 @@ function mule_ds() {
   return {
     config : config,
     graph : graph,
+    piechart : piechart,
     key : key,
     alerts : alerts,
     load: load,

@@ -6,7 +6,7 @@ Mule is an RRD tool designed with simplicity of use in mind. Its main use case i
 * simple input format
 * can keep multiple sequences for the same metric with different retention settings.
 * metrics are organized in hierarchies. Sequences of parent nodes are automatically updated when their children are.
-* JSON interface which can be used for graph generation and threshold monitoring (by tools like nagios).
+* RESTful interface which can be used for graph generation and threshold monitoring (by tools like nagios).
 
 # Definitions
 
@@ -64,7 +64,10 @@ or
 e.g.
 
     beer.stout.irish 20 74857843
-impling 20 orders of `beer.stout.irish` in the given timestamp (measured in seconds - aka unix time). The value (i.e. 20) is usually added to the number already calculated for this timestamp, but if an equal sign `=` precends the value then it replaces the number rather than adding to it.
+impling 20 orders of `beer.stout.irish` in the given timestamp (measured in seconds - aka unix time). The value (i.e. 20) is usually added to the number already calculated for this timestamp. A couple of additional metric types are supported:
+# Gauge - if an equal sign `=` precedes the value then it replaces the number rather than adding to it
+# High water mark - if `^` preceds the value the maximal value will be used
+
 e.g.
 
     beer.stout.irish =32 74858041
@@ -229,6 +232,8 @@ Simply stops the running http deamon. This is not meant to be secure by any mean
 Creates a backup of the db next to it. Returns the path.
 
 
+### Processing speed
+On a c3.2xlarge AWS instance with SSD in RAID 0, Mule peeked ~200 files per second, with an average file size of 3k, with average number of lines of 42 . The nginx based frontend easily handled writes of ~300 files per secondl
 
 ## Install
 
@@ -368,18 +373,27 @@ To setup the box:
 1. `vagrant ssh`
 1. /vagrant/setup.sh
 This should setup a machine with all the relevant development dependencies + an Nginx server accessible from the your host @ localhost:3000/mule/
+
 # License
 
-Mule is distributed under the MIT license reproduced below. Mule uses several 3rd party modules whose licenses are described below
+Mule is distributed under the Apache License, Version 2.0.
 
-## MIT License
-Copyright (c) 2012 Trusteer Ltd.
+## Apache License
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+(c) Copyright IBM Corp., 2010, 2015
+Shmulik Regev, Dan Carmon
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 ## Luarocks
 Licensed under their [own license](http://luarocks.org/en/License)

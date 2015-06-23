@@ -28,6 +28,8 @@ function app() {
   };
 
 
+  var time_format = d3.time.format("%y-%m-%dT%H:%M");
+
   function graph_to_id(graph_) {
     return graph_.replace(/[;:]/g,"_");
   }
@@ -180,7 +182,6 @@ function app() {
 
       // 0-critical, 1-warning, 2-anomaly, 3-Stale, 4-Normal
 
-      var date_format = d3.time.format("%Y-%M-%d:%H%M%S");
       var alerts = [[],[],[],[],[]];
       for (n in raw_data_) {
         var current = raw_data_[n];
@@ -210,7 +211,7 @@ function app() {
             cur.sort();
             d.push({
               graph : alerts[i][j][0],
-              time : date_format(new Date(cur[0]*1000)),
+              time : time_format(new Date(cur[0]*1000)),
               type : "anomaly" // this is needed for jsrender's predicate in the loop
             });
           } else {
@@ -230,11 +231,10 @@ function app() {
       function set_click_behavior() {
         $(".alert-graph-name").click(function(e) {
           var graph = $(e.target).attr("data-target");
-          $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph",
-                                                                                   slider: true}]));
+          $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph"}]));
           $("#alert-graph-container").attr("data-graph",graph);
-          load_graph(graph,".graph-body",true);
-          setup_graph_header(graph,".graph-header",true);
+          load_graph(graph,".graph-body");
+          setup_graph_header(graph,".graph-header",true,null,"medium-graph");
 
           e.stopPropagation();
         });
@@ -402,10 +402,50 @@ function app() {
 
   function on_graph_point_click(name_, date_, dt_, value_) {
     console.log("on_graph_point_click: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
+
+    function callback(raw_data_) {
+      if ( !raw_data_ || raw_data_.length==0 ) {
+        notify('Unable to load chart','No data for "'+name_+'".');
+        return;
+      }
+      var sorted_data = [];
+      var sum = 0;
+      $.each(raw_data_,function(name,value) {
+        if ( value[0] && name!=name_ ) {
+          var metric = graph_split(name);
+          sorted_data.push({name: name,graph: metric[0],value: value[0][0]});
+          sum += value[0][0];
+        }
+      });
+
+      sorted_data.sort(function(a,b) { return b.value-a.value; });
+      // the data is sorted in descending order. Each element is [name,value]
+      var template_data = [];
+      for (var i in sorted_data) {
+        sorted_data[i].precentage = (100*sorted_data[i].value/sum).toPrecision(3);
+      }
+      var content = $.templates("#piechart-container-template").render([{}]);
+
+      bootbox.dialog({
+        title: name_ + " | " + time_format(date_),
+        message: content,
+        size: 'large'
+      });
+
+      $.doTimeout(500,function() {
+        $("#piechart-container").append($.templates("#piechart-template").render(sorted_data));
+        $("#piechart-container a").click(function(e) {
+          bootbox.hideAll();
+          return true;
+        });
+        $('.sparkline-bullet').sparkline('html',{type: 'bullet', targetColor: 'black',width: "100%"});
+      });
+    }
+
+    scent_ds.piechart(name_,dt_,callback);
   }
 
-  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,target_) {
-    var rollover_date_format = d3.time.format("%Y-%m-%d %H:%M");
+  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_) {
     var rollover_value_format = d3.format(",d");
 
     if ($(target_).hasClass("tall-graph")) {
@@ -416,14 +456,10 @@ function app() {
       var x_axis_ticks_count = 5;
     }
 
-    var from_element = Math.floor(data_.length * from_percent_ / 100);
-    var to_element = Math.ceil(data_.length * to_percent_ / 100);
-    var sliced_data = data_.slice(from_element, to_element + 1);
-
     MG.data_graphic({
-      data: [sliced_data],
+      data: data_,
       // This breaks the chart because MetricsGraphics assumes the samples resolution is 1 day
-      // missing_is_zero: true,
+      //missing_is_zero: true,
       full_width: true,
       full_height: true,
       bottom: 40,
@@ -434,13 +470,12 @@ function app() {
       target: target_,
       interpolate: "basic",
       show_confidence_band: ["lower", "upper"],
-      legend: [name_],
-      legend_target: ".legend",
       baselines: baselines_,
+      markers: markers_,
       small_text: use_small_fonts,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
-          .text(rollover_date_format(d.date) + " " + rollover_value_format(d.value));
+          .text(time_format(d.date) + " | " + rollover_value_format(d.value));
       }
     });
 
@@ -455,7 +490,7 @@ function app() {
 
     // Hook click events for the chart
     d3.selectAll(target_ + " svg .mg-rollover-rect rect")
-      .on("click", function (d,i) {
+      .on("dblclick", function (d,i) {
                      on_graph_point_click(name_, d.date, d.dt, d.value);
                    });
   }
@@ -499,22 +534,7 @@ function app() {
     });
   }
 
-  function setup_slider(slider_target, on_slider_change_callback) {
-    var slider_element = $(slider_target);
-    var timer_id;
-    slider_element.slider().on("slide", function (e) {
-      var from_to = slider_element.data("slider").getValue();
-      if (timer_id) {
-        clearTimeout(timer_id);
-        timer_id = null;
-      }
-      timer_id = setTimeout(function() {
-        on_slider_change_callback(from_to[0], from_to[1]);
-      }, 1000)
-    });
-  }
-
-  function load_graph(name_,target_,slider_) {
+  function load_graph(name_,target_) {
     function callback(raw_data_) {
       if ( !raw_data_ || raw_data_.length==0 ) {
         if ( !notified_graphs[name_] ) {
@@ -535,7 +555,8 @@ function app() {
           }
         };
         data.sort(function(a,b) { return a.date-b.date });
-
+        var now = new Date();
+        data.push({date: now, value: 0, dt: now});
         add_bounds(data);
         var graph_alerts = alerts_[name_];
         var baselines = [];
@@ -551,28 +572,17 @@ function app() {
               label: "crit-high" },
             ]
         }
-
+        var markers = [];
+        if ( alerts_.anomalies && alerts_.anomalies[name_] ) {
+          var dt = alerts_.anomalies[name_][0];
+          markers.push({
+            date : new Date(dt * 1000),
+            label: 'Anomaly'
+          });
+        }
         var from_percent = 0;
         var to_percent = 100;
-        if (slider_) {
-          var slider_target = $(target_).parent().find(".timerange-slider");
-          if (slider_target.length == 1) {
-            if (slider_target[0].value) {
-              // there's an existing slider - fetch its range
-              var from_to = slider_target[0].value.split(",");
-              from_percent = parseInt(from_to[0]);
-              to_percent = parseInt(from_to[1]);
-            } else {
-              // setup a new slider
-              setup_slider(slider_target[0], function (new_from, new_to) {
-                draw_graph(name_,data,new_from,new_to,baselines,target_);
-              });
-            }
-          } else {
-            console.log("Error - someone asked for a slider but didn't provide a timerange-slider input");
-          }
-        }
-        draw_graph(name_,data,from_percent,to_percent,baselines,target_);
+        draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_);
 
         remove_spinner(target_);
       });
@@ -637,24 +647,8 @@ function app() {
         var id = "chart-"+i+"-container";
         $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
         load_graph(name,"#"+id+" .graph-body");
-        setup_graph_header(name,"#"+id+" .graph-header",true,graph_remove_callback);
+        setup_graph_header(name,"#"+id+" .graph-header",true,graph_remove_callback,"small-graph");
       }
-
-
-      $(".chart-show-modal").click(function(e) {
-        var graph = $(e.target).closest(".small-graph").attr("data-target");
-
-        $('#modal-target').on('shown.bs.modal', function (e) {
-          load_graph(graph,"#modal-graph");
-        });
-
-        // cleanup
-        $('#modal-target').on('hidden.bs.modal', function (e) {
-          $("#modal-graph").empty();
-        });
-
-        $("#modal-target").modal('show');
-      });
 
     });
 
@@ -705,29 +699,45 @@ function app() {
       source :function (query,process) {
         var add_button = ($(input_).parent().find("[type=submit]"))[0];
         var original = $(add_button).html();
+        //console.log('in source', query,context.scent_keys);
 
         function callback(keys_) {
-          if ( !context.scent_keys ) {
-            context.scent_keys = string_set_add_array({},keys_);
-          } else if ( /[\.;]$/.test(context.query) ) {
-            string_set_add_array(context.scent_keys,keys_);
-          }
+          context.scent_keys = string_set_add_array(context.scent_keys || {},keys_);
+          context.just_selected = false;
           $(add_button).html(original);
+          //console.log('out source', context.scent_keys);
           process(string_set_keys(context.scent_keys));
         }
 
         context.query = query;
-        if ( !context.scent_keys ) {
+        scent_ds.key(query,callback);
+
+        if ( !context.scent_keys || query.length==0 ) {
           $(add_button).html('<i class="fa fa-spinner"></i>');
           scent_ds.key("",callback);
-        } else if ( /[\.;]$/.test(context.query) ) {
+        } else if ( context.just_selected || /[\.;]$/.test(context.query) ) {
           $(add_button).html('<i class="fa fa-spinner"></i>');
           scent_ds.key(query,callback);
         } else {
           return string_set_keys(context.scent_keys);
         }
+
       },
+
+      afterSelect : function(query) {
+        if ( !/;\d+\w:\d+\w$/.test(query) ) {
+          //console.log('after select %s', query);
+          var ths = this;
+          $.doTimeout(2,function() {
+            context.just_selected = true;
+            ths.lookup();
+          });
+        }
+      },
+
       minLength: 0,
+      autoSelect: false,
+      showHintOnFocus: true,
       items: 'all',
     });
 
@@ -743,12 +753,10 @@ function app() {
       recent_.unshift(name_);
       recent_.length = Math.min(recent_.length,10);
       scent_ds.save(user,"recent",recent_);
-      // we don't updated the recent list as it seems to mess with the sidebar search form
-      // and it might very well wait for the next refresh
     });
   }
 
-  function setup_graph_header(name_,graph_header_container_,inner_navigation_,remove_callback_) {
+  function setup_graph_header(name_,graph_header_container_,inner_navigation_,remove_callback_,klass_) {
 
     generate_all_graphs(name_,function(pairs_) {
       var links = [];
@@ -781,8 +789,18 @@ function app() {
             }
             metric = [name_];
           }
+          var suffix = [";",metric[1],":",metric[2]].join("");
           metric = metric[0];
-          graph_box_header(graph_header_container_,{type: "graph", title: metric, graph: name_,
+          var metric_parts = metric.split(".");
+          var accum = [];
+          for (var i in metric_parts) {
+            accum.push(metric_parts[i]);
+            var title = (accum.length>1 ? "." : "") + metric_parts[i];
+            metric_parts[i] = { href: accum.join(".")+suffix, title: title }
+          }
+
+          graph_box_header(graph_header_container_,{klass: klass_,
+                                                    type: "graph", title: metric, parts: metric_parts, graph: name_,
                                                     links: links,favorite: favorite, alerted: ac.title, color: ac.color,
                                                     full: !!inner_navigation_, remove: !!remove_callback_});
           if ( remove_callback_ ) {
@@ -800,10 +818,9 @@ function app() {
             var graph = $(container).attr("data-graph"); // this is the existing graph
             var container_id = "#"+$(container).attr("id");
             var graph_view = $(container).find(".graph-view");
-            var slider = $(container_id+" .timerange-slider-section");
             console.log('inner navigation %s', graph);
-            load_graph(href,container_id+" .graph-body",slider);
-            setup_graph_header(href,container_id+" .graph-header",true,remove_callback_);
+            load_graph(href,container_id+" .graph-body");
+            setup_graph_header(href,container_id+" .graph-header",true,remove_callback_,klass_);
             graph_view.parent().attr("href","#/graph/"+href);
           });
 
@@ -838,9 +855,9 @@ function app() {
 
 
   function setup_graph(name_) {
-    $("#graph-box-container").html($.templates("#graph-template").render([{klass: "tall-graph",slider: true}]));
-    load_graph(name_,"#graph-box .graph-body",true);
-    setup_graph_header(name_,"#graph-box .graph-header",false);
+    $("#graph-box-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
+    load_graph(name_,"#graph-box .graph-body");
+    setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph");
     $("#graph-box").show();
     push_graph_to_recent(name_);
   }
@@ -861,8 +878,12 @@ function app() {
                       });
     load_persistent(function(persistent_) {
       load_graphs_lists("#main-favorite-container","#favorite-template",persistent_.favorites);
-      load_graphs_lists("#main-recent-container","#recent-template",persistent_.dashboards);
     });
+
+    load_recent(function(recent_) {
+      load_graphs_lists("#main-recent-container","#recent-template",recent_);
+    });
+
 
 
     function populate_keys_table(keys_) {
@@ -891,8 +912,8 @@ function app() {
       }
 
       $("#main-keys-container").empty().html($.templates("#keys-table-template").render({records: records}));
-      var dt = $("#keys-table").DataTable({iDisplayLength: 15,
-                                           aLengthMenu: [ 15, 30, 60 ],
+      var dt = $("#keys-table").DataTable({iDisplayLength: 40,
+                                           aLengthMenu: [ 20, 40, 60 ],
                                            destroy: true,
                                            order: [[ 2, "desc" ]]});
       set_click_behavior();
@@ -988,10 +1009,9 @@ function app() {
           return;
         }
         var graph = $(container).attr("data-graph");
-        var slider = $(obj_).parent().find(".timerange-slider");
         if ( graph_split(graph) ) {
-          load_graph(graph,"#"+$(container).attr('id')+" .graph-body",slider.length>0);
-          console.log('refresh_loaded_graphs: %s',graph);
+          load_graph(graph,"#"+$(container).attr('id')+" .graph-body");
+          //console.log('refresh_loaded_graphs: %s',graph);
         }
       });
       return true;
@@ -1035,7 +1055,7 @@ function app() {
       update_alerts(); // with no selected category it just updates the count
     }
 
-    router.get(/(index.html)?\/?(.*)$/i, function(req) {
+    router.get(/^(index.html)?$/i, function(req) {
       set_title("");
       globals();
       setup_main(req.params[1]);

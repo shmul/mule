@@ -125,7 +125,7 @@ function sequence(db_,name_)
 
   _seq_storage = db_.sequence_storage(name_,_period/_step)
 
-  local function update(timestamp_,hits_,sum_,replace_)
+  local function update(timestamp_,hits_,sum_,type_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
     local timestamp,hits,sum = at(idx)
 
@@ -147,19 +147,27 @@ function sequence(db_,name_)
       return
     end
 
-    if (not replace_) and adjusted_timestamp==timestamp and hits>0 then
-      -- no need to worry about the latest here, as we have the same (adjusted) timestamp
-      hits,sum = hits+(hits_ or 1), sum+sum_
-    else
+
+    if (not type_) then
+      if adjusted_timestamp==timestamp and hits>0 then
+        -- no need to worry about the latest here, as we have the same (adjusted) timestamp
+        hits,sum = hits+(hits_ or 1), sum+sum_
+      else
+        hits,sum = hits_ or 1,sum_
+      end
+    elseif type_=='=' then
       hits,sum = hits_ or 1,sum_
+    elseif type_=='^' then
+      hits,sum = hits_ or 1,math.max(sum_,sum)
     end
+
     at(idx,nil,adjusted_timestamp,hits,sum)
     local lt = latest_timestamp()
     if adjusted_timestamp>lt then
       latest(idx)
     else
       -- {{ debugging code
-      if adjusted_timestamp<lt then      
+      if adjusted_timestamp<lt then
         debugging_helper("latest not updated")
       end
       -- }}
@@ -174,10 +182,9 @@ function sequence(db_,name_)
     local j = 1
     local match = string.match
     while j<#slots_ do
-      local sum,hits,timestamp = tonumber(slots_[j]),tonumber(slots_[j+1]),tonumber(slots_[j+2])
+      local timestamp,hits,sum,typ = legit_input_line("",tonumber(slots_[j]),tonumber(slots_[j+2]),tonumber(slots_[j+1]))
       j = j + 3
-      local replace,s = match(sum,"(=?)(%d+)")
-      update(timestamp,hits,tonumber(s),replace)
+      update(timestamp,hits,sum,typ)
     end
 
     _seq_storage.save(_name)
@@ -191,7 +198,7 @@ function sequence(db_,name_)
     for s in indices() do
       local ts = get_timestamp(s)
       if ts>0 and ts<=adjusted_timestamp then
-        update(ts,0,0,true)
+        update(ts,0,0,'=')
         affected = true
       end
     end
@@ -354,6 +361,7 @@ end
 
 function mule(db_)
   local _factories = {}
+  local _sorted_factories
   local _alerts = {}
   local _anomalies = {} -- these do not persist as they can be recalulated
   local _db = db_
@@ -373,7 +381,10 @@ function mule(db_)
     for fm,rps in pairs(factories) do
       _factories[fm] = uniq_pairs(rps)
     end
+    _sorted_factories = keys(_factories)
+    table.sort(_sorted_factories)
   end
+
   local function add_factory(metric_,retentions_)
     metric_ = string.match(metric_,"^(.-)%.*$")
     for _,rp in ipairs(retentions_) do
@@ -399,11 +410,15 @@ function mule(db_)
     return coroutine.wrap(
       function()
         local metric_rps = {}
-        for fm,rps in pairs(_factories) do
-          if is_prefix(metric_,fm) then
-            table.insert(metric_rps,{fm,rps})
+        local idx = 1
+        while idx<=#_sorted_factories and _sorted_factories[idx]<=metric_ do
+          if is_prefix(metric_,_sorted_factories[idx]) then
+            local fm = _sorted_factories[idx]
+            table.insert(metric_rps,{fm,_factories[fm]})
           end
+          idx = idx + 1
         end
+
         local seqs = {}
         for m in metric_hierarchy(metric_) do
           for _,frp in ipairs(metric_rps) do
@@ -491,8 +506,7 @@ function mule(db_)
     local seq = sequence(_db,name_)
     local now = time_now()
     for j,sl in ipairs(sparse_.slots()) do
-      local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,
-                                                sl._hits==nil)
+      local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,sl._type)
       if adjusted_timestamp and sum then
         _hints[name_] = _hints[name_] or {}
         if not _hints[name_]._rank_ts then
@@ -745,7 +759,8 @@ function mule(db_)
 
   local function latest(resource_,opts_)
     opts_ = opts_ or {}
-    return slot(resource_,{timestamp="latest",readable=is_true(opts_.readable)})
+    opts_.timestamp = "latest"
+    return slot(resource_,opts_)
   end
 
 
@@ -984,14 +999,59 @@ function mule(db_)
     return wrap_json(str)
   end
 
+  local function merge_lines(sorted_file_,step_,period_,now_)
+    local last_metric,seq
+    local str = stdout("")
+    local format = string.format
+    local period = parse_time_unit(period_)
+
+    local function output_sequence(metric_,seq_)
+      for _,s in ipairs(seq_.slots()) do
+        str.write(metric_," ",s._sum," ",s._timestamp," ",s._hits,"\n")
+      end
+    end
+
+    function helper(f)
+      for l in f:lines() do
+        local items,t = parse_input_line(l)
+        if t=="command" then
+          logw("sorted_line - command in input file. ignoring",l)
+        else
+          if items[1]~=last_metric then
+            if seq then
+              output_sequence(last_metric,seq)
+            end
+            last_metric = items[1]
+            seq = sparse_sequence(format("%s;%s:%s",last_metric,step_,period_))
+          end
+
+          local timestamp,hits,sum,_ = legit_input_line(items[1],items[2],items[3],items[4])
+          if not timestamp then
+            logw("merge_lines - bad params",l)
+          elseif timestamp>now_-period then
+            seq.update(timestamp,hits,sum)
+          end
+        end
+
+      end
+
+      if seq then
+        output_sequence(seq)
+      end
+      return true
+    end
+
+    with_file(sorted_file_,helper)
+  end
+
   local function command(items_)
     local func = items_[1]
     local dispatch = {
       graph = function()
-        return graph(items_[2],{timestamp=items_[3]})
+        return graph(items_[2],qs_params(items_[3]))
       end,
       key = function()
-        return key(items_[2],{timestamp=items_[3]})
+        return key(items_[2],qs_params(items_[3]))
       end,
       alert = function()
         return alert(items_[2])
@@ -1010,19 +1070,22 @@ function mule(db_)
         })
       end,
       latest = function()
-        return latest(items_[2],{})
+        return latest(items_[2],qs_params(items_[3]))
       end,
       slot = function()
-        return slot(items_[2],{timestamp=items_[3]})
+        return slot(items_[2],qs_params(items_[3]))
       end,
       gc = function()
-        return gc(items_[2],{timestamp=items_[3],force=is_true(items_[4])})
+        return gc(items_[2],qs_params(items_[3]))
       end,
       reset = function()
-        return reset(items_[2],{timestamp=items_[3],force=is_true(items_[4]),level=tonumber(items_[5])})
+        return reset(items_[2],qs_params(items_[3]))
       end,
       dump = function()
-        return dump(items_[2],{to_str=is_true(items_[3])})
+        return dump(items_[2],qs_params(items_[3]))
+      end,
+      merge_lines = function()
+        return merge_lines(items_[2],items_[3],items_[4],items_[5])
       end,
     }
 
@@ -1092,6 +1155,7 @@ function mule(db_)
     end
     col.tail()
     logi("factories_out",table_size(_factories))
+    uniq_factories()
     return wrap_json(str)
   end
 
@@ -1117,8 +1181,8 @@ function mule(db_)
   end
 
 
-  local function update_line(metric_,sum_,timestamp_,hits_)
-    local timestamp,hits,sum,replace = legit_input_line(metric_,sum_,timestamp_,hits_)
+  local function update_line(metric_,sum_,timestamp_,hits_,now_)
+    local timestamp,hits,sum,typ = legit_input_line(metric_,sum_,timestamp_,hits_)
 
     if not timestamp then
       logw("update_line - bad params",metric_,sum_,timestamp_)
@@ -1129,12 +1193,19 @@ function mule(db_)
     end
 
     for n,m in get_sequences(metric_) do
-      local seq = _updated_sequences[n] or sparse_sequence(n)
-      local adjusted_timestamp,sum = seq.update(timestamp,hits,sum,replace)
-      -- it might happen that we try to update a too old timestamp. In such a case
-      -- the update function returns null
-      if adjusted_timestamp then
-        _updated_sequences[n] = seq
+      local skip = false
+      if now_ then
+        local metric,step,period = parse_name(n)
+        skip = timestamp_<now_-period
+      end
+      if not skip then
+        local seq = _updated_sequences[n] or sparse_sequence(n)
+        local adjusted_timestamp,sum = seq.update(timestamp,hits,sum,typ)
+        -- it might happen that we try to update a too old timestamp. In such a case
+        -- the update function returns null
+        if adjusted_timestamp then
+          _updated_sequences[n] = seq
+        end
       end
     end
   end
