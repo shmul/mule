@@ -950,59 +950,55 @@ function app() {
       assert.equal(timeunit_to_seconds("5m"),300);
       assert.equal(timeunit_to_seconds("1y"),60*60*24*365);
       assert.equal(timeunit_to_seconds("1d"),60*60*24);
-      assert.deepEqual(graph_split("brave.frontend;1d:2y"),["brave.frontend","1d","2y"]);
-      assert.deepEqual(graph_split("event.buka_mr_result;1h:90d"),["event.buka_mr_result","1h","90d"]);
+      assert.deepEqual(graph_split("beer.ale;1d:2y"),["beer.ale","1d","2y"]);
+      assert.deepEqual(graph_split("wine.red;1h:90d"),["wine.red","1h","90d"]);
 
       generate_all_graphs("no.such.graph:1h:90d",
                           function(actual_){
                             assert.deepEqual(actual_,[]);
                           });
-      generate_all_graphs("kashmir_report_db_storer.sql_queries;1h:90d",
+      generate_all_graphs("scotch.sql_single_malt;1h:90d",
                           function(actual_) {
                             assert.deepEqual(actual_,
-                                             ["kashmir_report_db_storer.sql_queries;5m:3d",
-                                              "kashmir_report_db_storer.sql_queries;1h:90d",
-                                              "kashmir_report_db_storer.sql_queries;1d:2y"]);
+                                             ["scotch.sql_single_malt;5m:3d",
+                                              "scotch.sql_single_malt;1h:90d",
+                                              "scotch.sql_single_malt;1d:2y"]);
                           });
 
-      generate_all_graphs("malware_signature.foo.bar;1h:90d",
+      generate_all_graphs("snark.foo.bar;1h:90d",
                           function(actual_) {
                             assert.deepEqual(actual_,
-                                             ["malware_signature.foo.bar;1d:2y"]);
+                                             ["snark.foo.bar;1d:2y"]);
                           });
 
-      generate_all_graphs("malware_signature.foo.bar;60d:90y",
+      generate_all_graphs("snark.foo.bar;60d:90y",
                           function(actual_) {
                             assert.deepEqual(actual_,
-                                             ["malware_signature.foo.bar;1h:90d","malware_signature.foo.bar;1d:2y"]);
+                                             ["snark.foo.bar;1h:90d","snark.foo.bar;1d:2y"]);
                           });
-      assert.equal(graph_refresh_time("malware_signature.foo.bar;1h:90d"),3600);
-      assert.equal(graph_refresh_time("kashmir_report_db_storer.sql_queries;5m:3d"),300);
+      assert.equal(graph_refresh_time("snark.foo.bar;1h:90d"),3600);
+      assert.equal(graph_refresh_time("scotch.sql_single_malt;5m:3d"),300);
     });
 
-    const expected = ["brave;1d:2y",
-                      "brave;1h:90d",
-                      "brave;5m:3d",
-                      "brave.backend;1d:2y",
-                      "brave.backend;1h:90d",
-                      "brave.backend;5m:3d",
-                      "brave.hrl_collect;1d:2y",
-                      "brave.hrl_collect;1h:90d",
-                      "brave.hrl_collect;5m:3d",
-                      "brave.request;1d:2y",
-                      "brave.request;1h:90d",
-                      "brave.request;5m:3d",
-                      "brave.frontend;1d:2y",
-                      "brave.frontend;1h:90d",
-                      "brave.frontend;5m:3d"];
-    scent_ds.key("brave",function(actual_) {
+    scent_ds.key("beer",function(actual_) {
       QUnit.test("key 1", function( assert ) {
-        assert.deepEqual(actual_,expected);
+        assert.deepEqual(actual_,[
+          "beer.ale",
+          "beer.pilsner",
+          "beer.stout",
+          "beer;1d:2y",
+          "beer;1h:90d",
+          "beer;5m:3d"]);
       });
     });
-    scent_ds.key("brave.",function(actual_) {
+    scent_ds.key("beer.",function(actual_) {
       QUnit.test("key 2", function( assert ) {
-        assert.deepEqual(actual_,expected);
+        assert.deepEqual(actual_,[
+          "beer",
+          "beer.ale",
+          "beer.pilsner",
+          "beer.stout"
+        ]);
       });
     });
   }
