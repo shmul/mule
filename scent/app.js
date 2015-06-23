@@ -408,41 +408,37 @@ function app() {
         return;
       }
       var sorted_data = [];
+      var sum = 0;
       $.each(raw_data_,function(name,value) {
         if ( value[0] && name!=name_ ) {
-          sorted_data.push({label: name,value: value[0][0]});
+          var metric = graph_split(name);
+          sorted_data.push({name: name,graph: metric[0],value: value[0][0]});
+          sum += value[0][0];
         }
       });
+
       sorted_data.sort(function(a,b) { return b.value-a.value; });
       // the data is sorted in descending order. Each element is [name,value]
-
-      var content = $.templates("#piechart-template").render([{}]);
-
-      function callback() {
-        MG.data_graphic({
-          data: sorted_data,
-          chart_type: 'bar',
-          x_accessor: 'value',
-          y_accessor: 'label',
-          //        baseline_accessor: 'baseline',
-          //        predictor_accessor: 'prediction',
-          width: 595,
-          right: 10,
-          target: '#piechart-graph-container',
-          animate_on_load: true,
-          x_axis: false,
-          small_text: true,
-          full_width: true
-        });
+      var template_data = [];
+      for (var i in sorted_data) {
+        sorted_data[i].precentage = (100*sorted_data[i].value/sum).toPrecision(3);
       }
+      var content = $.templates("#piechart-container-template").render([{}]);
 
       bootbox.dialog({
         title: name_ + " | " + d3.time.format("%y-%m-%dT%H:%M")(date_),
         message: content,
-        size: 'medium'
+        size: 'large'
       });
-      $.doTimeout(500,callback);
 
+      $.doTimeout(500,function() {
+        $("#piechart-container").append($.templates("#piechart-template").render(sorted_data));
+        $("#piechart-container a").click(function(e) {
+          bootbox.hideAll();
+          return true;
+        });
+        $('.sparkline-bullet').sparkline('html',{type: 'bullet', targetColor: 'black',width: "100%"});
+      });
     }
 
     scent_ds.piechart(name_,dt_,callback);

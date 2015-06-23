@@ -305,11 +305,24 @@
          </div>
         </script>
 
+        <script id="piechart-container-template" type="text/x-jsrender">
+         <div class="row">
+           <div class="col-md-12" id="piechart-container">
+           </div>
+         </div>
+        </script>
+
         <script id="piechart-template" type="text/x-jsrender">
          <div class="row">
-           <div class="col-lg-7">
-             <div id="piechart-graph-container"></div>
-           </div>
+          <div class="col-md-6">
+            <a href="#graph/{{:name}}">{{:graph}} </a>
+          </div>
+          <div class="col-md-2">
+            <span class="text-right">| {{:precentage}}</span></a>
+          </div>
+          <div class="col-md-4">
+            <span class="sparkline-bullet">100,null,{{:precentage}}</span>
+          </div>
          </div>
         </script>
       </div> <!-- ./templates -->
@@ -494,6 +507,7 @@
     <script src="./plugins/cache.js" type="text/javascript"></script>
     <script src="./plugins/pnotify.custom.min.js" type="text/javascript"></script>
     <script src='./plugins/mg-line-brushing/mg_line_brushing.js'></script>
+    <script src='./plugins/sparkline/jquery.sparkline.2.1.2.min.js'></script>
     <!-- Datasource -->
     <script src="./datasource.js" type="text/javascript"></script>
     <!-- app -->
