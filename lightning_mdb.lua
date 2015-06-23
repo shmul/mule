@@ -595,9 +595,14 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
             end
             k = cur:get_key(k,lightningmdb.MDB_NEXT)
           else
-            local next_key = trim_to_level(k,prefix_,level_)..";"
-            local nk = cur:get_key(next_key,lightningmdb.MDB_SET_RANGE)
-            k = nk
+            local trimmed = trim_to_level(k,prefix_,level_)
+            if trimmed then
+              local next_key = trimmed..";"
+              local nk = cur:get_key(next_key,lightningmdb.MDB_SET_RANGE)
+              k = nk
+            else
+              k = nil
+            end
           end
         else
           k = nil
