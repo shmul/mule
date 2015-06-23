@@ -233,7 +233,7 @@ function app() {
           $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph"}]));
           $("#alert-graph-container").attr("data-graph",graph);
           load_graph(graph,".graph-body");
-          setup_graph_header(graph,".graph-header",true);
+          setup_graph_header(graph,".graph-header",true,null,"medium-graph");
 
           e.stopPropagation();
         });
@@ -646,7 +646,7 @@ function app() {
         var id = "chart-"+i+"-container";
         $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
         load_graph(name,"#"+id+" .graph-body");
-        setup_graph_header(name,"#"+id+" .graph-header",true,graph_remove_callback);
+        setup_graph_header(name,"#"+id+" .graph-header",true,graph_remove_callback,"small-graph");
       }
 
     });
@@ -755,7 +755,7 @@ function app() {
     });
   }
 
-  function setup_graph_header(name_,graph_header_container_,inner_navigation_,remove_callback_) {
+  function setup_graph_header(name_,graph_header_container_,inner_navigation_,remove_callback_,klass_) {
 
     generate_all_graphs(name_,function(pairs_) {
       var links = [];
@@ -788,8 +788,18 @@ function app() {
             }
             metric = [name_];
           }
+          var suffix = [";",metric[1],":",metric[2]].join("");
           metric = metric[0];
-          graph_box_header(graph_header_container_,{type: "graph", title: metric, graph: name_,
+          var metric_parts = metric.split(".");
+          var accum = [];
+          for (var i in metric_parts) {
+            accum.push(metric_parts[i]);
+            var title = (accum.length>1 ? "." : "") + metric_parts[i];
+            metric_parts[i] = { href: accum.join(".")+suffix, title: title }
+          }
+
+          graph_box_header(graph_header_container_,{klass: klass_,
+                                                    type: "graph", title: metric, parts: metric_parts, graph: name_,
                                                     links: links,favorite: favorite, alerted: ac.title, color: ac.color,
                                                     full: !!inner_navigation_, remove: !!remove_callback_});
           if ( remove_callback_ ) {
@@ -809,7 +819,7 @@ function app() {
             var graph_view = $(container).find(".graph-view");
             console.log('inner navigation %s', graph);
             load_graph(href,container_id+" .graph-body");
-            setup_graph_header(href,container_id+" .graph-header",true,remove_callback_);
+            setup_graph_header(href,container_id+" .graph-header",true,remove_callback_,klass_);
             graph_view.parent().attr("href","#/graph/"+href);
           });
 
@@ -846,7 +856,7 @@ function app() {
   function setup_graph(name_) {
     $("#graph-box-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
     load_graph(name_,"#graph-box .graph-body");
-    setup_graph_header(name_,"#graph-box .graph-header",false);
+    setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph");
     $("#graph-box").show();
     push_graph_to_recent(name_);
   }

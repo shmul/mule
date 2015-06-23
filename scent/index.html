@@ -250,11 +250,13 @@
 
         <script id="graph-box-header-template" type="text/x-jsrender">
           <div class="box-header with-border" data-graph="{{:graph}}">
-            <small class="box-title">{{:title}}
-              {{for links}}
+            <small class="box-title">
+              <div class="{{:klass}}-header" >
+               {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
+               {{for links}}
                 &nbsp;|&nbsp;
                 {{if current}}
-                  <span class ="bg-light-blue">{{:rp}}</span>
+                <span class ="bg-light-blue">{{:rp}}</span>
                 {{else}}
                   {{if inner_navigation}}
                     <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
@@ -266,26 +268,25 @@
               {{if alerted }}
                 &nbsp;&nbsp;<span class="center bg-{{:color}}">{{:alerted}}</span>
               {{/if}}
-           </small>
-
-
-            <div class="box-tools pull-right">
-              {{if full}}
-                <button class="btn btn-box-tool" data-toggle="tooltip" title="View">
-                  <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
-                </button>
-              {{/if}}
-              {{if favorite}}
-                <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite">
-                  <i class="graph-favorite fa {{:favorite}}"></i>
-                </button>
-              {{/if}}
-              {{if remove}}
-                <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove">
-                  <i class="graph-remove fa fa-trash"></i>
-                </button>
-              {{/if}}
-            </div>
+              </div>
+            </small>
+              <div class="box-tools pull-right {{:klass}}-header">
+                {{if full}}
+                  <button class="btn btn-box-tool" data-toggle="tooltip" title="View">
+                    <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
+                  </button>
+                {{/if}}
+                {{if favorite}}
+                  <button class="btn btn-box-tool" data-toggle="tooltip" title="Favorite">
+                    <i class="graph-favorite fa {{:favorite}}"></i>
+                  </button>
+                {{/if}}
+                {{if remove}}
+                  <button class="btn btn-box-tool" data-toggle="tooltip" title="Remove">
+                    <i class="graph-remove fa fa-trash"></i>
+                  </button>
+                {{/if}}
+              </div>
           </div>
         </script>
 

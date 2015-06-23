@@ -41,6 +41,17 @@
     height: 300px;
 }
 
+.tall-graph-header {
+    font-size: 18px;
+}
+
+.medium-graph-header {
+    font-size: 18px;
+}
+.small-graph-header {
+    font-size: 14px;
+}
+
 .graph-favorite {
   color: #f39c12;
   cursor: pointer;
