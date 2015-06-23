@@ -906,6 +906,19 @@ function app() {
       function set_click_behavior() {
         $(".keys-table-key").click(function(e) {
           var key = $(e.target).attr("data-target");
+
+          if ( key ) {
+            var metric_parts = key.split(".");
+            var accum = [];
+            for (var i in metric_parts) {
+              accum.push(metric_parts[i]);
+              var title = (accum.length>1 ? "." : "") + metric_parts[i];
+              metric_parts[i] = { key: accum.join("."), title: title }
+            }
+            metric_parts.unshift({ key: "", title:"[root]&nbsp;"});
+            $("#main-keys-header-container").empty().html($.templates("#keys-table-header-template").render([{parts:metric_parts}]));
+          }
+
           scent_ds.key(key,populate_keys_table,true);
           e.stopPropagation();
         });
