@@ -205,6 +205,7 @@
                 <th>Value</th>
                 <th>Period</th>
                 <th>Stale</th>
+                <th>State</th>
                 {{/else}}
               </tr>
             </thead>
@@ -217,6 +218,7 @@
                   <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:value}}</td>
                   <td>{{:period}}</td>
                   <td>{{:stale}}</td>
+                  <td>{{:state}}</td>
                 {{/else}}
               </tr>
               {{/for}}
@@ -419,9 +421,9 @@
 
             <div class="box-body container-fluid" id="alert-container">
               <div class="row">
-                <div id="alert-table-container" class="col-md-4">
+                <div id="alert-table-container" class="col-md-5">
                 </div>
-                <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
+                <div id="alert-graph-container" data-graph="" class="graph-container col-md-7">
                 </div>
               </div>
             </div><!-- /.box -->

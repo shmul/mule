@@ -86,6 +86,14 @@ function app() {
     return lookup[alert_];
   }
 
+  function alert_high_low(alert_) {
+    if ( alert_[7].indexOf("HIGH")>-1 )
+      return "HIGH";
+    if ( alert_[7].indexOf("LOW")>-1 )
+      return "LOW";
+    return null;
+  }
+
   function mule_config(callback_) {
     scent_ds.config(function(conf_) {
       callback_(jQuery.extend(true,{},conf_));
@@ -222,6 +230,7 @@ function app() {
               value : cur[6],
               period : cur[4],
               stale : cur[5],
+              state : alert_high_low(cur),
             });
           }
         }
@@ -778,7 +787,8 @@ function app() {
           if ( alerts_[name_] ) {
             var idx = alert_index(alerts_[name_][7]);
             if ( idx>=0 ) {
-              ac = alert_category(idx);
+              ac = jQuery.extend(false,alert_category(idx));
+              ac.text = alert_high_low(alerts_[name_]);
             }
           }
 
@@ -801,7 +811,7 @@ function app() {
 
           graph_box_header(graph_header_container_,{klass: klass_,
                                                     type: "graph", title: metric, parts: metric_parts, graph: name_,
-                                                    links: links,favorite: favorite, alerted: ac.title, color: ac.color,
+                                                    links: links,favorite: favorite, alerted: ac.text, color: ac.color,
                                                     full: !!inner_navigation_, remove: !!remove_callback_});
           if ( remove_callback_ ) {
             $(".graph-remove").click(remove_callback_);
