@@ -869,11 +869,67 @@ function app() {
     load_graph(name_,"#graph-box .graph-body");
     setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph");
     $("#graph-box").show();
+    var metric = graph_split(name_);
+    scent_ds.key(metric[0],function(keys_) {
+      populate_keys_table(keys_,"#graph-box-keys-container")
+    },true);
+
+
     push_graph_to_recent(name_);
   }
 
   function teardown_graph() {
     $("#graph-box").hide();
+  }
+
+  function populate_keys_table(keys_,target_) {
+    var unified = {};
+    for (var i in keys_) {
+      var k = graph_split(keys_[i]);
+      var key = k[0];
+      if ( !unified[key] ) {
+        unified[key] = [];
+      }
+      var rp = k[1]+":"+k[2];
+      unified[key].push({href: keys_[i], rp: rp});
+    }
+    var records = [];
+    for (var i in unified) {
+      records.push({key: i, links: unified[i]});
+    }
+
+
+    function set_click_behavior() {
+      $(".keys-table-key").click(function(e) {
+        var key = $(e.target).attr("data-target");
+
+        if ( key && key.length>0 ) {
+          var metric_parts = key.split(".");
+          var accum = [];
+          for (var i in metric_parts) {
+            accum.push(metric_parts[i]);
+            var title = (accum.length>1 ? "." : "") + metric_parts[i];
+            metric_parts[i] = { key: accum.join("."), title: title }
+          }
+          metric_parts.unshift({ key: "", title:"[root]&nbsp;"});
+          $(target_+"-header").empty().html($.templates("#keys-table-header-template").render([{parts:metric_parts}]));
+        } else
+          $(target_+"-header").empty();
+
+        scent_ds.key(key,function(keys_) {
+          populate_keys_table(keys_,target_)
+        },true);
+        e.stopPropagation();
+      });
+    }
+
+    $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
+    var dt = $("#keys-table").DataTable({iDisplayLength: 40,
+                                         aLengthMenu: [ 20, 40, 60 ],
+                                         destroy: true,
+                                         order: [[ 2, "desc" ]]});
+    set_click_behavior();
+    dt.on('draw',set_click_behavior);
   }
 
   function setup_main(key_) {
@@ -895,56 +951,9 @@ function app() {
     });
 
 
-
-    function populate_keys_table(keys_) {
-      var unified = {};
-      for (var i in keys_) {
-        var k = graph_split(keys_[i]);
-        var key = k[0];
-        if ( !unified[key] ) {
-          unified[key] = [];
-        }
-        var rp = k[1]+":"+k[2];
-        unified[key].push({href: keys_[i], rp: rp});
-      }
-      var records = [];
-      for (var i in unified) {
-        records.push({key: i, links: unified[i]});
-      }
-
-
-      function set_click_behavior() {
-        $(".keys-table-key").click(function(e) {
-          var key = $(e.target).attr("data-target");
-
-          if ( key && key.length>0 ) {
-            var metric_parts = key.split(".");
-            var accum = [];
-            for (var i in metric_parts) {
-              accum.push(metric_parts[i]);
-              var title = (accum.length>1 ? "." : "") + metric_parts[i];
-              metric_parts[i] = { key: accum.join("."), title: title }
-            }
-            metric_parts.unshift({ key: "", title:"[root]&nbsp;"});
-            $("#main-keys-header-container").empty().html($.templates("#keys-table-header-template").render([{parts:metric_parts}]));
-          } else
-            $("#main-keys-header-container").empty();
-
-          scent_ds.key(key,populate_keys_table,true);
-          e.stopPropagation();
-        });
-      }
-
-      $("#main-keys-container").empty().html($.templates("#keys-table-template").render({records: records}));
-      var dt = $("#keys-table").DataTable({iDisplayLength: 40,
-                                           aLengthMenu: [ 20, 40, 60 ],
-                                           destroy: true,
-                                           order: [[ 2, "desc" ]]});
-      set_click_behavior();
-      dt.on('draw',set_click_behavior);
-    }
-
-    scent_ds.key(key_ || "",populate_keys_table,true);
+    scent_ds.key(key_ || "",function(keys_) {
+      populate_keys_table(keys_,"#main-keys-container")
+    },true);
 
     $("#main-box").show();
   }
