@@ -380,8 +380,8 @@ Mule is distributed under the Apache License, Version 2.0.
 
 ## Apache License
 
-(c) Copyright IBM Corp., 2010, 2015
-Shmulik Regev, Dan Carmon
+(c) Copyright IBM Corp. 2010, 2015
+Authors: Shmulik Regev, Dan Carmon, Dov Murik
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
