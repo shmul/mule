@@ -924,10 +924,14 @@ function app() {
     }
 
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
-    var dt = $("#keys-table").DataTable({iDisplayLength: 40,
-                                         aLengthMenu: [ 20, 40, 60 ],
-                                         destroy: true,
-                                         order: [[ 2, "desc" ]]});
+    var dt = $("#keys-table").DataTable({
+      bRetrieve: true,
+      iDisplayLength: 40,
+      aLengthMenu: [ 20, 40, 60 ],
+      destroy: true,
+      order: [[ 2, "desc" ]]
+    });
+
     set_click_behavior();
     dt.on('draw',set_click_behavior);
   }
@@ -1038,6 +1042,13 @@ function app() {
           return;
         }
         var graph = $(container).attr("data-graph");
+
+        // graphs in zoom state are also skipped
+        if ( $(container).find(".mg-brushed").length>0 || $(container).find(".mg-brushing-in-progress").length>0 ) {
+          //console.log('%s is in brushing. Not refreshing',graph);
+          return;
+        }
+
         if ( graph_split(graph) ) {
           load_graph(graph,"#"+$(container).attr('id')+" .graph-body");
           //console.log('refresh_loaded_graphs: %s',graph);
