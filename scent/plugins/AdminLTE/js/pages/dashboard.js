@@ -8,11 +8,6 @@
 
 $(function () {
 
-  //Activate the iCheck Plugin
-  $('input[type="checkbox"]').iCheck({
-    checkboxClass: 'icheckbox_flat-blue',
-    radioClass: 'iradio_flat-blue'
-  });
   //Make the dashboard widgets sortable Using jquery UI
   $(".connectedSortable").sortable({
     placeholder: "sort-highlight",
@@ -22,6 +17,7 @@ $(function () {
     zIndex: 999999
   });
   $(".connectedSortable .box-header, .connectedSortable .nav-tabs-custom").css("cursor", "move");
+  
   //jQuery UI sortable for the todo list
   $(".todo-list").sortable({
     placeholder: "sort-highlight",
@@ -37,13 +33,13 @@ $(function () {
           {
             ranges: {
               'Today': [moment(), moment()],
-              'Yesterday': [moment().subtract('days', 1), moment().subtract('days', 1)],
-              'Last 7 Days': [moment().subtract('days', 6), moment()],
-              'Last 30 Days': [moment().subtract('days', 29), moment()],
+              'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+              'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+              'Last 30 Days': [moment().subtract(29, 'days'), moment()],
               'This Month': [moment().startOf('month'), moment().endOf('month')],
-              'Last Month': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
+              'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
             },
-            startDate: moment().subtract('days', 29),
+            startDate: moment().subtract(29, 'days'),
             endDate: moment()
           },
   function (start, end) {
