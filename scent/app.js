@@ -240,7 +240,7 @@ function app() {
       function set_click_behavior() {
         $(".alert-graph-name").click(function(e) {
           var graph = $(e.target).attr("data-target");
-          $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph"}]));
+          $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
           $("#alert-graph-container").attr("data-graph",graph);
           load_graph(graph,".graph-body");
           setup_graph_header(graph,".graph-header",true,null,"medium-graph");
@@ -469,6 +469,7 @@ function app() {
       data: data_,
       // This breaks the chart because MetricsGraphics assumes the samples resolution is 1 day
       //missing_is_zero: true,
+      //title: graph_split(name_)[0],
       full_width: true,
       full_height: true,
       bottom: 40,
