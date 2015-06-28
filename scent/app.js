@@ -701,7 +701,7 @@ function app() {
         callback_(name);
       }
       $(form_).trigger("reset");
-      //return false;
+      return false;
     });
     var context = {};
 
@@ -1091,6 +1091,7 @@ function app() {
       setup_menu_alerts();
       setup_search_keys("#topnav-search-form","#search-keys-input",
                         function(name_) {
+                          $("#topnav-search-dropdown").dropdown("toggle");
                           router.navigate('graph/'+name_);
                         });
       update_alerts(); // with no selected category it just updates the count
