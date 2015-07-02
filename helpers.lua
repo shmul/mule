@@ -1,14 +1,13 @@
 local _,lr = require "luarocks.require"
 local url = require "socket.url"
 local pp = require "purepack"
-local posix_exists,posix = pcall(require,'posix')
+local posix_fcntl = require "posix.fcntl"
+local posix_glob = require "posix.glob"
+local posix_unistd = require "posix.unistd"
+local posix_sys_stat = require "posix.sys.stat"
+local posix_sys_wait = require "posix.sys.wait"
 local stp_exists,stp = pcall(require,"StackTracePlus")
 require "conf"
-
-if not posix_exists or lunit then
---  print("disabling posix")
---  posix = nil
-end
 
 if stp_exists then
   if lunit then
@@ -70,7 +69,7 @@ end
 
 local function flog(level,...)
   rotate_log_file()
-  local pid = posix and posix.getpid('pid') or "-"
+  local pid = posix_unistd and posix_unistd.getpid() or "-"
   local sarg = {pid,os.date("%y%m%d:%H:%M:%S"),level," "}
   for _,v in ipairs({...}) do
     table.insert(sarg,tostring(v))
@@ -367,7 +366,7 @@ function with_file(file_,func_,mode_)
 end
 
 function directory_exists(dir)
-  return posix.stat(dir,"type")=='directory'
+  return posix_sys_stat.stat(dir,"type")=='directory'
 end
 
 function file_exists(file_)
@@ -776,36 +775,36 @@ function adler32(str_)
 end
 
 function fork_and_exit(callback_)
-  if not posix then
+  if not posix_unistd then
     return callback_()
   end
 
-  local child = posix.fork()
+  local child = posix_unistd.fork()
   if child~=0 then
-    logi("fork (parent)",posix.getpid('pid'),child)
+    logi("fork (parent)",posix_unistd.getpid(),child)
     return
   end
-  logi("fork (child)",posix.getpid('pid'))
+  logi("fork (child)",posix_unistd.getpid())
   pcall_wrapper(callback_)
-  logi("exiting",posix.getpid('pid'))
-  posix._exit(0)
+  logi("exiting",posix_unistd.getpid())
+  posix_unistd._exit(0)
 end
 
 -- based on http://luaposix.github.io/luaposix/docs/examples/lock.lua.html
 function posix_lock(lock_file_,callback_)
-  if not posix then
+  if not posix_fcntl then
     return callback_()
   end
 
   -- Set lock on file
-  local fd = posix.creat(lock_file_, "rw-r--r--")
+  local fd = posix_fcntl.open(lock_file_, posix_fcntl.O_CREAT, 0644)
   local lock = {
-    l_type = posix.F_WRLCK;     -- Exclusive lock
-    l_whence = posix.SEEK_SET;  -- Relative to beginning of file
+    l_type = posix_unistd.F_WRLCK;     -- Exclusive lock
+    l_whence = posix_unistd.SEEK_SET;  -- Relative to beginning of file
     l_start = 0;            -- Start from 1st byte
     l_len = 0;              -- Lock whole file
   }
-  local result = posix.fcntl(fd, posix.F_SETLK, lock)
+  local result = posix_fcntl.fcntl(fd, posix_fcntl.F_SETLK, lock)
   logi("posix_lock acquire",lock_file_,result)
   if result == -1 then
     loge("locked by another process")
@@ -816,21 +815,21 @@ function posix_lock(lock_file_,callback_)
   result = pcall_wrapper(callback_)
 
   -- Release the lock
-  lock.l_type = posix.F_UNLCK
-  posix.fcntl(fd, posix.F_SETLK, lock)
+  lock.l_type = posix_fcntl.F_UNLCK
+  posix_fcntl.fcntl(fd, posix_fcntl.F_SETLK, lock)
   logi("posix_lock released",lock_file_,result)
   return result
 end
 
 function noblock_wait_for_children()
-  if posix then
-    posix.wait(-1,posix.WNOHANG)
+  if posix_sys_wait then
+    posix_sys_wait.wait(-1,posix_sys_wait.WNOHANG)
   end
 end
 
 function block_wait_for_children()
-  if posix then
-    posix.wait(-1,0)
+  if posix_sys_wait then
+    posix_sys_wait.wait(-1,0)
   end
 end
 
@@ -865,7 +864,7 @@ function weak_hash(string_)
 end
 
 function first_file(glob_pattern_)
-  local files = posix and posix.glob(glob_pattern_)
+  local files = posix_glob and posix_glob.glob(glob_pattern_)
   return files and files[1]
 end
 
