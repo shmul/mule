@@ -360,13 +360,18 @@ end
 function with_file(file_,func_,mode_)
   local f = io.open(file_,mode_ or "r")
   if not f then return false end
-  local rv = pcall_wrapper(function() func_(f) end)
+  local success, rv = pcall_wrapper(function() return func_(f) end)
   f:close()
+  if not success then
+    loge("with_file callback error",rv)
+    return nil
+  end
   return rv
 end
 
 function directory_exists(dir)
-  return posix_sys_stat.stat(dir,"type")=='directory'
+  local st = posix_sys_stat.stat(dir)
+  return st and posix_sys_stat.S_ISDIR(st.st_mode) > 0 or false
 end
 
 function file_exists(file_)
