@@ -221,7 +221,7 @@ TODO
 
 #### stop
 
-    http://muleserver/stop?password=<pwd>
+    http://muleserver/stop?token=<stop_password>
 
 Simply stops the running http deamon. This is not meant to be secure by any mean and serves as a simple protection from accidental termination.
 
