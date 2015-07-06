@@ -1,7 +1,7 @@
 module("purepack",package.seeall)
 local bit32_found,bit32 = pcall(require,"bit32")
 local bit_found,bit = pcall(require,"bit")
-local lightningmdb_lib= require("lightningmdb") -- contains LHF's lpack
+local lmdb_found,lightningmdb_lib = pcall(require,"lightningmdb") -- contains LHF's lpack (introduces string.pack and string.unpack)
 
 PNS = 4 -- Packed Number Size
 local nop = function() end
