@@ -1,14 +1,19 @@
-module("purepack",package.seeall)
 local bit32_found,bit32 = pcall(require,"bit32")
 local bit_found,bit = pcall(require,"bit")
 local lmdb_found,lightningmdb_lib = pcall(require,"lightningmdb") -- contains LHF's lpack (introduces string.pack and string.unpack)
 
-PNS = 4 -- Packed Number Size
 local nop = function() end
 
-to_binary,to_binary3,from_binary,from_binary3 = nop,nop,nop,nop
+local M = {
+  PNS = 4, -- Packed Number Size
+  to_binary = nop,
+  to_binary3 = nop,
+  from_binary = nop,
+  from_binary3 = nop,
+  concat_three_strings = nop
+}
 
-function set_pack_lib(lib_)
+local function set_pack_lib(lib_)
   local function helper()
     local bits_lib = (bit32_found and bit32) or (bit_found and bit)
 
@@ -17,25 +22,25 @@ function set_pack_lib(lib_)
         return nil,"purepack - lpack not found"
       end
 
-      to_binary = function(int_)
+      M.to_binary = function(int_)
         return string.pack(">I",int_)
       end
 
-      to_binary3 = function(a_,b_,c_)
+      M.to_binary3 = function(a_,b_,c_)
         return string.pack(">III",a_,b_,c_)
       end
 
-      from_binary = function(str_,s)
+      M.from_binary = function(str_,s)
         local _,value = string.unpack(str_,">I",s or 1)
         return value
       end
 
-      from_binary3 = function(str_,s)
+      M.from_binary3 = function(str_,s)
         local _,a,b,c = string.unpack(str_,">III",s or 1)
         return a,b,c
       end
 
-      concat_three_strings = function(a_,b_,c_)
+      M.concat_three_strings = function(a_,b_,c_)
         return string.pack("AAA",a_ or "",b_ or "",c_ or "")
       end
 
@@ -47,7 +52,7 @@ function set_pack_lib(lib_)
         return nil,"purepack - bits not found"
       end
 
-      to_binary = function(int_)
+      M.to_binary = function(int_)
         local sh = bits_lib.rshift
         local an = bits_lib.band
         local i = sh(int_,16)
@@ -55,7 +60,7 @@ function set_pack_lib(lib_)
                            an(sh(int_,8),255),an(int_,255))
       end
 
-      to_binary3 = function(a_,b_,c_)
+      M.to_binary3 = function(a_,b_,c_)
         local sh = bits_lib.rshift
         local an = bits_lib.band
         local i,j,k = sh(a_,16),sh(b_,16),sh(c_,16)
@@ -66,14 +71,14 @@ function set_pack_lib(lib_)
                           )
       end
 
-      from_binary = function(str_,s)
+      M.from_binary = function(str_,s)
         s = s or 1
         local a,b,c,d = string.byte(str_,s,s+3)
         local sh = bits_lib.lshift
         return (d or 0) + (c and sh(c,8) or 0) + (b and sh(b,16) or 0) + (a and sh(a,24) or 0)
       end
 
-      from_binary3 = function(str_,s)
+      M.from_binary3 = function(str_,s)
         s = s or 1
         local a,b,c,d,e,f,g,h,i,j,k,l = string.byte(str_,s,s+11)
         local sh = bits_lib.lshift
@@ -82,7 +87,7 @@ function set_pack_lib(lib_)
         (l or 0) + (k and sh(k,8) or 0) + (j and sh(j,16) or 0) + (i and sh(i,24) or 0)
       end
 
-      concat_three_strings = function(a_,b_,c_)
+      M.concat_three_strings = function(a_,b_,c_)
         return table.concat({a_ or "",b_ or "",c_ or ""})
       end
 
@@ -90,7 +95,7 @@ function set_pack_lib(lib_)
     end
 
     if lib_=="purepack" then
-      to_binary = function(int_)
+      M.to_binary = function(int_)
         local fl = math.floor
         local i = fl(int_/65536)
         return string.char((i~=0 and fl(i/256)%256) or 0,
@@ -98,11 +103,11 @@ function set_pack_lib(lib_)
                            fl(int_/256)%256,
                            int_%256)
       end
-      to_binary3 = function(a_,b_,c_)
-        return to_binary(a_)..to_binary(b_)..to_binary(c_)
+      M.to_binary3 = function(a_,b_,c_)
+        return M.to_binary(a_)..M.to_binary(b_)..M.to_binary(c_)
       end
 
-      from_binary = function(str_,s)
+      M.from_binary = function(str_,s)
         s = s or 1
         if not str_ then
           logi(s,"traceback",debug.traceback())
@@ -116,12 +121,12 @@ function set_pack_lib(lib_)
           (a and a*16777216 or 0)
       end
 
-      from_binary3 = function(str_,s)
+      M.from_binary3 = function(str_,s)
         s = s or 1
-        return from_binary(str_,s),from_binary(str_,s+4),from_binary(str_,s+8)
+        return M.from_binary(str_,s),M.from_binary(str_,s+4),M.from_binary(str_,s+8)
       end
 
-      concat_three_strings = function(a_,b_,c_)
+      M.concat_three_strings = function(a_,b_,c_)
         return table.concat({a_ or "",b_ or "",c_ or ""})
       end
 
@@ -141,14 +146,14 @@ local END_OF_TABLE_MARK = "end.of.table.mark"
 
 -- for some reason using coroutines rather than standard functions seems slightly
 -- faster. Perhaps the profiler distorts the real picture ?
-function pack_helper(obj_,visited_,id_,out)
+local function pack_helper(obj_,visited_,id_,out)
   local insert = table.insert
   local yield = coroutine.yield
 
   local push = coroutine.wrap(function(type,len,val)
                                 while true do
                                   insert(out,type)
-                                  insert(out,to_binary(len))
+                                  insert(out,M.to_binary(len))
                                   if val then
                                     insert(out,val)
                                   end
@@ -165,7 +170,7 @@ function pack_helper(obj_,visited_,id_,out)
         elseif t=="string" then
           if not visited_[lit_] then
             push("s",#lit_,lit_)
-            insert(out,to_binary(id_))
+            insert(out,M.to_binary(id_))
             visited_[lit_] = id_
             id_ = id_ + 1
           else
@@ -202,7 +207,7 @@ function pack_helper(obj_,visited_,id_,out)
   helper(obj_)
 end
 
-function pack(obj_)
+local function pack(obj_)
   local out = {}
   pack_helper(obj_,{},0,out)
   return table.concat(out,"")
@@ -217,19 +222,19 @@ local function unpack_helper(str_,i,visited_)
   end
 
   if s=="s" then
-    local len = from_binary(str_,i)
-    local f = i+PNS
+    local len = M.from_binary(str_,i)
+    local f = i+M.PNS
     local e = f+len
     local str = string.sub(str_,f,e-1)
-    local id = from_binary(str_,e)
+    local id = M.from_binary(str_,e)
     visited_[id] = str
-    return str,e+PNS
+    return str,e+M.PNS
   end
   if s=="i" then
-    return from_binary(str_,i),i+PNS
+    return M.from_binary(str_,i),i+M.PNS
   end
   if s=="r" then
-    return visited_[from_binary(str_,i)],i+PNS
+    return visited_[M.from_binary(str_,i)],i+M.PNS
   end
   if s=="T" or s=="F" then
     return s=="T",i
@@ -241,8 +246,8 @@ local function unpack_helper(str_,i,visited_)
   if s=="t" then
     local t = {}
     local k,v
-    visited_[from_binary(str_,i)] = t
-    i = i + PNS
+    visited_[M.from_binary(str_,i)] = t
+    i = i + M.PNS
     repeat
       k,i = unpack_helper(str_,i,visited_)
       if k==END_OF_TABLE_MARK then
@@ -255,6 +260,12 @@ local function unpack_helper(str_,i,visited_)
   end
 end
 
-function unpack(str_)
+local function unpack(str_)
   return str_ and unpack_helper(str_,1,{})
 end
+
+M.set_pack_lib = set_pack_lib
+M.pack = pack
+M.unpack = unpack
+
+return M
