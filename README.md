@@ -7,6 +7,7 @@ Mule is an RRD tool designed with simplicity of use in mind. Its main use case i
 * can keep multiple sequences for the same metric with different retention settings.
 * metrics are organized in hierarchies. Sequences of parent nodes are automatically updated when their children are.
 * RESTful interface which can be used for graph generation and threshold monitoring (by tools like nagios).
+* Thresholds can be defined (Nagios like) and alerts generated
 
 # Definitions
 
