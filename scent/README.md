@@ -67,7 +67,7 @@ DONE switch to bootbox where possible
 
 NO NEED when clicking a graph in an alert table - scroll to top
 
-a piechart-like implementation.
+DONE a piechart-like implementation.
 
 DONE use nested templates - the all_links and favorites
 
