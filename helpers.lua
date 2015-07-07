@@ -804,7 +804,7 @@ function posix_lock(lock_file_,callback_)
   -- Set lock on file
   local fd = posix_fcntl.open(lock_file_, posix_fcntl.O_CREAT, 0644)
   local lock = {
-    l_type = posix_unistd.F_WRLCK;     -- Exclusive lock
+    l_type = posix_fcntl.F_WRLCK;     -- Exclusive lock
     l_whence = posix_unistd.SEEK_SET;  -- Relative to beginning of file
     l_start = 0;            -- Start from 1st byte
     l_len = 0;              -- Lock whole file
