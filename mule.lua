@@ -4,7 +4,9 @@ pcall(require,"tc_store")
 local c = require "column_db"
 local _,l = pcall(require,"lightning_mdb")
 require "httpd"
-local posix_exists,posix = pcall(require,'posix')
+local posix_libgen = require "posix.libgen"
+local posix_dirent = require "posix.dirent"
+local posix_sys_stat = require "posix.sys.stat"
 local p = require "purepack"
 
 pcall(require, "profiler")
@@ -20,7 +22,7 @@ function first_files(path_,pattern_,max_)
   local num = 0
   return coroutine.wrap(
     function()
-      for f in posix.files(path_) do
+      for f in posix_dirent.files(path_) do
         if num==max_ then return end
         if string.match(f,pattern_) then
           num = num+1
@@ -124,7 +126,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
       executing = true
       if time_now()-now<=1 then
         pcall_wrapper(function()
-                        local sz = posix.stat(file,"size")
+                        local sz = posix_sys_stat.stat(file).st_size
                         if sz==0 then
                           logi("empty file",file)
                           os.remove(file)
@@ -132,7 +134,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
                         end
                         if sz>1048576 then
                           logi("large file",file,sz)
-                          new_name = string.format("%s/%s",failed,posix.basename(file))
+                          new_name = string.format("%s/%s",failed,posix_libgen.basename(file))
                           os.rename(file,new_name)
                           return
                         end
@@ -144,7 +146,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
                           minute_dir = cm
                           os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
                         end
-                        new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix.basename(file)),"//","/")
+                        new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix_libgen.basename(file)),"//","/")
                         os.rename(file,new_name)
                         logi("incoming_queue file processed",new_name)
                       end)
