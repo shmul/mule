@@ -122,7 +122,8 @@ local function column_db(base_dir_)
   local index = tr:new()
   local dirty = false
   local meta_file = base_dir_.."/db.meta"
-  local cell_store_cache = {}
+  local cell_store_per_file_cache = {}
+  local cell_store_per_name_cache = {}
   local last_save = nil
   local seq_cache = {}
   local seq_cache_size = 0
@@ -199,37 +200,39 @@ local function column_db(base_dir_)
 
   local function save_all(close_)
     logi("save_all",close_)
-    for k,cdb in pairs(cell_store_cache) do
+    for _,cdb in pairs(cell_store_per_file_cache) do
       cdb:flush()
       if close_ then
         cdb:close()
       end
     end
     if close_ then
-      cell_store_cache = {}
+      cell_store_per_file_cache = {}
+      cell_store_per_name_cache = {}
     end
     save_meta_file()
   end
 
   local function find_file(name_)
-    local metric,step,period,id = extract_from_name(name_)
-    local cdb = cell_store_cache[name_]
-
-    if cdb then
-      return cdb,id % SEQUENCES_PER_FILE
+    local cached = cell_store_per_name_cache[name_]
+    if cached then
+      return cached.cdb,cached.id % SEQUENCES_PER_FILE
     end
+
+    local metric,step,period,id = extract_from_name(name_)
+
     -- we normalize the step,period variables to canonical time units
     -- we add 1 to the period/step to accomodate the latest value at the last slot
     local file_name = string.format("%s/%s.%s.%d.cdb",base_dir_,
                                     secs_to_time_unit(step),
                                     secs_to_time_unit(period),
                                     math.floor(id / SEQUENCES_PER_FILE))
-    cdb = cell_store_cache[file_name]
+    local cdb = cell_store_per_file_cache[file_name]
     if not cdb then
       cdb = cell_store(file_name,SEQUENCES_PER_FILE,period/step,p.PNS*3) -- 3 items per slot
-      cell_store_cache[file_name] = cdb
-      cell_store_cache[name_] = cdb
+      cell_store_per_file_cache[file_name] = cdb
     end
+    cell_store_per_name_cache[name_] = { cdb = cdb, id = id }
     return cdb,id % SEQUENCES_PER_FILE
   end
 
