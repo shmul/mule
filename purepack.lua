@@ -215,6 +215,7 @@ end
 
 local function unpack_helper(str_,i,visited_)
   local s = string.sub(str_,i,i)
+  local pns = M.PNS
 
   i = i + 1
   if s=="l" then
@@ -223,18 +224,18 @@ local function unpack_helper(str_,i,visited_)
 
   if s=="s" then
     local len = M.from_binary(str_,i)
-    local f = i+M.PNS
+    local f = i+pns
     local e = f+len
     local str = string.sub(str_,f,e-1)
     local id = M.from_binary(str_,e)
     visited_[id] = str
-    return str,e+M.PNS
+    return str,e+pns
   end
   if s=="i" then
-    return M.from_binary(str_,i),i+M.PNS
+    return M.from_binary(str_,i),i+pns
   end
   if s=="r" then
-    return visited_[M.from_binary(str_,i)],i+M.PNS
+    return visited_[M.from_binary(str_,i)],i+pns
   end
   if s=="T" or s=="F" then
     return s=="T",i
@@ -247,7 +248,7 @@ local function unpack_helper(str_,i,visited_)
     local t = {}
     local k,v
     visited_[M.from_binary(str_,i)] = t
-    i = i + M.PNS
+    i = i + pns
     repeat
       k,i = unpack_helper(str_,i,visited_)
       if k==END_OF_TABLE_MARK then

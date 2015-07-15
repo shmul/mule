@@ -255,9 +255,6 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
       return send_(standard_response(rv,nil,extra_headers_),nil,blocking_)
     end
 
-    if qs.jsonp then
-      rv = string.format("%s(%s)",qs.jsonp,rv)
-    end
     local headers = extra_headers_ or {}
     table.insert(headers,CONTENT_TYPE_JSON)
     return send_(standard_response(200,rv,headers),rv,blocking_)

@@ -88,9 +88,9 @@ runs the garabge-collection command for any metric with the prefix `beer.stout` 
 * `reset <metric>` - clear all slots in the metric
 
 
-### http interface
+### API
 
-Mule exposes a REST/JSON interface . Results are return using either plain JSON or as JSONP style, when the generic query string option `p=<callback>` is provided
+Mule exposes a REST API with json results.
 
 #### Configuration
 To update mule's configuration POST a configuration file to
@@ -248,13 +248,13 @@ On a c3.2xlarge AWS instance with SSD in RAID 0, Mule peeked ~200 files per seco
 Assuming `/home/user/projects` is the root of your development projects
 
 <pre>
-git clone git://gitorious.org/mdb/mdb.git # This will create a directory `./mdb/libraries/liblmdb`.
-cd ./mdb/libraries/liblmdb`
+git clone https://github.com/LMDB/lmdb # This will create a directory `./mdb/libraries/liblmdb`.
+cd ./lmdb/libraries/liblmdb`
 make`
 cd /home/user/projects
 git clone git://github.com/shmul/lightningdbm.git
 cd ./lightningmdb
-cp ../mdb/libraries/liblmdb/liblmdb.{a,so} .
+cp ../lmdb/libraries/liblmdb/liblmdb.{a,so} .
 make
 </pre>
 
