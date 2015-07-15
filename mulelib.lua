@@ -105,7 +105,7 @@ function sequence(db_,name_)
     -- fix_timestamp(latest_idx) -- enable to fix the latest timestamp
     if latest_idx>0 then
         logw("latest_timestamp is 0",_name,latest_idx)
-    end		       
+    end
     return get_timestamp(latest_idx)
   end
 
@@ -564,7 +564,7 @@ function mule(db_)
 
       if options_.force then
         for _,name in ipairs(garbage) do
-          _sequences.out(name)
+          _db.out(name)
         end
       end
     end
@@ -579,6 +579,7 @@ function mule(db_)
 
     each_metric(_db,resource_,nil,
                 function(seq)
+                  flush_cache_of_sequence(seq)
                   seq.serialize(serialize_opts,
                                 function()
                                   str.write(seq.name())
@@ -739,6 +740,7 @@ function mule(db_)
     each_metric(db_,resource_,nil,
                 function(seq)
                   local col1 = collectionout(str,"[","]\n")
+                  flush_cache_of_sequence(seq)
                   seq.serialize(opts,
                                 function()
                                   col.elem(format("\"%s\": ",seq.name()))
