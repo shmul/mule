@@ -798,7 +798,7 @@ function posix_lock(lock_file_,callback_)
   end
 
   -- Set lock on file
-  local fd = posix_fcntl.open(lock_file_, posix_fcntl.O_CREAT, 0644)
+  local fd = posix_fcntl.open(lock_file_, posix_fcntl.O_CREAT, tonumber("666", 8))
   local lock = {
     l_type = posix_fcntl.F_WRLCK;     -- Exclusive lock
     l_whence = posix_unistd.SEEK_SET;  -- Relative to beginning of file
@@ -819,6 +819,7 @@ function posix_lock(lock_file_,callback_)
   lock.l_type = posix_fcntl.F_UNLCK
   posix_fcntl.fcntl(fd, posix_fcntl.F_SETLK, lock)
   logi("posix_lock released",lock_file_,result)
+  posix_unistd.close(fd)
   return result
 end
 
