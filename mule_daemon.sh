@@ -14,7 +14,7 @@
 prog="mule.lua"
 stop_token="nomoremule"
 mule_port=8980
-muleuser=trusteer
+muleuser=<mule-user> # set the actual user
 luaexe=/usr/bin/lua
 luarocks=/usr/local/bin/luarocks
 muleuser=`ls -l -H /etc/init.d/mule_daemon | awk '{ print $3}'`

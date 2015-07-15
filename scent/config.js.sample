@@ -1,0 +1,8 @@
+function mule_config() {
+  return {
+    namespace: 'mule',
+    user: 'Shmul the mule',
+    server: '/mule/api', // or change to a different mule server
+    cache_size: 100
+  }
+}

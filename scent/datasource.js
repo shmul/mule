@@ -163,10 +163,11 @@ function mule_mockup () {
 };
 
 function mule_ds() {
-  var ns = $.initNamespaceStorage('mule');
-  const user = "Shmul the mule";
-  const mule_server = "http://v2.mule.trusteer.net/mule/api";
-  var cache = new Cache(100);
+  var conf = mule_config();
+  var ns = $.initNamespaceStorage(conf.namespace);
+  const user = conf.user;
+  const mule_server = conf.server;
+  var cache = new Cache(conf.cache_size);
 
 
   function delayed(func_) {

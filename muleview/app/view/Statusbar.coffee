@@ -93,6 +93,6 @@ Ext.define "Muleview.view.Statusbar",
       handler: ->
         Ext.MessageBox.show
           title: "About Mule"
-          msg: "<p style=\"text-align:center\"><b>Mule</b> is an <a href=http://github.com/trusteer/mule>open-source</a> project written by <a href=mailto:shmul@trusteer.com>Shmulik Regev</a> & <a href=mailto:dan@carmon.org.il>Dan Carmon</a><br /></p>"
+          msg: "<p style=\"text-align:center\"><b>Mule</b> is an <a href=http://github.com/shmul/mule>open-source</a> project.<br /></p>"
           buttons: Ext.Msg.OK
   ]
