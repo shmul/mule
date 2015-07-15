@@ -2,21 +2,12 @@ require "mulelib"
 require "tests.strict"
 pcall(require, "profiler")
 require "lunit"
-require "tc_store"
 require "memory_store"
 local cdb = require "column_db"
 local mdb = require "lightning_mdb"
 local p = require "purepack"
 
 module( "test_mulelib", lunit.testcase,package.seeall )
-
-
-local function cabinet_db_factory(name_)
-  p.set_pack_lib("bits")
-
-  os.remove(name_..cabinet.suffix)
-  return cabinet_db(name_..cabinet.suffix)
-end
 
 local function column_db_factory(name_)
   p.set_pack_lib("bits")
@@ -42,9 +33,6 @@ local function for_each_db(name_,func_,no_mule_)
     lightning_db_factory(name_),
     column_db_factory(name_)
   }
-  if cabinet then
---    table.insert(dbs,cabinet_db_factory(name_))
-  end
 
   for _,db in ipairs(dbs) do
     func_(no_mule_ and db or mule(db))
