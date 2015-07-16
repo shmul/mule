@@ -1,6 +1,7 @@
-.git
-img
-muleview
-profi
-vagrant
+temp
 tests/temp
+.git
+.dockerignore
+.gitignore
+muleview
+!muleview/build
