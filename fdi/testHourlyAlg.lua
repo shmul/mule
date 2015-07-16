@@ -79,7 +79,7 @@ for line in io.lines(filePath) do
 						assert(matlab[zz][tdind][3] == value[4], string.format('failed test ano-measure: signal num = %d, alert num = %d, got %d instead of %d', zz, tdind, value[4], matlab[zz][tdind][3]))
 				end
 			end
-			assert(tdind == table.getn(matlab[zz]), string.format('failed test: signal num = %d, entries num = %d, expected = %d',zz, tdind, table.getn(matlab[zz])))
+			assert(tdind == #matlab[zz], string.format('failed test: signal num = %d, entries num = %d, expected = %d',zz, tdind, #matlab[zz]))
 		end
 	end
 end
