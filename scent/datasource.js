@@ -56,15 +56,15 @@ function mule_mockup () {
   ns=$.initNamespaceStorage('mule: ');
 
   save(user,"recent",
-       ["brave.backend;1d:2y",
-        "event.activation_failed;5m:3d",
-        "kashmir_report_db_storer;5m:3d"],function() {});
+       ["beer.ale;1d:2y",
+        "wine.merlot;5m:3d",
+        "scotch;5m:3d"],function() {});
   var v = $.localStorage.get(user);
   if ( !v ) {
     save(user,"persistent",
-         {favorites:["event.bho_blocked_blacklisted;1h:90d",
-                     "event.browser_apc_detected;1h:90d",
-                     "event.buka_mr_result;1d:2y"],
+         {favorites:["beer.stout;1h:90d",
+                     "wine.france;1h:90d",
+                     "wine.italy;1d:2y"],
           dashboards:{},
          },function() {});
   }
