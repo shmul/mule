@@ -4,3 +4,4 @@ profiler.out*
 build/production/Muleview-all.scss
 build/production/Muleview-example.scss
 vagrant/.vagrant
+scent/config.js
