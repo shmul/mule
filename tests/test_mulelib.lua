@@ -1109,7 +1109,7 @@ function test_hits_provided()
     gr = m.graph("Johnston.Emilia.Sweet-Nuthin",{level=1,count=1,in_memory=true,stat="average"})
     assert(arrays_equal({0.5,100,0},gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"][1]))
   end
-  for_each_db("./tests/temp/test_find_keys",helper)
+  for_each_db("./tests/temp/test_hits_provided",helper)
 end
 
 function test_factor()
@@ -1126,7 +1126,7 @@ function test_factor()
     gr = m.graph("Johnston.Emilia.Sweet-Nuthin",{level=1,count=1,in_memory=true,factor=100})
     assert(arrays_equal({0.05,100,0},gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"][1]))
   end
-  for_each_db("./tests/temp/test_find_keys",helper)
+  for_each_db("./tests/temp/test_factor",helper)
 
 end
 

@@ -250,6 +250,12 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return native_put(k,pack_node(node),true)
     end
 
+    if not _nodes_cache[k] then
+      -- a new key? We write it to the DB, so it will be picked up when looking for keys
+      -- (find_keys, matching_keys, has_sub_keys)
+      native_put(k,pack_node(node),true)
+    end
+
     local idx = _nodes_cache[k] and _nodes_cache[k][2] or nil
     _nodes_cache[k] = {node,idx,true}
     return _nodes_cache[k][1]
@@ -584,6 +590,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local find = string.find
       local cur = t:cursor_open(db)
       local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
+
       repeat
         local prefixed = k and find(k,prefix_,1,true)
         if prefixed then

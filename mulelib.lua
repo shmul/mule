@@ -1179,17 +1179,28 @@ function mule(db_)
 
     for n,m in get_sequences(metric_) do
       local skip = false
+      local new_key = false
       if now_ then
         local metric,step,period = parse_name(n)
         skip = timestamp_<now_-period
       end
       if not skip then
-        local seq = _updated_sequences[n] or sparse_sequence(n)
+        local seq = _updated_sequences[n]
+
+        if not seq then
+          -- this might be a new key and so we should add it to the DB as well. Kind of ugly, but we rely on the
+          -- DB (and not the caches) when looking for keys
+          seq = sparse_sequence(n)
+          new_key = true
+        end
         local adjusted_timestamp,sum = seq.update(timestamp,hits,sum,typ)
         -- it might happen that we try to update a too old timestamp. In such a case
         -- the update function returns null
         if adjusted_timestamp then
           _updated_sequences[n] = seq
+          if new_key then
+            flush_cache_of_sequence(n,seq)
+          end
         end
       end
     end
