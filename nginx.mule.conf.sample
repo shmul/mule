@@ -1,0 +1,58 @@
+server {
+  listen   80  default_server;
+  server_name  _;
+
+  if ($request_method !~ ^(GET|HEAD|POST|PUT|DELETE)$) {
+    return 403;
+  }
+
+
+  location = /mule/api/graph {
+    limit_except POST { deny all; }
+
+    client_body_temp_path  '<mule_queues>/mule_work/';
+    client_body_in_file_only   on;
+    client_body_buffer_size 128K;
+    client_max_body_size 1000M;
+    lua_need_request_body on;
+    content_by_lua '
+      ngx.req.read_body()
+      local body_file = ngx.req.get_body_file()
+      local base_name = string.match(body_file,"/([^/]*)$")
+      local content = io.open(body_file,"rb"):read("*all")
+
+      local function write_to_path(content,path)
+      local out = io.open(body_file..".tmp","wb")
+      out:write(content)
+      out:close()
+
+      os.rename(body_file..".tmp",string.format("%s/%s-%s.mule",path,ngx.var.remote_addr,base_name))
+      end
+      write_to_path(content,"<mule_queues>/mule_incoming")
+      ngx.exit(202)
+    ';
+  }
+
+  location  /mule/api/ {
+    gzip_proxied any;
+    add_header Access-Control-Allow-Origin *;
+    proxy_pass http://localhost:8981/;
+  }
+
+  rewrite ^/mule$ /mule/ permanent;
+
+  location /mule/ {
+    # change the path as necessary
+    index index.html;
+    alias '<mule_code>/muleview/build/production/';
+    expires 1d;
+  }
+  rewrite ^/scent$ /scent/ permanent;
+  location /scent/ {
+    # change the path as necessary
+    root <mule_code>;
+    index index.html;
+    expires 1m;
+  }
+
+}
