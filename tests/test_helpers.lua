@@ -1,7 +1,12 @@
 require "tests.strict"
-require "helpers"
+local lunit = require "lunitx"
+if _VERSION >= 'Lua 5.2' then
+  _ENV = lunit.module('test_helpers','seeall')
+else
+  module( "test_helpers", lunit.testcase,package.seeall )
+end
 
-module( "test_helpers", lunit.testcase,package.seeall )
+require "helpers"
 
 function test_file_exists()
   assert_true(file_exists("tests/fixtures/mule.cfg"))

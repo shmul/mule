@@ -1,7 +1,11 @@
 require "tests.strict"
-require "lunit"
+local lunit = require "lunitx"
+if _VERSION >= 'Lua 5.2' then
+  _ENV = lunit.module('test_httpd','seeall')
+else
+  module( "test_httpd", lunit.testcase,package.seeall )
+end
 require "mule"
-module( "test_httpd", lunit.testcase,package.seeall )
 local cdb = require "column_db"
 local p = require "purepack"
 

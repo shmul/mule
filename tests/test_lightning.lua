@@ -1,8 +1,12 @@
 local l = require "lightning_mdb"
 require "tests.strict"
+local lunit = require "lunitx"
+if _VERSION >= 'Lua 5.2' then
+  _ENV = lunit.module('test_lightning_mdb','seeall')
+else
+  module( "test_lightning_mdb", lunit.testcase,package.seeall )
+end
 require "helpers"
-
-module( "lightning_mdb", lunit.testcase,package.seeall )
 
 local function lightning_mdb_factory(name_,num_pages_)
   local dir = create_test_directory(name_.."_mdb")

@@ -1,10 +1,17 @@
-require "mule"
---require "tests.strict"
 
-require "lunit"
+require "tests.strict"
+
+lunit = require "lunitx"
+
+local lunit = require "lunit"
+if _VERSION >= 'Lua 5.2' then
+  _ENV = lunit.module('test_mule','seeall')
+else
+  module( "test_mule", lunit.testcase, package.seeall )
+end
+
 pcall(require, "profiler")
-module( "test_mule", lunit.testcase, package.seeall )
-
+require "mule"
 
 local function db(p)
   return test_directory()..p.."_mdb"

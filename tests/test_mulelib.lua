@@ -1,7 +1,15 @@
-require "mulelib"
 require "tests.strict"
+lunit = require "lunitx"
+local lunit = require "lunit"
+if _VERSION >= 'Lua 5.2' then
+    _ENV = lunit.module('test_mulelib','seeall')
+else
+  module( "test_mulelib", lunit.testcase, package.seeall )
+end
+
+require "mulelib"
+
 pcall(require, "profiler")
-require "lunit"
 require "memory_store"
 local cdb = require "column_db"
 local mdb = require "lightning_mdb"

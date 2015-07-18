@@ -1,7 +1,12 @@
-local tr = require "trie"
 require "tests.strict"
 
-module( "test_trie", lunit.testcase,package.seeall )
+local lunit = require "lunitx"
+if _VERSION >= 'Lua 5.2' then
+  _ENV = lunit.module('test_trie','seeall')
+else
+  module( "test_trie", lunit.testcase,package.seeall )
+end
+local tr = require "trie"
 
 function test_insert()
   local t = tr.new()

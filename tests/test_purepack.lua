@@ -1,8 +1,15 @@
-local p = require "purepack"
-require "tests.strict"
-require "helpers"
 
-module( "test_purepack", lunit.testcase,package.seeall )
+require "tests.strict"
+local lunit = require "lunitx"
+if _VERSION >= 'Lua 5.2' then
+  _ENV = lunit.module('test_purepack','seeall')
+else
+  module( "test_purepack", lunit.testcase,package.seeall )
+end
+
+require "helpers"
+local p = require "purepack"
+
 p.set_pack_lib("purepack")
 
 local function for_each_lib(func_)

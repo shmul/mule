@@ -28,14 +28,14 @@ RUN cd /tmp && \
 RUN luarocks install copas 1.1.6-1
 RUN luarocks install lightningmdb
 RUN luarocks install luaposix
+RUN luarocks install lunitx
 
 ENV HOME /root
 WORKDIR $HOME
 
 COPY *.lua $HOME/
-COPY lunit-0.5 $HOME/lunit-0.5
 COPY tests $HOME/tests
 COPY fdi $HOME/fdi/
 RUN mkdir -p $HOME/tests/temp
 
-CMD lunit-0.5/lunit tests/test_*.lua
+CMD lunit.sh tests/test_*.lua

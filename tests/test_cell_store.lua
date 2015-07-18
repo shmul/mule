@@ -1,8 +1,15 @@
-local c = require "column_db"
-local p = require "purepack"
 require "tests.strict"
 
-module( "test_cell_store", lunit.testcase,package.seeall )
+local lunit = require "lunitx"
+if _VERSION >= 'Lua 5.2' then
+  _ENV = lunit.module('test_cell_store','seeall')
+else
+  module( "test_cell_store", lunit.testcase,package.seeall )
+end
+
+local c = require "column_db"
+local p = require "purepack"
+
 
 p.set_pack_lib("bits")
 function empty_cell(cell_)
