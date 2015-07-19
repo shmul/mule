@@ -967,66 +967,6 @@ function app() {
     $("#main-box").hide();
   }
 
-  function run_tests() {
-    QUnit.config.hidepassed = true;
-    $(".content-wrapper").prepend("<div id='qunit'></div>");
-    QUnit.test("utility functions", function( assert ) {
-      assert.equal(timeunit_to_seconds("5m"),300);
-      assert.equal(timeunit_to_seconds("1y"),60*60*24*365);
-      assert.equal(timeunit_to_seconds("1d"),60*60*24);
-      assert.deepEqual(graph_split("beer.ale;1d:2y"),["beer.ale","1d","2y"]);
-      assert.deepEqual(graph_split("wine.red;1h:90d"),["wine.red","1h","90d"]);
-
-      generate_all_graphs("no.such.graph:1h:90d",
-                          function(actual_){
-                            assert.deepEqual(actual_,[]);
-                          });
-      generate_all_graphs("scotch.sql_single_malt;1h:90d",
-                          function(actual_) {
-                            assert.deepEqual(actual_,
-                                             ["scotch.sql_single_malt;5m:3d",
-                                              "scotch.sql_single_malt;1h:90d",
-                                              "scotch.sql_single_malt;1d:2y"]);
-                          });
-
-      generate_all_graphs("snark.foo.bar;1h:90d",
-                          function(actual_) {
-                            assert.deepEqual(actual_,
-                                             ["snark.foo.bar;1d:2y"]);
-                          });
-
-      generate_all_graphs("snark.foo.bar;60d:90y",
-                          function(actual_) {
-                            assert.deepEqual(actual_,
-                                             ["snark.foo.bar;1h:90d","snark.foo.bar;1d:2y"]);
-                          });
-      assert.equal(graph_refresh_time("snark.foo.bar;1h:90d"),3600);
-      assert.equal(graph_refresh_time("scotch.sql_single_malt;5m:3d"),300);
-    });
-
-    scent_ds.key("beer",function(actual_) {
-      QUnit.test("key 1", function( assert ) {
-        assert.deepEqual(actual_,[
-          "beer.ale",
-          "beer.pilsner",
-          "beer.stout",
-          "beer;1d:2y",
-          "beer;1h:90d",
-          "beer;5m:3d"]);
-      });
-    });
-    scent_ds.key("beer.",function(actual_) {
-      QUnit.test("key 2", function( assert ) {
-        assert.deepEqual(actual_,[
-          "beer",
-          "beer.ale",
-          "beer.pilsner",
-          "beer.stout"
-        ]);
-      });
-    });
-  }
-
   function set_title(title_) {
     $("title").text("Scent of a Mule | "+title_);
     //$("#page-title").text(title_);
@@ -1149,7 +1089,6 @@ function app() {
   // call init functions
   setup_pnotify();
 
-  //run_tests();
   setup_router();
 
 }
