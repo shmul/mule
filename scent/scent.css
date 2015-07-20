@@ -1,0 +1,111 @@
+.modal.modal-wide .modal-dialog {
+    width: 90%;
+}
+.modal-wide .modal-body {
+    overflow-y: auto;
+}
+
+/* override some AdminLTE
+ */
+.sidebar-menu .treeview-menu  li > a {
+    padding: 5px 5px 5px 15px;
+    display: block;
+    font-size: 14px;
+    white-space: nowrap;
+    text-overflow: clip;
+    overflow: hidden;
+}
+
+.tall-graph {
+    display: block;
+    margin: 0px;
+    padding: 5px;
+    width: 100%;
+    height: 630px;
+    font-size: 14px;
+}
+
+.medium-graph {
+    display: block;
+    margin: 0px;
+    padding: 5px;
+    width: 100%;
+    height: 630px;
+}
+
+.small-graph {
+    display: block;
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+    height: 300px;
+}
+
+.tall-graph-header {
+    font-size: 18px;
+}
+
+.medium-graph-header {
+    font-size: 18px;
+}
+.small-graph-header {
+    font-size: 14px;
+}
+
+.graph-favorite {
+  color: #f39c12;
+  cursor: pointer;
+}
+
+.mg-x-axis text, .mg-y-axis text, .mg-histogram .axis text,
+.mg-active-datapoint, .mg-baselines text {
+    font-size: 1.5rem;
+}
+
+.mg-x-axis-small text, .mg-y-axis-small text,
+.mg-active-datapoint-small, .mg-baselines-small text {
+    font-size: 1.0rem;
+}
+
+.mg-x-axis-small .label, .mg-y-axis-small .label {
+    font-size: 1.0rem;
+}
+
+/* Hide the verical line on every Jan 1st */
+.mg-year-marker line {
+    display: none;
+}
+
+.timerange-slider-section {
+  padding: 0 4em;
+}
+.timerange-slider-section .slider {
+  width: 100%;
+}
+.timerange-slider {
+  display: none;
+}
+
+/* Horizontally center the legend */
+.legend {
+  margin: 1em auto;
+  width: -moz-fit-content;
+  width: -webkit-fit-content;
+  width: fit-content;
+}
+
+.alert-graph-name {
+    cursor: pointer;
+}
+
+.keys-table-key {
+    cursor: pointer;
+}
+
+.inner-navigation {
+    cursor: pointer;
+}
+
+.box-body {
+    padding: 0;
+}
