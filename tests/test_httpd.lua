@@ -1,5 +1,5 @@
 require "tests.strict"
-local lunit = require "lunitx"
+local lunit = require "lunit"
 if _VERSION >= 'Lua 5.2' then
   _ENV = lunit.module('test_httpd','seeall')
 else

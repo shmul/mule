@@ -1,5 +1,4 @@
 require "tests.strict"
-lunit = require "lunitx"
 local lunit = require "lunit"
 if _VERSION >= 'Lua 5.2' then
     _ENV = lunit.module('test_mulelib','seeall')
@@ -500,8 +499,8 @@ function test_modify_factories()
     m.modify_factories({{"beer.ale","1h:30d","2h:90d"}})
 
     assert(non_empty_metrics(m.matching_sequences("beer.ale")))
-    assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]'))
-    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74857800]'))
+    assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]',1,true))
+    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true))
   end
   for_each_db("modify_factories",helper)
 end

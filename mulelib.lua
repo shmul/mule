@@ -169,7 +169,7 @@ function sequence(db_,name_)
     while j<#slots_ do
       local timestamp,hits,sum,typ = legit_input_line("",tonumber(slots_[j+sm]),tonumber(slots_[j+ts]),tonumber(slots_[j+ht]))
       j = j + 3
-      update(timestamp,hits,sum,typ)
+      update(timestamp,hits,sum,"=")
     end
 
     _seq_storage.save(_name)
@@ -1233,7 +1233,7 @@ function mule(db_)
             for seq in sequences_for_prefix(_db,f[1],f[2]) do
               logd("found original sequence:",seq.name())
               local new_name = name(seq.metric(),new_step,new_period)
-              sequence(db_,new_name).update_batch(seq.slots(),2,0,1)
+              sequence(db_,new_name).update_batch(seq.slots(),0,1,2)
               _db.out(seq.name())
             end
           end
