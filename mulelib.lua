@@ -160,12 +160,14 @@ function sequence(db_,name_)
     return adjusted_timestamp,sum
   end
 
-  local function update_batch(slots_)
-    -- slots is a flat array of arrays
+  local function update_batch(slots_,ts,ht,sm)
+    -- slots is a flat array of arrays.
+    -- it is kind of ugly that we need to pass the indices to the various cells in each slot, but an inconsistency
+    -- in the order that is too fundemental to change, forces us to.
     local j = 1
     local match = string.match
     while j<#slots_ do
-      local timestamp,hits,sum,typ = legit_input_line("",tonumber(slots_[j]),tonumber(slots_[j+2]),tonumber(slots_[j+1]))
+      local timestamp,hits,sum,typ = legit_input_line("",tonumber(slots_[j+sm]),tonumber(slots_[j+ts]),tonumber(slots_[j+ht]))
       j = j + 3
       update(timestamp,hits,sum,typ)
     end
@@ -1231,7 +1233,7 @@ function mule(db_)
             for seq in sequences_for_prefix(_db,f[1],f[2]) do
               logd("found original sequence:",seq.name())
               local new_name = name(seq.metric(),new_step,new_period)
-              sequence(db_,new_name).update_batch(seq.slots())
+              sequence(db_,new_name).update_batch(seq.slots(),2,0,1)
               _db.out(seq.name())
             end
           end
@@ -1272,7 +1274,7 @@ function mule(db_)
       -- here we DON'T use the sparse sequence as they aren't needed when reading an
       -- entire sequence
       -- TODO might be a corrupted line with ';' accidently in the line.
-      return sequence(_db,name).update_batch(items)
+      return sequence(_db,name).update_batch(items,2,1,0)
     end
 
     local success,rv = pcall(helper)

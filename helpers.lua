@@ -541,8 +541,7 @@ function parse_input_line(line_)
 end
 
 function legit_input_line(metric_,sum_,timestamp_,hits_)
-  local typ,
-  sum = string.match(sum_ or "","([=%^]?)(%d+)")
+  local typ,sum = string.match(sum_ or "","([=%^]?)(%d+)")
 
   if #typ==0 then typ = nil end
   timestamp_ = tonumber(timestamp_)
@@ -652,27 +651,24 @@ end
 
 function get_slot(data_,idx_,offset_)
   -- idx_ is zero based
-  local fromb,size = pp.from_binary,pp.PNS
+  local size = pp.PNS
   if offset_ then
-    local i = 1+(idx_*size*3)+offset_*size
-    return fromb(data_,i)
+    return pp.from_binary(data_,1+size*(idx_*3+offset_))
   end
-  local i = 1+(idx_*size*3)
-  return pp.from_binary3(data_,i)
---  return fromb(data_,i),fromb(data_,i+size),fromb(data_,i+size*2)
+  return pp.from_binary3(data_,1+size*idx_*3)
 end
 
 
 function set_slot(data_,idx_,offset_,a,b,c)
-  -- idx_ is zero based
-  local tob,sub = pp.to_binary,string.sub
+  -- idx_ is zero based and we work in 0 based indexing and then add some
+  local sub = string.sub
   local size = pp.PNS
   if offset_ then
-    local i = 1+(idx_*size*3)+offset_*size
-    return sub(data_,1,i-1),tob(a),sub(data_,i+size)
+    local i = size*(idx_*3+offset_)
+    return sub(data_,1,i),pp.to_binary(a),sub(data_,1+i+size)
   end
-  local i = 1+(idx_*size*3)
-  return sub(data_,1,i-1),pp.to_binary3(a,b,c),sub(data_,i+size*3)
+  local i = size*idx_*3
+  return sub(data_,1,i),pp.to_binary3(a,b,c),sub(data_,1+i+size*3)
 end
 
 function printf(format_,...)

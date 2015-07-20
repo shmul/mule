@@ -9,8 +9,8 @@ function sequence_storage(db_,name_,numslots_)
   end
 
 
-  local function internal_set_slot(idx_,offset_,a,b,c)
-    local a,b,c = set_slot(_data,idx_,offset_,a,b,c)
+  local function internal_set_slot(idx_,offset_,a_,b_,c_)
+    local a,b,c = set_slot(_data,idx_,offset_,a_,b_,c_)
     _data = pp.concat_three_strings(a,b,c)
   end
 
