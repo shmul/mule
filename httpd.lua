@@ -16,6 +16,17 @@ local status_codes = {
   [405] = "405 Method Not Allowed"
 }
 
+local file_extension_content_types = {
+  css = "text/css",
+  html = "text/html",
+  js = "application/javascript",
+  json = "application/json",
+  jpg = "image/jpeg",
+  jpeg = "image/jpeg",
+  png = "image/png",
+  gif = "image/gif",
+  ico = "image/x-icon"
+}
 
 require "mulelib"
 
@@ -300,6 +311,10 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
       end
   end
 
+  local function guess_content_type(file_)
+    local extension = string.match(file_, "%.(%w+)$")
+    return file_extension_content_types[extension] or "application/octet-stream"
+  end
 
   local function send_file(socket_)
     return
@@ -318,9 +333,13 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
             socket.sink("close-when-done",socket_))
         end
 
+        headers = {
+          {"Content-Type",guess_content_type(file)},
+          {"ETag",etag}
+        }
         return ltn12.pump.all(
           sr.cat(
-            sr.string(standard_response(200,file_size(file),{{"ETag",etag}})),
+            sr.string(standard_response(200,file_size(file),headers)),
             sr.file(io.open(file,"rb"))),
           socket.sink("close-when-done",socket_))
       end
