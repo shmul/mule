@@ -97,7 +97,7 @@ local CORS = {{"Access-Control-Allow-Origin","*"},{"Access-Control-Allow-Headers
 local CONTENT_TYPE_JSON = {"Content-Type","application/json"}
 
 local function standard_response(status_,content_,extra_headers_)
-  local headers = {{"Connection","keep-alive"}}
+  local headers = {{"Connection","close"}}
   if extra_headers_ then
     concat_arrays(headers,extra_headers_)
   end
