@@ -375,7 +375,7 @@ Mule ships with a couple of Docker files used to automate the unit tests across 
 
 # License
 
-Mule is distributed under the [Apache License, version 2.0](LICENSE.md)
+Mule is distributed under the [Apache License, version 2.0](LICENSE)
 
 (c) Copyright IBM Corp. 2010, 2015
 
