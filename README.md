@@ -60,16 +60,17 @@ The following lists the retention units:
 #### Input Format
 Each input line should be in the following format:
 
+An *event*
     <metric> <value> <timestamp>
 
-or
+or a *command*
 
     .<command> ...
 
-For example:
+##### Event
 
     beer.stout.irish 20 74857843
-This means that 20 orders of `beer.stout.irish` were received at the given timestamp, measured in seconds (also known as Unix time). The value (20 in this example) is usually added to the number that was already calculated for this timestamp.
+This means that 20 orders of `beer.stout.irish` were recorded at the given timestamp, measured in seconds (also known as Unix time). The value (20 in this example) is added to the count of the metric for this particular bucket, derived from the timestamp and the *step* value.
 
 Two more metric types are supported:
 
@@ -80,6 +81,7 @@ For example:
 
     beer.stout.irish =32 74858041
 
+##### Command
 The following command runs garbage collection for any metric with the prefix `beer.stout` that wasn't updated after the provided timestamp.
 
     .gc beer.stout 7489826
@@ -87,31 +89,19 @@ The following command runs garbage collection for any metric with the prefix `be
 
 ### Commands
 
-Mule contains the following commands:
 
-* `key <metric>` - Retrieve all the metrics for which the given parameter is a prefix. `<metric>` can be an exact sequence name.
+#### Command line interface
+
+The following commands can be issue via the command line or in an input file. Recall that they should be preceded by a `.` (dot).
 * `graph <metric> [<timestamp>]` - Retrieve all the sequences for which the given parameter is a prefix. `<metric>` can be an exact sequence name. `<timestamp>` can be used to limit the output to a range. `<timestamp>` can be a comma-separated array of timestamps. Additionally, `l` (latest) and `n` (now) can be used as well as simple arithmetic operations. For example, `<timestamp>` can be `l-10..l,n,n-100..l+50`.
+* `key <metric>` - Retrieve all the metrics for which the given parameter is a prefix. `<metric>` can be an exact sequence name.
 * `latest <metric-or-name>` - Retrieves the latest updated slot.
 * `slot <metric-or-name> <timestamp>` - Retrieves the slots specified by the timestamp(s).
 * `gc <metric> <timestamp> [<force>]` - Erase all metrics that weren't updated since the timestamp. You must pass `true` for `<force>` to modify the database.
 * `reset <metric>` - Clear all slots in the metric.
 
 
-### API
-
-Mule exposes a REST API with JSON formatted results.
-
-#### Configuration
-To update Mule's configuration POST a configuration file to:
-
-    http://muleserver/config
-For example:
-
-    curl -vd @<(echo "wine. 1d:3y") http://muleserver/config
-
-To read (export) the configuration use GET:
-
-    http://muleserver/config
+### REST API
 
 #### Graphs
 
@@ -165,10 +155,12 @@ Use a DELETE request to erase a graph, or to set its data to 0. You can use only
 
 * `force` - Pass `force=true` to remove the graph.
 * `timestamp` - All the entries before and including the timestamp are set to 0. **Note**: The entries are not deleted.
+
+Optional parameters:
 * `level` - The depth of the sub keys to reset. The default value is 0.
 
 
-#### Metrics Hierarchy
+#### Key
 The metrics and names create a hierarchy that can be retrieved by sending a GET request to:
 
     http://muleserver/key/<metric>?<level>
@@ -253,6 +245,24 @@ You can create a backup of the database with the following command. This command
     http://muleserver/backup
 
 
+#### Configuration
+To update Mule's configuration POST a configuration file to:
+
+    http://muleserver/config
+For example:
+
+    curl -vd @<(echo "wine. 1d:3y") http://muleserver/config
+
+To read (export) the configuration use GET:
+
+    http://muleserver/config
+
+#### Key-value store
+Mule provides a simple interface for storing arbitrary values. Using the relevant HTTP verbs:
+* To retrieve the value associated with a key use a GET request to `http://muleserver/kvs/<key>`
+* To set (or update) the value associated with a key use a PUT request to `http://muleserver/kvs/<key>` where the body is the value
+* To remove a key and its value use a DELETE request to `http://muleserver/kvs/<key>`.
+
 ### Processing Speed
 During testing on a c3.2xlarge AWS instance with SSD in RAID 0, Mule peaked at approximately 200 files per second, with an average file size of 3k, and an average number of lines of 42. The nginx based frontend can handle writes of approximately 300 files per second.
 
@@ -262,12 +272,12 @@ You need to install Lua, luarocks, and the Lightning Memory-Mapped Database.
 
 ### Lua and luarocks
 
-* Install either Lua 5.1 or 5.2 using your standard package manager. You can also install Lua from the [Lua download page](http://www.lua.org/download.html).
+* Install >=Lua 5.1 (caveat - Lua 5.3 was only lightly tested) using your standard package manager. You can also install Lua from the [Lua download page](http://www.lua.org/download.html).
 * Install luarocks using the package manager or from the [luarocks download page](http://luarocks.org/en/Download).
 * Install additional rocks - copas, lpack, luaposix, StackTracePlus (optional)
 
 ### Lightning Memory-Mapped Database (LMDB)
-Assuming `/home/user/projects` is the root of your development projects, run the following commands to install LMDB: 
+Assuming `/home/user/projects` is the root of your development projects, run the following commands to install LMDB:
 
 <pre>
 git clone https://github.com/LMDB/lmdb # This will create a directory ./mdb/libraries/liblmdb
@@ -283,8 +293,9 @@ make
 copy `lightningmdb.so` to your mule directory
 
 
-### HTTP daemon
+### Deployment model
 
+#### Internal HTTP daemon
 Mule ships with a simple HTTP daemon and supports:
 
 * A REST/JSONP interface
@@ -300,18 +311,32 @@ For example,
 
     lua mule.lua -d mule.kct -t localhost:3012 -x stopme
 
+#### (through) Nginx
+The recommended mule setup, is proxying the traffic through Nginx. In this setup, mule runs as a backend HTTP server (as explained above) but the traffic is proxied through Nginx. This setup enables:
+- Serving static files (the user interface, see below) directly via Nginx
+- Async processing of input files - a Lua script, running inside Nginx, saves the submitted input into a local directory (which serves as a queue). Mule then periodically scans the directory, and processes the files. This mode of operation adds to the robustness of the system, as Mule can be restarted and updated without losing data.
+- Queries are proxied through Ngins directly to mule.
 
-TODO provide nginx proxying configuration
 
-### Muleview
+Sample nginx configuration is provided in `nginx.mule.conf.sample`. In this sample the URL routes are:
+- For accessing the mule API, including file submission `http://muleserver/mule/api/`.
+- For accessing the *muleview* application `http://muleserver/mule/`.
+- For accessing the *scent* application `http://muleserver/scent/`.
+
+
+### User interface
+
+Two different web applications are provided with Mule, *muelview* provides a rich interface, where as *scent* is oriented towards dashboard view.
+
+#### Muleview
 
 Mule ships with a simple [Ext JS](http://www.sencha.com/products/extjs/)-based client web-application written in [CoffeeScript](http://coffeescript.org/) called "Muleview".
 Muleview can display graphs of all Mule's current data.
 
-#### Requirements
+##### Requirements
 Muleview requires [CoffeeScript](http://coffeescript.org/) for compilation and [Sencha Cmd](http://www.sencha.com/products/sencha-cmd/download) for creating a production-ready build, that is, a single-file minified version of the entire framework and source (all_classes.js) and all the necessary static resources.
 
-#### Build
+##### Build
 To build a production-ready folder:
 
 1. Install [CoffeeScript](http://coffeescript.org/#installation) and make sure the `coffee` command is available.
@@ -319,7 +344,7 @@ To build a production-ready folder:
 1. Change directory to the muleview directory (`cd muleview`) and run `sencha app build`.
 1. The output should be generated under `muleview/build/Muleview/production`.
 
-#### Built-in Serving with Mule
+##### Built-in Serving with Mule
 You can use Mule as a web-server for Muleview. To use Mule as a web-server, run Mule with the static files root path parameter (`-R muleview/build/Muleview/production`).
 
 A typical configuration is:
@@ -328,14 +353,13 @@ A typical configuration is:
 
 It is recommended to run Mule and Muleview on different servers. If they are on different servers, before you compile and build Muleview, you must enter Mule's URL in `muleview/coffee/app/Settings.coffee`.
 
-### Command Line Interface
+#### Scent
 
-Mule also has a command line interface (CLI) that is useful for tests and development. **Note**: It is not recommended to use the CLI for interactive use. For a short usage description, run `lua mule.lua -h`.
+TODO
 
-TODO provide a list of the common commands
+### Development environment
 
-
-### Vagrant Box
+#### Vagrant Box
 Mule ships with a [Vagrant](http://vagrantup.com) server for development.
 To set up the server:
 
@@ -345,6 +369,9 @@ To set up the server:
 1. `vagrant ssh`
 1. `/vagrant/setup.sh`
 This sets up a server with all the relevant development dependencies and an Nginx server that is accessible from the your host at localhost:3000/mule/
+
+#### Docker
+Mule ships with a couple of Docker files used to automate the unit tests across multiple Lua versions. Additionally a Docker file with a mule+nginx setup is provided.
 
 # License
 
