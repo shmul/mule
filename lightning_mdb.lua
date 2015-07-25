@@ -21,6 +21,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _cache = {}
   local _nodes_cache = {}
   local _readonly_txn = {}
+  local _increment = nil
 
   local function flush_cache_logger()
     local a = table_size(_cache)
@@ -332,6 +333,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       if dont_cache_ or disable_cache then
         return v
       end
+      _increment("mule.lightning_mdb.get.cache_miss")
       _cache[k] = {v,idx}
     end
     return _cache[k][1]
@@ -342,6 +344,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local v,idx = native_get(k,true)
       v = v and unpack_node(k,v)
       if not v or disable_cache then return v end
+      _increment("mule.lightning_mdb.get_node.cache_miss")
       _nodes_cache[k] = {v,idx}
     end
     return _nodes_cache[k][1]
@@ -445,6 +448,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function internal_set_slot(name_,idx_,offset_,timestamp_,hits_,sum_)
     local function new_page_data()
+      _increment("mule.lightning_mdb.internal_set_slot.new_page_data")
       return string.rep(string.char(0),pp.PNS*3*_slots_per_page)
     end
 
@@ -467,6 +471,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if node._seq then
       node._seq.set(timestamp_,hits_,sum_)
       if #node._seq.slots()==MAX_SLOTS_IN_SPARSE_SEQ then
+      _increment("mule.lightning_mdb.internal_set_slot.create_pages")
         -- time to create actual pages
         local slots = node._seq.slots()
         node._latest = node._seq.latest()
@@ -618,6 +623,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       cur:close()
       release_readonly_txn(env)
     end
+    _increment("mule.lightning_mdb.matching_keys")
     return coroutine.wrap(
       function()
         for _,ed in ipairs(_metas) do
@@ -727,6 +733,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     cache = function() end,
     dump_keys = dump_keys,
     dump_values = dump_values,
+    set_increment = function(increment_) _increment = increment_ end,
   }
 
   self.sequence_storage = function(name_,numslots_)

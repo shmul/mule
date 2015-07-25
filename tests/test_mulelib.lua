@@ -795,7 +795,7 @@ end
 function test_pale()
   local function helper(db)
     local m = mule(db)
-    m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y"}))
+    m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y","mule. 5m:3d 1h:90d"}))
 
     m.process("./tests/fixtures/pale.dump")
 
@@ -807,6 +807,7 @@ function test_pale()
 
     assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361300362"}),"46,27",1,true))
+    print(m.graph("mule"))
   end
 
   for_each_db("pale",helper,true)

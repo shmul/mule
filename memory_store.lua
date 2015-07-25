@@ -46,6 +46,7 @@ function in_memory_db()
     close = function () end,
     cache = function() end,
     flush_cache = function() end,
+    set_increment = function() end,
   }
 
   self.sequence_storage = function(name_,numslots_)

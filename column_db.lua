@@ -127,6 +127,7 @@ local function column_db(base_dir_)
   local last_save = nil
   local seq_cache = {}
   local seq_cache_size = 0
+  local _increment = nil
   logi("column_db")
 
   local function extract_from_name(name_)
@@ -414,6 +415,7 @@ local function column_db(base_dir_)
     matching_keys = matching_keys,
     flush_cache = function() end,
     cache = function(name_) return cache(name_) end,
+    set_increment = function(increment_) _increment = increment_ end,
   }
 
 

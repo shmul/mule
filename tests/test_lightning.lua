@@ -15,6 +15,7 @@ end
 
 function test_meta()
   local db = lightning_mdb_factory("l_meta")
+  db.set_increment(function() end)
   db.put("metadata=hello","cruel world")
   assert_equal("cruel world",db.get("metadata=hello"))
   assert_nil(db.get("hello"))
@@ -37,6 +38,7 @@ end
 function test_payload()
   local function helper(num_pages_,count_,index_)
     local db = lightning_mdb_factory("l_payload."..index_,num_pages_)
+    db.set_increment(function() end)
     for i=1,count_ do
       db.put(tostring(i),tostring(i))
     end
@@ -62,6 +64,8 @@ end
 function test_matchingkeys()
   local db = lightning_mdb_factory("l_matchingkeys")
   local count = 10
+
+  db.set_increment(function() end)
   for i=count*2,0,-1 do
     db.native_put(string.format("%04d",i),i,true)
   end
