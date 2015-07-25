@@ -359,11 +359,19 @@ function mule(db_)
                                                  logi("mulelib flush_cache",a)
                                                end
   end)
-  local update_sequence = nil -- foreward declaration
+  local update_line = nil -- foreward declaration
+  local _self_metrics = {}
 
-  local function increment(metric_,value_,hits_)
-    local now = os.time()
-    update_sequence(metric_..";5m:3d",value_ or  1,now,hits_ or 1,now)
+  local function increment(metric_,sum_,hits_)
+    local v = _self_metrics[metric_]
+    sum_ = sum_ or 1
+    hits_ = hits_ or 1
+    if not v then
+      _self_metrics[metric_] = {sum_,hits_}
+      return
+    end
+    v[1] = v[1]+sum_
+    v[2] = v[2]+hits_
   end
 
   db_.set_increment(increment)
@@ -519,6 +527,13 @@ function mule(db_)
   local function flush_cache(max_,step_)
     _flush_cache_logger()
 
+    local self_metrics = _self_metrics
+    _self_metrics = {}
+    local now = time_now()
+    for k,v in pairs(self_metrics) do
+      update_line(k,v[1],now,v[2],nil,now)
+    end
+
     -- we now update the real sequences
     local num_processed = 0
     local size,st,en = random_table_region(_updated_sequences,max_)
@@ -528,6 +543,7 @@ function mule(db_)
       flush_cache_of_sequence(n,s)
       num_processed = num_processed + 1
     end
+
     if num_processed==0 then return false end
     -- returns true if there are more items to process
     return _updated_sequences and next(_updated_sequences)~=nil
@@ -1183,7 +1199,7 @@ function mule(db_)
   end
 
 
-  update_sequence = function(name_,sum_,timestamp_,hits_,type_,now_)
+  local function update_sequence(name_,sum_,timestamp_,hits_,type_,now_)
     if now_ then
       local metric,step,period = parse_name(name_)
       if timestamp_<now_-period then
@@ -1211,7 +1227,7 @@ function mule(db_)
     return true
   end
 
-  local function update_line(metric_,sum_,timestamp_,hits_,now_)
+  update_line = function(metric_,sum_,timestamp_,hits_,now_)
     local timestamp,hits,sum,typ = legit_input_line(metric_,sum_,timestamp_,hits_)
 
     if not timestamp then
