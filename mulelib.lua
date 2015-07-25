@@ -359,6 +359,14 @@ function mule(db_)
                                                  logi("mulelib flush_cache",a)
                                                end
   end)
+  local update_sequence = nil -- foreward declaration
+
+  local function increment(metric_,value_,hits_)
+    local now = os.time()
+    update_sequence(metric_..";5m:3d",value_ or  1,now,hits_ or 1,now)
+  end
+
+  db_.set_increment(increment)
 
   local function uniq_factories()
     local factories = _factories
@@ -490,6 +498,7 @@ function mule(db_)
 
     local seq = sequence(_db,name_)
     local now = time_now()
+    increment("mule.mulelib.flush_cache_of_sequence")
     for j,sl in ipairs(sparse_.slots()) do
       local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,sl._type)
       if adjusted_timestamp and sum then
@@ -514,7 +523,7 @@ function mule(db_)
     local num_processed = 0
     local size,st,en = random_table_region(_updated_sequences,max_)
     if size==0 then return false end
-
+    increment("mule.mulelib.flush_cache")
     for n,s in iterate_table(_updated_sequences,st,en) do
       flush_cache_of_sequence(n,s)
       num_processed = num_processed + 1
@@ -640,6 +649,7 @@ function mule(db_)
     local now = time_now()
     local find = string.find
     local in_memory = options_.in_memory and {}
+    local count = 0
 
     col.head()
     for m in split_helper(resource_,"/") do
@@ -671,6 +681,7 @@ function mule(db_)
 
       for seq in sequences_generator(db_,m,level) do
         flush_cache_of_sequence(seq)
+        count = count+1
         if in_memory then
           local current = {}
           seq.serialize(
@@ -699,7 +710,7 @@ function mule(db_)
         end
       end
     end
-
+    increment("mule.mulelib.graph",count)
     if in_memory then
       return in_memory
     end
@@ -757,6 +768,7 @@ function mule(db_)
     local find = string.find
     local col = collectionout(str,"{","}")
     local level = tonumber(options_.level) or 0
+    local count = 0
     col.head()
 
     if not resource_ or resource_=="" or resource_=="*" then
@@ -775,12 +787,14 @@ function mule(db_)
     for prefix in split_helper(resource_ or "","/") do
       for k in selector(prefix,level) do
         local metric,_,_ = split_name(k)
+        count = count+1
         if metric then
           local hash = db_.has_sub_keys(metric) and "{\"children\": true}" or "{}"
           col.elem(format("\"%s\": %s",k,hash))
         end
       end
     end
+    increment("mule.mulelib.key",count)
     logd("key - done traversing")
     col.tail()
     return wrap_json(str)
@@ -1077,6 +1091,7 @@ function mule(db_)
     }
 
     if dispatch[func] then
+      increment("mule.mulelib.command."..func)
       return dispatch[func]()
     end
     loge("unknown command",func)
@@ -1168,6 +1183,34 @@ function mule(db_)
   end
 
 
+  update_sequence = function(name_,sum_,timestamp_,hits_,type_,now_)
+    if now_ then
+      local metric,step,period = parse_name(name_)
+      if timestamp_<now_-period then
+        return false
+      end
+    end
+
+    local seq = _updated_sequences[name_]
+    local new_key = false
+    if not seq then
+      -- this might be a new key and so we should add it to the DB as well. Kind of ugly, but we rely on the
+      -- DB (and not the caches) when looking for keys
+      seq = sparse_sequence(name_)
+      new_key = true
+    end
+    local adjusted_timestamp,sum = seq.update(timestamp_,hits_,sum_,type_)
+    -- it might happen that we try to update a too old timestamp. In such a case
+    -- the update function returns null
+    if adjusted_timestamp then
+      _updated_sequences[name_] = seq
+      if new_key then
+        flush_cache_of_sequence(name_,seq)
+      end
+    end
+    return true
+  end
+
   local function update_line(metric_,sum_,timestamp_,hits_,now_)
     local timestamp,hits,sum,typ = legit_input_line(metric_,sum_,timestamp_,hits_)
 
@@ -1179,33 +1222,10 @@ function mule(db_)
       return
     end
 
-    for n,m in get_sequences(metric_) do
-      local skip = false
-      local new_key = false
-      if now_ then
-        local metric,step,period = parse_name(n)
-        skip = timestamp_<now_-period
-      end
-      if not skip then
-        local seq = _updated_sequences[n]
-
-        if not seq then
-          -- this might be a new key and so we should add it to the DB as well. Kind of ugly, but we rely on the
-          -- DB (and not the caches) when looking for keys
-          seq = sparse_sequence(n)
-          new_key = true
-        end
-        local adjusted_timestamp,sum = seq.update(timestamp,hits,sum,typ)
-        -- it might happen that we try to update a too old timestamp. In such a case
-        -- the update function returns null
-        if adjusted_timestamp then
-          _updated_sequences[n] = seq
-          if new_key then
-            flush_cache_of_sequence(n,seq)
-          end
-        end
-      end
+    for n,_ in get_sequences(metric_) do
+      update_sequence(n,sum,timestamp,hits,typ,now_)
     end
+
   end
 
   local function flush_all_caches(amount_,step_)
