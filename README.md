@@ -381,6 +381,8 @@ Mule is distributed under the [Apache License, version 2.0](LICENSE)
 
 Authors: Shmulik Regev, Dan Carmon, Dov Murik
 
+Contributions are gladly welcome. Please see the requirement for [Developer Certificate of Origin](CONTRIBUTING.md) .
+
 ## Luarocks
 Licensed under the [luarocks license](http://luarocks.org/en/License)
 
