@@ -56,6 +56,21 @@ function app() {
     return timeunit_to_seconds(gs[1]);
   }
 
+  function graph_span_in_seconds(graph_) {
+    var gs = graph_split(graph_);
+    if ( !gs ) { return null; }
+    return timeunit_to_seconds(gs[2]);
+  }
+
+  function graph_time_range(graph_) {
+    var step = graph_step_in_seconds(graph_);
+    var span = graph_span_in_seconds(graph_);
+    var now = Math.floor(new Date().getTime() / 1000);
+    var end_time = now - (now % step); // Round now to whole 'step' units
+    var start_time = end_time - span;
+    return [start_time, end_time];
+  }
+
   function alert_index(alert_string_) {
     switch ( alert_string_ ) {
     case "CRITICAL LOW":
@@ -467,8 +482,7 @@ function app() {
 
     MG.data_graphic({
       data: data_,
-      // This breaks the chart because MetricsGraphics assumes the samples resolution is 1 day
-      //missing_is_zero: true,
+      missing_is_hidden: true,
       //title: graph_split(name_)[0],
       full_width: true,
       full_height: true,
@@ -483,6 +497,7 @@ function app() {
       baselines: baselines_,
       markers: markers_,
       small_text: use_small_fonts,
+      brushing_interval: 1,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
           .text(time_format(d.date) + " | " + rollover_value_format(d.value));
@@ -544,6 +559,25 @@ function app() {
     });
   }
 
+  function fill_in_missing_slots(graph_name_, actual_data_) {
+    var step = graph_step_in_seconds(graph_name_);
+    var time_range = graph_time_range(graph_name_);
+    var first_time = time_range[0];
+    var last_time = time_range[1];
+    var full_data = new Array();
+    var pos = 0;
+    for (var t = first_time; t <= last_time; t += step) {
+      if (actual_data_[pos] && t == actual_data_[pos].dt) {
+        full_data.push(actual_data_[pos]);
+        pos++;
+      } else {
+        // No actual data for this time slot; push a "missing" entry (value=null)
+        full_data.push({date: new Date(t * 1000), value: null, dt: t});
+      }
+    }
+    return full_data;
+  }
+
   function load_graph(name_,target_) {
     function callback(raw_data_) {
       if ( !raw_data_ || raw_data_.length==0 ) {
@@ -564,10 +598,9 @@ function app() {
             data.push({date: new Date(dt * 1000), value: v, dt: dt});
           }
         };
-        data.sort(function(a,b) { return a.date-b.date });
-        var now = new Date();
-        data.push({date: now, value: 0, dt: now});
+        data.sort(function(a,b) { return a.dt-b.dt });
         add_bounds(data);
+        data = fill_in_missing_slots(name_, data)
         var graph_alerts = alerts_[name_];
         var baselines = [];
         if ( graph_alerts ) {
