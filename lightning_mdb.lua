@@ -418,7 +418,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if node._seq then
       -- trying to access one past the size is interpreted as getting the latest index
       if node._size==idx_ then
-        return node._seq.latest()
+        return node._seq.latest_timestamp()
       end
 
       local slot = node._seq.find_by_index(idx_)
@@ -474,7 +474,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       _increment("mule.lightning_mdb.internal_set_slot.create_pages")
         -- time to create actual pages
         local slots = node._seq.slots()
-        node._latest = node._seq.latest()
+        node._latest = node._seq.latest_timestamp()
         logi("lightningmdb creating pages",name_)
         local _,step,period = split_name(name_)
         node._seq = nil
