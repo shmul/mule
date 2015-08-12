@@ -193,3 +193,12 @@ function test_delete()
   t:delete("hell",true,true)
   assert_equal(0,t:size())
 end
+
+function test_replace()
+  local t = tr.new()
+  local n = t:insert("hello.cruel.world")
+  assert_nil(t:find("hello.cruel.world").secret)
+  n.secret = "visions of Johanna"
+  t:insert("hello.cruel.world")
+  assert_equal("visions of Johanna",t:find("hello.cruel.world").secret)
+end

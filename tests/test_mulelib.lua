@@ -501,6 +501,7 @@ function test_modify_factories()
     assert(non_empty_metrics(m.matching_sequences("beer.ale")))
     assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]',1,true))
     assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true))
+    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true))
   end
   for_each_db("modify_factories",helper)
 end
@@ -566,7 +567,7 @@ function test_reset()
   for_each_db("reset",helper)
 end
 
-function test_reset2()
+function test_2reset()
   function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 5m:3d"}))
     m.process("./tests/fixtures/reset2.mule")
@@ -576,7 +577,7 @@ function test_reset2()
     assert(string.find(m.graph("beer.stout.irish;5m:3d"),'[0,0,1418602500]',1,true))
     assert(string.find(m.graph("beer.stout.irish;5m:3d"),'[9,4,1418602800]',1,true))
   end
-  for_each_db("reset2",helper)
+  for_each_db("2reset",helper)
 end
 
 function test_save_load()

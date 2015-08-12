@@ -1,9 +1,12 @@
 local _,lr = require "luarocks.require"
 local url = require "socket.url"
 local pp = require "purepack"
+_DEBUG = false -- needed for luaposix
+local posix = require "posix"
 local posix_fcntl = require "posix.fcntl"
 local posix_glob = require "posix.glob"
 local posix_unistd = require "posix.unistd"
+local posix_errno = require "posix.errno"
 local posix_sys_stat = require "posix.sys.stat"
 local posix_sys_wait = require "posix.sys.wait"
 local stp_exists,stp = pcall(require,"StackTracePlus")
@@ -798,15 +801,20 @@ function posix_lock(lock_file_,callback_)
   end
 
   -- Set lock on file
-  local fd = posix_fcntl.open(lock_file_, posix_fcntl.O_CREAT, tonumber("666", 8))
+  --  local fd = posix_fcntl.open(lock_file_, posix_fcntl.O_CREAT, 0644)
+  local fd = posix.creat(lock_file_, "rw-r--r--")
+  if not fd then
+    logw("posix_lock - unable to obtain lock",lock_file_)
+    return
+  end
   local lock = {
     l_type = posix_fcntl.F_WRLCK;     -- Exclusive lock
     l_whence = posix_unistd.SEEK_SET;  -- Relative to beginning of file
     l_start = 0;            -- Start from 1st byte
     l_len = 0;              -- Lock whole file
   }
-  local result = posix_fcntl.fcntl(fd, posix_fcntl.F_SETLK, lock)
-  logi("posix_lock acquire",lock_file_,result)
+  local result,err,err_str = posix_fcntl.fcntl(fd, posix_fcntl.F_SETLK, lock)
+  logi("posix_lock acquire",lock_file_,fd,err,err_str)
   if result == -1 then
     loge("locked by another process")
     return
@@ -817,8 +825,9 @@ function posix_lock(lock_file_,callback_)
 
   -- Release the lock
   lock.l_type = posix_fcntl.F_UNLCK
-  posix_fcntl.fcntl(fd, posix_fcntl.F_SETLK, lock)
-  logi("posix_lock released",lock_file_,result)
+  _,err,err_str = posix_fcntl.fcntl(fd, posix_fcntl.F_SETLK, lock)
+  logi("posix_lock released",lock_file_,result,fd,err,err_str)
+
   posix_unistd.close(fd)
   return result
 end
