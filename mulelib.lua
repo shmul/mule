@@ -1255,6 +1255,7 @@ function mule(db_)
   local function modify_factories(factories_modifications_)
     -- the factories_modifications_ is a list of triples,
     -- <pattern, original retention, new retention>
+    local to_remove = {}
     for _,f in ipairs(factories_modifications_) do
       local factory = _factories[f[1]]
       if factory then
@@ -1268,15 +1269,21 @@ function mule(db_)
             -- a new retention
             for seq in sequences_for_prefix(_db,f[1],f[2]) do
               logd("found original sequence:",seq.name())
+              flush_cache_of_sequence(seq.name())
               local new_name = name(seq.metric(),new_step,new_period)
+              table.insert(to_remove,seq)
               sequence(db_,new_name).update_batch(seq.slots(),0,1,2)
-              _db.out(seq.name())
             end
           end
         end
       else
         logw("pattern not found",f[1])
       end
+    end
+
+    for _,seq in ipairs(to_remove) do
+      seq.reset_to_timestamp(time_now())
+      _db.out(seq.name())
     end
     flush_all_caches()
   end

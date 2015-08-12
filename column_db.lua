@@ -140,7 +140,7 @@ local function column_db(base_dir_)
       node.metric = metric
       node.step = step
       node.period = period
-      node.value = index:size()-1
+      node.value = index:size()-1 + index:find("metadata=column_db_deleted").count
       node.latest = 0
     end
     return node.metric,node.step,node.period,node.value
@@ -188,14 +188,19 @@ local function column_db(base_dir_)
 
     end
 
-    posix_lock(meta_file..".lock",function()
-                 logi("save_meta_file",dirty)
-                 if not dirty then
-                   return
-                 end
-                 fork_and_exit(helper)
-                 dirty = false
-    end)
+    local function lock_and_save()
+      posix_lock(meta_file..".lock",function()
+                   logi("save_meta_file",dirty)
+                   if not dirty then
+                     return
+                   end
+                   helper()
+                   dirty = false
+      end)
+    end
+
+
+    fork_and_exit(lock_and_save)
   end
 
 
@@ -263,11 +268,6 @@ local function column_db(base_dir_)
     end
   end
 
-  local function out(key_)
-    dirty = true
-    return index:delete(key_)
-  end
-
   local function find_keys(prefix_,substring_)
     local gsub = string.gsub
     local find = string.find
@@ -333,14 +333,13 @@ local function column_db(base_dir_)
                                end
                                return cached[idx_+1][offset_+1]
                              end
-
                              local slot = cdb_.read(sid_,idx_)
                              return get_slot(slot,0,offset_)
                            end
     )
   end
 
-  local function internal_set_slot(name_,idx_,offset_,a,b,c)
+  local function internal_set_slot(name_,idx_,offset_,a,b,c,dont_cache)
     return with_cell_store(name_,
                            function(cdb_,sid_)
                              -- trying to access one past the cdb size is interpreted as
@@ -349,9 +348,11 @@ local function column_db(base_dir_)
                                return latest(name_,a)
                              end
 
-                             local cached = seq_cache[name_]
-                             if cached then
-                               cached[idx_+1] = {a,b,c}
+                             if not dont_cache then
+                               local cached = seq_cache[name_]
+                               if cached then
+                                 cached[idx_+1] = {a,b,c}
+                               end
                              end
 
                              local t,u,v = set_slot(cdb_.read(sid_,idx_),0,offset_,a,b,c)
@@ -360,10 +361,24 @@ local function column_db(base_dir_)
                              -- save all the files every SAVE_PERIOD
                              if not last_save or time_now()>last_save+SAVE_PERIOD then
                                last_save = time_now()
-                               save_all()
+                               save_all(true)
                              end
                            end
     )
+  end
+
+
+  local function out(key_)
+    dirty = true
+    if seq_cache[key_] then
+      seq_cache[key_] = nil
+      seq_cache_size = seq_cache_size - 1
+    end
+
+    cell_store_per_name_cache[key_] = nil
+    local t = index:delete(key_)
+    index:find("metadata=column_db_deleted").count = index:find("metadata=column_db_deleted").count + 1
+    return t
   end
 
   local function cache(name_)
@@ -399,6 +414,11 @@ local function column_db(base_dir_)
   end
 
   read_meta_file()
+  if not index:find("metadata=column_db_deleted") then
+    local n = index:insert("metadata=column_db_deleted")
+    n.count = 0
+  end
+
   logi("column_db size",index:size())
   local self = {
     save = save_meta_file,
