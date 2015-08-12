@@ -1047,6 +1047,7 @@ function app() {
         title: "Phish | Scent of a Mule",
         message: '<iframe width="560" height="315" src="https://www.youtube.com/embed/qBkhao0DEhU" frameborder="0" allowfullscreen></iframe>'
       });
+      return false;
     });
 
     $("#govt-mule").click(function() {
@@ -1054,6 +1055,7 @@ function app() {
         title: "Gov't Mule | What is Hip",
         message: '<iframe width="560" height="315" src="https://www.youtube.com/embed/lz29Fqbh3sE" frameborder="0" allowfullscreen></iframe>'
       });
+      return false;
     });
   }
 
