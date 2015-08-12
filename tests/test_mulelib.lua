@@ -133,22 +133,22 @@ function helper_time_sequence(db_)
 
   seq.update(0,1,10)
   assert_equal(10,seq.slot(0)._sum)
-  assert_equal(10,seq.slot(seq.latest())._sum)
+  assert_equal(10,seq.slot(seq.latest_slot_index())._sum)
   seq.update(1,1,17)
   assert_equal(27,seq.slot(0)._sum)
   assert_equal(2,seq.slot(0)._hits)
-  assert_equal(27,seq.slot(seq.latest())._sum)
+  assert_equal(27,seq.slot(seq.latest_slot_index())._sum)
   seq.update(3660,1,3)
   assert_equal(3,seq.slot(1)._sum)
-  assert_equal(3,seq.slot(seq.latest())._sum)
+  assert_equal(3,seq.slot(seq.latest_slot_index())._sum)
   seq.update(60,1,7) -- this is in the past and should be discarded
   assert_equal(3,seq.slot(1)._sum)
   assert_equal(1,seq.slot(1)._hits)
-  assert_equal(3,seq.slot(seq.latest())._sum)
+  assert_equal(3,seq.slot(seq.latest_slot_index())._sum)
   seq.update(7260,1,89)
   assert_equal(89,seq.slot(1)._sum)
   assert_equal(1,seq.slot(1)._hits)
-  assert_equal(89,seq.slot(seq.latest())._sum)
+  assert_equal(89,seq.slot(seq.latest_slot_index())._sum)
 
   --seq.serialize(stdout(", "))
   local tbl = {}
@@ -297,7 +297,7 @@ function test_factories()
   for_each_db("test_factories",helper)
 end
 
-function test_modify_factories_1()
+function test_modify_more_factories()
   local function helper(m)
 
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.ale 60s:24h"}))
@@ -467,6 +467,7 @@ function test_top_level_factories()
     assert(non_empty_metrics(m.matching_sequences("beer")))
     assert(non_empty_metrics(m.matching_sequences("beer.ale")))
     assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
+--    print(m.latest("beer"))
     assert(string.find(m.latest("beer"),"70,3,74857800"))
 
     m.process("beer.ale.brown.newcastle 98 74857954")
@@ -804,7 +805,6 @@ function test_pale()
 
     assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361300362"}),"46,27",1,true))
---    print(m.graph("mule.",{level=3,count=100}))
   end
 
   for_each_db("pale",helper,true)

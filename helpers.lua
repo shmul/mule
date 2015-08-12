@@ -938,7 +938,6 @@ function sparse_sequence(name_,slots_)
     local idx,adjusted_timestamp = calculate_idx(timestamp_,_step,_period)
 
     -- we if the adjusted timestamp is too old, we can ignore it
-
     if _latest_timestamp and adjusted_timestamp<=_latest_timestamp-_period then
       return nil
     end
@@ -987,10 +986,6 @@ function sparse_sequence(name_,slots_)
     update = update,
     find_by_index = find_by_index,
     latest_timestamp = function() return _latest_timestamp end,
-    latest = function() -- all over, "latest" refers to the index of the slot with the latest timestamp
-      local latest_idx,_ = calc_idx(_latest_timestamp)
-      return latest_idx
-    end,
     slots = function() return _slots end
          }
 end

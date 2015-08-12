@@ -21,8 +21,8 @@ local NOP_SEQUENCE = {
   slot_index = return_0,
   update = nop,
   update_batch = nop,
-  latest = nop,
   latest_timestamp = return_0,
+  latest_slot_index = return_0,
   reset = nop,
   serialize = nop,
 }
@@ -42,12 +42,35 @@ function sequence(db_,name_)
     return at(idx_,0)
   end
 
-  local function latest(latest_idx_)
-    local pos = math.floor(_period/_step)
-    if not latest_idx_ then
-      return at(pos,0)
+  local function set_latest(latest_timestamp_)
+    at(math.floor(_period/_step),0,latest_timestamp_)
+  end
+
+
+  local function latest_slot_index()
+    local range_top = math.floor(_period/_step)
+    local l = at(range_top,0)
+    -- originally the latest value was the index of the slot last to be updated. Since the impl. changed to hold
+    -- the actual latest timestamp, we check whether the value we got is in the range [0,_period/_step]
+    -- and if so consider it an index. Otherwise it is the timestamp itself.
+    if l<range_top then
+      return l
     end
-    at(pos,0,latest_idx_)
+    local idx,_ = calculate_idx(l,_step,_period)
+    return idx
+  end
+
+
+  local function latest_timestamp()
+    local range_top = math.floor(_period/_step)
+    local l = at(range_top,0)
+    -- originally the latest value was the index of the slot last to be updated. Since the impl. changed to hold
+    -- the actual latest timestamp, we check whether the value we got is in the range [0,_period/_step]
+    -- and if so consider it an index. Otherwise it is the timestamp itself.
+    if l<range_top then
+      return get_timestamp(range_top)
+    end
+    return l
   end
 
   local function indices(sorted_)
@@ -70,42 +93,6 @@ function sequence(db_,name_)
           coroutine.yield(s[1])
         end
     end)
-  end
-
-
-  local function find_latest()
-    local latest = 0
-    local latest_idx = 0
-    for s in indices() do
-      local timestamp,hits,sum = at(s)
-      if sum>latest then
-        latest = sum
-        latest_idx = s
-      end
-    end
-    return latest_idx,latest
-  end
-
-  local function fix_timestamp(latest_idx)
-    local new_latest_idx,new_latest = find_latest()
-    if new_latest>0 then
-      logw("latest_timestamp - fixing",name_,latest_idx,new_latest_idx,new_latest)
-      latest(new_latest_idx)
-    end
-    return new_latest
-  end
-
-  local function latest_timestamp()
-    local latest_idx = latest()
-    if get_timestamp(latest_idx)>0 then
-      return get_timestamp(latest_idx)
-    end
-
-    -- fix_timestamp(latest_idx) -- enable to fix the latest timestamp
-    if latest_idx>0 then
-        logw("latest_timestamp is 0",_name,latest_idx)
-    end
-    return get_timestamp(latest_idx)
   end
 
   local function reset()
@@ -135,24 +122,27 @@ function sequence(db_,name_)
       return
     end
 
-
-    if (not type_) then
-      if adjusted_timestamp==timestamp and hits>0 then
-        -- no need to worry about the latest here, as we have the same (adjusted) timestamp
-        hits,sum = hits+(hits_ or 1), sum+sum_
-      else
+    -- it can happen that we get a 0 sum to update. In this case we'll skip the update of the slot
+    -- but will still update the latest timestamp
+    if sum_>0 or type_=="=" then
+      if (not type_) then
+        if adjusted_timestamp==timestamp and hits>0 then
+          -- no need to worry about the latest here, as we have the same (adjusted) timestamp
+          hits,sum = hits+(hits_ or 1), sum+sum_
+        else
+          hits,sum = hits_ or 1,sum_
+        end
+      elseif type_=='=' then
         hits,sum = hits_ or 1,sum_
+      elseif type_=='^' then
+        hits,sum = hits_ or 1,math.max(sum_,sum)
       end
-    elseif type_=='=' then
-      hits,sum = hits_ or 1,sum_
-    elseif type_=='^' then
-      hits,sum = hits_ or 1,math.max(sum_,sum)
+      at(idx,nil,adjusted_timestamp,hits,sum)
     end
 
-    at(idx,nil,adjusted_timestamp,hits,sum)
     local lt = latest_timestamp()
     if adjusted_timestamp>lt then
-      latest(idx)
+      set_latest(adjusted_timestamp)
     end
 
     _seq_storage.save(_name)
@@ -167,8 +157,8 @@ function sequence(db_,name_)
     local match = string.match
     while j<#slots_ do
       local timestamp,hits,sum,typ = legit_input_line("",tonumber(slots_[j+sm]),tonumber(slots_[j+ts]),tonumber(slots_[j+ht]))
+      update(timestamp,hits,sum)
       j = j + 3
-      update(timestamp,hits,sum,"=")
     end
 
     _seq_storage.save(_name)
@@ -186,6 +176,7 @@ function sequence(db_,name_)
         affected = true
       end
     end
+    _seq_storage.save(_name)
     return affected
   end
 
@@ -291,8 +282,8 @@ function sequence(db_,name_)
     slot_index = function(timestamp_) return calculate_idx(timestamp_,_step,_period) end,
     update = update,
     update_batch = update_batch,
-    latest = latest,
     latest_timestamp = latest_timestamp,
+    latest_slot_index = latest_slot_index,
     reset_to_timestamp = reset_to_timestamp,
     reset = reset,
     serialize = serialize,
@@ -847,7 +838,6 @@ function mule(db_)
     local str = strout("","\n")
     local format = string.format
     local col = collectionout(str,"[","]")
-    local timestamp = tonumber(options_.timestamp)
 
     col.head()
     if resource_=="" then
@@ -1171,10 +1161,6 @@ function mule(db_)
       logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
-    if sum==0 then -- don't bother to update
-      return
-    end
-
     for n,_ in get_sequences(metric_) do
       update_sequence(n,sum,timestamp,hits,typ,now_)
     end
