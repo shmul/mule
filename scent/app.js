@@ -905,15 +905,32 @@ function app() {
     $("#graph-box").show();
     var metric = graph_split(name_);
     scent_ds.key(metric[0],function(keys_) {
-      populate_keys_table(keys_,"#graph-box-keys-container")
+      populate_keys_table(keys_,"#graph-box-keys-container");
+      populate_keys_list(keys_,"#keys-list",name_);
     },true);
-
 
     push_graph_to_recent(name_);
   }
 
   function teardown_graph() {
     $("#graph-box").hide();
+  }
+
+  // Populate the sidebar's keys list with one link per metric, all to the same
+  // time span of the currently displayed graph.
+  function populate_keys_list(keys_,target_, current_graph_name_) {
+    var metric = graph_split(current_graph_name_);
+    var suffix = [";",metric[1],":",metric[2]].join("");
+    var graph_keys = [];
+    var processed_keys = {};
+    for (var i in keys_) {
+      var k = graph_split(keys_[i]);
+      if (!processed_keys[k[0]]) {
+        graph_keys.push({key: k[0], href: "#graph/"+k[0]+suffix});
+        processed_keys[k[0]] = true;
+      }
+    }
+    $(target_).empty().html($.templates("#keys-list-template").render({graph_keys: graph_keys}));
   }
 
   function populate_keys_table(keys_,target_) {
@@ -960,6 +977,11 @@ function app() {
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     var dt = $("#keys-table").DataTable({
       bRetrieve: true,
+      sDom: "frtilp", // Show the record count select box *below* the table
+      aoColumns: [
+        { sWidth: "25em" },
+        { sWidth: "20em" }
+      ],
       iDisplayLength: 40,
       aLengthMenu: [ 20, 40, 60 ],
       destroy: true,
