@@ -926,7 +926,9 @@ function app() {
     for (var i in keys_) {
       var k = graph_split(keys_[i]);
       if (!processed_keys[k[0]]) {
-        graph_keys.push({key: k[0], href: "#graph/"+k[0]+suffix});
+        var metric_parts = k[0].split(".");
+        var last_part = metric_parts[metric_parts.length - 1];
+        graph_keys.push({key: k[0], last_part: last_part, href: "#graph/"+k[0]+suffix});
         processed_keys[k[0]] = true;
       }
     }
