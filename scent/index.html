@@ -234,43 +234,43 @@
                 <h4>
                  {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
                 </h4>
-                {{if klass == "small-graph"}}
-                  {{for links}}
-                    {{if current}}
-                      <span class="label bg-light-blue">{{:rp}}</span>
-                    {{/if}}
-                  {{/for}}
-                {{else}}
-                  {{for links}}
-                    {{if current}}
-                      <span class="label bg-light-blue">{{:rp}}</span>
-                    {{else}}
-                      <span class="label">
-                        {{if inner_navigation}}
-                          <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
-                        {{else}}
-                          <a href="#graph/{{:href}}">{{:rp}}</a>
-                        {{/if}}
-                      </span>
-                    {{/if}}
-                  {{/for}}
-                {{/if}}
-                {{if alerted}}
-                  &nbsp;&nbsp;<span class="label bg-{{:color}}">{{:alerted}}</span>
-                {{/if}}
               </div>
             </div>
-              <div class="box-tools pull-right {{:klass}}-header">
-                {{if full}}
-                  <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
-                {{/if}}
-                {{if favorite}}
-                  <i class="graph-favorite fa {{:favorite}}"></i>
-                {{/if}}
-                {{if remove}}
-                  <i class="graph-remove fa fa-trash"></i>
-                {{/if}}
-              </div>
+            <div class="box-tools pull-right {{:klass}}-header">
+              {{if klass == "small-graph"}}
+                {{for links}}
+                  {{if current}}
+                    <span class="label bg-light-blue">{{:rp}}</span>
+                  {{/if}}
+                {{/for}}
+              {{else}}
+                {{for links}}
+                  {{if current}}
+                    <span class="label bg-light-blue">{{:rp}}</span>
+                  {{else}}
+                    <span class="label">
+                      {{if inner_navigation}}
+                        <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
+                      {{else}}
+                        <a href="#graph/{{:href}}">{{:rp}}</a>
+                      {{/if}}
+                    </span>
+                  {{/if}}
+                {{/for}}
+              {{/if}}
+              {{if alerted}}
+                &nbsp;&nbsp;<span class="label bg-{{:color}}">{{:alerted}}</span>
+              {{/if}}
+              {{if full}}
+                <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
+              {{/if}}
+              {{if favorite}}
+                <i class="graph-favorite fa {{:favorite}}"></i>
+              {{/if}}
+              {{if remove}}
+                <i class="graph-remove fa fa-trash"></i>
+              {{/if}}
+            </div>
           </div>
         </script>
 
