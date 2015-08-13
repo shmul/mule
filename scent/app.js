@@ -56,6 +56,21 @@ function app() {
     return timeunit_to_seconds(gs[1]);
   }
 
+  function graph_span_in_seconds(graph_) {
+    var gs = graph_split(graph_);
+    if ( !gs ) { return null; }
+    return timeunit_to_seconds(gs[2]);
+  }
+
+  function graph_time_range(graph_) {
+    var step = graph_step_in_seconds(graph_);
+    var span = graph_span_in_seconds(graph_);
+    var now = Math.floor(new Date().getTime() / 1000);
+    var end_time = now - (now % step); // Round now to whole 'step' units
+    var start_time = end_time - span;
+    return [start_time, end_time];
+  }
+
   function alert_index(alert_string_) {
     switch ( alert_string_ ) {
     case "CRITICAL LOW":
@@ -467,8 +482,7 @@ function app() {
 
     MG.data_graphic({
       data: data_,
-      // This breaks the chart because MetricsGraphics assumes the samples resolution is 1 day
-      //missing_is_zero: true,
+      missing_is_hidden: true,
       //title: graph_split(name_)[0],
       full_width: true,
       full_height: true,
@@ -483,6 +497,7 @@ function app() {
       baselines: baselines_,
       markers: markers_,
       small_text: use_small_fonts,
+      brushing_interval: 1,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
           .text(time_format(d.date) + " | " + rollover_value_format(d.value));
@@ -544,6 +559,25 @@ function app() {
     });
   }
 
+  function fill_in_missing_slots(graph_name_, actual_data_) {
+    var step = graph_step_in_seconds(graph_name_);
+    var time_range = graph_time_range(graph_name_);
+    var first_time = time_range[0];
+    var last_time = time_range[1];
+    var full_data = new Array();
+    var pos = 0;
+    for (var t = first_time; t <= last_time; t += step) {
+      if (actual_data_[pos] && t == actual_data_[pos].dt) {
+        full_data.push(actual_data_[pos]);
+        pos++;
+      } else {
+        // No actual data for this time slot; push a "missing" entry (value=null)
+        full_data.push({date: new Date(t * 1000), value: null, dt: t});
+      }
+    }
+    return full_data;
+  }
+
   function load_graph(name_,target_) {
     function callback(raw_data_) {
       if ( !raw_data_ || raw_data_.length==0 ) {
@@ -564,10 +598,9 @@ function app() {
             data.push({date: new Date(dt * 1000), value: v, dt: dt});
           }
         };
-        data.sort(function(a,b) { return a.date-b.date });
-        var now = new Date();
-        data.push({date: now, value: 0, dt: now});
+        data.sort(function(a,b) { return a.dt-b.dt });
         add_bounds(data);
+        data = fill_in_missing_slots(name_, data)
         var graph_alerts = alerts_[name_];
         var baselines = [];
         if ( graph_alerts ) {
@@ -872,15 +905,32 @@ function app() {
     $("#graph-box").show();
     var metric = graph_split(name_);
     scent_ds.key(metric[0],function(keys_) {
-      populate_keys_table(keys_,"#graph-box-keys-container")
+      populate_keys_table(keys_,"#graph-box-keys-container");
+      populate_keys_list(keys_,"#keys-list",name_);
     },true);
-
 
     push_graph_to_recent(name_);
   }
 
   function teardown_graph() {
     $("#graph-box").hide();
+  }
+
+  // Populate the sidebar's keys list with one link per metric, all to the same
+  // time span of the currently displayed graph.
+  function populate_keys_list(keys_,target_, current_graph_name_) {
+    var metric = graph_split(current_graph_name_);
+    var suffix = [";",metric[1],":",metric[2]].join("");
+    var graph_keys = [];
+    var processed_keys = {};
+    for (var i in keys_) {
+      var k = graph_split(keys_[i]);
+      if (!processed_keys[k[0]]) {
+        graph_keys.push({key: k[0], href: "#graph/"+k[0]+suffix});
+        processed_keys[k[0]] = true;
+      }
+    }
+    $(target_).empty().html($.templates("#keys-list-template").render({graph_keys: graph_keys}));
   }
 
   function populate_keys_table(keys_,target_) {
@@ -927,6 +977,11 @@ function app() {
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     var dt = $("#keys-table").DataTable({
       bRetrieve: true,
+      sDom: "frtilp", // Show the record count select box *below* the table
+      aoColumns: [
+        { sWidth: "25em" },
+        { sWidth: "20em" }
+      ],
       iDisplayLength: 40,
       aLengthMenu: [ 20, 40, 60 ],
       destroy: true,
@@ -1014,6 +1069,7 @@ function app() {
         title: "Phish | Scent of a Mule",
         message: '<iframe width="560" height="315" src="https://www.youtube.com/embed/qBkhao0DEhU" frameborder="0" allowfullscreen></iframe>'
       });
+      return false;
     });
 
     $("#govt-mule").click(function() {
@@ -1021,6 +1077,7 @@ function app() {
         title: "Gov't Mule | What is Hip",
         message: '<iframe width="560" height="315" src="https://www.youtube.com/embed/lz29Fqbh3sE" frameborder="0" allowfullscreen></iframe>'
       });
+      return false;
     });
   }
 

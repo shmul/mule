@@ -1,8 +1,6 @@
 local _,lr = require "luarocks.require"
 local url = require "socket.url"
 local pp = require "purepack"
-_DEBUG = false -- needed for luaposix
-local posix = require "posix"
 local posix_fcntl = require "posix.fcntl"
 local posix_glob = require "posix.glob"
 local posix_unistd = require "posix.unistd"
@@ -801,8 +799,7 @@ function posix_lock(lock_file_,callback_)
   end
 
   -- Set lock on file
-  --  local fd = posix_fcntl.open(lock_file_, posix_fcntl.O_CREAT, 0644)
-  local fd = posix.creat(lock_file_, "rw-r--r--")
+  local fd = posix_fcntl.open(lock_file_, posix_fcntl.O_CREAT, tonumber("666", 8))
   if not fd then
     logw("posix_lock - unable to obtain lock",lock_file_)
     return
@@ -817,6 +814,7 @@ function posix_lock(lock_file_,callback_)
   logi("posix_lock acquire",lock_file_,fd,err,err_str)
   if result == -1 then
     loge("locked by another process")
+    posix_unistd.close(fd)
     return
   end
 
@@ -827,7 +825,7 @@ function posix_lock(lock_file_,callback_)
   lock.l_type = posix_fcntl.F_UNLCK
   _,err,err_str = posix_fcntl.fcntl(fd, posix_fcntl.F_SETLK, lock)
   logi("posix_lock released",lock_file_,result,fd,err,err_str)
-
+  posix_unistd.close(fd)
   return result
 end
 

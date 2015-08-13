@@ -16,6 +16,17 @@ local status_codes = {
   [405] = "405 Method Not Allowed"
 }
 
+local file_extension_content_types = {
+  css = "text/css",
+  html = "text/html",
+  js = "application/javascript",
+  json = "application/json",
+  jpg = "image/jpeg",
+  jpeg = "image/jpeg",
+  png = "image/png",
+  gif = "image/gif",
+  ico = "image/x-icon"
+}
 
 require "mulelib"
 
@@ -206,6 +217,10 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
     return send_(standard_response(400))
   end
 
+  if req_.verb=="OPTIONS" then
+    return send_(standard_response(200,nil,CORS))
+  end
+
   local url_no_qs = string.match(req_.url,"^([^%?]+)")
   local raw_qs = string.match(req_.url,"%?(.+)$")
   local qs = qs_params(raw_qs)
@@ -217,9 +232,6 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
   if not handler then
     if #segments == 0 then url_no_qs = "/index.html" end -- Support a default landing page
     return send_file_(url_no_qs,req_["If-None-Match"])
-  end
-  if req_.verb=="OPTIONS" then
-    return send_(standard_response(200,nil,CORS))
   end
   logi("send_response - handling",req_.url)
   local handler_result,extra_headers = with_mule_(
@@ -300,6 +312,10 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
       end
   end
 
+  local function guess_content_type(file_)
+    local extension = string.match(file_, "%.(%w+)$")
+    return file_extension_content_types[extension] or "application/octet-stream"
+  end
 
   local function send_file(socket_)
     return
@@ -318,9 +334,13 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
             socket.sink("close-when-done",socket_))
         end
 
+        headers = {
+          {"Content-Type",guess_content_type(file)},
+          {"ETag",etag}
+        }
         return ltn12.pump.all(
           sr.cat(
-            sr.string(standard_response(200,file_size(file),{{"ETag",etag}})),
+            sr.string(standard_response(200,file_size(file),headers)),
             sr.file(io.open(file,"rb"))),
           socket.sink("close-when-done",socket_))
       end
@@ -345,7 +365,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
   local i = 0
 
   local function step()
-    copas.step(0)
+    copas.step(1)
   end
 
   while not stop_cond_() do

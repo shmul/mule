@@ -21,7 +21,7 @@
     margin: 0px;
     padding: 5px;
     width: 100%;
-    height: 630px;
+    height: 400px;
     font-size: 14px;
 }
 
@@ -30,7 +30,7 @@
     margin: 0px;
     padding: 5px;
     width: 100%;
-    height: 630px;
+    height: 400px;
 }
 
 .small-graph {
@@ -50,6 +50,11 @@
 }
 .small-graph-header {
     font-size: 14px;
+}
+
+.graph-header h4 {
+    display: inline;
+    margin-right: 1em;
 }
 
 .graph-favorite {
@@ -108,4 +113,10 @@
 
 .box-body {
     padding: 0;
+}
+.box-body .keys-container {
+    padding: 10px;
+}
+#keys-table {
+    margin-top: 12px;
 }
