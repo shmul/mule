@@ -482,7 +482,7 @@ function app() {
 
     MG.data_graphic({
       data: data_,
-      missing_is_hidden: true,
+      //missing_is_hidden: true,
       //title: graph_split(name_)[0],
       full_width: true,
       full_height: true,
@@ -493,7 +493,7 @@ function app() {
       y_extended_ticks: true,
       target: target_,
       interpolate: "basic",
-      show_confidence_band: ["lower", "upper"],
+      //show_confidence_band: ["lower", "upper"],
       baselines: baselines_,
       markers: markers_,
       small_text: use_small_fonts,
