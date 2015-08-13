@@ -370,13 +370,20 @@ function app() {
     var alpha = 0.6;
     var gamma = 0.5;
     var datum, prev_datum;
+    var b;
     data_[0].smoothed_value = data_[0].value;
-    var b = data_[1].value - data_[0].value;
     for (var i = 1; i < data_.length; i++) {
       datum = data_[i];
       prev_datum = data_[i - 1];
-      datum.smoothed_value = alpha * datum.value + (1 - alpha) * (prev_datum.smoothed_value + b);
-      b = gamma * (datum.smoothed_value - prev_datum.smoothed_value) + (1 - gamma) * b;
+      if (!b && datum.value && prev_datum.value) {
+        b = datum.value - prev_datum.value;
+      }
+      if (prev_datum.smoothed_value) {
+        datum.smoothed_value = alpha * datum.value + (1 - alpha) * (prev_datum.smoothed_value + b);
+        b = gamma * (datum.smoothed_value - prev_datum.smoothed_value) + (1 - gamma) * b;
+      } else {
+        datum.smoothed_value = datum.value;
+      }
     }
   }
 
@@ -392,7 +399,6 @@ function app() {
   function add_upper_and_lower_bounds(data_) {
     var compare_interval_days = 7;
     var border_ratio = 0.10; // 10% boundary from each side
-    var fake_border_ratio = 0.01 // 1% boundary for the first 7 days
     var len = data_.length
     var minimal_time_for_bounds = add_interval_days(data_[0].date, compare_interval_days);
     var i = 0;
@@ -403,17 +409,16 @@ function app() {
 
     for (var i = 0; i < len; i++) {
       if (i < compare_interval_data_points) {
-        // Fake boundaries
-        data_[i].upper = data_[i].value;
-        data_[i].lower = data_[i].value;
+        data_[i].upper = null;
+        data_[i].lower = null;
       } else {
         var compare_datum = data_[i - compare_interval_data_points];
         if (compare_datum && compare_datum.smoothed_value) {
           data_[i].upper = compare_datum.smoothed_value * (1 + border_ratio);
           data_[i].lower = compare_datum.smoothed_value * (1 - border_ratio);
         } else {
-          data_[i].upper = data_[i - 1].upper;
-          data_[i].lower = data_[i - 1].lower;
+          data_[i].upper = null;
+          data_[i].lower = null;
         }
       }
     }
@@ -482,7 +487,6 @@ function app() {
 
     MG.data_graphic({
       data: data_,
-      //missing_is_hidden: true,
       //title: graph_split(name_)[0],
       full_width: true,
       full_height: true,
@@ -493,7 +497,7 @@ function app() {
       y_extended_ticks: true,
       target: target_,
       interpolate: "basic",
-      //show_confidence_band: ["lower", "upper"],
+      show_confidence_band: ["lower", "upper"],
       baselines: baselines_,
       markers: markers_,
       small_text: use_small_fonts,
@@ -599,8 +603,8 @@ function app() {
           }
         };
         data.sort(function(a,b) { return a.dt-b.dt });
-        add_bounds(data);
         data = fill_in_missing_slots(name_, data)
+        add_bounds(data);
         var graph_alerts = alerts_[name_];
         var baselines = [];
         if ( graph_alerts ) {
