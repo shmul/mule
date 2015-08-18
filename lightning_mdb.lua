@@ -6,7 +6,7 @@ require "conf"
 
 local disable_cache = false
 
-local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
+local lightningmdb = _VERSION >= "Lua 5.2" and lightningmdb_lib or lightningmdb
 
 local NUM_PAGES = 256000
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
