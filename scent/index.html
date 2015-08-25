@@ -174,9 +174,9 @@
               {{for records}}
               <tr>
                 {{if type==="anomaly"}}
-                  <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td>
+                  <td><a class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</a><td>{{:time}}</td>
                 {{else}}
-                  <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:value}}</td>
+                  <td><a class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</a></td><td>{{:value}}</td>
                   <td>{{:period}}</td>
                   <td>{{:stale}}</td>
                   <td>{{:state}}</td>
@@ -397,7 +397,9 @@
 
             <div class="box-body container-fluid" id="alert-container">
               <div class="row">
-                <div id="alert-table-container" class="col-md-4">
+                <div class="col-md-4">
+                  <div class="box" id="alert-table-container">
+                  </div>
                 </div>
                 <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
                 </div>
