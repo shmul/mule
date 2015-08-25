@@ -28,7 +28,7 @@ function app() {
   };
 
 
-  var time_format = d3.time.format("%y-%m-%dT%H:%M");
+  var time_format = d3.time.format.utc("%y-%m-%dT%H:%M");
 
   function graph_to_id(graph_) {
     return graph_.replace(/[;:]/g,"_");
@@ -504,7 +504,7 @@ function app() {
       brushing_interval: 1,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
-          .text(time_format(d.date) + " | " + rollover_value_format(d.value));
+          .text(rollover_value_format(d.value) + " @ "+time_format(d.date) );
       }
     });
 
@@ -759,7 +759,7 @@ function app() {
         context.query = query;
         scent_ds.key(query,callback);
 
-        if ( !context.scent_keys || query.length==0 ) {
+        if ( !context.scent_keys || (query.length==0 && $(input_).val().length==0)) {
           $(add_button).html('<i class="fa fa-spinner"></i>');
           scent_ds.key("",callback);
         } else if ( context.just_selected || /[\.;]$/.test(context.query) ) {
