@@ -40,8 +40,14 @@ local function set_pack_lib(lib_)
         return a,b,c
       end
 
-      M.concat_three_strings = function(a_,b_,c_)
-        return string.pack("AAA",a_ or "",b_ or "",c_ or "")
+      if lua_version_number()=="5.1" or lua_version_number()=="5.2" then
+        M.concat_three_strings = function(a_,b_,c_)
+          return string.pack("AAA",a_ or "",b_ or "",c_ or "")
+        end
+      else
+        M.concat_three_strings = function(a_,b_,c_)
+          return string.pack("sss",a_ or "",b_ or "",c_ or "")
+        end
       end
 
       return true
