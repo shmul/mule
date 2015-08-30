@@ -1095,3 +1095,12 @@ function binarySearch (list,value)
   end
   return low-1
 end
+
+local lua_version_number_memo
+function lua_version_number()
+  if not lua_version_number_memo then
+    lua_version_number_memo = string.gsub(_VERSION,"Lua ","")
+  end
+
+  return lua_version_number_memo
+end
