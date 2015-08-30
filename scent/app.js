@@ -44,7 +44,7 @@ function app() {
   }
 
   function graph_split(graph_) {
-    var m = graph_.match(/^([\w\.\-]+);(\d\w+):(\d\w+)$/);
+    var m = graph_.match(/^([\w\[\]\.\-]+);(\d\w+):(\d\w+)$/);
     if ( !m || m.length!=4 ) { return null; }
     m.shift();
     return m;
