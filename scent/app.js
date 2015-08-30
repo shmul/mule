@@ -570,13 +570,19 @@ function app() {
     var last_time = time_range[1];
     var full_data = new Array();
     var pos = 0;
-    for (var t = first_time; t <= last_time; t += step) {
+    var t = first_time;
+    while (t <= last_time) {
       if (actual_data_[pos] && t == actual_data_[pos].dt) {
+        full_data.push(actual_data_[pos]);
+        pos++;
+        t += step;
+      } else if (actual_data_[pos] && t > actual_data_[pos].dt) {
         full_data.push(actual_data_[pos]);
         pos++;
       } else {
         // No actual data for this time slot; push a "missing" entry (value=null)
         full_data.push({date: new Date(t * 1000), value: null, dt: t});
+        t += step;
       }
     }
     return full_data;
