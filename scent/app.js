@@ -994,8 +994,8 @@ function app() {
         { sWidth: "25em" },
         { sWidth: "20em" }
       ],
-      iDisplayLength: 40,
-      aLengthMenu: [ 20, 40, 60 ],
+      iDisplayLength: 10,
+      aLengthMenu: [ 10, 20, 40 ],
       destroy: true,
       order: [[ 2, "desc" ]]
     });
