@@ -527,6 +527,9 @@ function to_timestamp(expr_,now_,latest_)
   return {from,to}
 end
 
+function time_now()
+  return os.time()
+end
 
 function parse_input_line(line_)
   local items = nil
@@ -545,7 +548,7 @@ function legit_input_line(metric_,sum_,timestamp_,hits_)
   local typ,sum = string.match(sum_ or "","([=%^]?)(%d+)")
 
   if #typ==0 then typ = nil end
-  timestamp_ = tonumber(timestamp_)
+  timestamp_ = timestamp_=="@now" and os.time() or tonumber(timestamp_)
   sum = tonumber(sum)
 
   if not metric_ or #metric_>MAX_METRIC_LEN or not sum or not timestamp_ or (hits_ and not tonumber(hits_)) then
@@ -678,11 +681,6 @@ end
 
 function hex(s)
  return string.gsub(s,"(.)",function (x) return string.format("%02X",string.byte(x)) end)
-end
-
--- the whole purpose of this is to enable tests to override it.
-function time_now()
-  return os.time()
 end
 
 
