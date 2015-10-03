@@ -56,6 +56,9 @@ function sequence(db_,name_)
     -- originally the latest value was the index of the slot last to be updated. Since the impl. changed to hold
     -- the actual latest timestamp, we check whether the value we got is in the range [0,_period/_step]
     -- and if so consider it an index. Otherwise it is the timestamp itself.
+    if not l then
+      return 0
+    end
     if l<range_top then
       return l
     end
@@ -70,6 +73,10 @@ function sequence(db_,name_)
     -- originally the latest value was the index of the slot last to be updated. Since the impl. changed to hold
     -- the actual latest timestamp, we check whether the value we got is in the range [0,_period/_step]
     -- and if so consider it an index. Otherwise it is the timestamp itself.
+    if not l then
+      logd("latest_timestamp - latest not found")
+      return 0
+    end
     if l<range_top then
       return get_timestamp(range_top)
     end
