@@ -15,14 +15,14 @@ RUN cd /tmp && \
 
 # Install luarocks
 RUN cd /tmp && \
-    curl -L -O http://luarocks.org/releases/luarocks-2.2.1.tar.gz && \
-    tar zxpf luarocks-2.2.1.tar.gz && \
-    rm luarocks-2.2.1.tar.gz && \
-    cd luarocks-2.2.1 && \
-    ./configure --prefix=/usr && \
-    make bootstrap && \
+    curl -L -O http://luarocks.org/releases/luarocks-2.2.2.tar.gz && \
+    tar zxpf luarocks-2.2.2.tar.gz && \
+    rm luarocks-2.2.2.tar.gz && \
+    cd luarocks-2.2.2 && \
+    ./configure && \
+    make build install && \
     cd /tmp && \
-    rm -r /tmp/luarocks-2.2.1
+    rm -r /tmp/luarocks-2.2.2
 
 RUN cd /tmp && \
     curl -L -O https://github.com/LMDB/lmdb/archive/LMDB_0.9.15.tar.gz && \

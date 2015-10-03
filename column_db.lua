@@ -1,9 +1,10 @@
 --module("column_db",package.seeall)
 require "helpers"
 
-local lr = require("luarocks.require")
+--local lr = require("luarocks.require")
 local p = require("purepack")
 local tr = require("trie")
+local unpack_compatibility = unpack or table.unpack
 
 --[[
   Sequences are stored column by column, i.e. all the Nth slots of each sequences are stored
@@ -329,7 +330,7 @@ local function column_db(base_dir_)
                              local cached = seq_cache[name_]
                              if cached then
                                if not offset_ then
-                                 return unpack(cached[idx_+1])
+                                 return unpack_compatibility(cached[idx_+1])
                                end
                                return cached[idx_+1][offset_+1]
                              end
