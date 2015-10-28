@@ -35,7 +35,6 @@ WORKDIR $HOME
 
 COPY *.lua $HOME/
 COPY tests $HOME/tests
-COPY fdi $HOME/fdi
 RUN mkdir -p $HOME/tests/temp
 
 CMD lunit.sh tests/test_*.lua
