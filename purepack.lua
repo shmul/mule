@@ -1,6 +1,9 @@
 local bit32_found,bit32 = pcall(require,"bit32")
 local bit_found,bit = pcall(require,"bit")
-local lmdb_found,lightningmdb_lib = pcall(require,"lightningmdb") -- contains LHF's lpack (introduces string.pack and string.unpack)
+
+-- For Lua versions older than 5.3, lightningmdb contains LHF's lpack
+-- which introduces string.pack and string.unpack.
+local lmdb_found,lightningmdb_lib = pcall(require,"lightningmdb")
 
 local nop = function() end
 
@@ -17,7 +20,12 @@ local function set_pack_lib(lib_)
   local function helper()
     local bits_lib = (bit32_found and bit32) or (bit_found and bit)
 
+    if lib_=="lpack" and _VERSION >= 'Lua 5.3' then
+      lib_ = "native"
+    end
+
     if lib_=="lpack" then
+
       if not string.pack or not string.unpack then
         return nil,"purepack - lpack not found"
       end
@@ -51,6 +59,34 @@ local function set_pack_lib(lib_)
       end
 
       return true
+    end
+
+    if lib_=="native" then
+      if _VERSION < "Lua 5.3" then
+        return nil,"purepack - cannot use native packing, Lua version too low"
+      end
+
+      M.to_binary = function(int_)
+        return (string.pack(">I",int_))
+      end
+
+      M.to_binary3 = function(a_,b_,c_)
+        return (string.pack(">III",a_,b_,c_))
+      end
+
+      M.from_binary = function(str_,s)
+        return (string.unpack(">I",str_,s))
+      end
+
+      M.from_binary3 = function(str_,s)
+        local a,b,c = string.unpack(">III",str_,s)
+        return a,b,c
+      end
+
+      M.concat_three_strings = function(a_,b_,c_)
+        return table.concat({a_ or "",b_ or "",c_ or ""})
+      end
+
     end
 
     if lib_=="bits" then
