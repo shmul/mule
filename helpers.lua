@@ -547,7 +547,9 @@ end
 function legit_input_line(metric_,sum_,timestamp_,hits_)
   local typ,sum = string.match(sum_ or "","([=%^]?)(%d+)")
 
-  if #typ==0 then typ = nil end
+  if typ and #typ==0 then
+    typ = nil
+  end
   timestamp_ = timestamp_=="@now" and os.time() or tonumber(timestamp_)
   sum = tonumber(sum)
 
