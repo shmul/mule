@@ -77,27 +77,33 @@ function app() {
     case "CRITICAL HIGH": return 0;
     case "WARNING LOW":
     case "WARNING HIGH": return 1;
+    case "anomaly": return 2;
     case "stale": return 3;
     case "NORMAL": return 4;
     }
     return -1;
   }
 
+  const lookup = {
+    0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
+    1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
+    2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "yellow"},
+    3: { title: "Stale", type: "stale", indicator: "info", color: "maroon"},
+    4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
+
+    critical: 0,
+    warning: 1,
+    anomaly: 2,
+    stale: 3,
+    normal: 4
+  }
   function alert_category(alert_) {
-    const lookup = {
-      0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
-      1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
-      2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "yellow"},
-      3: { title: "Stale", type: "stale", indicator: "info", color: "maroon"},
-      4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
-
-      critical: 0,
-      warning: 1,
-      anomaly: 2,
-      stale: 3,
-      normal: 4
+    if ( !lookup[0].hex_color ) {
+      for (var i in lookup) {
+        lookup[i].hex_color = $('.bg-'+lookup[i].color+':eq(0)').css('backgroundColor')
+        ++i;
+      }
     }
-
     return lookup[alert_];
   }
 
@@ -474,7 +480,7 @@ function app() {
     scent_ds.piechart(name_,dt_,callback);
   }
 
-  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_) {
+  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_,alert_idx_) {
     var rollover_value_format = d3.format(",d");
 
     if ($(target_).hasClass("tall-graph")) {
@@ -485,7 +491,7 @@ function app() {
       var x_axis_ticks_count = 5;
     }
 
-    MG.data_graphic({
+    var graph_props = {
       data: data_,
       //title: graph_split(name_)[0],
       full_width: true,
@@ -506,8 +512,11 @@ function app() {
         d3.select(target_ + " svg .mg-active-datapoint")
           .text(rollover_value_format(d.value) + " @ "+time_format(d.date) );
       }
-    });
+    };
 
+    graph_props.color = alert_category(alert_idx_).hex_color;
+
+    MG.data_graphic(graph_props);
     // Fix overlapping labels in x-axis
     d3.selectAll(target_ + " svg .mg-year-marker text").attr("transform", "translate(0, 8)");
 
@@ -613,6 +622,7 @@ function app() {
         add_bounds(data);
         var graph_alerts = alerts_[name_];
         var baselines = [];
+        var alert_name = "NORMAL";
         if ( graph_alerts ) {
           baselines = [
             { value: graph_alerts[0],
@@ -623,7 +633,8 @@ function app() {
               label: "warn-high" },
             { value: graph_alerts[3],
               label: "crit-high" },
-            ]
+          ];
+          alert_name = graph_alerts[7];
         }
         var markers = [];
         if ( alerts_.anomalies && alerts_.anomalies[name_] ) {
@@ -632,10 +643,11 @@ function app() {
             date : new Date(dt * 1000),
             label: 'Anomaly'
           });
+          alert_name = "anomaly";
         }
         var from_percent = 0;
         var to_percent = 100;
-        draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_);
+        draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_,alert_index(alert_name));
 
         remove_spinner(target_);
       });
