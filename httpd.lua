@@ -365,7 +365,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
   local i = 0
 
   local function step()
-    copas.step(1)
+    copas.step(0)
   end
 
   while not stop_cond_() do
