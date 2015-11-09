@@ -1,3 +1,4 @@
+--pcall(require,"luacov")
 require "tests.strict"
 
 if _VERSION >= 'Lua 5.2' then

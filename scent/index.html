@@ -14,7 +14,7 @@
     <!-- AdminLTE Skins. Choose a skin from the css/skins
           folder instead of downloading all of them to reduce the load. -->
     <link href="./plugins/AdminLTE/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css" />
-    <link href="./plugins/metricsgraphics/metricsgraphics-2.6.0.css" rel="stylesheet" type="text/css" />
+    <link href="./plugins/metricsgraphics/metricsgraphics-2.7.0.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/qunit-1.17.1.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/pnotify.custom.min.css" rel="stylesheet" type="text/css" />
     <link href='./plugins/mg-line-brushing/mg_line_brushing.css' rel='stylesheet' type="text/css"/>
@@ -174,9 +174,9 @@
               {{for records}}
               <tr>
                 {{if type==="anomaly"}}
-                  <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:time}}</td>
+                  <td><a class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</a><td>{{:time}}</td>
                 {{else}}
-                  <td class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</td><td>{{:value}}</td>
+                  <td><a class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</a></td><td>{{:value}}</td>
                   <td>{{:period}}</td>
                   <td>{{:stale}}</td>
                   <td>{{:state}}</td>
@@ -193,7 +193,7 @@
             {{for graph_keys}}
             <li>
               <a href="{{:href}}">
-                <i class="fa fa-circle-o"></i>{{:key}}
+                <i class="fa fa-circle-o"></i>{{:last_part}}
               </a>
             </li>
             {{/for}}
@@ -356,6 +356,9 @@
                 <div class="box">
                   <div class="box-header with-border">
                     <h3 class="box-title">Keys</h3>
+                    <div class="box-tools pull-right">
+                      <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                    </div>
                     <div class="small-graph-header" id="main-keys-container-header"></div>
                   </div>
                   <div class="box-body container-fluid">
@@ -397,7 +400,9 @@
 
             <div class="box-body container-fluid" id="alert-container">
               <div class="row">
-                <div id="alert-table-container" class="col-md-4">
+                <div class="col-md-4">
+                  <div class="box" id="alert-table-container">
+                  </div>
                 </div>
                 <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
                 </div>
@@ -418,6 +423,10 @@
                   <div class="box">
                     <div class="box-header with-border">
                       <h3 class="box-title">Keys</h3>
+                      <div class="box-tools pull-right">
+                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                      </div>
+
                       <div class="small-graph-header" id="graph-box-keys-container-header"></div>
                     </div>
                     <div class="box-body container-fluid">
@@ -490,13 +499,13 @@
     <script src="./plugins/jsrender/jsrender.min.js" type="text/javascript"></script>
     <script src="./plugins/datatables/jquery.dataTables.js" type="text/javascript"></script>
     <script src="./plugins/datatables/dataTables.bootstrap.js" type="text/javascript"></script>
-    <script src="./plugins/storage/jquery.storageapi.js" type="text/javascript"></script>
+    <script src="./plugins/storage/jquery.storageapi-1.7.5.min.js" type="text/javascript"></script>
     <!--script src="./plugins/qunit-1.17.1.js" type="text/javascript"></script-->
     <script src="./plugins/grapnel.min.js" type="text/javascript"></script>
     <script src="./plugins/Bootstrap-3-Typeahead-3.1.1/bootstrap3-typeahead.js" type="text/javascript"></script>
     <script src="./plugins/d3/d3.min.js" type="text/javascript"></script>
     <script src="./plugins/bootbox-4.3.0.js" type="text/javascript"></script>
-    <script src="./plugins/metricsgraphics/metricsgraphics-2.6.0.min.js" type="text/javascript"></script>
+    <script src="./plugins/metricsgraphics/metricsgraphics-2.7.0.min.js" type="text/javascript"></script>
     <script src="./plugins/jquery.ba-dotimeout.min.js" type="text/javascript"></script>
     <script src="./plugins/cache.js" type="text/javascript"></script>
     <script src="./plugins/pnotify.custom.min.js" type="text/javascript"></script>

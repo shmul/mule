@@ -1013,6 +1013,9 @@ function test_bad_input_lines()
     m.process("6 54")
 
     assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
+
+    m.process("beer.al e.pale 1 1446711103")
+    assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
   end
   for_each_db("test_bad_input_lines",helper)
 end
@@ -1149,6 +1152,22 @@ function test_same_prefix()
     assert_nil(string.find(gr,'"beer;1m:1d": [[7,1,0]]',1,true))
   end
   for_each_db("./tests/temp/test_same_prefix",helper)
+end
+
+function test_time_now()
+  local function helper(m)
+    m.configure(table_itr({"beer 60s:12h 1h:30d","bee 1h:30d"}))
+    -- there is a slight possibility that the tests will fail if the current time is changed between the
+    -- 1st and the 3rd call to os.time AND we switch to the next bucket. We'll take that chance
+    local _,now1 = calculate_idx(os.time(),60*60,30*24*60)
+    local _,now2 = calculate_idx(os.time(),60,12*60)
+    m.process("beer.ale.pale 7 @now")
+
+    local gr = m.graph("beer",{})
+    assert(string.find(gr,'"beer;1h:30d": [[7,1,'..now1..']]',1,true))
+    assert(string.find(gr,'"beer;1m:12h": [[7,1,'..now2..']]',1,true))
+  end
+  for_each_db("./tests/temp/test_time_now",helper)
 end
 
 

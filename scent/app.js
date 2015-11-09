@@ -28,7 +28,7 @@ function app() {
   };
 
 
-  var time_format = d3.time.format("%y-%m-%dT%H:%M");
+  var time_format = d3.time.format.utc("%y-%m-%dT%H:%M");
 
   function graph_to_id(graph_) {
     return graph_.replace(/[;:]/g,"_");
@@ -44,7 +44,7 @@ function app() {
   }
 
   function graph_split(graph_) {
-    var m = graph_.match(/^([\w\.\-]+);(\d\w+):(\d\w+)$/);
+    var m = graph_.match(/^([\w\[\]\.\-]+);(\d\w+):(\d\w+)$/);
     if ( !m || m.length!=4 ) { return null; }
     m.shift();
     return m;
@@ -77,27 +77,33 @@ function app() {
     case "CRITICAL HIGH": return 0;
     case "WARNING LOW":
     case "WARNING HIGH": return 1;
+    case "anomaly": return 2;
     case "stale": return 3;
     case "NORMAL": return 4;
     }
     return -1;
   }
 
+  const lookup = {
+    0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
+    1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
+    2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "yellow"},
+    3: { title: "Stale", type: "stale", indicator: "info", color: "maroon"},
+    4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
+
+    critical: 0,
+    warning: 1,
+    anomaly: 2,
+    stale: 3,
+    normal: 4
+  }
   function alert_category(alert_) {
-    const lookup = {
-      0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
-      1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
-      2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "yellow"},
-      3: { title: "Stale", type: "stale", indicator: "info", color: "maroon"},
-      4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
-
-      critical: 0,
-      warning: 1,
-      anomaly: 2,
-      stale: 3,
-      normal: 4
+    if ( !lookup[0].hex_color ) {
+      for (var i in lookup) {
+        lookup[i].hex_color = $('.bg-'+lookup[i].color+':eq(0)').css('backgroundColor')
+        ++i;
+      }
     }
-
     return lookup[alert_];
   }
 
@@ -370,13 +376,20 @@ function app() {
     var alpha = 0.6;
     var gamma = 0.5;
     var datum, prev_datum;
+    var b;
     data_[0].smoothed_value = data_[0].value;
-    var b = data_[1].value - data_[0].value;
     for (var i = 1; i < data_.length; i++) {
       datum = data_[i];
       prev_datum = data_[i - 1];
-      datum.smoothed_value = alpha * datum.value + (1 - alpha) * (prev_datum.smoothed_value + b);
-      b = gamma * (datum.smoothed_value - prev_datum.smoothed_value) + (1 - gamma) * b;
+      if (!b && datum.value && prev_datum.value) {
+        b = datum.value - prev_datum.value;
+      }
+      if (prev_datum.smoothed_value) {
+        datum.smoothed_value = alpha * datum.value + (1 - alpha) * (prev_datum.smoothed_value + b);
+        b = gamma * (datum.smoothed_value - prev_datum.smoothed_value) + (1 - gamma) * b;
+      } else {
+        datum.smoothed_value = datum.value;
+      }
     }
   }
 
@@ -392,7 +405,6 @@ function app() {
   function add_upper_and_lower_bounds(data_) {
     var compare_interval_days = 7;
     var border_ratio = 0.10; // 10% boundary from each side
-    var fake_border_ratio = 0.01 // 1% boundary for the first 7 days
     var len = data_.length
     var minimal_time_for_bounds = add_interval_days(data_[0].date, compare_interval_days);
     var i = 0;
@@ -403,17 +415,16 @@ function app() {
 
     for (var i = 0; i < len; i++) {
       if (i < compare_interval_data_points) {
-        // Fake boundaries
-        data_[i].upper = data_[i].value;
-        data_[i].lower = data_[i].value;
+        data_[i].upper = null;
+        data_[i].lower = null;
       } else {
         var compare_datum = data_[i - compare_interval_data_points];
         if (compare_datum && compare_datum.smoothed_value) {
           data_[i].upper = compare_datum.smoothed_value * (1 + border_ratio);
           data_[i].lower = compare_datum.smoothed_value * (1 - border_ratio);
         } else {
-          data_[i].upper = data_[i - 1].upper;
-          data_[i].lower = data_[i - 1].lower;
+          data_[i].upper = null;
+          data_[i].lower = null;
         }
       }
     }
@@ -469,7 +480,7 @@ function app() {
     scent_ds.piechart(name_,dt_,callback);
   }
 
-  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_) {
+  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_,alert_idx_) {
     var rollover_value_format = d3.format(",d");
 
     if ($(target_).hasClass("tall-graph")) {
@@ -480,9 +491,8 @@ function app() {
       var x_axis_ticks_count = 5;
     }
 
-    MG.data_graphic({
+    var graph_props = {
       data: data_,
-      //missing_is_hidden: true,
       //title: graph_split(name_)[0],
       full_width: true,
       full_height: true,
@@ -493,17 +503,20 @@ function app() {
       y_extended_ticks: true,
       target: target_,
       interpolate: "basic",
-      //show_confidence_band: ["lower", "upper"],
+      show_confidence_band: ["lower", "upper"],
       baselines: baselines_,
       markers: markers_,
       small_text: use_small_fonts,
       brushing_interval: 1,
       mouseover: function(d, i) {
         d3.select(target_ + " svg .mg-active-datapoint")
-          .text(time_format(d.date) + " | " + rollover_value_format(d.value));
+          .text(rollover_value_format(d.value) + " @ "+time_format(d.date) );
       }
-    });
+    };
 
+    graph_props.color = alert_category(alert_idx_).hex_color;
+
+    MG.data_graphic(graph_props);
     // Fix overlapping labels in x-axis
     d3.selectAll(target_ + " svg .mg-year-marker text").attr("transform", "translate(0, 8)");
 
@@ -566,13 +579,19 @@ function app() {
     var last_time = time_range[1];
     var full_data = new Array();
     var pos = 0;
-    for (var t = first_time; t <= last_time; t += step) {
+    var t = first_time;
+    while (t <= last_time) {
       if (actual_data_[pos] && t == actual_data_[pos].dt) {
+        full_data.push(actual_data_[pos]);
+        pos++;
+        t += step;
+      } else if (actual_data_[pos] && t > actual_data_[pos].dt) {
         full_data.push(actual_data_[pos]);
         pos++;
       } else {
         // No actual data for this time slot; push a "missing" entry (value=null)
         full_data.push({date: new Date(t * 1000), value: null, dt: t});
+        t += step;
       }
     }
     return full_data;
@@ -599,10 +618,11 @@ function app() {
           }
         };
         data.sort(function(a,b) { return a.dt-b.dt });
-        add_bounds(data);
         data = fill_in_missing_slots(name_, data)
+        add_bounds(data);
         var graph_alerts = alerts_[name_];
         var baselines = [];
+        var alert_name = "NORMAL";
         if ( graph_alerts ) {
           baselines = [
             { value: graph_alerts[0],
@@ -613,7 +633,8 @@ function app() {
               label: "warn-high" },
             { value: graph_alerts[3],
               label: "crit-high" },
-            ]
+          ];
+          alert_name = graph_alerts[7];
         }
         var markers = [];
         if ( alerts_.anomalies && alerts_.anomalies[name_] ) {
@@ -622,10 +643,11 @@ function app() {
             date : new Date(dt * 1000),
             label: 'Anomaly'
           });
+          alert_name = "anomaly";
         }
         var from_percent = 0;
         var to_percent = 100;
-        draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_);
+        draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_,alert_index(alert_name));
 
         remove_spinner(target_);
       });
@@ -755,7 +777,7 @@ function app() {
         context.query = query;
         scent_ds.key(query,callback);
 
-        if ( !context.scent_keys || query.length==0 ) {
+        if ( !context.scent_keys || (query.length==0 && $(input_).val().length==0)) {
           $(add_button).html('<i class="fa fa-spinner"></i>');
           scent_ds.key("",callback);
         } else if ( context.just_selected || /[\.;]$/.test(context.query) ) {
@@ -926,7 +948,9 @@ function app() {
     for (var i in keys_) {
       var k = graph_split(keys_[i]);
       if (!processed_keys[k[0]]) {
-        graph_keys.push({key: k[0], href: "#graph/"+k[0]+suffix});
+        var metric_parts = k[0].split(".");
+        var last_part = metric_parts[metric_parts.length - 1];
+        graph_keys.push({key: k[0], last_part: last_part, href: "#graph/"+k[0]+suffix});
         processed_keys[k[0]] = true;
       }
     }
@@ -982,8 +1006,8 @@ function app() {
         { sWidth: "25em" },
         { sWidth: "20em" }
       ],
-      iDisplayLength: 40,
-      aLengthMenu: [ 20, 40, 60 ],
+      iDisplayLength: 10,
+      aLengthMenu: [ 10, 20, 40 ],
       destroy: true,
       order: [[ 2, "desc" ]]
     });
