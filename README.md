@@ -295,6 +295,17 @@ copy `lightningmdb.so` to your mule directory
 
 ### Deployment model
 
+#### DB creation
+The first step is to create a new DB for mule
+
+    lua mule.lua -r -d <db-path> -c <configuration-file>
+
+Mule automatically decides which DB to create by inspecting the `db-path` suffix:
+- `_mdb` - lightningmdb
+- `_cdb` - column db (a pure lua DB implementation)
+
+Providing the configuration file is optional, as mule can be configured while running also (as described above, using the `config` call).
+
 #### Internal HTTP daemon
 Mule ships with a simple HTTP daemon and supports:
 
@@ -309,7 +320,7 @@ To run Mule as an HTTP daemon run the following command:
 
 For example,
 
-    lua mule.lua -d mule.kct -t localhost:3012 -x stopme
+    lua mule.lua -d mule_cdb -t localhost:3012 -x stopme
 
 #### (through) Nginx
 The recommended mule setup, is proxying the traffic through Nginx. In this setup, mule runs as a backend HTTP server (as explained above) but the traffic is proxied through Nginx. This setup enables:
