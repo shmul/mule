@@ -471,7 +471,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if node._seq then
       node._seq.set(timestamp_,hits_,sum_)
       if #node._seq.slots()==MAX_SLOTS_IN_SPARSE_SEQ then
-      _increment("mule.lightning_mdb.internal_set_slot.create_pages")
+        _increment("mule.lightning_mdb.internal_set_slot.create_pages")
         -- time to create actual pages
         local slots = node._seq.slots()
         node._latest = node._seq.latest_timestamp()

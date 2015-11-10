@@ -3,6 +3,7 @@ require "helpers"
 
 --local lr = require "luarocks.require"
 local ltn12 = require "ltn12"
+local socket = require "socket"
 local url = require "socket.url"
 local copas = require "copas"
 
@@ -364,19 +365,17 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
                   end)
   local i = 0
 
-  local function step()
-    copas.step(1)
-  end
-
+  local adaptive_timeout = 0
   while not stop_cond_() do
-    step()
+    copas.step(adaptive_timeout)
     if can_fork_ then
       noblock_wait_for_children()
     end
     with_mule_(function(mule_)
-                 mule_.flush_cache(UPDATE_AMOUNT,step)
-                 incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
-               end)
+        mule_.flush_cache(UPDATE_AMOUNT,step)
+        local process_files = incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
+        adaptive_timeout = (process_files and process_files>0 and 0) or 1
+    end)
     i = i + 1
   end
 end
