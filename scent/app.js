@@ -87,8 +87,8 @@ function app() {
   const lookup = {
     0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
     1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
-    2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "yellow"},
-    3: { title: "Stale", type: "stale", indicator: "info", color: "maroon"},
+    2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "olive"},
+    3: { title: "Stale", type: "stale", indicator: "info", color: "purple"},
     4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
 
     critical: 0,
@@ -634,6 +634,12 @@ function app() {
             { value: graph_alerts[3],
               label: "crit-high" },
           ];
+          // the baselines should be adjusted to the displayed graph
+          var step = graph_step_in_seconds(name_);
+          var factor = graph_alerts[4]/step;
+          for (var i=0; i<4; ++i) {
+            baselines[i].value = baselines[i].value/factor;
+          }
           alert_name = graph_alerts[7];
         }
         var markers = [];
