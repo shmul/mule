@@ -4,29 +4,58 @@ function app() {
   var notified_graphs = {};
 
   // from Rickshaw
-  function formatKMBT(y) {
+  function formatKMBT(y,dec) {
     var abs_y = Math.abs(y);
-	  if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(1) + "T" }
-    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(1) + "B" }
-    if (abs_y >= 1000000)    { return (y / 1000000).toFixed(1) + "M" }
-    if (abs_y >= 1000)       { return (y / 1000).toFixed(1) + "K" }
-    if (abs_y < 1 && y > 0)  { return y.toFixed(1) }
+    dec = dec ? dec : 1;
+	  if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(dec) + "T" }
+    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(dec) + "B" }
+    if (abs_y >= 1000000)    { return (y / 1000000).toFixed(dec) + "M" }
+    if (abs_y >= 1000)       { return (y / 1000).toFixed(dec) + "K" }
+    if (abs_y < 1 && y > 0)  { return y.toFixed(dec) }
     if (abs_y === 0)         { return '' }
     return y;
   };
 
-  function formatBase1024KMGTP(y) {
+  function formatBase1024KMGTP(y,dec) {
     var abs_y = Math.abs(y);
-    if (abs_y >= 1125899906842624)  { return (y / 1125899906842624).toFixed(1) + "P" }
-    if (abs_y >= 1099511627776){ return (y / 1099511627776).toFixed(1) + "T" }
-    if (abs_y >= 1073741824)   { return (y / 1073741824).toFixed(1) + "G" }
-    if (abs_y >= 1048576)      { return (y / 1048576).toFixed(1) + "M" }
-    if (abs_y >= 1024)         { return (y / 1024).toFixed(1) + "K" }
+    dec = dec ? dec : 1;
+    if (abs_y >= 1125899906842624)  { return (y / 1125899906842624).toFixed(dec) + "P" }
+    if (abs_y >= 1099511627776){ return (y / 1099511627776).toFixed(dec) + "T" }
+    if (abs_y >= 1073741824)   { return (y / 1073741824).toFixed(dec) + "G" }
+    if (abs_y >= 1048576)      { return (y / 1048576).toFixed(dec) + "M" }
+    if (abs_y >= 1024)         { return (y / 1024).toFixed(dec) + "K" }
     if (abs_y < 1 && y > 0)    { return y.toFixed(2) }
     if (abs_y === 0)           { return '' }
     return y;
   };
 
+  // from https://github.com/Olical/binary-search
+  // assume the data is a sorted array of [datetime,value] as flots requires; we are looking for the datetime value
+  // modified to return the largest item less then or equal to x
+  function binarySearch(data, x) {
+    var min = 0;
+    var max = data.length - 1;
+    var guess,dx;
+
+    while (min <= max) {
+      guess = Math.floor((min + max) / 2);
+      dx = data[guess][0];
+
+      if (dx === x) {
+        return guess;
+      }
+      else {
+        if (dx < x) {
+          min = guess + 1;
+        }
+        else {
+          max = guess - 1;
+        }
+      }
+    }
+
+    return Math.min(min,data.length - 1);
+  }
 
   var time_format = d3.time.format.utc("%y-%m-%dT%H:%M");
 
@@ -480,9 +509,16 @@ function app() {
     scent_ds.piechart(name_,dt_,callback);
   }
 
+  function choose_timestamp_format(name_) {
+    var step = graph_step_in_seconds(name_);
+    if ( step<TIME_UNITS.d )
+      return "%y-%m-%dT%H:%M";
+    if ( step<TIME_UNITS.w )
+      return "%y-%m-%d";
+    return "%y-%m";
+  }
   function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_,alert_idx_) {
-    var rollover_value_format = d3.format(",d");
-
+/*
     if ($(target_).hasClass("tall-graph")) {
       var use_small_fonts = false;
       var x_axis_ticks_count = 10;
@@ -490,48 +526,110 @@ function app() {
       var use_small_fonts = true;
       var x_axis_ticks_count = 5;
     }
-
-    var graph_props = {
-      data: data_,
-      //title: graph_split(name_)[0],
-      full_width: true,
-      full_height: true,
-      bottom: 60,
-      area: false,
-      xax_count: x_axis_ticks_count,
-      x_extended_ticks: true,
-      y_extended_ticks: true,
-      axes_not_compact: false,
-      target: target_,
-      interpolate: "basic",
-      show_confidence_band: ["lower", "upper"],
-      baselines: baselines_,
-      markers: markers_,
-      small_text: use_small_fonts,
-      brushing_interval: 1,
-      mouseover: function(d, i) {
-        d3.select(target_ + " svg .mg-active-datapoint")
-          .text(rollover_value_format(d.value) + " @ "+time_format(d.date) );
-      }
+  */
+    var plot_data = [{label: graph_split(name_)[0],data: data_}];
+    var plot_options = {
+      xaxis: {
+        mode: "time",
+        color: alert_category(alert_idx_).hex_color,
+        timeformat: choose_timestamp_format(name_)
+      },
+      yaxis: {
+        tickFormatter: formatKMBT,
+      },
+      legend: {
+        show: true,
+        labelFormatter: function(label, series) {
+          if ( series.label.indexOf("crit")>-1 || series.label.indexOf("warn")>-1 ) {
+            return series.label+" "+series.data[0][1];
+          }
+        },
+      },
+      selection: {
+				mode: "x"
+			},
+      crosshair: {
+				mode: "x" //TODO - change the color
+			},
+      grid: {
+				hoverable: true,
+				autoHighlight: false,
+        markingsLineWidth: 20
+			},
     };
 
-    graph_props.color = alert_category(alert_idx_).hex_color;
+    if ( baselines_.length>0 ) {
+      var xmin = data_[0][0],
+          xmax = data_[data_.length-1][0];
+      // generate a line for each
+      for (var i in baselines_) {
+        plot_data.push({
+          label: baselines_[i].label,
+          data: [[xmin,baselines_[i].value],[xmax,baselines_[i].value]]
+        });
+      }
+    }
 
-    MG.data_graphic(graph_props);
-    // Fix overlapping labels in x-axis
-    d3.selectAll(target_ + " svg .mg-year-marker text").attr("transform", "translate(0, 8)");
+    if ( markers_.length>0 ) {
+      var markings = [];
+      for (var i in markers_) {
+        markings.push({ xaxis: {from: markers_[i].x, to: markers_[i].x}
+                        });
+      }
+      plot_options.grid.markings = markings;
+    }
 
-    // .Use small fonts for baselines text, if needed
-    d3.selectAll(target_ + " svg .mg-baselines").classed("mg-baselines-small", use_small_fonts);
+    function plot_it() {
+      return $.plot(target_,plot_data,plot_options);
+    }
+    var plot = plot_it();
 
-    // Fix overlapping labels in baselines
-    d3.selectAll(target_ + " svg .mg-baselines text").attr("dx", function (d,i) { return -i*60; });
+    $(target_).bind("plotselected", function (event, ranges) {
+			// do the zooming
+			$.each(plot.getXAxes(), function(_, axis) {
+				var opts = axis.options;
+				opts.min = ranges.xaxis.from;
+				opts.max = ranges.xaxis.to;
+			});
+			plot.setupGrid();
+			plot.draw();
+			plot.clearSelection();
+		});
 
-    // Hook click events for the chart
-    d3.selectAll(target_ + " svg .mg-rollover-rect rect")
-      .on("dblclick", function (d,i) {
-                     on_graph_point_click(name_, d.date, d.dt, d.value);
-                   });
+    $(target_).dblclick(function () {
+      plot = plot_it();
+    });
+
+    var legends = $("#placeholder .legendLabel");
+
+		legends.each(function () {
+			// fix the widths so they don't jump around
+			$(this).css('width', $(this).width());
+		});
+
+
+    $(target_).bind("plothover",  function (event, pos, item) {
+      /*
+      if ( !item )
+        return;
+      var axes = plot.getAxes();
+			if (pos.x < axes.xaxis.min || pos.x > axes.xaxis.max ||
+				pos.y < axes.yaxis.min || pos.y > axes.yaxis.max) {
+				return;
+			}
+*/
+      var dataset = plot.getData()[0].data; // we are always interested in the graph data which is at the first index
+      var idx = binarySearch(dataset,pos.x);
+      if ( !idx | !dataset[idx])
+        return;
+      var dt = $.plot.formatDate(new Date(dataset[idx][0]),choose_timestamp_format(name_));
+      var v = dataset[idx][1];
+      $("#graph-tooltip").html(v+" @ "+dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+		});
+
+    $(target_).bind("mouseleave",  function (e) {
+      $("#graph-tooltip").fadeOut(200);
+    });
   }
 
   function remove_spinner(anchor_) {
@@ -615,12 +713,12 @@ function app() {
           var dt = raw_data_[rw][2];
           var v = raw_data_[rw][0];
           if ( dt>100000 ) {
-            data.push({date: new Date(dt * 1000), value: v, dt: dt});
+            data.push([dt * 1000,v]);
           }
         };
-        data.sort(function(a,b) { return a.dt-b.dt });
-        data = fill_in_missing_slots(name_, data)
-        add_bounds(data);
+        data.sort(function(a,b) { return a[0]-b[0]});
+        //data = fill_in_missing_slots(name_, data)
+        //add_bounds(data);
         var graph_alerts = alerts_[name_];
         var baselines = [];
         var alert_name = "NORMAL";
@@ -639,15 +737,16 @@ function app() {
           var step = graph_step_in_seconds(name_);
           var factor = graph_alerts[4]/step;
           for (var i=0; i<4; ++i) {
-            baselines[i].value = baselines[i].value/factor;
+            baselines[i].value = Math.round(baselines[i].value/factor);
           }
           alert_name = graph_alerts[7];
         }
         var markers = [];
         if ( alerts_.anomalies && alerts_.anomalies[name_] ) {
-          var dt = alerts_.anomalies[name_][0];
+          var dt = alerts_.anomalies[name_][0]*1000;
           markers.push({
-            date : new Date(dt * 1000),
+            x : dt,
+            //idx: binarySearch(data,dt),
             label: 'Anomaly'
           });
           alert_name = "anomaly";
@@ -1112,6 +1211,17 @@ function app() {
     });
   }
 
+  function setup_flot() {
+    $("<div id='graph-tooltip'></div>").css({
+			position: "absolute",
+			display: "none",
+			border: "1px solid",
+			padding: "2px",
+			"background-color": "#ffffe0",
+			opacity: 0.90
+		}).appendTo("body");
+  }
+
   function setup_router() {
 
     function globals() {
@@ -1179,6 +1289,7 @@ function app() {
 
   setup_router();
 
+  setup_flot();
 }
 
 
