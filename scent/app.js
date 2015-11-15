@@ -596,8 +596,15 @@ function app() {
 			plot.clearSelection();
 		});
 
+    // TODO - if the graph is in zoomed state, don't refresh.
+
     $(target_).dblclick(function () {
-      plot = plot_it();
+      // TODO - if the graph is in zoomed state, redraw it, otherwise present the piechart
+      if ( is_zoomed() ) {
+        plot = plot_it();
+      } else {
+        on_graph_point_click();
+      }
     });
 
     var legends = $("#placeholder .legendLabel");
