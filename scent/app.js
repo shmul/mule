@@ -1169,12 +1169,6 @@ function app() {
         }
         var graph = $(container).attr("data-graph");
 
-        // graphs in zoom state are also skipped
-        if ( $(container).find(".mg-brushed").length>0 || $(container).find(".mg-brushing-in-progress").length>0 ) {
-          //console.log('%s is in brushing. Not refreshing',graph);
-          return;
-        }
-
         if ( graph_split(graph) ) {
           load_graph(graph,"#"+$(container).attr('id')+" .graph-body");
           //console.log('refresh_loaded_graphs: %s',graph);
