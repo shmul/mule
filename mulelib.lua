@@ -1117,7 +1117,7 @@ function mule(db_)
     for l in lines_without_comments(configuration_lines_) do
       local items,t = parse_input_line(l)
       if t then
-        logw("unexpexted type",type)
+        logw("unexpexted type",t,l)
       else
         local metric = items[1]
         table.remove(items,1)
