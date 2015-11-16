@@ -520,12 +520,7 @@ function app() {
         sorted_data.push({ graph: "No data to present"});
 
       var content = $.templates("#piechart-container-template").render([{}]);
-
-      bootbox.dialog({
-        title: name_ + " @ " + time_format(date_),
-        message: content,
-        size: 'large'
-      });
+      $(".bootbox-body").html(content);
 
       $.doTimeout(500,function() {
         $("#piechart-container").append($.templates("#piechart-template").render(sorted_data));
@@ -536,6 +531,12 @@ function app() {
         $('.sparkline-bullet').sparkline('html',{type: 'bullet', targetColor: 'black',width: "100%"});
       });
     }
+
+    bootbox.dialog({
+      title: name_ + " @ " + time_format(date_),
+      message: "content",
+      size: 'large'
+    });
 
     scent_ds.piechart(name_,dt_,callback);
   }
