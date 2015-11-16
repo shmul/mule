@@ -6,7 +6,6 @@ function app() {
   // from Rickshaw
   function formatKMBT(y,dec) {
     var abs_y = Math.abs(y);
-    dec = dec ? dec : 1;
 	  if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(dec) + "T" }
     if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(dec) + "B" }
     if (abs_y >= 1000000)    { return (y / 1000000).toFixed(dec) + "M" }
@@ -16,9 +15,25 @@ function app() {
     return y;
   };
 
-  function formatBase1024KMGTP(y,dec) {
+  function flot_axis_format(y,axis) {
+    var label,dec = axis.tickDecimals;
+    var exists
+    do {
+      label = formatKMBT(y,dec);
+      ++dec;
+      // we peek back to see whether the label was already used
+      exists = false;
+      for (var j in axis.ticks ) {
+        exists = exists || label==axis.ticks[j].label;
+      }
+    } while ( exists );
+
+    return label;
+  };
+
+  function formatBase1024KMGTP(y) {
     var abs_y = Math.abs(y);
-    dec = dec ? dec : 1;
+    var dec = 1;
     if (abs_y >= 1125899906842624)  { return (y / 1125899906842624).toFixed(dec) + "P" }
     if (abs_y >= 1099511627776){ return (y / 1099511627776).toFixed(dec) + "T" }
     if (abs_y >= 1073741824)   { return (y / 1073741824).toFixed(dec) + "G" }
@@ -28,6 +43,15 @@ function app() {
     if (abs_y === 0)           { return '' }
     return y;
   };
+
+
+  function formatNumber(num_) {
+    var parts = num_.toString().split(".");
+    var n = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,",");
+    if ( parts.length==1 )
+      return n;
+    return [n,parts[1]].join(".");
+  }
 
   // from https://github.com/Olical/binary-search
   // assume the data is a sorted array of [datetime,value] as flots requires; we are looking for the datetime value
@@ -464,8 +488,12 @@ function app() {
     add_upper_and_lower_bounds(data_);
   }
 
-  function on_graph_point_click(name_, date_, dt_, value_) {
-    console.log("on_graph_point_click: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
+  function show_piechart(name_, date_, dt_, value_) {
+    if ( $(".modal-content").is(":visible") ) {
+      // prevents showing the piechart twice
+      return;
+    }
+    console.log("show_piechart: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
 
     function callback(raw_data_) {
       if ( !raw_data_ || raw_data_.length==0 ) {
@@ -484,14 +512,17 @@ function app() {
 
       sorted_data.sort(function(a,b) { return b.value-a.value; });
       // the data is sorted in descending order. Each element is [name,value]
-      var template_data = [];
-      for (var i in sorted_data) {
-        sorted_data[i].precentage = (100*sorted_data[i].value/sum).toPrecision(3);
-      }
+      if ( sorted_data.length>0 ) {
+        for (var i in sorted_data) {
+          sorted_data[i].precentage = (100*sorted_data[i].value/sum).toPrecision(3);
+        }
+      } else
+        sorted_data.push({ graph: "No data to present"});
+
       var content = $.templates("#piechart-container-template").render([{}]);
 
       bootbox.dialog({
-        title: name_ + " | " + time_format(date_),
+        title: name_ + " @ " + time_format(date_),
         message: content,
         size: 'large'
       });
@@ -528,6 +559,8 @@ function app() {
     }
   */
     var plot_data = [{label: graph_split(name_)[0],data: data_}];
+    var tooltip_data;
+
     var plot_options = {
       xaxis: {
         mode: "time",
@@ -535,7 +568,7 @@ function app() {
         timeformat: choose_timestamp_format(name_)
       },
       yaxis: {
-        tickFormatter: formatKMBT,
+        tickFormatter: flot_axis_format, // TODO - the decimals number is sometimes not calculated properly
       },
       legend: {
         show: true,
@@ -579,10 +612,13 @@ function app() {
       plot_options.grid.markings = markings;
     }
 
+
     function plot_it() {
       return $.plot(target_,plot_data,plot_options);
     }
+
     var plot = plot_it();
+
 
     $(target_).bind("plotselected", function (event, ranges) {
 			// do the zooming
@@ -598,12 +634,22 @@ function app() {
 
     // TODO - if the graph is in zoomed state, don't refresh.
 
-    $(target_).dblclick(function () {
-      // TODO - if the graph is in zoomed state, redraw it, otherwise present the piechart
-      if ( is_zoomed() ) {
+    function is_zoomed() {
+      var rv = true;
+			$.each(plot.getXAxes(), function(_, axis) {
+				var opts = axis.options;
+        if ( !opts.min || !opts.max ) {
+          rv = rv && false;
+        }
+      });
+      return rv;
+    }
+    $(target_).dblclick(function (e) {
+      // TODO - , otherwise present the piechart
+      if ( is_zoomed() ) { // if the graph is in zoomed state, redraw it
         plot = plot_it();
       } else {
-        on_graph_point_click();
+        show_piechart(name_, new Date(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
       }
     });
 
@@ -629,9 +675,12 @@ function app() {
       var idx = binarySearch(dataset,pos.x);
       if ( !idx | !dataset[idx])
         return;
-      var dt = $.plot.formatDate(new Date(dataset[idx][0]),choose_timestamp_format(name_));
-      var v = dataset[idx][1];
-      $("#graph-tooltip").html(v+" @ "+dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+      tooltip_data = {
+        x: dataset[idx][0],
+        dt: $.plot.formatDate(new Date(dataset[idx][0]),choose_timestamp_format(name_)),
+        v: dataset[idx][1]
+      }
+      $("#graph-tooltip").html(formatNumber(tooltip_data.v)+" @ "+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
 		});
 
     $(target_).bind("mouseleave",  function (e) {

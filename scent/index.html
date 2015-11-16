@@ -300,12 +300,14 @@
           <div class="col-md-6">
             <a href="#graph/{{:name}}">{{:graph}} </a>
           </div>
+          {{if precentage}}
           <div class="col-md-2">
-            <span class="text-right">| {{:precentage}}%</span></a>
+              <span class="text-right">| {{:precentage}}%</span></a>
           </div>
           <div class="col-md-4">
             <span class="sparkline-bullet">100,null,{{:precentage}}</span>
           </div>
+         {{/if}}
          </div>
         </script>
       </div> <!-- ./templates -->
@@ -503,9 +505,9 @@
     <script src="./plugins/Bootstrap-3-Typeahead-3.1.1/bootstrap3-typeahead.js" type="text/javascript"></script>
     <script src="./plugins/d3/d3-3.5.7.min.js" type="text/javascript"></script>
     <script src="./plugins/bootbox-4.3.0.js" type="text/javascript"></script>
-    <script src="./plugins/flot/jquery.flot-0.8.3.min.js" type="text/javascript"></script>
+    <script src="./plugins/flot/jquery.flot-0.8.3.js" type="text/javascript"></script>
     <script src="./plugins/flot/jquery.flot.time-0.8.3.min.js" type="text/javascript"></script>
-    <script src="./plugins/flot/jquery.flot.selection-0.8.3.min.js" type="text/javascript"></script>
+    <script src="./plugins/flot/jquery.flot.selection-0.8.3.js" type="text/javascript"></script>
     <script src="./plugins/flot/jquery.flot.crosshair-0.8.3.min.js" type="text/javascript"></script>
     <script src="./plugins/jquery.ba-dotimeout.min.js" type="text/javascript"></script>
     <script src="./plugins/cache.js" type="text/javascript"></script>
