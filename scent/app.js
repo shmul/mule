@@ -6,28 +6,44 @@ function app() {
   // from Rickshaw
   function formatKMBT(y,dec) {
     var abs_y = Math.abs(y);
-	  if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(dec) + "T" }
-    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(dec) + "B" }
-    if (abs_y >= 1000000)    { return (y / 1000000).toFixed(dec) + "M" }
-    if (abs_y >= 1000)       { return (y / 1000).toFixed(dec) + "K" }
-    if (abs_y < 1 && y > 0)  { return y.toFixed(dec) }
-    if (abs_y === 0)         { return '' }
-    return y;
+	  if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(dec) + "T"; }
+    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(dec) + "B"; }
+    if (abs_y >= 1000000)    { return (y / 1000000).toFixed(dec) + "M"; }
+    if (abs_y >= 1000)       { return (y / 1000).toFixed(dec) + "K"; }
+    if (abs_y < 1 && y > 0)  { return y.toFixed(dec)+""; }
+    if (abs_y === 0)         { return "0" }
+    return y+"";
   };
 
   function flot_axis_format(y,axis) {
     var label,dec = axis.tickDecimals;
-    var exists
+    var exists;
+
+    // a kludge around flot's original tick formatting implementation to avoid 2 things:
+    // 1) not to have multiple ticks that due to our special formatting are the same, for example 1.6M and 1.8M both
+    //   changed to 2M
+    // 2) to make sure there is a consistency in the number of digits past decimal point being used.
+
     do {
       label = formatKMBT(y,dec);
       ++dec;
-      // we peek back to see whether the label was already used
+      // we scan back to see whether the label was already used
       exists = false;
       for (var j in axis.ticks ) {
         exists = exists || label==axis.ticks[j].label;
       }
     } while ( exists );
 
+    // this may be redundant if the ticks are already properly formatted (as specified above), but to avoid
+    // ugly checks, we do it anyway.
+    for (var j in axis.ticks ) {
+      var modified_label = formatKMBT(axis.ticks[j].v,dec);
+      if ( !modified_label || modified_label.indexOf(".")==-1 ) {
+        continue;
+      }
+      modified_label = modified_label.replace(/\.?0+([TBMK]?)$/,"$1");
+      axis.ticks[j].label = modified_label;
+    }
     return label;
   };
 
@@ -594,12 +610,13 @@ function app() {
 
     if ( baselines_.length>0 ) {
       var xmin = data_[0][0],
-          xmax = data_[data_.length-1][0];
+          xmax = data_[data_.length-1][0],
+          reveresed = baselines_.reverse();
       // generate a line for each
-      for (var i in baselines_) {
+      for (var i in reveresed) {
         plot_data.push({
-          label: baselines_[i].label,
-          data: [[xmin,baselines_[i].value],[xmax,baselines_[i].value]]
+          label: reveresed[i].label,
+          data: [[xmin,reveresed[i].value],[xmax,reveresed[i].value]]
         });
       }
     }
