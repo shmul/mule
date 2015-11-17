@@ -834,7 +834,7 @@ function app() {
 
     }
     add_spinner(target_);
-    $.doTimeout(30*1000,function() { remove_spinner(target_); }); // to make sure we get it off at some point
+//    $.doTimeout(30*1000,function() { remove_spinner(target_); }); // to make sure we get it off at some point
     scent_ds.graph(name_,callback);
   }
 
@@ -1319,6 +1319,7 @@ function app() {
       teardown_main();
       teardown_charts();
       teardown_graph();
+      teardown_alerts(); // we need to clear the displayed alert table/graph when navigating between alerts
       update_alerts(category);
       refresh_loaded_graphs();
     });
