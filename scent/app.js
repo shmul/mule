@@ -565,6 +565,11 @@ function app() {
       return "%y-%m-%d";
     return "%y-%m";
   }
+
+  function is_graph_zoomed(graph_container_) {
+    return $(graph_container_).hasClass("flot-zoomed");
+  }
+
   function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_,alert_idx_) {
 /*
     if ($(target_).hasClass("tall-graph")) {
@@ -585,7 +590,7 @@ function app() {
         timeformat: choose_timestamp_format(name_)
       },
       yaxis: {
-        tickFormatter: flot_axis_format, // TODO - the decimals number is sometimes not calculated properly
+        tickFormatter: flot_axis_format
       },
       legend: {
         show: true,
@@ -632,6 +637,7 @@ function app() {
 
 
     function plot_it() {
+      $(target_).removeClass("flot-zoomed");
       return $.plot(target_,plot_data,plot_options);
     }
 
@@ -648,23 +654,14 @@ function app() {
 			plot.setupGrid();
 			plot.draw();
 			plot.clearSelection();
+
+      // we add an artificial class to the container so an observer (like the auto refresh code) can check
+      // whether the graph is zoomed.
+      $(target_).addClass("flot-zoomed");
 		});
 
-    // TODO - if the graph is in zoomed state, don't refresh.
-
-    function is_zoomed() {
-      var rv = true;
-			$.each(plot.getXAxes(), function(_, axis) {
-				var opts = axis.options;
-        if ( !opts.min || !opts.max ) {
-          rv = rv && false;
-        }
-      });
-      return rv;
-    }
     $(target_).dblclick(function (e) {
-      // TODO - , otherwise present the piechart
-      if ( is_zoomed() ) { // if the graph is in zoomed state, redraw it
+      if ( is_graph_zoomed(target_) ) { // if the graph is in zoomed state, redraw it
         plot = plot_it();
       } else {
         show_piechart(name_, new Date(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
@@ -1241,10 +1238,14 @@ function app() {
         if ( $(container_box).css("display")=="none" ) {
           return;
         }
+        var graph_container_id = "#"+$(container).attr('id')+" .graph-body";
+        if ( is_graph_zoomed(graph_container_id) ) {
+          return;
+        }
         var graph = $(container).attr("data-graph");
 
         if ( graph_split(graph) ) {
-          load_graph(graph,"#"+$(container).attr('id')+" .graph-body");
+          load_graph(graph,graph_container_id);
           //console.log('refresh_loaded_graphs: %s',graph);
         }
       });
