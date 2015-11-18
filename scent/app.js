@@ -288,6 +288,8 @@ function app() {
           alerts[idx].push([n,current]);
         }
       }
+
+      // TODO - use the expected value of the anomaly as well (requires a change in mulelib:fdi)
       var anomalies = raw_data_["anomalies"];
       for (n in anomalies) {
         alerts[2].push([n,anomalies[n]]);
@@ -570,7 +572,7 @@ function app() {
     return $(graph_container_).hasClass("flot-zoomed");
   }
 
-  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_,alert_idx_) {
+  function draw_graph(name_,data_,from_percent_,to_percent_,thresholds_,anomalies_,target_,alert_idx_) {
 /*
     if ($(target_).hasClass("tall-graph")) {
       var use_small_fonts = false;
@@ -598,6 +600,9 @@ function app() {
           if ( series.label.indexOf("crit")>-1 || series.label.indexOf("warn")>-1 ) {
             return series.label+" "+series.data[0][1];
           }
+          if ( series.label=="Anomalies" ) {
+            return series.label;
+          }
         },
       },
       selection: {
@@ -611,12 +616,17 @@ function app() {
 				autoHighlight: false,
         markingsLineWidth: 20
 			},
+      series: {
+				lines: {
+					show: true
+				},
+			},
     };
 
-    if ( baselines_.length>0 ) {
+    if ( thresholds_.length>0 ) {
       var xmin = data_[0][0],
           xmax = data_[data_.length-1][0],
-          reveresed = baselines_.reverse();
+          reveresed = thresholds_.reverse();
       // generate a line for each
       for (var i in reveresed) {
         plot_data.push({
@@ -626,13 +636,12 @@ function app() {
       }
     }
 
-    if ( markers_.length>0 ) {
-      var markings = [];
-      for (var i in markers_) {
-        markings.push({ xaxis: {from: markers_[i].x, to: markers_[i].x}
-                        });
-      }
-      plot_options.grid.markings = markings;
+    for (var i in anomalies_) {
+      plot_data.push({
+        label: "Anomalies",
+        data: anomalies_[i],
+        points: { show: true, radius: 8}
+      });
     }
 
 
@@ -647,9 +656,8 @@ function app() {
     $(target_).bind("plotselected", function (event, ranges) {
 			// do the zooming
 			$.each(plot.getXAxes(), function(_, axis) {
-				var opts = axis.options;
-				opts.min = ranges.xaxis.from;
-				opts.max = ranges.xaxis.to;
+				axis.options.min = ranges.xaxis.from;
+				axis.options.max = ranges.xaxis.to;
 			});
 			plot.setupGrid();
 			plot.draw();
@@ -688,7 +696,7 @@ function app() {
 */
       var dataset = plot.getData()[0].data; // we are always interested in the graph data which is at the first index
       var idx = binarySearch(dataset,pos.x);
-      if ( !idx | !dataset[idx])
+      if ( !idx || !dataset[idx] )
         return;
       tooltip_data = {
         x: dataset[idx][0],
@@ -791,10 +799,10 @@ function app() {
         //data = fill_in_missing_slots(name_, data)
         //add_bounds(data);
         var graph_alerts = alerts_[name_];
-        var baselines = [];
+        var thresholds = [];
         var alert_name = "NORMAL";
         if ( graph_alerts ) {
-          baselines = [
+          thresholds = [
             { value: graph_alerts[0],
               label: "crit-low" },
             { value: graph_alerts[1],
@@ -804,27 +812,31 @@ function app() {
             { value: graph_alerts[3],
               label: "crit-high" },
           ];
-          // the baselines should be adjusted to the displayed graph
+          // the thresholds should be adjusted to the displayed graph
           var step = graph_step_in_seconds(name_);
           var factor = graph_alerts[4]/step;
           for (var i=0; i<4; ++i) {
-            baselines[i].value = Math.round(baselines[i].value/factor);
+            thresholds[i].value = Math.round(thresholds[i].value/factor);
           }
           alert_name = graph_alerts[7];
         }
-        var markers = [];
+        var anomalies = [];
         if ( alerts_.anomalies && alerts_.anomalies[name_] ) {
-          var dt = alerts_.anomalies[name_][0]*1000;
-          markers.push({
-            x : dt,
-            //idx: binarySearch(data,dt),
-            label: 'Anomaly'
-          });
+          var dt = [];
+          var anomaly = alerts_.anomalies[name_];
+          for (var i in anomaly) {
+            var x = anomaly[i]*1000;
+            var idx = binarySearch(data,x);
+            if ( idx && data[idx] ) {
+              dt.push([data[idx][0],data[idx][1]]);
+            }
+          }
+          anomalies.push(dt);
           alert_name = "anomaly";
         }
         var from_percent = 0;
         var to_percent = 100;
-        draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_,alert_index(alert_name));
+        draw_graph(name_,data,from_percent,to_percent,thresholds,anomalies,target_,alert_index(alert_name));
 
         remove_spinner(target_);
       });
