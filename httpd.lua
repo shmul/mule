@@ -363,19 +363,24 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
                     send_response(send(skt),send_file(skt),
                                   req,content,with_mule_,backup_callback_,stop_cond_,can_fork_)
                   end)
-  local i = 0
-
   local adaptive_timeout = 0
-  while not stop_cond_() do
+  local function step()
     copas.step(adaptive_timeout)
+  end
+
+  while not stop_cond_() do
+
     if can_fork_ then
       noblock_wait_for_children()
     end
     with_mule_(function(mule_)
                  mule_.flush_cache(UPDATE_AMOUNT,step)
-        local process_files = incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
-        adaptive_timeout = (process_files and process_files>0 and 0) or 1
-               end)
-    i = i + 1
+                 local process_files = incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
+		 if process_files and process_files>0 then
+		   adaptive_timeout = 0
+		 else
+		   adaptive_timeout = 1
+		 end
+	       end)
   end
 end
