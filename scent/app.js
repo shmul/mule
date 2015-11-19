@@ -561,11 +561,24 @@ function app() {
 
   function choose_timestamp_format(name_) {
     var step = graph_step_in_seconds(name_);
-    if ( step<TIME_UNITS.d )
-      return "%y-%m-%dT%H:%M";
-    if ( step<TIME_UNITS.w )
-      return "%y-%m-%d";
-    return "%y-%m";
+    if ( step<TIME_UNITS.d ) {
+      return "%e %b<br>%H:%M";
+    }
+    if ( step<TIME_UNITS.w ) {
+      return "%e %b";
+    }
+    return "%e %b %y";
+  }
+
+  function choose_tick_size(name_) {
+    var step = graph_step_in_seconds(name_);
+    if ( step<TIME_UNITS.d ) {
+      return [1,"hour"];
+    }
+    if ( step<TIME_UNITS.w ) {
+      return [7,"day"];
+    }
+    return [1,"month"];
   }
 
   function is_graph_zoomed(graph_container_) {
@@ -584,12 +597,12 @@ function app() {
   */
     var plot_data = [{label: graph_split(name_)[0],data: data_}];
     var tooltip_data;
-
     var plot_options = {
       xaxis: {
         mode: "time",
         color: alert_category(alert_idx_).hex_color,
-        timeformat: choose_timestamp_format(name_)
+        timeformat: choose_timestamp_format(name_),
+        minTickSize: choose_tick_size(name_),
       },
       yaxis: {
         tickFormatter: flot_axis_format
