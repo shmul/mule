@@ -151,8 +151,7 @@ function sequence(db_,name_)
     end
 
     local lt = latest_timestamp()
-    --if adjusted_timestamp>lt then
-    if lt>0 and adjusted_timestamp>lt then
+    if (ZERO_NOT_PROCESSED or lt>0) and adjusted_timestamp>lt then
       set_latest(adjusted_timestamp)
     end
 
@@ -1234,9 +1233,11 @@ function mule(db_)
       logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
-    if sum==0 then -- don't bother to update
+
+    if ZERO_NOT_PROCESSED and sum==0 then -- don't bother to update
       return
     end
+
     for n,_ in get_sequences(metric_) do
       update_sequence(n,sum,timestamp,hits,typ,now_)
     end
