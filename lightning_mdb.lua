@@ -335,6 +335,8 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end
       _increment("mule.lightning_mdb.get.cache_miss")
       _cache[k] = {v,idx}
+    else
+      _increment("mule.lightning_mdb.get.cache_hit")
     end
     return _cache[k][1]
   end
@@ -346,6 +348,8 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       if not v or disable_cache then return v end
       _increment("mule.lightning_mdb.get_node.cache_miss")
       _nodes_cache[k] = {v,idx}
+    else
+      _increment("mule.lightning_mdb.get_node.cache_hit")
     end
     return _nodes_cache[k][1]
   end

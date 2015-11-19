@@ -234,6 +234,18 @@ The parameters are defined as follows:
 ##### Defining Alerts
 TODO
 
+#### Anomaly Detection in Time Series
+This code implement anomaly detection in time series representing aggregated counting of events over days, hours or minutes.
+
+The algorithms are based on Model based Fault Detection and Isolation (FDI) and  Adaptive filtering, under Signal based detection technology. The signal model is based on a shifted log normal distribution (Week/Daily seasonality). The estimation of  the signal model is done recursively, with forgetting factors, while detecting changes. Estimation is selectively restarted after a change is done during an adaptive burn-in period. Detecting changes is done with Cumulative Sum (CUSUM) test. Statistical test is used to detect both steady changes and outliers (spikes).
+
+The working assumption is that we are interested in 3 types of changes: abrupt (step) incipient (spike) and intermittent (drifting change). Yet this method to classify change types is not the only used way.
+
+Although the API accepts an entire graph, the internal algorithm is online i.e. it gets sample after sample in a chronological order and produces alert/no-alert output on each new time point without a delay. The alert is produced as a response to a change in the signal, and removed when the algorithm decides that the signal is back to its previous behavior, or alternatively, when it decides that a new behavior became steady.
+
+General algorithmic note: In the time series experimented the changes were usually either short temporal changes (spikes) or steep step functions. In order to adjust quickly to spikes, after a change had been detected, the old model was kept for a duration smaller or equal to some fallback threshold. During this fallback duration, if a measurement suitable to the old model is observed, the algorithm falls back to the old model. In order to adjust quickly to steep step functions, the last detected abnormal value is kept. If subsequent values are evaluated as normal under the hypotheses this value is a correct model, for a stability period defined by another constant threshold, then we update the model according to this hypotheses. Furthermore, all time the hypothesized model fits, no alerts are produced, even if the new model was not yet accepted. The above mechanisms lead to a fast adjustment to the common spike and steep step changes. The price is slower adjustment to rare types of changes. For example, during a period of constantly instability, the algorithm alarm may blink rather than constantly alarm.
+
+
 ##### Stop
 You can stop the http daemon with the following command. This is not intended to be secure and provides basic protection from accidental termination.
 
