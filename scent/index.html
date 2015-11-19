@@ -235,6 +235,9 @@
               </div>
             </div>
             <div class="box-tools pull-right {{:klass}}-header">
+              {{if alerted}}
+                <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
+              {{/if}}
               {{if klass == "small-graph"}}
                 {{for links}}
                   {{if current}}
@@ -255,9 +258,6 @@
                     </span>
                   {{/if}}
                 {{/for}}
-              {{/if}}
-              {{if alerted}}
-                &nbsp;&nbsp;<span class="label bg-{{:color}}">{{:alerted}}</span>
               {{/if}}
               {{if full}}
                 <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>

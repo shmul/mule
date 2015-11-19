@@ -668,21 +668,18 @@ function app() {
       $(target_).addClass("flot-zoomed");
 		});
 
-    $(target_).dblclick(function (e) {
+    $(target_).unbind("dblclick"); // clear previous listeners
+    $(target_).bind("dblclick",function (e) {
+      console.log("dblclick",is_graph_zoomed(target_));
       if ( is_graph_zoomed(target_) ) { // if the graph is in zoomed state, redraw it
         plot = plot_it();
       } else {
         show_piechart(name_, new Date(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
       }
+      e.stopPropagation();
     });
 
     var legends = $("#placeholder .legendLabel");
-
-		legends.each(function () {
-			// fix the widths so they don't jump around
-			$(this).css('width', $(this).width());
-		});
-
 
     $(target_).bind("plothover",  function (event, pos, item) {
       /*
@@ -1242,7 +1239,6 @@ function app() {
   }
 
   function refresh_loaded_graphs() {
-    notified_graphs = {}; // we reset the list of graphs on which we've already notified
     $.doTimeout(1000*60,function() {
       $(".graph-body").each(function(idx_,obj_) {
         var container = ($(obj_).closest(".graph-container"))[0];
