@@ -659,15 +659,15 @@ function app() {
       });
     }
 
-
+    var plot;
     function plot_it() {
-      $(target_).removeClass("flot-zoomed");
-      return $.plot(target_,plot_data,plot_options);
+      $.doTimeout(0,function() {
+        $(target_).removeClass("flot-zoomed");
+        plot =  $.plot(target_,plot_data,plot_options);
+      });
     }
 
-    var plot = plot_it();
-
-
+    plot_it();
     $(target_).bind("plotselected", function (event, ranges) {
 			// do the zooming
 			$.each(plot.getXAxes(), function(_, axis) {
