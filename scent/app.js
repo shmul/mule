@@ -531,9 +531,9 @@ function app() {
       sorted_data.sort(function(a,b) { return b.value-a.value; });
       // the data is sorted in descending order. Each element is [name,value]
       if ( sorted_data.length>0 ) {
-        for (var i in sorted_data) {
-          sorted_data[i].precentage = (100*sorted_data[i].value/sum).toPrecision(3);
-        }
+      for (var i in sorted_data) {
+        sorted_data[i].precentage = (100*sorted_data[i].value/sum).toPrecision(3);
+      }
       } else
         sorted_data.push({ graph: "No data to present"});
 
@@ -599,7 +599,7 @@ function app() {
         labelFormatter: function(label, series) {
           if ( series.label.indexOf("crit")>-1 || series.label.indexOf("warn")>-1 ) {
             return series.label+" "+series.data[0][1];
-          }
+      }
           if ( series.label=="Anomalies" ) {
             return series.label;
           }
@@ -658,7 +658,7 @@ function app() {
 			$.each(plot.getXAxes(), function(_, axis) {
 				axis.options.min = ranges.xaxis.from;
 				axis.options.max = ranges.xaxis.to;
-			});
+                   });
 			plot.setupGrid();
 			plot.draw();
 			plot.clearSelection();
@@ -675,7 +675,7 @@ function app() {
         plot = plot_it();
       } else {
         show_piechart(name_, new Date(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
-      }
+  }
       e.stopPropagation();
     });
 

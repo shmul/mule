@@ -74,7 +74,7 @@ function sequence(db_,name_)
     -- the actual latest timestamp, we check whether the value we got is in the range [0,_period/_step]
     -- and if so consider it an index. Otherwise it is the timestamp itself.
     if not l then
-      logd("latest_timestamp - latest not found")
+      --logd("latest_timestamp - latest not found")
       return 0
     end
     if l<range_top then
@@ -151,8 +151,7 @@ function sequence(db_,name_)
     end
 
     local lt = latest_timestamp()
-    if adjusted_timestamp>lt then
-      --if lt>0 and adjusted_timestamp>lt then
+    if (ZERO_NOT_PROCESSED or lt>0) and adjusted_timestamp>lt then
       set_latest(adjusted_timestamp)
     end
 
@@ -1117,7 +1116,7 @@ function mule(db_)
     for l in lines_without_comments(configuration_lines_) do
       local items,t = parse_input_line(l)
       if t then
-        logw("unexpexted type",type)
+        logw("unexpexted type",t,l)
       else
         local metric = items[1]
         table.remove(items,1)
@@ -1234,9 +1233,11 @@ function mule(db_)
       logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
---    if sum==0 then -- don't bother to update
---      return
---    end
+
+    if ZERO_NOT_PROCESSED and sum==0 then -- don't bother to update
+      return
+    end
+
     for n,_ in get_sequences(metric_) do
       update_sequence(n,sum,timestamp,hits,typ,now_)
     end
