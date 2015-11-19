@@ -515,7 +515,7 @@ function app() {
       }
     };
 
-    graph_props.color = alert_category(alert_idx_).hex_color;
+    //graph_props.color = alert_category(alert_idx_).hex_color;
 
     MG.data_graphic(graph_props);
     // Fix overlapping labels in x-axis
