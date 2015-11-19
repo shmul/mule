@@ -97,7 +97,9 @@ function app() {
     return Math.min(min,data.length - 1);
   }
 
-  var time_format = d3.time.format.utc("%y-%m-%dT%H:%M");
+  function time_format(t_) {
+    return $.plot.formatDate(t_,"%H:%M (%y-%m-%d)");//"%y-%m-%dT%H:%M");
+  }
 
   function graph_to_id(graph_) {
     return graph_.replace(/[;:]/g,"_");
@@ -710,7 +712,7 @@ function app() {
         return;
       tooltip_data = {
         x: dataset[idx][0],
-        dt: $.plot.formatDate(new Date(dataset[idx][0]),choose_timestamp_format(name_)),
+        dt: $.plot.formatDate(new Date(dataset[idx][0]),"%H:%M (%y-%m-%d)"),
         v: dataset[idx][1]
       }
       $("#graph-tooltip").html(formatNumber(tooltip_data.v)+" @ "+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
