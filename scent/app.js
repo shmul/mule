@@ -1139,6 +1139,7 @@ function app() {
 
   function teardown_graph() {
     $("#graph-box").hide();
+    $("#graph-box-container").empty();
   }
 
   // Populate the sidebar's keys list with one link per metric, all to the same
