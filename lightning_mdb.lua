@@ -327,31 +327,35 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
 
   local function get(k,dont_cache_)
-    if dont_cache_ or disable_cache or not _cache[k] then
-      local v,idx = native_get(k)
-
-      if dont_cache_ or disable_cache then
-        return v
-      end
-      _increment("mule.lightning_mdb.get.cache_miss")
-      _cache[k] = {v,idx}
-    else
+    local cached = _cache[k]
+    if not (dont_cache_ or disable_cache) and cached then
       _increment("mule.lightning_mdb.get.cache_hit")
+      return cached[1]
     end
-    return _cache[k][1]
+
+    local v,idx = native_get(k)
+
+    if dont_cache_ or disable_cache then
+      return v
+    end
+    _increment("mule.lightning_mdb.get.cache_miss")
+    _cache[k] = {v,idx}
+    return v
   end
 
   local function get_node(k)
-    if disable_cache or not _nodes_cache[k] then
-      local v,idx = native_get(k,true)
-      v = v and unpack_node(k,v)
-      if not v or disable_cache then return v end
-      _increment("mule.lightning_mdb.get_node.cache_miss")
-      _nodes_cache[k] = {v,idx}
-    else
+    local cached = _nodes_cache[k]
+    if not disable_cache and cached then
       _increment("mule.lightning_mdb.get_node.cache_hit")
+      return cached[1]
     end
-    return _nodes_cache[k][1]
+
+    local v,idx = native_get(k,true)
+    v = v and unpack_node(k,v)
+    if not v or disable_cache then return v end
+    _increment("mule.lightning_mdb.get_node.cache_miss")
+    _nodes_cache[k] = {v,idx}
+    return v
   end
 
 
