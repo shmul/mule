@@ -183,6 +183,8 @@ function app() {
       return "HIGH";
     if ( alert_[7].indexOf("LOW")>-1 )
       return "LOW";
+    if ( alert_[7].indexOf("stale")>-1 )
+      return "STALE";
     return null;
   }
 
@@ -597,12 +599,15 @@ function app() {
       var x_axis_ticks_count = 5;
     }
   */
-    var plot_data = [{label: graph_split(name_)[0],data: data_}];
+    var plot_data = [{
+      label: graph_split(name_)[0],
+      data: data_,
+      color: $.color.parse(alert_category(alert_idx_).hex_color),
+    }];
     var tooltip_data;
     var plot_options = {
       xaxis: {
         mode: "time",
-        color: alert_category(alert_idx_).hex_color,
         timeformat: choose_timestamp_format(name_),
         minTickSize: choose_tick_size(name_),
       },
@@ -628,12 +633,11 @@ function app() {
 			},
       grid: {
 				hoverable: true,
-				autoHighlight: false,
-        markingsLineWidth: 20
+				autoHighlight: true,
 			},
       series: {
 				lines: {
-					show: true
+					show: true,
 				},
 			},
     };
