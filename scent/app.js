@@ -655,13 +655,15 @@ function app() {
       plot_data.push({
         label: "Anomalies",
         data: anomalies_[i],
-        points: { show: true, radius: 8}
+        points: { show: true, radius: 8},
+        lines: { show: false }
       });
     }
 
     var plot;
     function plot_it() {
-      $.doTimeout(0,function() {
+      $.doTimeout(2,function() {
+        console.log("plot_it",name_);
         $(target_).removeClass("flot-zoomed");
         plot =  $.plot(target_,plot_data,plot_options);
       });
