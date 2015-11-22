@@ -369,7 +369,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
   end
 
   while not stop_cond_() do
-
+    step()
     if can_fork_ then
       noblock_wait_for_children()
     end
