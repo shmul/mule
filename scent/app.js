@@ -676,10 +676,22 @@ function app() {
     plot_it();
     $(target_).bind("plotselected", function (event, ranges) {
 			// do the zooming
-			$.each(plot.getXAxes(), function(_, axis) {
+      var ymax = -1;
+
+			$.each(plot.getXAxes(), function(j, axis) {
 				axis.options.min = ranges.xaxis.from;
 				axis.options.max = ranges.xaxis.to;
-                   });
+        var dataset = plot_data[j].data;
+        // we calculate the max value so we can change the yaxis
+        var idx_min = binarySearch(dataset,axis.options.min),
+            idx_max = binarySearch(dataset,axis.options.max);
+        for (var i=idx_min; i<=idx_max; ++i) {
+          ymax = Math.max(ymax,dataset[i][1]);
+        }
+      });
+			$.each(plot.getYAxes(), function(_, axis) {
+				axis.options.max = ymax;
+      });
 			plot.setupGrid();
 			plot.draw();
 			plot.clearSelection();
