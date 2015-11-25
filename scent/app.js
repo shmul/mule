@@ -168,6 +168,7 @@ function app() {
     stale: 3,
     normal: 4
   }
+
   function alert_category(alert_) {
     if ( !lookup[0].hex_color ) {
       for (var i in lookup) {
@@ -176,6 +177,13 @@ function app() {
       }
     }
     return lookup[alert_];
+  }
+
+  const threshold_color = {
+    "crit-high": "#9a6115",
+    "crit-low": "#9a6115",
+    "warn-high": "#edc240",
+    "warn-low": "#edc240",
   }
 
   function alert_high_low(alert_) {
@@ -650,6 +658,7 @@ function app() {
       for (var i in reveresed) {
         plot_data.push({
           label: reveresed[i].label,
+          color: threshold_color[reveresed[i].label],
           data: [[xmin,reveresed[i].value],[xmax,reveresed[i].value]]
         });
       }
