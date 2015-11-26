@@ -14,16 +14,19 @@ then
 fi
 sudo apt-get install -y lua5.1 luarocks nginx git
 
+if [ ! -f /usr/local/lib/liblmdb.so ]
+then
 : Installing Lightningmdb:
 : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-mkdir installs
-pushd installs
-git clone https://gitorious.org/mdb/mdb.git
-cd mdb/libraries/liblmdb/
-make
-sudo make install
-sudo ldconfig # we need to rebuild the cache to have libmdb.so discoverable
-popd
+  mkdir -p ~/installs
+  pushd ~/installs
+  git clone https://gitorious.org/mdb/mdb.git
+  cd mdb/libraries/liblmdb/
+  make
+  sudo make install
+  sudo ldconfig # we need to rebuild the cache to have libmdb.so discoverable
+  popd
+fi;
 
 : Installing rocks:
 : ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
