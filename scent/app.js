@@ -714,7 +714,7 @@ function app() {
 
     $(target_).unbind("dblclick"); // clear previous listeners
     $(target_).bind("dblclick",function (e) {
-      console.log("dblclick",is_graph_zoomed(target_));
+      //console.log("dblclick",is_graph_zoomed(target_));
       if ( is_graph_zoomed(target_) ) { // if the graph is in zoomed state, redraw it
         plot = plot_it();
       } else {
@@ -1285,7 +1285,7 @@ function app() {
   }
 
   function refresh_loaded_graphs() {
-    $.doTimeout(1000*60,function() {
+    $.doTimeout(scent_config().graphs_refersh_rate*1000,function() {
       $(".graph-body").each(function(idx_,obj_) {
         var container = ($(obj_).closest(".graph-container"))[0];
         var container_box = ($(container).closest(".box"))[0];
