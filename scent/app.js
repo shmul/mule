@@ -724,15 +724,10 @@ function app() {
     var legends = $("#placeholder .legendLabel");
 
     $(target_).bind("plothover",  function (event, pos, item) {
-      /*
-      if ( !item )
+      if ( !plot ) {
+        console.log("no plot found");
         return;
-      var axes = plot.getAxes();
-			if (pos.x < axes.xaxis.min || pos.x > axes.xaxis.max ||
-				pos.y < axes.yaxis.min || pos.y > axes.yaxis.max) {
-				return;
-			}
-*/
+      }
       var dataset = plot.getData()[0].data; // we are always interested in the graph data which is at the first index
       var idx = binarySearch(dataset,pos.x);
       if ( !idx || !dataset[idx] )
@@ -1104,7 +1099,7 @@ function app() {
                                                     links: links,favorite: favorite, alerted: ac.text, color: ac.color,
                                                     full: !!inner_navigation_, remove: !!remove_callback_});
           if ( remove_callback_ ) {
-            $(".graph-remove").click(remove_callback_);
+            $(".graph-remove").unbind("click").click(remove_callback_);
           }
 
           if ( notified_graphs[name_] ) {
