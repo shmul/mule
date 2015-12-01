@@ -416,6 +416,7 @@ function app() {
       var name = $("#dashboard-add").val();
       e.preventDefault();
       e.stopPropagation();
+      $(".dropdown.open > .dropdown-menu").dropdown("toggle");
       load_persistent(function(persistent_) {
         if ( !persistent_.dashboards[name] ) {
           persistent_.dashboards[name] = [];
@@ -434,6 +435,7 @@ function app() {
       load_persistent(function(persistent_) {
         if ( persistent_.dashboards[name_] ) {
           delete persistent_.dashboards[name_];
+          load_graphs_lists("#dashboard-container","#dashboard-template",persistent_.dashboards);
           scent_ds.save(user,"persistent",persistent_,function() {
             router.navigate('/');
           });
