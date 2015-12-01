@@ -284,7 +284,7 @@
 
         <!-- just a data holder to make the template generation code easier without closure hacks -->
         <script id="chart-graph-template" type="text/x-jsrender">
-          <div id="chart-{{:index}}-container" data-graph="{{:graph}}" class="graph-container col-md-4">
+          <div id="chart-{{:index}}-container" data-graph="{{:graph}}" class="graph-container col-md-{{:width}}">
           </div>
         </script>
 
@@ -467,7 +467,7 @@
 
 
             <div class="box-body container-fluid">
-              <div class="row" id="charts-container">
+              <div id="charts-container">
               </div><!-- /.box-body -->
             </div><!-- /.box -->
 

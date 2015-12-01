@@ -928,11 +928,17 @@ function app() {
         return;
       }
       $("#charts-container").html("");
+      var charts_per_row = scent_config().charts_per_row;
+      var chart_width = Math.ceil(12/charts_per_row);
+      var current_row;
 
       for (var i in dashboard) {
         var name = dashboard[i];
-        $("#charts-container").append($.templates("#chart-graph-template").render([{index: i,
-                                                                                    name: name}]));
+        if ( (i % charts_per_row)==0 ) {
+          current_row = $('<div class="row">');
+          $("#charts-container").append(current_row);
+        }
+        current_row.append($.templates("#chart-graph-template").render([{index: i,name: name, width: chart_width}]));
       }
 
       for (var i in dashboard) {
