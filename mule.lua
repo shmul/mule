@@ -120,39 +120,41 @@ local function incoming_queue(db_path_,incoming_queue_path_)
   local failed = string.gsub(incoming_queue_path_,"_incoming","_failed")
 
   local function helper(m,count)
-    if executing then return end
+    if executing then return 0 end
     local now = time_now()
+    local num_files = 0
+    executing = true
     for file in first_files(incoming_queue_path_,"%.mule$",count) do
-      executing = true
-      if time_now()-now<=1 then
-        pcall_wrapper(function()
-                        local sz = posix_sys_stat.stat(file).st_size
-                        if sz==0 then
-                          logi("empty file",file)
-                          os.remove(file)
-                          return
-                        end
-                        if sz>1048576 then
-                          logi("large file",file,sz)
-                          new_name = string.format("%s/%s",failed,posix_libgen.basename(file))
-                          os.rename(file,new_name)
-                          return
-                        end
-                        logi("incoming_queue file",file,sz)
-                        -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
-                        m.process(file,true,true)
-                        local cm = os.date("%y/%m/%d/%H/%M")
-                        if minute_dir~=cm then
-                          minute_dir = cm
-                          os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
-                        end
-                        new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix_libgen.basename(file)),"//","/")
-                        os.rename(file,new_name)
-                        logi("incoming_queue file processed",new_name)
-                      end)
-      end
-      executing = false
+      pcall_wrapper(
+        function()
+          local sz = posix_sys_stat.stat(file).st_size
+          if sz==0 then
+            logi("empty file",file)
+            os.remove(file)
+            return
+          end
+          if sz>1048576 then
+            logi("large file",file,sz)
+            new_name = string.format("%s/%s",failed,posix_libgen.basename(file))
+            os.rename(file,new_name)
+            return
+          end
+          num_files = num_files + 1
+          logi("incoming_queue file",file,sz)
+          -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
+          m.process(file,true,true)
+          local cm = os.date("%y/%m/%d/%H/%M")
+          if minute_dir~=cm then
+            minute_dir = cm
+            os.execute(string.format("mkdir -p %s/%s",processed,minute_dir))
+          end
+          new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix_libgen.basename(file)),"//","/")
+          os.rename(file,new_name)
+          logi("incoming_queue file processed",new_name)
+      end)
     end
+    executing = false
+    return num_files
   end
   return helper
 end

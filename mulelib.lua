@@ -1,6 +1,9 @@
 require "helpers"
 local pp = require("purepack")
 require "conf"
+require "fdi/calculate_fdi"
+
+
 
 local function name(metric_,step_,period_)
   return string.format("%s;%s:%s",metric_,
@@ -71,7 +74,7 @@ function sequence(db_,name_)
     -- the actual latest timestamp, we check whether the value we got is in the range [0,_period/_step]
     -- and if so consider it an index. Otherwise it is the timestamp itself.
     if not l then
-      logd("latest_timestamp - latest not found")
+      --logd("latest_timestamp - latest not found")
       return 0
     end
     if l<range_top then
@@ -148,7 +151,7 @@ function sequence(db_,name_)
     end
 
     local lt = latest_timestamp()
-    if adjusted_timestamp>lt then
+    if (ZERO_NOT_PROCESSED or lt>0) and adjusted_timestamp>lt then
       set_latest(adjusted_timestamp)
     end
 
@@ -950,6 +953,68 @@ function mule(db_)
     return wrap_json(output_alerts(as,#resource_==0))
   end
 
+  local function fdi(resource_,options_)
+    local str = strout("")
+    local col = collectionout(str,"{","}")
+    local now = time_now()
+    local last_days = to_timestamp(ANOMALIES_LAST_DAYS,now,nil)
+    local last_hours = to_timestamp(ANOMALIES_LAST_HOURS,now,nil)
+    local last_minutes = to_timestamp(ANOMALIES_LAST_MINUTES,now,nil)
+    local today = normalize_timestamp(now,86400)
+    local this_hour = normalize_timestamp(now,3600)
+    local this_5_minute = normalize_timestamp(now,300)
+    local insert = table.insert
+    local format = string.format
+    col.head()
+    options_ = options_ or {}
+    options_["in_memory"] = true
+    local graphs = graph(resource_,options_)
+    logd("fdi - got graphs")
+
+    for k,v in pairs(graphs) do
+      local metric,step,period = split_name(k)
+      logd("fdi",parse_time_unit(step),k)
+      if metric and step and period then
+        local anomalies = {}
+        local daily = step==86400
+        local hourly = step==3600
+        local minutely = step==300 -- actually five minutes
+        for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
+          local vv1 = vv[1]
+          -- we ignore today/this-hour as it is likely to have only very partial data
+          if vv[2] and
+            ((daily and vv1~=today and vv1>=last_days) or
+                (hourly and vv1~=this_hour and vv1>=last_hours) or
+              (minutely and vv1~=this_5_minute) and vv1>=last_minutes) then
+              insert(anomalies,vv1)
+          end
+        end
+        if #anomalies>0 then
+          _anomalies[k] = anomalies
+          local ar = table.concat(anomalies,",")
+          col.elem(format("\"%s\": [%s]",k,ar))
+          logd("fdi - anomalies detected",today,k,ar)
+        else
+          _anomalies[k] = nil
+        end
+      else
+        loge("fdi - bad input",k)
+      end
+    end
+    col.tail()
+
+    -- add cleanup of outdated anomalies
+    for k,v in pairs(_anomalies) do
+      local metric,step,period = split_name(k)
+      local daily = step==86400
+      local hourly = step==3600
+      if (daily and v[#v]<last_days) or (hourly and v[#v]<last_hours) then
+        _anomalies[k] = nil
+      end
+    end
+    return wrap_json(str)
+  end
+
   local function merge_lines(sorted_file_,step_,period_,now_)
     local last_metric,seq
     local str = stdout("")
@@ -1051,7 +1116,7 @@ function mule(db_)
     for l in lines_without_comments(configuration_lines_) do
       local items,t = parse_input_line(l)
       if t then
-        logw("unexpexted type",type)
+        logw("unexpexted type",t,l)
       else
         local metric = items[1]
         table.remove(items,1)
@@ -1168,6 +1233,11 @@ function mule(db_)
       logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
+
+    if ZERO_NOT_PROCESSED and sum==0 then -- don't bother to update
+      return
+    end
+
     for n,_ in get_sequences(metric_) do
       update_sequence(n,sum,timestamp,hits,typ,now_)
     end
@@ -1353,5 +1423,6 @@ function mule(db_)
     kvs_put = kvs_put,
     kvs_get = kvs_get,
     kvs_out = kvs_out,
+    fdi = fdi
   }
 end

@@ -119,65 +119,67 @@ function test_calculate_idx()
   end
 end
 
-function helper_time_sequence(db_)
-  local step,period = parse_time_pair("1m:60m")
-  assert_equal(60,step)
-  assert_equal(3600,period)
 
-  local seq = sequence(db_,"seq;1m:60m")
-  assert_equal(0,seq.slot_index(0))
-  assert_equal(0,seq.slot_index(59))
-  assert_equal(1,seq.slot_index(60))
-  assert_equal(5,seq.slot_index(359))
-  assert_equal(6,seq.slot_index(360))
+function test_sequences()
+  function helper(db_)
+    local step,period = parse_time_pair("1m:60m")
+    assert_equal(60,step)
+    assert_equal(3600,period)
+    db_.set_increment(function() end)
+    local seq = sequence(db_,"seq;1m:60m")
+    assert_equal(0,seq.slot_index(0))
+    assert_equal(0,seq.slot_index(59))
+    assert_equal(1,seq.slot_index(60))
+    assert_equal(5,seq.slot_index(359))
+    assert_equal(6,seq.slot_index(360))
 
-  seq.update(0,1,10)
-  assert_equal(10,seq.slot(0)._sum)
-  assert_equal(10,seq.slot(seq.latest_slot_index())._sum)
-  seq.update(1,1,17)
-  assert_equal(27,seq.slot(0)._sum)
-  assert_equal(2,seq.slot(0)._hits)
-  assert_equal(27,seq.slot(seq.latest_slot_index())._sum)
-  seq.update(3660,1,3)
-  assert_equal(3,seq.slot(1)._sum)
-  assert_equal(3,seq.slot(seq.latest_slot_index())._sum)
-  seq.update(60,1,7) -- this is in the past and should be discarded
-  assert_equal(3,seq.slot(1)._sum)
-  assert_equal(1,seq.slot(1)._hits)
-  assert_equal(3,seq.slot(seq.latest_slot_index())._sum)
-  seq.update(7260,1,89)
-  assert_equal(89,seq.slot(1)._sum)
-  assert_equal(1,seq.slot(1)._hits)
-  assert_equal(89,seq.slot(seq.latest_slot_index())._sum)
+    seq.update(0,1,10)
+    assert_equal(10,seq.slot(0)._sum)
+    assert_equal(10,seq.slot(seq.latest_slot_index())._sum)
+    seq.update(1,1,17)
+    assert_equal(27,seq.slot(0)._sum)
+    assert_equal(2,seq.slot(0)._hits)
+    assert_equal(27,seq.slot(seq.latest_slot_index())._sum)
+    seq.update(3660,1,3)
+    assert_equal(3,seq.slot(1)._sum)
+    assert_equal(3,seq.slot(seq.latest_slot_index())._sum)
+    seq.update(60,1,7) -- this is in the past and should be discarded
+    assert_equal(3,seq.slot(1)._sum)
+    assert_equal(1,seq.slot(1)._hits)
+    assert_equal(3,seq.slot(seq.latest_slot_index())._sum)
+    seq.update(7260,1,89)
+    assert_equal(89,seq.slot(1)._sum)
+    assert_equal(1,seq.slot(1)._hits)
+    assert_equal(89,seq.slot(seq.latest_slot_index())._sum)
 
-  --seq.serialize(stdout(", "))
-  local tbl = {}
-  seq.serialize({all_slots=true},insert_all_args(tbl),insert_all_args(tbl))
-  assert_equal("seq",tbl[1])
-  assert_equal(60,tbl[2]) --
-  assert_equal(3600,tbl[3]) -- period
+    --seq.serialize(stdout(", "))
+    local tbl = {}
+    seq.serialize({all_slots=true},insert_all_args(tbl),insert_all_args(tbl))
+    assert_equal("seq",tbl[1])
+    assert_equal(60,tbl[2]) --
+    assert_equal(3600,tbl[3]) -- period
 
-  -- first slot
-  assert_equal(27,tbl[4])
-  assert_equal(2,tbl[5])
-  assert_equal(0,tbl[6])
-  -- second slot
-  assert_equal(89,tbl[7])
-  assert_equal(1,tbl[8])
-  assert_equal(7260,tbl[9])
-  -- third slot
-  assert_equal(0,tbl[10])
-  assert_equal(0,tbl[11])
-  assert_equal(0,tbl[12])
+    -- first slot
+    assert_equal(27,tbl[4])
+    assert_equal(2,tbl[5])
+    assert_equal(0,tbl[6])
+    -- second slot
+    assert_equal(89,tbl[7])
+    assert_equal(1,tbl[8])
+    assert_equal(7260,tbl[9])
+    -- third slot
+    assert_equal(0,tbl[10])
+    assert_equal(0,tbl[11])
+    assert_equal(0,tbl[12])
 
-  --[[
-    local seq1 = sequence(db_,"seq")
-    local tblin = tablein(tbl)
-    local function read_3_values()
-    return tblin.read(),tblin.read(),tblin.read()
-    end
+    --[[
+      local seq1 = sequence(db_,"seq")
+      local tblin = tablein(tbl)
+      local function read_3_values()
+      return tblin.read(),tblin.read(),tblin.read()
+      end
 
-    assert_equal("seq",seq1.deserialize(in_memory_db,true,read_3_values,read_3_values))
+      assert_equal("seq",seq1.deserialize(in_memory_db,true,read_3_values,read_3_values))
     --]]
 
     local tbl1 = {}
@@ -211,6 +213,8 @@ function helper_time_sequence(db_)
     assert_equal(1,tbl[last-4])
     assert_equal(10740,tbl[last-3])
 
+  end
+  for_each_db("test_sequences",helper,true)
 end
 
 function test_to_timestamp()
@@ -243,10 +247,6 @@ function test_to_timestamp()
 
 end
 
-
-function test_sequences()
-  for_each_db("test_sequences",helper_time_sequence,true)
-end
 
 local function table_itr(tbl_)
   local current = 0
@@ -568,7 +568,7 @@ function test_reset()
   for_each_db("reset",helper)
 end
 
-function test_2reset()
+function test_reset2()
   function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 5m:3d"}))
     m.process("./tests/fixtures/reset2.mule")
@@ -578,7 +578,7 @@ function test_2reset()
     assert(string.find(m.graph("beer.stout.irish;5m:3d"),'[0,0,1418602500]',1,true))
     assert(string.find(m.graph("beer.stout.irish;5m:3d"),'[9,4,1418602800]',1,true))
   end
-  for_each_db("2reset",helper)
+  for_each_db("reset2",helper)
 end
 
 function test_save_load()
@@ -1013,6 +1013,9 @@ function test_bad_input_lines()
     m.process("6 54")
 
     assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
+
+    m.process("beer.al e.pale 1 1446711103")
+    assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
   end
   for_each_db("test_bad_input_lines",helper)
 end
@@ -1166,6 +1169,7 @@ function test_time_now()
   end
   for_each_db("./tests/temp/test_time_now",helper)
 end
+
 
 --verbose_log(true)
 --profiler.start("profiler.out")

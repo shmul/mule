@@ -6,7 +6,7 @@ require "conf"
 
 local disable_cache = false
 
-local lightningmdb = _VERSION >= "Lua 5.2" and lightningmdb_lib or lightningmdb
+local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
 
 local NUM_PAGES = 256000
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
@@ -327,27 +327,35 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
 
   local function get(k,dont_cache_)
-    if dont_cache_ or disable_cache or not _cache[k] then
-      local v,idx = native_get(k)
-
-      if dont_cache_ or disable_cache then
-        return v
-      end
-      _increment("mule.lightning_mdb.get.cache_miss")
-      _cache[k] = {v,idx}
+    local cached = _cache[k]
+    if not (dont_cache_ or disable_cache) and cached then
+      _increment("mule.lightning_mdb.get.cache_hit")
+      return cached[1]
     end
-    return _cache[k][1]
+
+    local v,idx = native_get(k)
+
+    if dont_cache_ or disable_cache then
+      return v
+    end
+    _increment("mule.lightning_mdb.get.cache_miss")
+    _cache[k] = {v,idx}
+    return v
   end
 
   local function get_node(k)
-    if disable_cache or not _nodes_cache[k] then
-      local v,idx = native_get(k,true)
-      v = v and unpack_node(k,v)
-      if not v or disable_cache then return v end
-      _increment("mule.lightning_mdb.get_node.cache_miss")
-      _nodes_cache[k] = {v,idx}
+    local cached = _nodes_cache[k]
+    if not disable_cache and cached then
+      _increment("mule.lightning_mdb.get_node.cache_hit")
+      return cached[1]
     end
-    return _nodes_cache[k][1]
+
+    local v,idx = native_get(k,true)
+    v = v and unpack_node(k,v)
+    if not v or disable_cache then return v end
+    _increment("mule.lightning_mdb.get_node.cache_miss")
+    _nodes_cache[k] = {v,idx}
+    return v
   end
 
 
@@ -471,7 +479,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if node._seq then
       node._seq.set(timestamp_,hits_,sum_)
       if #node._seq.slots()==MAX_SLOTS_IN_SPARSE_SEQ then
-      _increment("mule.lightning_mdb.internal_set_slot.create_pages")
+        _increment("mule.lightning_mdb.internal_set_slot.create_pages")
         -- time to create actual pages
         local slots = node._seq.slots()
         node._latest = node._seq.latest_timestamp()

@@ -3,6 +3,7 @@ require "helpers"
 
 --local lr = require "luarocks.require"
 local ltn12 = require "ltn12"
+local socket = require "socket"
 local url = require "socket.url"
 local copas = require "copas"
 
@@ -81,7 +82,7 @@ local function read_request(socket_)
       if header_name and header_value then
         req[header_name] = header_value
         if header_name=="Expect" and header_value=="100-continue" and
-          (req.verb=="POST" or req.verb=="PUT") and req.protocol~="HTTP/1.0" then
+        (req.verb=="POST" or req.verb=="PUT") and req.protocol~="HTTP/1.0" then
           socket_:send("HTTP/1.1 100 Continue\r\n\r\n")
         end
       else
@@ -95,7 +96,7 @@ local function build_response(status_,headers_,body_)
   local response = {status_}
   concat_arrays(response,headers_,function(header_)
 									return string.format("%s: %s",header_[1],header_[2])
-                                  end)
+  end)
   if body_ then -- might be a string or size
     local length = type(body_)=="string" and #body_ or body_
     table.insert(response,string.format("Content-Length: %d",length))
@@ -200,6 +201,7 @@ local handlers = { key = generic_get_handler,
                    gc = gc_handler,
                    latest = generic_get_handler,
                    slot = generic_get_handler,
+                   fdi = generic_get_handler,
                    update = graph_handler,
                    config = config_handler,
                    stop = nop_handler,
@@ -244,7 +246,7 @@ function send_response(send_,send_file_,req_,content_,with_mule_,
 
       return handler(mule_,handler_name,req_,table.concat(decoded_segments,"/"),
                      qs,content_)
-    end)
+  end)
 
   local function response_continuation(rv,blocking_,extra_headers_)
     if handler_name=="stop" then
@@ -360,11 +362,10 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
 
                     send_response(send(skt),send_file(skt),
                                   req,content,with_mule_,backup_callback_,stop_cond_,can_fork_)
-                  end)
-  local i = 0
-
+  end)
+  local adaptive_timeout = 0
   local function step()
-    copas.step(1)
+    copas.step(adaptive_timeout)
   end
 
   while not stop_cond_() do
@@ -373,11 +374,13 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
       noblock_wait_for_children()
     end
     with_mule_(function(mule_)
-                 mule_.flush_cache(UPDATE_AMOUNT,step)
-                 incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
-               end)
-    i = i + 1
+        mule_.flush_cache(UPDATE_AMOUNT,step)
+        local process_files = incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
+        if process_files and process_files>0 then
+          adaptive_timeout = 0
+        else
+          adaptive_timeout = 1
+        end
+    end)
   end
 end
-
---verbose_log(true)
