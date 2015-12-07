@@ -4,31 +4,102 @@ function app() {
   var notified_graphs = {};
 
   // from Rickshaw
-  function formatKMBT(y) {
+  function formatKMBT(y,dec) {
     var abs_y = Math.abs(y);
-	  if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(1) + "T" }
-    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(1) + "B" }
-    if (abs_y >= 1000000)    { return (y / 1000000).toFixed(1) + "M" }
-    if (abs_y >= 1000)       { return (y / 1000).toFixed(1) + "K" }
-    if (abs_y < 1 && y > 0)  { return y.toFixed(1) }
-    if (abs_y === 0)         { return '' }
-    return y;
+	  if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(dec) + "T"; }
+    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(dec) + "B"; }
+    if (abs_y >= 1000000)    { return (y / 1000000).toFixed(dec) + "M"; }
+    if (abs_y >= 1000)       { return (y / 1000).toFixed(dec) + "K"; }
+    if (abs_y < 1 && y > 0)  { return y.toFixed(dec)+""; }
+    if (abs_y === 0)         { return "0" }
+    return y+"";
+  };
+
+  function flot_axis_format(y,axis) {
+    var label,dec = axis.tickDecimals;
+    var exists;
+
+    // a kludge around flot's original tick formatting implementation to avoid 2 things:
+    // 1) not to have multiple ticks that due to our special formatting are the same, for example 1.6M and 1.8M both
+    //   changed to 2M
+    // 2) to make sure there is a consistency in the number of digits past decimal point being used.
+
+    do {
+      label = formatKMBT(y,dec);
+      ++dec;
+      // we scan back to see whether the label was already used
+      exists = false;
+      for (var j in axis.ticks ) {
+        exists = exists || label==axis.ticks[j].label;
+      }
+    } while ( exists );
+
+    // this may be redundant if the ticks are already properly formatted (as specified above), but to avoid
+    // ugly checks, we do it anyway.
+    for (var j in axis.ticks ) {
+      var modified_label = formatKMBT(axis.ticks[j].v,dec);
+      if ( !modified_label || modified_label.indexOf(".")==-1 ) {
+        continue;
+      }
+      modified_label = modified_label.replace(/\.?0+([TBMK]?)$/,"$1");
+      axis.ticks[j].label = modified_label;
+    }
+    return label;
   };
 
   function formatBase1024KMGTP(y) {
     var abs_y = Math.abs(y);
-    if (abs_y >= 1125899906842624)  { return (y / 1125899906842624).toFixed(1) + "P" }
-    if (abs_y >= 1099511627776){ return (y / 1099511627776).toFixed(1) + "T" }
-    if (abs_y >= 1073741824)   { return (y / 1073741824).toFixed(1) + "G" }
-    if (abs_y >= 1048576)      { return (y / 1048576).toFixed(1) + "M" }
-    if (abs_y >= 1024)         { return (y / 1024).toFixed(1) + "K" }
+    var dec = 1;
+    if (abs_y >= 1125899906842624)  { return (y / 1125899906842624).toFixed(dec) + "P" }
+    if (abs_y >= 1099511627776){ return (y / 1099511627776).toFixed(dec) + "T" }
+    if (abs_y >= 1073741824)   { return (y / 1073741824).toFixed(dec) + "G" }
+    if (abs_y >= 1048576)      { return (y / 1048576).toFixed(dec) + "M" }
+    if (abs_y >= 1024)         { return (y / 1024).toFixed(dec) + "K" }
     if (abs_y < 1 && y > 0)    { return y.toFixed(2) }
     if (abs_y === 0)           { return '' }
     return y;
   };
 
 
-  var time_format = d3.time.format.utc("%y-%m-%dT%H:%M");
+  function formatNumber(num_) {
+    var parts = num_.toString().split(".");
+    var n = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,",");
+    if ( parts.length==1 )
+      return n;
+    return [n,parts[1]].join(".");
+  }
+
+  // from https://github.com/Olical/binary-search
+  // assume the data is a sorted array of [datetime,value] as flots requires; we are looking for the datetime value
+  // modified to return the largest item less then or equal to x
+  function binarySearch(data, x) {
+    var min = 0;
+    var max = data.length - 1;
+    var guess,dx;
+
+    while (min <= max) {
+      guess = Math.floor((min + max) / 2);
+      dx = data[guess][0];
+
+      if (dx === x) {
+        return guess;
+      }
+      else {
+        if (dx < x) {
+          min = guess + 1;
+        }
+        else {
+          max = guess - 1;
+        }
+      }
+    }
+
+    return Math.min(min,data.length - 1);
+  }
+
+  function time_format(t_) {
+    return $.plot.formatDate(t_,"%H:%M (%y-%m-%d)");//"%y-%m-%dT%H:%M");
+  }
 
   function graph_to_id(graph_) {
     return graph_.replace(/[;:]/g,"_");
@@ -77,28 +148,42 @@ function app() {
     case "CRITICAL HIGH": return 0;
     case "WARNING LOW":
     case "WARNING HIGH": return 1;
+    case "anomaly": return 2;
     case "stale": return 3;
     case "NORMAL": return 4;
     }
     return -1;
   }
 
+  const lookup = {
+    0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
+    1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
+    2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "olive"},
+    3: { title: "Stale", type: "stale", indicator: "info", color: "purple"},
+    4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
+
+    critical: 0,
+    warning: 1,
+    anomaly: 2,
+    stale: 3,
+    normal: 4
+  }
+
   function alert_category(alert_) {
-    const lookup = {
-      0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
-      1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
-      2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "yellow"},
-      3: { title: "Stale", type: "stale", indicator: "info", color: "maroon"},
-      4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
-
-      critical: 0,
-      warning: 1,
-      anomaly: 2,
-      stale: 3,
-      normal: 4
+    if ( !lookup[0].hex_color ) {
+      for (var i in lookup) {
+        lookup[i].hex_color = $('.bg-'+lookup[i].color+':eq(0)').css('backgroundColor')
+        ++i;
+      }
     }
-
     return lookup[alert_];
+  }
+
+  const threshold_color = {
+    "crit-high": "#9a6115",
+    "crit-low": "#9a6115",
+    "warn-high": "#edc240",
+    "warn-low": "#edc240",
   }
 
   function alert_high_low(alert_) {
@@ -106,6 +191,8 @@ function app() {
       return "HIGH";
     if ( alert_[7].indexOf("LOW")>-1 )
       return "LOW";
+    if ( alert_[7].indexOf("stale")>-1 )
+      return "STALE";
     return null;
   }
 
@@ -213,6 +300,8 @@ function app() {
           alerts[idx].push([n,current]);
         }
       }
+
+      // TODO - use the expected value of the anomaly as well (requires a change in mulelib:fdi)
       var anomalies = raw_data_["anomalies"];
       for (n in anomalies) {
         alerts[2].push([n,anomalies[n]]);
@@ -327,6 +416,7 @@ function app() {
       var name = $("#dashboard-add").val();
       e.preventDefault();
       e.stopPropagation();
+      $(".dropdown.open > .dropdown-menu").dropdown("toggle");
       load_persistent(function(persistent_) {
         if ( !persistent_.dashboards[name] ) {
           persistent_.dashboards[name] = [];
@@ -345,6 +435,7 @@ function app() {
       load_persistent(function(persistent_) {
         if ( persistent_.dashboards[name_] ) {
           delete persistent_.dashboards[name_];
+          load_graphs_lists("#dashboard-container","#dashboard-template",persistent_.dashboards);
           scent_ds.save(user,"persistent",persistent_,function() {
             router.navigate('/');
           });
@@ -429,8 +520,12 @@ function app() {
     add_upper_and_lower_bounds(data_);
   }
 
-  function on_graph_point_click(name_, date_, dt_, value_) {
-    console.log("on_graph_point_click: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
+  function show_piechart(name_, date_, dt_, value_) {
+    if ( $(".modal-content").is(":visible") ) {
+      // prevents showing the piechart twice
+      return;
+    }
+    console.log("show_piechart: %s | %s | %d | %d", name_, date_.toString(), dt_, value_);
 
     function callback(raw_data_) {
       if ( !raw_data_ || raw_data_.length==0 ) {
@@ -449,17 +544,15 @@ function app() {
 
       sorted_data.sort(function(a,b) { return b.value-a.value; });
       // the data is sorted in descending order. Each element is [name,value]
-      var template_data = [];
+      if ( sorted_data.length>0 ) {
       for (var i in sorted_data) {
         sorted_data[i].precentage = (100*sorted_data[i].value/sum).toPrecision(3);
       }
-      var content = $.templates("#piechart-container-template").render([{}]);
+      } else
+        sorted_data.push({ graph: "No data to present"});
 
-      bootbox.dialog({
-        title: name_ + " | " + time_format(date_),
-        message: content,
-        size: 'large'
-      });
+      var content = $.templates("#piechart-container-template").render([{}]);
+      $(".bootbox-body").html(content);
 
       $.doTimeout(500,function() {
         $("#piechart-container").append($.templates("#piechart-template").render(sorted_data));
@@ -471,12 +564,43 @@ function app() {
       });
     }
 
+    bootbox.dialog({
+      title: name_ + " @ " + time_format(date_),
+      message: "content",
+      size: 'large'
+    });
+
     scent_ds.piechart(name_,dt_,callback);
   }
 
-  function draw_graph(name_,data_,from_percent_,to_percent_,baselines_,markers_,target_) {
-    var rollover_value_format = d3.format(",d");
+  function choose_timestamp_format(name_) {
+    var step = graph_step_in_seconds(name_);
+    if ( step<TIME_UNITS.d ) {
+      return "%e %b<br>%H:%M";
+    }
+    if ( step<TIME_UNITS.w ) {
+      return "%e %b";
+    }
+    return "%e %b %y";
+  }
 
+  function choose_tick_size(name_) {
+    var step = graph_step_in_seconds(name_);
+    if ( step<TIME_UNITS.d ) {
+      return [1,"hour"];
+    }
+    if ( step<TIME_UNITS.w ) {
+      return [7,"day"];
+    }
+    return [1,"month"];
+  }
+
+  function is_graph_zoomed(graph_container_) {
+    return $(graph_container_).hasClass("flot-zoomed");
+  }
+
+  function draw_graph(name_,data_,from_percent_,to_percent_,thresholds_,anomalies_,target_,alert_idx_) {
+/*
     if ($(target_).hasClass("tall-graph")) {
       var use_small_fonts = false;
       var x_axis_ticks_count = 10;
@@ -484,44 +608,143 @@ function app() {
       var use_small_fonts = true;
       var x_axis_ticks_count = 5;
     }
-
-    MG.data_graphic({
+  */
+    var plot_data = [{
+      label: graph_split(name_)[0],
       data: data_,
-      //title: graph_split(name_)[0],
-      full_width: true,
-      full_height: true,
-      bottom: 40,
-      area: false,
-      xax_count: x_axis_ticks_count,
-      x_extended_ticks: true,
-      y_extended_ticks: true,
-      target: target_,
-      interpolate: "basic",
-      show_confidence_band: ["lower", "upper"],
-      baselines: baselines_,
-      markers: markers_,
-      small_text: use_small_fonts,
-      brushing_interval: 1,
-      mouseover: function(d, i) {
-        d3.select(target_ + " svg .mg-active-datapoint")
-          .text(rollover_value_format(d.value) + " @ "+time_format(d.date) );
+      color: $.color.parse(alert_category(alert_idx_).hex_color),
+    }];
+    var tooltip_data;
+    var plot_options = {
+      xaxis: {
+        mode: "time",
+        timeformat: choose_timestamp_format(name_),
+        minTickSize: choose_tick_size(name_),
+      },
+      yaxis: {
+        tickFormatter: flot_axis_format
+      },
+      legend: {
+        show: true,
+        labelFormatter: function(label, series) {
+          if ( series.label.indexOf("crit")>-1 || series.label.indexOf("warn")>-1 ) {
+            return series.label+" "+series.data[0][1];
       }
+          if ( series.label=="Anomalies" ) {
+            return series.label;
+          }
+        },
+      },
+      selection: {
+				mode: "x"
+			},
+      crosshair: {
+				mode: "x" //TODO - change the color
+			},
+      grid: {
+				hoverable: true,
+				autoHighlight: true,
+			},
+      series: {
+				lines: {
+					show: true,
+				},
+			},
+    };
+
+    if ( thresholds_.length>0 ) {
+      var xmin = data_[0][0],
+          xmax = data_[data_.length-1][0],
+          reveresed = thresholds_.reverse();
+      // generate a line for each
+      for (var i in reveresed) {
+        plot_data.push({
+          label: reveresed[i].label,
+          color: threshold_color[reveresed[i].label],
+          data: [[xmin,reveresed[i].value],[xmax,reveresed[i].value]]
+        });
+      }
+    }
+
+    for (var i in anomalies_) {
+      plot_data.push({
+        label: "Anomalies",
+        data: anomalies_[i],
+        points: { show: true, radius: 8},
+        lines: { show: false }
+      });
+    }
+
+    var plot;
+    function plot_it() {
+      $.doTimeout(2,function() {
+        console.log("plot_it",name_);
+        $(target_).removeClass("flot-zoomed");
+        plot =  $.plot(target_,plot_data,plot_options);
+      });
+    }
+
+    plot_it();
+    $(target_).bind("plotselected", function (event, ranges) {
+			// do the zooming
+      var ymax = -1;
+
+			$.each(plot.getXAxes(), function(j, axis) {
+				axis.options.min = ranges.xaxis.from;
+				axis.options.max = ranges.xaxis.to;
+        var dataset = plot_data[j].data;
+        // we calculate the max value so we can change the yaxis
+        var idx_min = binarySearch(dataset,axis.options.min),
+            idx_max = binarySearch(dataset,axis.options.max);
+        for (var i=idx_min; i<=idx_max; ++i) {
+          ymax = Math.max(ymax,dataset[i][1]);
+        }
+      });
+			$.each(plot.getYAxes(), function(_, axis) {
+				axis.options.max = ymax;
+      });
+			plot.setupGrid();
+			plot.draw();
+			plot.clearSelection();
+
+      // we add an artificial class to the container so an observer (like the auto refresh code) can check
+      // whether the graph is zoomed.
+      $(target_).addClass("flot-zoomed");
+		});
+
+    $(target_).unbind("dblclick"); // clear previous listeners
+    $(target_).bind("dblclick",function (e) {
+      //console.log("dblclick",is_graph_zoomed(target_));
+      if ( is_graph_zoomed(target_) ) { // if the graph is in zoomed state, redraw it
+        plot = plot_it();
+      } else {
+        show_piechart(name_, new Date(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
+  }
+      e.stopPropagation();
     });
 
-    // Fix overlapping labels in x-axis
-    d3.selectAll(target_ + " svg .mg-year-marker text").attr("transform", "translate(0, 8)");
+    var legends = $("#placeholder .legendLabel");
 
-    // .Use small fonts for baselines text, if needed
-    d3.selectAll(target_ + " svg .mg-baselines").classed("mg-baselines-small", use_small_fonts);
+    $(target_).bind("plothover",  function (event, pos, item) {
+      if ( !plot ) {
+        console.log("no plot found");
+        return;
+      }
+      var dataset = plot.getData()[0].data; // we are always interested in the graph data which is at the first index
+      var idx = binarySearch(dataset,pos.x);
+      if ( !idx || !dataset[idx] )
+        return;
+      tooltip_data = {
+        x: dataset[idx][0],
+        dt: $.plot.formatDate(new Date(dataset[idx][0]),"%H:%M (%y-%m-%d)"),
+        v: dataset[idx][1]
+      }
+      $("#graph-tooltip").html(formatNumber(tooltip_data.v)+" @ "+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+		});
 
-    // Fix overlapping labels in baselines
-    d3.selectAll(target_ + " svg .mg-baselines text").attr("dx", function (d,i) { return -i*60; });
-
-    // Hook click events for the chart
-    d3.selectAll(target_ + " svg .mg-rollover-rect rect")
-      .on("dblclick", function (d,i) {
-                     on_graph_point_click(name_, d.date, d.dt, d.value);
-                   });
+    $(target_).bind("mouseleave",  function (e) {
+      $("#graph-tooltip").fadeOut(200);
+    });
   }
 
   function remove_spinner(anchor_) {
@@ -605,16 +828,17 @@ function app() {
           var dt = raw_data_[rw][2];
           var v = raw_data_[rw][0];
           if ( dt>100000 ) {
-            data.push({date: new Date(dt * 1000), value: v, dt: dt});
+            data.push([dt * 1000,v]);
           }
         };
-        data.sort(function(a,b) { return a.dt-b.dt });
-        data = fill_in_missing_slots(name_, data)
-        add_bounds(data);
+        data.sort(function(a,b) { return a[0]-b[0]});
+        //data = fill_in_missing_slots(name_, data)
+        //add_bounds(data);
         var graph_alerts = alerts_[name_];
-        var baselines = [];
+        var thresholds = [];
+        var alert_name = "NORMAL";
         if ( graph_alerts ) {
-          baselines = [
+          thresholds = [
             { value: graph_alerts[0],
               label: "crit-low" },
             { value: graph_alerts[1],
@@ -623,26 +847,39 @@ function app() {
               label: "warn-high" },
             { value: graph_alerts[3],
               label: "crit-high" },
-            ]
+          ];
+          // the thresholds should be adjusted to the displayed graph
+          var step = graph_step_in_seconds(name_);
+          var factor = graph_alerts[4]/step;
+          for (var i=0; i<4; ++i) {
+            thresholds[i].value = Math.round(thresholds[i].value/factor);
+          }
+          alert_name = graph_alerts[7];
         }
-        var markers = [];
+        var anomalies = [];
         if ( alerts_.anomalies && alerts_.anomalies[name_] ) {
-          var dt = alerts_.anomalies[name_][0];
-          markers.push({
-            date : new Date(dt * 1000),
-            label: 'Anomaly'
-          });
+          var dt = [];
+          var anomaly = alerts_.anomalies[name_];
+          for (var i in anomaly) {
+            var x = anomaly[i]*1000;
+            var idx = binarySearch(data,x);
+            if ( idx && data[idx] ) {
+              dt.push([data[idx][0],data[idx][1]]);
+            }
+          }
+          anomalies.push(dt);
+          alert_name = "anomaly";
         }
         var from_percent = 0;
         var to_percent = 100;
-        draw_graph(name_,data,from_percent,to_percent,baselines,markers,target_);
+        draw_graph(name_,data,from_percent,to_percent,thresholds,anomalies,target_,alert_index(alert_name));
 
         remove_spinner(target_);
       });
 
     }
     add_spinner(target_);
-    $.doTimeout(30*1000,function() { remove_spinner(target_); }); // to make sure we get it off at some point
+//    $.doTimeout(30*1000,function() { remove_spinner(target_); }); // to make sure we get it off at some point
     scent_ds.graph(name_,callback);
   }
 
@@ -688,11 +925,17 @@ function app() {
         return;
       }
       $("#charts-container").html("");
+      var charts_per_row = scent_config().charts_per_row;
+      var chart_width = Math.ceil(12/charts_per_row);
+      var current_row;
 
       for (var i in dashboard) {
         var name = dashboard[i];
-        $("#charts-container").append($.templates("#chart-graph-template").render([{index: i,
-                                                                                    name: name}]));
+        if ( (i % charts_per_row)==0 ) {
+          current_row = $('<div class="row">');
+          $("#charts-container").append(current_row);
+        }
+        current_row.append($.templates("#chart-graph-template").render([{index: i,name: name, width: chart_width}]));
       }
 
       for (var i in dashboard) {
@@ -858,7 +1101,7 @@ function app() {
                                                     links: links,favorite: favorite, alerted: ac.text, color: ac.color,
                                                     full: !!inner_navigation_, remove: !!remove_callback_});
           if ( remove_callback_ ) {
-            $(".graph-remove").click(remove_callback_);
+            $(".graph-remove").unbind("click").click(remove_callback_);
           }
 
           if ( notified_graphs[name_] ) {
@@ -924,6 +1167,7 @@ function app() {
 
   function teardown_graph() {
     $("#graph-box").hide();
+    $("#graph-box-container").empty();
   }
 
   // Populate the sidebar's keys list with one link per metric, all to the same
@@ -1041,24 +1285,21 @@ function app() {
   }
 
   function refresh_loaded_graphs() {
-    notified_graphs = {}; // we reset the list of graphs on which we've already notified
-    $.doTimeout(1000*60,function() {
+    $.doTimeout(scent_config().graphs_refersh_rate*1000,function() {
       $(".graph-body").each(function(idx_,obj_) {
         var container = ($(obj_).closest(".graph-container"))[0];
         var container_box = ($(container).closest(".box"))[0];
         if ( $(container_box).css("display")=="none" ) {
           return;
         }
-        var graph = $(container).attr("data-graph");
-
-        // graphs in zoom state are also skipped
-        if ( $(container).find(".mg-brushed").length>0 || $(container).find(".mg-brushing-in-progress").length>0 ) {
-          //console.log('%s is in brushing. Not refreshing',graph);
+        var graph_container_id = "#"+$(container).attr('id')+" .graph-body";
+        if ( is_graph_zoomed(graph_container_id) ) {
           return;
         }
+        var graph = $(container).attr("data-graph");
 
         if ( graph_split(graph) ) {
-          load_graph(graph,"#"+$(container).attr('id')+" .graph-body");
+          load_graph(graph,graph_container_id);
           //console.log('refresh_loaded_graphs: %s',graph);
         }
       });
@@ -1093,6 +1334,17 @@ function app() {
     });
   }
 
+  function setup_flot() {
+    $("<div id='graph-tooltip'></div>").css({
+			position: "absolute",
+			display: "none",
+			border: "1px solid",
+			padding: "2px",
+			"background-color": "#ffffe0",
+			opacity: 0.90
+		}).appendTo("body");
+  }
+
   function setup_router() {
 
     function globals() {
@@ -1122,6 +1374,7 @@ function app() {
       teardown_main();
       teardown_charts();
       teardown_graph();
+      teardown_alerts(); // we need to clear the displayed alert table/graph when navigating between alerts
       update_alerts(category);
       refresh_loaded_graphs();
     });
@@ -1160,6 +1413,7 @@ function app() {
 
   setup_router();
 
+  setup_flot();
 }
 
 

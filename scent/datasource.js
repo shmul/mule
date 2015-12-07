@@ -1,6 +1,6 @@
 
 function mule_ds() {
-  var conf = mule_config();
+  var conf = scent_config();
   var ns = $.initNamespaceStorage(conf.namespace);
   const user = conf.user;
   const mule_server = conf.server;
