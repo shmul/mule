@@ -12,7 +12,7 @@ function app() {
     if (abs_y >= 1000)       { return (y / 1000).toFixed(dec) + "K"; }
     if (abs_y < 1 && y > 0)  { return y.toFixed(dec)+""; }
     if (abs_y === 0)         { return "0" }
-    return y+"";
+    return y.toFixed(dec)+"";
   };
 
   function flot_axis_format(y,axis) {
@@ -155,10 +155,23 @@ function app() {
     return -1;
   }
 
+  function alert_to_css(alert_string_) {
+    switch ( alert_string_ ) {
+    case "CRITICAL LOW": return "crit-low";
+    case "CRITICAL HIGH": return "crit-high";
+    case "WARNING LOW": return "warn-low";
+    case "WARNING HIGH": return "warn-high";
+    case "anomaly": return alert_string_;
+    case "stale": return alert_string_;
+    case "NORMAL": return "ok-green";
+    }
+    return -1;
+  }
+
   const lookup = {
     0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
     1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
-    2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "olive"},
+    2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "anomaly"},
     3: { title: "Stale", type: "stale", indicator: "info", color: "purple"},
     4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
 
@@ -169,21 +182,18 @@ function app() {
     normal: 4
   }
 
+  function background_color(selector_) {
+    return $(selector_+':eq(0)').css('backgroundColor');
+  }
+
   function alert_category(alert_) {
     if ( !lookup[0].hex_color ) {
       for (var i in lookup) {
-        lookup[i].hex_color = $('.bg-'+lookup[i].color+':eq(0)').css('backgroundColor')
+        lookup[i].hex_color = background_color('.'+lookup[i].color);
         ++i;
       }
     }
     return lookup[alert_];
-  }
-
-  const threshold_color = {
-    "crit-high": "#9a6115",
-    "crit-low": "#9a6115",
-    "warn-high": "#edc240",
-    "warn-low": "#edc240",
   }
 
   function alert_high_low(alert_) {
@@ -599,7 +609,7 @@ function app() {
     return $(graph_container_).hasClass("flot-zoomed");
   }
 
-  function draw_graph(name_,data_,from_percent_,to_percent_,thresholds_,anomalies_,target_,alert_idx_) {
+  function draw_graph(name_,data_,from_percent_,to_percent_,thresholds_,anomalies_,target_,alert_name_) {
 /*
     if ($(target_).hasClass("tall-graph")) {
       var use_small_fonts = false;
@@ -612,14 +622,14 @@ function app() {
     var plot_data = [{
       label: graph_split(name_)[0],
       data: data_,
-      color: $.color.parse(alert_category(alert_idx_).hex_color),
+      color: background_color('.'+alert_to_css(alert_name_))
     }];
     var tooltip_data;
     var plot_options = {
       xaxis: {
         mode: "time",
         timeformat: choose_timestamp_format(name_),
-        minTickSize: choose_tick_size(name_),
+        minTickSize: choose_tick_size(name_)
       },
       yaxis: {
         tickFormatter: flot_axis_format
@@ -629,7 +639,7 @@ function app() {
         labelFormatter: function(label, series) {
           if ( series.label.indexOf("crit")>-1 || series.label.indexOf("warn")>-1 ) {
             return series.label+" "+series.data[0][1];
-      }
+          }
           if ( series.label=="Anomalies" ) {
             return series.label;
           }
@@ -660,7 +670,7 @@ function app() {
       for (var i in reveresed) {
         plot_data.push({
           label: reveresed[i].label,
-          color: threshold_color[reveresed[i].label],
+          color: background_color('.'+reveresed[i].label),
           data: [[xmin,reveresed[i].value],[xmax,reveresed[i].value]]
         });
       }
@@ -872,7 +882,7 @@ function app() {
         }
         var from_percent = 0;
         var to_percent = 100;
-        draw_graph(name_,data,from_percent,to_percent,thresholds,anomalies,target_,alert_index(alert_name));
+        draw_graph(name_,data,from_percent,to_percent,thresholds,anomalies,target_,alert_name);
 
         remove_spinner(target_);
       });
