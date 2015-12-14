@@ -359,6 +359,8 @@ Two different web applications are provided with Mule, *muelview* provides a ric
 
 Scent provides a simple UI for viewing Mule metrics. It supports customizable dashboards, favourites and alerts views.
 
+Priot to using Scent, there is a need to create a configuration file, based on the sample in `scent/config.js.sample`. It can be simply copied, though special attention should be given to the `server` attribute which determines the path to use for API calls.
+
 To use Mule+scent in standalone mode, use
 
    lua mule.lua -d db/my_great_db_cdb -t myserver:80 -R scent/
