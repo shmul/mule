@@ -276,11 +276,15 @@ Mule provides a simple interface for storing arbitrary values. Using the relevan
 * To remove a key and its value use a DELETE request to `http://muleserver/kvs/<key>`.
 
 ### Processing Speed
-During testing on a c3.2xlarge AWS instance with SSD in RAID 0, Mule peaked at approximately 200 files per second, with an average file size of 3k, and an average number of lines of 42. The nginx based frontend can handle writes of approximately 300 files per second.
+During testing on a c3.2xlarge AWS instance with SSD in RAID 0, Mule peaked at approximately 200 files per second, with an average file size of 3k, and an average number of lines of 42. The Nginx based frontend can handle writes of approximately 300 files per second.
 
 ## Installation
 
-You need to install Lua, luarocks, and the Lightning Memory-Mapped Database.
+### The short version
+1. install all the dependencies (rocks and lightningmdb)
+1. create the db `lua mule.lua -r -d <db-path> -c <configuration-file>`
+1. run Mule `lua mule.lua -d <db-path> -t localhost:3012 -x stopme`
+
 
 ### Lua and luarocks
 
@@ -341,7 +345,7 @@ The recommended mule setup, is proxying the traffic through Nginx. In this setup
 - Queries are proxied through Ngins directly to mule.
 
 
-Sample nginx configuration is provided in `nginx.mule.conf.sample`. In this sample the URL routes are:
+Sample Nginx configuration is provided in `Nginx.mule.conf.sample`. In this sample the URL routes are:
 - For accessing the mule API, including file submission `http://muleserver/mule/api/`.
 - For accessing the *muleview* application `http://muleserver/mule/`.
 - For accessing the *scent* application `http://muleserver/scent/`.
@@ -349,7 +353,15 @@ Sample nginx configuration is provided in `nginx.mule.conf.sample`. In this samp
 
 ### User interface
 
-Two different web applications are provided with Mule, *muelview* provides a rich interface, where as *scent* is oriented towards dashboard view.
+Two different web applications are provided with Mule, *muelview* provides a rich interface, where as *scent* is oriented towards dashboard view. Both are best used through a webserver, like Nginx (for which sample configuration is provided) but as Mule has a simple webserver implementation can be used in standalone mode as well.
+
+#### Scent
+
+Scent provides a simple UI for viewing Mule metrics. It supports customizable dashboards, favourites and alerts views.
+
+To use Mule+scent in standalone mode, use
+
+   lua mule.lua -d db/my_great_db_cdb -t myserver:80 -R scent/
 
 #### Muleview
 
@@ -370,15 +382,11 @@ To build a production-ready folder:
 ##### Built-in Serving with Mule
 You can use Mule as a web-server for Muleview. To use Mule as a web-server, run Mule with the static files root path parameter (`-R muleview/build/Muleview/production`).
 
-A typical configuration is:
+To use Mule+muleview in standalone mode, use
 
-    lua mule.lua -d db/my_great_db_cdb -T myserver:80 -R muleview/build/Muleview/production
+    lua mule.lua -d db/my_great_db_cdb -t myserver:80 -R muleview/build/Muleview/production
 
 It is recommended to run Mule and Muleview on different servers. If they are on different servers, before you compile and build Muleview, you must enter Mule's URL in `muleview/coffee/app/Settings.coffee`.
-
-#### Scent
-
-TODO
 
 ### Development environment
 
@@ -394,7 +402,7 @@ To set up the server:
 This sets up a server with all the relevant development dependencies and an Nginx server that is accessible from the your host at localhost:3000/mule/
 
 #### Docker
-Mule ships with a couple of Docker files used to automate the unit tests across multiple Lua versions. Additionally a Docker file with a mule+nginx setup is provided.
+Mule ships with a couple of Docker files used to automate the unit tests across multiple Lua versions. Additionally a Docker file with a mule+Nginx setup is provided.
 
 # License
 
