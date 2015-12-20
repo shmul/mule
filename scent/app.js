@@ -688,7 +688,7 @@ function app() {
     var plot;
     function plot_it() {
       $.doTimeout(2,function() {
-        console.log("plot_it",name_);
+        //console.log("plot_it",name_);
         $(target_).removeClass("flot-zoomed");
         plot =  $.plot(target_,plot_data,plot_options);
       });
@@ -737,7 +737,7 @@ function app() {
 
     $(target_).bind("plothover",  function (event, pos, item) {
       if ( !plot ) {
-        console.log("no plot found");
+        //console.log("no plot found");
         return;
       }
       var dataset = plot.getData()[0].data; // we are always interested in the graph data which is at the first index
