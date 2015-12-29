@@ -1,0 +1,92 @@
+<nav class="navbar-default navbar-static-side" role="navigation">
+    <div class="sidebar-collapse">
+        <ul side-navigation class="nav metismenu" id="side-menu">
+            <li class="nav-header">
+
+                <div class="dropdown profile-element" dropdown>
+                    <img alt="image" class="img-circle" src="img/mule_logo.png" ui-sref="app.home" />
+                    <a class="dropdown-toggle" dropdown-toggle href>
+                            <span class="clear">
+                                <span class="block m-t-xs">
+                                    <img alt="logo" style="width: 48%;margin-top: -10px;" src="img/mule_logo_white.png"/>
+                             </span>
+                                <span class="text-muted text-xs block">scent of a mule</span>
+                            </span>
+                    </a>
+                </div>
+                <div class="logo-element">
+                    <img alt="image" class="img-circle" style="width: 50%;" src="img/mule_logo.png"/>
+                </div>
+            </li>
+            <li ng-class="{active: $state.includes('dashboards')}">
+                <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">{{ 'DASHBOARD' | translate }}</span> <span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level collapse" ng-class="{in: $state.includes('dashboards')}">
+                    <li ui-sref-active="active"><a ui-sref="app.dashboard({id: 1})">Dashboard 1 </a></li>
+                </ul>
+                <ul class="nav nav-second-level collapse" ng-class="{in: $state.includes('dashboards')}">
+                    <li ui-sref-active="active"><a ui-sref="app.dashboard({id: 1})">Dashboard 2 </a></li>
+                </ul>
+                <ul class="nav nav-second-level collapse" ng-class="{in: $state.includes('dashboards')}">
+                    <li ui-sref-active="active"><a ui-sref="app.dashboard({id: 1})">Dashboard 3 </a></li>
+                </ul>
+            </li>
+            <li>
+                <a ui-sref="app.severity({severity: 0})">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span class="nav-label">{{ 'CRITICAL' | translate }}</span>
+                    <span class="label label-danger pull-right">{{alerts[0].length}}</span>
+                </a>
+            </li>
+            <li>
+                <a ui-sref="app.severity({severity: 1})">
+                    <i class="fa fa-exclamation-circle"></i>
+                    <span class="nav-label">{{ 'WARNING' | translate }}</span>
+                    <span class="label label-warning pull-right">{{alerts[1].length}}</span>
+                </a>
+            </li>
+            <li>
+                <a ui-sref="app.severity({severity: 2})">
+                    <i class="fa fa-info-circle"></i>
+                    <span class="nav-label">{{ 'ANOMALY' | translate }}</span>
+                    <span class="label pull-right" style="background-color:#f39c12;color:white;">{{alerts[2].length}}</span>
+                </a>
+            </li>
+            <li>
+                <a ui-sref="app.severity({severity: 3})">
+                    <i class="fa fa-check-circle-o"></i>
+                    <span class="nav-label">{{ 'STALE' | translate }}</span>
+                    <span class="label pull-right" style="background-color:#d81b60;color:white;">{{alerts[3].length}}</span>
+                </a>
+            </li>
+            <li>
+                <a ui-sref="app.severity({severity: 4})">
+                    <i class="fa fa-check-circle"></i>
+                    <span class="nav-label">{{ 'NORMAL' | translate }}</span>
+                    <span class="label pull-right"  style="background-color:#00a65a;color:white;">{{alerts[4].length}}</span>
+                </a>
+            </li>
+            <li class="landing_link">
+                <a target="_blank" href="landing.html"><i class="fa fa-history"></i> <span class="nav-label">Recent</span> </a>
+            </li>
+            <li>
+                <a ui-sref="app.severity({severity: 4})">
+                    <i class="fa fa-line-chart"></i>
+                    <span class="nav-label">agentevents;1d:2y</span>
+                </a>
+            </li>
+            <li>
+                <a ui-sref="app.severity({severity: 4})">
+                    <i class="fa fa-line-chart"></i>
+                    <span class="nav-label">pinpoint.api_res.;5m:3d</span>
+                </a>
+            </li>
+            <li>
+                <a ui-sref="app.severity({severity: 4})">
+                    <i class="fa fa-line-chart"></i>
+                    <span class="nav-label">stylus_events;1h:90d</span>
+                </a>
+            </li>
+        </ul>
+
+    </div>
+</nav>

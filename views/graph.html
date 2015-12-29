@@ -1,0 +1,143 @@
+<div class="sidebard-panel">
+    <div>
+        <h4>Periods</h4>
+        <div class="feed-element">
+            <span class="label label-success" style=" float: right;border-radius: 10px;" ng-if="period == '1d:2y'"><i class="fa fa-arrow-left" style="font-size: 25px;"></i></span>
+            <span class="label label-stabe" style="float: right;border-radius: 10px;color:white;" ng-if="period != '1d:2y'" ng-click='openGraph(key, "1d:2y")'><i class="fa fa-arrow-left" style="font-size: 25px;"></i></span>
+            <a href="" ng-click="openGraph(key, v)" class="pull-left">
+                <svg class="peity" height="35" width="35">
+                    <path d="M 8 8 L 8 0 A 8 8 0 0 1 14.933563796318165 11.990700825968545 Z" fill="#1ab394"></path><path d="M 8 8 L 14.933563796318165 11.100 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7">
+                    </path>
+                </svg>
+            </a>
+            <div class="media-body">
+                <strong>1d:2y</strong>
+                <br>
+                <small class="text-muted">click to open</small>
+            </div>
+        </div>
+
+        <div class="feed-element">
+            <span class="label label-success" style=" float: right;border-radius: 10px;" ng-if="period == '1h:90d'"><i class="fa fa-arrow-left" style="font-size: 25px;"></i></span>
+            <span class="label label-stable" style="float: right;border-radius: 10px;color:white;" ng-if="period != '1h:90d'" ng-click='openGraph(key, "1h:90d")'><i class="fa fa-arrow-left" style="font-size: 25px;"></i></span>
+            <a href="" ng-click="openGraph(key, v)" class="pull-left">
+                <svg class="peity" height="35" width="35">
+                    <path d="M 8 8 L 8 0 A 8 8 0 0 1 14.933563796318165 11.990700825968545 Z" fill="#1ab394"></path><path d="M 8 8 L 14.933563796318165 11.100 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7">
+                    </path>
+                </svg>
+            </a>
+            <div class="media-body">
+                <strong>1h:90d</strong>
+                <br>
+                <small class="text-muted">click to open</small>
+            </div>
+        </div>
+
+        <div class="feed-element">
+            <span class="label label-success" style=" float: right;border-radius: 10px;" ng-if="period == '5m:3d'"><i class="fa fa-arrow-left" style="font-size: 25px;"></i></span>
+            <span class="label label-stable" style="float: right;border-radius: 10px;color:white;" ng-if="period != '5m:3d'" ng-click='openGraph(key, "5m:3d")'><i class="fa fa-arrow-left" style="font-size: 25px;"></i></span>
+            <a href="" ng-click="openGraph(key, v)" class="pull-left">
+                <svg class="peity" height="35" width="35">
+                    <path d="M 8 8 L 8 0 A 8 8 0 0 1 14.933563796318165 11.990700825968545 Z" fill="#1ab394"></path><path d="M 8 8 L 14.933563796318165 11.100 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7">
+                    </path>
+                </svg>
+            </a>
+            <div class="media-body">
+                <strong>5m:3d</strong>
+                <br>
+                <small class="text-muted">click to open</small>
+            </div>
+        </div>
+
+    </div>
+    <div class="m-t-md">
+        <h4>Averages</h4>
+        <div>
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <span class="badge" style="background-color:#6666EC;color:white;">{{graphDataAavg | singleDecimal }}</span>
+                    Metric 1
+                </li>
+                <li class="list-group-item ">
+                    <span class="badge" style="background-color:#1ab394;color:white;">{{graphDataBavg | singleDecimal }}</span>
+                    Metric 2
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="wrapper sidebar-content wrapper-content">
+<div class="row">
+    <div class="col-lg-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-content" style="background-color: transparent;border-style:none;">
+                <div>
+                    <span class="pull-right text-right">
+                    <small><strong style="font-size:17px;"> {{ currentGraph.split(';')[1] }}</strong></small>
+                    </span>
+                    <h1 class="m-b-xs">{{ currentGraph.split(';')[0] }} </h1>
+                    </br>
+                </div>
+                <div>
+                <div class="flot-chart">
+                    <div flot class="flot-chart-content" dataset="multiData" options="multiOptions"></div>
+                </div>
+                </div>
+                <div class="m-t-md">
+                    <small class="pull-right">
+                        <i class="fa fa-clock-o"> </i>
+                        Last update on <b>{{ lastUpdate | date:"h:mm a" }}</b>
+                    </small>
+                    <small>
+                        This graph is updated every {{refreshInterval / 1000}} seconds.
+                    </small>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row" ng-controller="HomeCtrl">
+    <div class="col-lg-12">
+        <div class="ibox">
+            <div class="ibox-content">
+                <div class="m-b-lg">
+                    <div class="input-group">
+                        <input type="text" placeholder="Search" class="form-control" ng-model="searchKeys">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-white" ng-click="searchKeys = ''">clear</button>
+                        </span>
+                    </div>
+                </div>
+                <div class="table-responsive span11 " style="overflow: auto">
+                    <div class="row-fluid" id="table_append">
+                        <div class="col-lg-3" id="table_0" style="margin-right: 45px;display: inline-block">
+                            <h2>Keys <strong>{{ keys | keylength }}</strong><span style="float:right"><i class="fa fa-angle-right selected_key" style="display:none;margin-right: -15px;font-size: 30px;color:grey;"></i></span></h2>
+                            <table class="table table-hover issue-tracker table_keys">
+                                <tr ng-repeat='(key, value) in keys | custom: searchKeys'>
+                                    <td class="issue-info">
+                                        <a href="#">
+                                            {{key}}
+                                        </a>
+                                        <small>
+                                            Key Description
+                                        </small>
+                                    </td>
+                                    <td ng-repeat= 'v in value.period' ng-if="key != 'stylus'">
+                                        <a href="" ng-click="openGraph(key, v)"><span class="pie" style="display: none;" >0.52,1.041</span><svg class="peity" height="16" width="16"><path d="M 8 8 L 8 0 A 8 8 0 0 1 14.933563796318165 11.990700825968545 Z" fill="#1ab394"></path><path d="M 8 8 L 14.933563796318165 11.990700825968545 A 8 8 0 1 1 7.999999999999998 0 Z" fill="#d7d7d7"></path></svg>
+                                        {{v}}</a>
+                                    </td>
+                                    <td ng-if='value.children'>
+                                        <a href="#" ng-click="getChildrenKeys(key, $event)"><i class="level_0 fa fa-angle-double-right" style="font-size: 23px;color:grey;"></i></a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+
+</div>

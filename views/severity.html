@@ -1,0 +1,64 @@
+<div class="row wrapper border-bottom white-bg page-heading">
+    <div class="col-lg-10">
+        <h2><span style="float:left;margin-right: 30px;"><i class="{{severity.icon}}" style="font-size:50px;color:{{severity.color}}"></i></span>  {{ severity.title }} </h2>
+        <ol class="breadcrumb">
+            <li>
+                <a>Severity</a>
+            </li>
+            <li class="active">
+                <strong>{{ severity.title }}</strong>
+            </li>
+        </ol>
+    </div>
+    <div class="col-lg-2">
+
+    </div>
+</div>
+<div class="row  border-bottom white-bg dashboard-header ng-scope">
+    <div class="col-lg-5">
+        <h2 class="ng-binding">Alerts</h2>
+        <small class="ng-binding">You have {{ selectedAlerts.length }} {{ severity.title }} alerts.</small>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Graph</th>
+                <th>Value</th>
+                <th>Period</th>
+                <th>Stale</th>
+                <th>State</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="a in selectedAlerts">
+                <td><b>{{a[0]}}</b></td>
+                <td>31</td>
+                <td>{{a[1][4]}}</td>
+                <td>{{a[1][5]}}</td>
+                <td><span class="label label-success" style="background-color:{{severity.color}};color:white;">{{a[1][7]}}</span></td>
+                <td><i class="fa fa-angle-double-right" style="font-size: 23px;color:grey;" ng-click="showSeverityGraph($index)"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-sm-7">
+        <div class="row text-left graph_content" style="margin-top: 93px;">
+            <div flot class="flot-chart-content" dataset="multiData" options="multiOptions" style="width: 100%;height: 350px;"></div>
+            <div class="col-xs-4">
+                <div class=" m-l-md">
+                    <span class="h4 font-bold m-t block">{{ selectedAlerts[currentGraph][0] }}</span>
+                    <small class="text-muted m-b block">Sales marketing report</small>
+                </div>
+            </div>
+            <div class="col-xs-4">
+                <span class="h4 font-bold m-t block"></span>
+                <small class="text-muted m-b block"></small>
+            </div>
+            <div class="col-xs-4">
+                <span class="h4 font-bold m-t block">16,822</span>
+                <small class="text-muted m-b block">Graph Avg</small>
+            </div>
+
+        </div>
+    </div>
+</div>
