@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="Muleview" default=".help">
+
+    <import file="${basedir}/.sencha/app/build-impl.xml"/>
+    <target name="-before-build">
+      <echo>Compiling Coffee-Script...</echo>
+      <exec executable="coffee" dir="${basedir}" failonerror="true" searchpath="true">
+        <arg line=" -c ${basedir}/app"/>
+      </exec>
+      <copy file="${basedir}/rickshaw/rickshaw.min.js" tofile="resources/default/vendor/rickshaw.min.js" />
+      <copy file="${basedir}/d3/d3.min.js" tofile="resources/default/vendor/d3.min.js" />
+      <copy file="${basedir}/rickshaw/rickshaw.min.js" tofile="resources/default/vendor/rickshaw.min.js" />
+
+    </target>
+
+</project>

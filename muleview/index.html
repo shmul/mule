@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mule</title>
+    <link rel="stylesheet" href="resources/default/vendor/rickshaw.css"/>
+    <link type="text/css" rel="stylesheet" href="resources/default/vendor/jquery-ui.css">
+
+
+    <!-- <link rel="stylesheet" href="resources/default/app.css"> -->
+    <link rel="stylesheet" href="bootstrap.css">
+    <!-- <x-compile> -->
+        <!-- <x-bootstrap> -->
+            <script src="ext/ext-all-dev.js"></script>
+        <!-- </x-bootstrap> -->
+        <script src="app/app.js"></script>
+    <!-- </x-compile> -->
+    <style>
+      body {
+        background: #dfe8f6;
+      }
+
+      #initMask {
+        position: absolute;
+        top: 40%;
+        width: 100%;
+        text-align:center;
+        color: rgb(6, 52, 170);
+        font-style: italic;
+        font-size: 2em;
+        font-weight: bold;
+      }
+    </style>
+</head>
+<body>
+  <div id="initMask">
+    Saddling...
+  </div>
+  <div style="visibility: visible">
+    <div class="statusLabel-progress"> </div>
+    <div class="statusLabel-success"> </div>
+    <div class="statusLabel-error"> </div>
+  </div>
+
+    <script src="resources/default/vendor/jquery.min.js"></script>
+    <script src="resources/default/vendor/jquery-ui.min.js"></script>
+
+    <!-- Development:  -->
+    <!-- <script src="d3/d3.js" charset="utf-8"></script> -->
+    <!-- <script type="text/javascript" src="rickshaw/rickshaw.js"></script> -->
+
+    <!-- Production:  -->
+    <script src="resources/default/vendor/d3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="resources/default/vendor/rickshaw.min.js"></script>
+</body>
+</html>

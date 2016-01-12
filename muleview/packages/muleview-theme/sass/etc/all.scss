@@ -1,0 +1,340 @@
+.mule-bg {
+  div {
+    background-image: url("bg.png") !important;
+  }
+}
+
+
+img.x-tree-icon.x-tree-icon-parent.key-with-anomalies {
+  background-image: url("anomaly.png") !important;
+  width: 18px;
+}
+
+.load-mask-no-image {
+  > div {
+    background-image: none;
+    padding: 5px;
+  }
+}
+
+.retention-combobox-item {
+  margin: 3px;
+
+  .retention-name {
+    display: inline-block;
+    width: 60px;
+    margin-right: 5px;
+    font-weight: bold;
+  }
+
+  .retention-title {
+  }
+
+}
+
+.icon-cell > div{
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.alert-row-critical {
+  color: red;
+ .state-cell > div {
+    background-color: red;
+    color: white;
+  }
+}
+
+.alert-row-warning {
+  color: orange;
+  .state-cell > div {
+    background-color: orange;
+    color: white;
+  }
+}
+
+.alert-row-normal {
+  .state-cell > div {
+    background-color: white;
+  }
+}
+
+.alert-row-critical-high {
+  .icon-cell > div {
+    background-image: url("critical_high.png")
+  }
+}
+
+.alert-row-warning-high {
+  .icon-cell > div {
+    background-image: url("warning_high.png");
+  }
+}
+
+.alert-row-critical-low {
+  .icon-cell > div {
+    background-image: url("critical_low.png");
+  }
+}
+.alert-row-warning-low {
+  .icon-cell > div {
+    background-image: url("warning_low.png");
+  }
+}
+
+/* **** Alerts Editor **************************************************************** */
+
+.alerts-editor-table-header {
+  text-decoration: underline;
+}
+
+.alerts-editor-row-critical-high {
+  padding-left: 20px;
+  background-repeat: no-repeat;
+  background-image: url("critical_high.png")
+}
+
+.alerts-editor-row-critical-low {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("critical_low.png")
+}
+
+.alerts-editor-row-warning-high {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("warning_high.png")
+}
+
+.alerts-editor-row-warning-low {
+  background-repeat: no-repeat;
+  padding-left: 20px;
+  background-image: url("warning_low.png")
+}
+
+/* **************************************************************** */
+.alert-summary-critical {
+  background-image: url("summary_critical.png");
+}
+
+.alert-summary-warning {
+  background-image: url("summary_warning.png");
+}
+
+.alert-summary-normal {
+  background-image: url("summary_normal.png");
+}
+
+.alert-summary-stale {
+  background-image: url("summary_stale.png");
+}
+
+#statusProgressbar {
+
+}
+.statusLabel {
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-top: 1px;
+  padding-left: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.statusLabel-normal {
+  padding-left: 0px;
+}
+
+.statusLabel-progress {
+  background-image: url("loading.gif")
+}
+
+.statusLabel-success {
+  background-image: url("status-ok.png")
+}
+
+.statusLabel-error {
+  color: red;
+  background-image: url("status-error.gif");
+}
+
+#statusStats {
+  top: -1px;
+  white-space: nowrap;
+  margin-left: 25;
+  .statName {
+    font-style: italic;
+    margin-right: 2px;
+    margin-left: 5px;
+
+  }
+  .statValue {
+    border-right: 1px solid silver;
+    padding-left: 5px;
+    padding-right: 5px;
+    font-weight: bold;
+  }
+}
+
+.mule-tt {
+  padding-right: 15px;
+}
+
+.mule-tt-colorbox {
+  width:  12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+  float: left;
+  margin-top: 1px;
+  margin-right: 3px;
+}
+
+$rickshawYAxis: 55px;
+
+.rickshaw-chart-container {
+  position: relative;
+  display: inline-block;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.mule-chart {
+  padding-right: 10px;
+}
+.rickshaw-chart {
+  display: inline-block;
+  left: $rickshawYAxis;
+  position: relative;
+  .detail .x_label {
+    opacity: 0.9;
+  }
+}
+
+.rickshaw-alert {
+  width: 100%;
+  height: 2px;
+  position: absolute;
+  border-style: dotted;
+  border-width: 2px;
+}
+.mule-lightchart .rickshaw-chart {
+  left: 0px;
+}
+
+.rickshaw-y-axis {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  width: $rickshawYAxis;
+}
+
+.rickshaw-x-axis {
+  position: relative;
+  left: $rickshawYAxis;
+  height: 40px;
+}
+
+
+.rickshaw-legend {
+  position: absolute;
+  display: block;
+  top: 10px;
+  left: 80px;
+  background-color: rgba(64, 64, 64, 0.5);
+  vertical-align: top;
+  margin: 0px 0px 0px 10px;
+  box-shadow: 3px 3px 10px -2px black;
+  cursor: move;
+  border-top-width: 8px;
+  border-top-style: solid;
+  border-top-color: rgba(147, 188, 250, 0.66);
+}
+
+.rickshaw-legend-close {
+  margin: -23px -9px 0px 0px;
+  width: 16px;
+  height: 16px;
+  float: right;
+  background-image: url("closeButton.png");
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.rickshaw-preview {
+  position: relative;
+  display: block;
+  left: $rickshawYAxis;
+  top: 16px;
+}
+
+.rickshaw-fixed-tooltip {
+  height: 8px;
+  margin: 2px;
+  text-align: center;
+  width: 100%;
+}
+
+.rickshaw-fixedtip-colorbox {
+  width:  12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-top: 1px;
+}
+
+.rickshaw-graph-title-container {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+}
+
+.rickshaw-graph-title {
+  display: inline-block;
+  font-family: helvetica, arial, sans-serif;
+  font-size: 3.2em;
+  font-weight: bolder;
+  opacity: 0.7;
+  background-color: whitesmoke;
+}
+
+.rickshaw_graph .x_tick .title {
+  bottom: -16px;
+  margin-left: 0px;
+}
+
+.rickshaw-zoom-highlight {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  display: none;
+  background-color: rgba(255, 224, 0, 0.3);
+  height: 100%;
+}
+
+.rickshaw-annotator {
+  left: $rickshawYAxis;
+  margin-top: 15px;
+}
+
+.rickshaw-annotator .rickshaw_annotation_timeline .annotation  {
+  background-color: rgba(255, 224, 0, 0.74);
+}
+
+
+.chart-timestamp-tag {
+  position: absolute;
+  width: 2px;
+  background: yellow;
+  height: 100%;
+  top: 0px;
+}
+
+.rickshaw_annotation_timeline .annotation{
+  background: red;
+}
+
+.rickshaw_graph .annotation_line {
+  display: block;
+  border-left-style: dashed;
+}

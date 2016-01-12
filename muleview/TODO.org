@@ -1,0 +1,245 @@
+* Issues
+** TODO Alleged race-condition in stacked mode
+http://v2.mule.trusteer.net/test/#expressway.device_id;1h:90d
+** TODO Graph headline exceeds panel with too long
+** TODO Pie charts numbers
+   - [ ] Need to test
+   - [ ] Need to do something with leaves' pie charts (currently it's "unknown")
+** TODO Error in graph seems to mess history URL
+** TODO Error-function not called in case of exception in Mule interface?
+   Causes endless "Fetching..." :(
+** TODO keystree Pbar inconsistent
+   Needs both refactoring and not to disappear after less than 3
+   seconds and stuff
+** DONE dan-simplified-processing
+*** DONE Fix Alerts and AlertsEditor
+*** DONE Fix Subkey Click
+*** DONE Make updates graceful
+*** DONE Workaround Mule bug
+** DONE TopKey should be first in the legend
+** DONE Graph should default to show only Topkey and hide subkey series
+** DONE Refresh resets legend visibility, position and which series are shown
+** DONE Resize resets legend position
+** DONE Alerts' lines go in the back of surfaces
+** DONE "undefined" keeps on scrolling at the status bar -> 100% progress bar doesn't go off
+** DONE Critical-up icon missing
+   In alerts summary
+   ------
+   Could not reproduce
+** TODO keys performance
+*** TODO Loading new keys takes time
+*** TODO Switching to multiple mode with a lot of keys takes forever
+** CHALLENGED Failure function for keys expand
+   This is to prevent the loading circle from stayign there forever
+** TODO Back button issue
+** CHALLENGED Going back to no-graphs page
+   When marking zero graphs in compare mode, then marking something, then going back to zero - the display doesn't update to the background picture correctly.
+** CHALLENGED Misordered responses issue
+   When requesting a graph  and then requesting a different graph - if the first one returns after the second, Muleview will display the first one :(
+   We need to do some versioning of the requests sent (by order of the user selection) or add an ability to abort requests.
+** DONE Refresh timer not reset by reloading graph
+** DONE Masking when opening new graph before receiving retentions
+** DONE Don't make the zoom interactive
+   Apply it only after mouse up
+** DONE Discrepancy in tooltips/graph
+   http://v2.mule.trusteer.net/mule/#file_storer.stored.patch_sentry_agg_patch_detected;1h:90d
+** DONE Don't show the future
+   Ext charts seem to sometimes show more than the data in the axis (jumps by chunks or something)
+   Perhaps setting max to now or something like that
+** DONE Ignore -1 in stale values
+** DONE HRs in tooltips aren't the same width with long key names
+** DONE Retention names are wrong in combobox (missing "s")
+** DONE Multimode seems to be broken
+   Can't check keys
+** DONE Can't open alerts editor in the same graph different retention
+** DONE Alets - not all are shown
+** DONE "Hide Legend" isn't toggled by default on single graphs
+** DONE Retentions aren't saved when switching between keys
+** DONE Graphs look awful in Firefox
+** DONE Nicer sorting in alerts report
+   There should be a way to sort by critical > warning > normal..
+** DONE Default alerts
+*** DONE Calculation should be based upon period
+*** DONE Period should be bigger
+    We should start with bucket * 3
+** DONE Alert lines in charts should be thicker
+   Perhaps even some marker on the side?
+** DONE Fix status bar
+*** DONE Auto clear
+*** DONE Icons
+** DONE Alerts Editor
+*** DONE "Save" When the alert is initially turned off doesn't work
+    This is because the default values are invalid + hidden
+*** DONE Add default values
+    According to the current chart data...
+*** DONE Tooltip issue
+    The error tooltip is broken
+** DONE Don't pull all retentions per graph
+** DONE Renovate Alerts Report
+   Should be a different window or something
+   ----
+   I went for the mini dock implementation
+** DONE Nicer formatting of stale/period values in alerts report
+** DONE Mask when switching retentions in the same graph
+** DONE Navigation in compare-mode
+** DONE Status bar doesn't have busy icon
+   Also, it should utilize Ext.Ajax.is(something, loading or waiting or something like that)
+   ---------------------
+   I end up implementing it with an array of request ids
+** DONE Fix statusbar auto fade
+it gets into "ready" even though still waiting for mule events
+** DONE Coffee 1.6 compatibility
+** DONE "Loading" mask has double icons
+** DONE Subkeys pagination
+*** DONE Handle case when no subkeys
+*** DONE Disable subkeys selector when no subkeys
+** DONE prettier combobox in chart viewer
+** DONE AlertsEditor not complete
+** DONE The tool tip over the stack graph shows the % sign with no value
+** DONE Times should be shown in UTC
+
+* Features:
+** DONE Graph auto-refresh should be visible to the user
+   Also, it would be nice to have it configurable or at least togglable
+** TODO Indication of alerts/anomalies in the keys tree
+** TODO Double clicks on pie slices to drill-down
+** TODO Add indication to stale graphs
+   We should somehow mark graphs that weren't updated for more than twice their period (bucket size)
+** SKIPPED Scrollbar Zoom?
+   Shouldn't be _that_ hard to implemenet
+It's hard.
+** TODO Optional / Automatic Log scale?
+** TODO Add combo box to MuleTimeField
+   Instead of using the regex, have a combo with ["Seconds", "Minutes", ...]
+** TODO Better distinguish main key tooltip and subkey tooltip (and alerts, too?)
+** TODO Add error handling to request functions
+** DONE Maximize/restore button
+** TODO Editable Settings
+   There should be a way to edit the settings, perhaps even persist to the browser and/or import/export settings files
+** TODO Nicer about box?
+   perhaps, god forbig, an image or something?
+** TODO Support for timestamp labels - Waiting for Mule API
+   Probably can't implement in Ext Chart :(
+** TODO Something cooler with tooltips?
+** TODO Theme
+*** DONE Favicon
+*** DONE Areas color pallete
+*** DONE Nicer Mule Background
+"The mule picture should at least have the full "l" letter. I think it looks more like a bull than a mule so maybe adding another ear or a face will work."
+
+*** TODO Different color for topKey and areas
+*** DONE Less ugly keysTree icons
+    I simply removed them.
+** DONE Move axis to outside of chart
+** DONE Enable closing the legend without changing which graphs(subkeys) are displayed
+   The legend is used to hide/show the different series in the graph but the users want to both hide some of them and close the legend
+** DONE The name of the currently showed graph should be very visible, including the current retention
+   Suggested location is the graph's top-center as background (Its ok if some of it is hidden by graph series)
+** DONE Have a close button on the legend itself
+** DONE Unify two parts of the (mouseover) status
+** DONE Easy way to show only main key (hide all subkeys)
+** DONE Pointer cursor for clickable areas
+** DONE Color alert fieldLabels
+** DONE Fix Tooltip Errors somehow
+** DONE Lexicographic order of keys
+** DONE Add value field to main key tooltip
+** DONE Remove "GMT" from tooltip timestamp
+** DONE Implement "Average Alerts" instead of meaningless alert lines in charts
+** DONE Add automatic retries for requests
+** DONE Implement children
+   In the keys tree - show + sign next to keys which are known to have subkeys.
+** DONE Loading mask when loading keys
+** DONE Url Navigation:
+*** DONE Fix history-landing keys Tree
+When entering Muleview with a graph url, the keys-tree doesn't update nicely.p
+It should immediately show the full path of the key, and then subsequently load the full tree up to the root
+** DONE Color pallete
+** DONE Dymamic Tree improvements:
+*** DONE Show loading mask in node itself
+** DONE The x-axis contains full time stamps which can be too much for the eye. What about showing the day only when they change?
+I hope this fix is suitable (Not trivial to check).
+** DONE We should add some branding to the status bar. Maybe the project name and a link to github?
+** DONE Alert dashboard - a summary of the alert statuses. Navigating to the faulty graphs would be great.
+** DONE When presenting single graphs (i.e. not stacked) the lines should be thicker.
+** DONE Add an option to reset the zoom factor
+** DONE Toggle Legend
+** DONE Mule/Hinny picture
+** DONE Something nicer with the status bar
+   Added alert status
+   Can always add more events to reportin the sb...
+** DONE Redesign display
+ - [X] Only relevant small graphs
+ - [X] Make small graphs clickable
+** DONE Url navigation
+** DONE Nicer title(s)
+** DONE Status Bar
+** DONE Refresh interval
+** DONE Click to zoom graphs
+** DONE Refresh button
+** DONE Improve progress bar
+ - [X] Overlay only on main panel
+** DONE Shorter key names in legend
+** DONE Alerts:
+*** DONE Display lines on graphs
+ - [X] Show lines
+ - [X] Design lines
+ - [X] Get rid of legend line markers
+*** DONE Enable configuration
+ - [X] Save
+ - [X] Read
+ - [X] Stale/Period:
+   - [X] Save
+   - [X] Read
+   - [X] Special controller / Validations
+*** DONE Enable removing alerts
+*** DONE Do not show fields when not alerts
+aka "Add alerts" button
+*** DONE Nicer tips
+*** DONE Load alerts with graph
+* Optimizations:
+** DONE Welcome, Rickshaw
+  ** Legend can be toggled via HTML, no need to re-render  graph
+** DONE ask for /graph before asking for /key
+** TODO Bulk process stuff
+   So that the UI won't freeze.
+** TODO Try to implement onhashchange event myself
+   This is related to histoy controller
+** DONE Dynamic tree
+** DONE Utilize numchilds
+** DONE Don't pull all graph data, only relevant retention
+** DONE Generate big chart only on demand
+** DONE Upgrade to Extjs 4.2
+* Misc:
+** DONE Fix rare tootip "surface" error davar
+   Solved by migrating to Rickshaw
+** DONE Check data correctness
+   --------
+   Seems legit AFAIK
+** DONE Support for more than 2-3 retentions?
+** DONE Refactor / naming, "Graph" object
+ - Graph object will contain references to 2 charts + alerts
+ - Distinguish "chart", "graph" and "retention"
+ ---------
+ Close enough
+** DONE Get rid of Muleview.Events
+in favor of this.application.whatever
+** Ideas:
+*** Experiment with union-graph
+One graph to rule them all ( all retentions )
+*** PASS - Experiment with single graph component
+the single graph component is a panel containing a chart and can have two viewing mode - big and light
+Think i'll pass this one
+*** PASS - Experiment with docked buttons instead of a tab bar
+*** Experiment with tree-grid
+Instead of having regular tree + tabs, use tree-grid, which will hold 3 (?) buttons for each node, button per graph/retention
+PASS - since I eventually implemented compare mode.
+*** Color tree keys according to what they appear in the legend
+*** PASS - Use Google charts instead of Extjs
+    It looks nicer
+    I used Rickshaw instead
+*** Slideshow
+Add an option to save and manage a list of graphs and when played, switch between them with an interval
+Now even easier in compare-mode checkboxes
+*** Split Screen
+Add an option to see 4 or 9 graphs at the same time
+Now even easier in compare-mode checkboxes

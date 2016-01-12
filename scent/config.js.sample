@@ -1,0 +1,11 @@
+function scent_config() {
+  return {
+    namespace: 'mule',
+    user: 'Shmul the mule',
+    server: '/mule/api', // or change to a different mule server
+    cache_size: 100,
+    charts_per_row: 3,
+    graphs_refersh_rate: 60, // how often (secs) to referesh the graphs
+
+  }
+}

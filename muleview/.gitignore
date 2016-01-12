@@ -1,0 +1,6 @@
+.sass-cache/
+tmp
+*.map
+.sencha_backup
+bootstrap.css
+bootstrap.js

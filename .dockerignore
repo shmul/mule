@@ -1,0 +1,7 @@
+temp
+tests/temp
+.git
+.dockerignore
+.gitignore
+muleview
+!muleview/build
