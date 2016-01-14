@@ -9,7 +9,18 @@ require 'helpers'
 -- costants
 local DAY_INTERVAL = 86400
 local HOUR_INTERVAL = 3600
-local MINUTES_INTERVAL = 300
+local MINUTES_INTERVAL = 60
+-- the callbacks are for day,hour,minute, other
+local function per_interval(interval_,callbacks_)
+  if interval_ >= DAY_INTERVAL then
+	  return callbacks_[1]()
+	elseif interval_ >= HOUR_INTERVAL then
+	  return callbacks_[2]()
+  elseif interval_ >= MINUTES_INTERVAL then
+	  return callbacks_[3]()
+	end
+  return callbacks_[4]()
+end
 
 function calculate_fdi(epoh_time_, interval_, graph_)
 
@@ -17,15 +28,13 @@ function calculate_fdi(epoh_time_, interval_, graph_)
   local size = #graph_
 
 	local bufSize = 0
-  if interval_ == DAY_INTERVAL then
-	  bufSize = 730
-	elseif interval_ == HOUR_INTERVAL then
-	  bufSize = 2160
-  elseif interval_ == MINUTES_INTERVAL then
-	  bufSize = 864
-	else
-	  bufSize = 0
-  end
+  per_interval(interval_,
+               {
+                 function() bufSize = 730 end,
+                 function() bufSize = 2160 end,
+                 function() bufSize = 864 end,
+                 function() bufSize = 0 end
+  })
 
   local max = 0
   for _,v in ipairs(graph_) do
@@ -58,15 +67,15 @@ function calculate_fdi(epoh_time_, interval_, graph_)
   end
 
   -- run days algorithm
-	if interval_ == DAY_INTERVAL then
-		return calculate_fdi_days(times, values)
-  elseif interval_ == HOUR_INTERVAL then
-	  return calculate_fdi_hours(times, values)
-  elseif interval_ == MINUTES_INTERVAL then
-	  return calculate_fdi_minutes(times, values)
-  else
-	  logw('calculate_fdi - current version supports only 86400 (day) or 3600 (hour) or 300 (5 minutes) intervals')
-    return nil
-  end
+  return per_interval(interval_,
+               {
+                 function() return calculate_fdi_days(times, values) end,
+                 function() return calculate_fdi_hours(times, values) end,
+                 function() return calculate_fdi_minutes(times, values) end,
+                 function()
+                   logw('calculate_fdi - no match for passed interval',interval_)
+                   return nil
+                 end
+  })
 
 end

@@ -1,4 +1,5 @@
 require "tests.strict"
+require 'fdi/calculate_fdi'
 
 local lunit = require "lunit"
 if _VERSION >= 'Lua 5.2' then
@@ -8,10 +9,6 @@ else
 end
 
 
-
-package.path=package.path..";./fdi/?.lua"
-function test_external_fdi()
-  require "testDailyAlg"
-  require "testHourlyAlg"
-  require "testMinutelyAlg"
+function test_illegal_intervals()
+  assert_nil(calculate_fdi(os.time(),50,{}))
 end
