@@ -328,8 +328,7 @@ end
 
 
 local function wrap_json(stream_)
-  local str = stream_.get_string()
-  if #str==0 then return nil end
+  local str = stream_.get_string() or ""
   return string.format("{\"version\": %d,\n\"data\": %s\n}",
                        CURRENT_VERSION,
                        #str>0 and str or '""')
