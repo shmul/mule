@@ -1,15 +1,13 @@
 require 'fdi/dailyAlg'
 require 'fdi/hourlyAlg'
 require 'fdi/minutelyAlg'
---require 'dailyAlg'
---require 'hourlyAlg'
---require 'minutelyAlg'
 require 'helpers'
 
 -- costants
 local DAY_INTERVAL = 86400
 local HOUR_INTERVAL = 3600
 local MINUTES_INTERVAL = 60
+
 -- the callbacks are for day,hour,minute, other
 local function per_interval(interval_,callbacks_)
   if interval_ >= DAY_INTERVAL then

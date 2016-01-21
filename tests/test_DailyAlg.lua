@@ -1,5 +1,6 @@
-require "tests.strict"
+
 local lunit = require "lunit"
+require "tests.strict"
 if _VERSION >= 'Lua 5.2' then
   _ENV = lunit.module('test_DailyAlg','seeall')
 else

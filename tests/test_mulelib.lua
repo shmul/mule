@@ -14,8 +14,6 @@ local cdb = require "column_db"
 local mdb = require "lightning_mdb"
 local p = require "purepack"
 
-module( "test_mulelib", lunit.testcase,package.seeall )
-
 local function column_db_factory(name_)
   p.set_pack_lib("bits")
   local dir = create_test_directory(name_.."_cdb")
