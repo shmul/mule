@@ -1,6 +1,6 @@
 local bit32_found,bit32 = pcall(require,"bit32")
 local bit_found,bit = pcall(require,"bit")
-local lmdb_found,lightningmdb_lib = pcall(require,"lightningmdb") -- contains LHF's lpack (introduces string.pack and string.unpack)
+
 
 local nop = function() end
 
@@ -18,36 +18,30 @@ local function set_pack_lib(lib_)
     local bits_lib = (bit32_found and bit32) or (bit_found and bit)
 
     if lib_=="lpack" then
-      if not string.pack or not string.unpack then
+      if not bpack or not bunpack then
         return nil,"purepack - lpack not found"
       end
 
       M.to_binary = function(int_)
-        return string.pack(">I",int_)
+        return bpack(">I",int_)
       end
 
       M.to_binary3 = function(a_,b_,c_)
-        return string.pack(">III",a_,b_,c_)
+        return bpack(">III",a_,b_,c_)
       end
 
       M.from_binary = function(str_,s)
-        local _,value = string.unpack(str_,">I",s or 1)
+        local _,value = bunpack(str_,">I",s or 1)
         return value
       end
 
       M.from_binary3 = function(str_,s)
-        local _,a,b,c = string.unpack(str_,">III",s or 1)
+        local _,a,b,c = bunpack(str_,">III",s or 1)
         return a,b,c
       end
 
-      if lua_version_number()=="5.1" or lua_version_number()=="5.2" then
-        M.concat_three_strings = function(a_,b_,c_)
-          return string.pack("AAA",a_ or "",b_ or "",c_ or "")
-        end
-      else
-        M.concat_three_strings = function(a_,b_,c_)
-          return string.pack("sss",a_ or "",b_ or "",c_ or "")
-        end
+      M.concat_three_strings = function(a_,b_,c_)
+        return bpack("AAA",a_ or "",b_ or "",c_ or "")
       end
 
       return true

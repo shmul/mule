@@ -455,6 +455,12 @@ local TIME_UNITS_SORTED = (function()
                            end)()
 
 
+-- to handle 5.3's integers
+local tointeger = _VERSION>"Lua 5.2" and
+  function(num_) return math.tointeger(num_) end
+  or
+  function(num_) return num_ end
+
 local parse_time_unit_cache = {}
 
 function parse_time_unit(str_)
@@ -465,12 +471,13 @@ function parse_time_unit(str_)
   if not parse_time_unit_cache[str_] then
     string.gsub(str_,"^(%d+)([smhdwy])$",
                 function(num,unit)
-                  secs = num*TIME_UNITS[unit]
+                  secs = tointeger(num*TIME_UNITS[unit])
                 end)
     parse_time_unit_cache[str_] = secs or tonumber(str_) or 0
   end
   return parse_time_unit_cache[str_]
 end
+
 
 local secs_to_time_unit_cache = {}
 function secs_to_time_unit(secs_)
@@ -480,7 +487,7 @@ function secs_to_time_unit(secs_)
   local fmod = math.fmod
   for _,v in pairs(TIME_UNITS_SORTED) do
     if secs_>=v[1] and fmod(secs_,v[1])==0 then
-      local rv = (secs_/v[1])..v[2]
+      local rv = string.format("%d%s",secs_/v[1],v[2])
       secs_to_time_unit_cache[secs_] = rv
       return rv
     end
@@ -514,6 +521,9 @@ function to_timestamp_helper(expr_,now_,latest_)
   interpolated = string.gsub(interpolated,"(%w+)",parse_time_unit)
   if not string.match(interpolated,"^[%s%d%-%+]+$") then
     return nil
+  end
+  if _VERSION>="Lua 5.2" then
+    return math.abs(load("return "..interpolated)())
   end
   return math.abs(loadstring("return "..interpolated)())
 end
@@ -628,7 +638,7 @@ function uniq_pairs(array_)
   local insert = table.insert
 
   for prs,_ in pairs(ks) do
-    local a,b = match(prs,"^(%w+):(%w+)$")
+    local a,b = match(prs,"^([%d%.]+):([%d%.]+)$") -- TODO: consider caching
     insert(un,{tonumber(a),tonumber(b)})
   end
   table.sort(un,function(u,v) return u[1]<v[1] or (u[1]==v[1] and u[2]<v[2]) end)
