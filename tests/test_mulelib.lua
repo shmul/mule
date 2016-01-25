@@ -499,7 +499,7 @@ function test_modify_factories()
 
     assert(non_empty_metrics(m.matching_sequences("beer.ale")))
     assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]',1,true))
-    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true))
+    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true),m.graph("beer.ale"))
     assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true))
   end
   for_each_db("modify_factories",helper)

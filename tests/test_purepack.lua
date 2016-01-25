@@ -10,8 +10,6 @@ end
 require "helpers"
 local p = require "purepack"
 
-p.set_pack_lib("purepack")
-
 local function for_each_lib(func_)
   for _,v in ipairs({"lpack","bit","purepack"}) do
     p.set_pack_lib(v)

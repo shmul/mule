@@ -1,6 +1,6 @@
 local bit32_found,bit32 = pcall(require,"bit32")
 local bit_found,bit = pcall(require,"bit")
-
+local _,_ = pcall(require,"lightningmdb")
 
 local nop = function() end
 
