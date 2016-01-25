@@ -1,32 +1,37 @@
 FROM ubuntu:14.04
+ENV lua_ver 5.2
+ENV luarocks_ver 2.3.0
+ENV lmdb_ver 0.9.17
+ENV lightningmdb_ver 0.9.17.3-1
 
 RUN apt-get update -y && apt-get install -y unzip curl make git
 
-RUN apt-get install -y lua5.2 liblua5.2 liblua5.2-dev
+RUN apt-get install -y lua${lua_ver} liblua${lua_ver} liblua${lua_ver}-dev
 
 # Install luarocks
 RUN cd /tmp && \
-    curl -L -O http://luarocks.org/releases/luarocks-2.2.1.tar.gz && \
-    tar zxpf luarocks-2.2.1.tar.gz && \
-    rm luarocks-2.2.1.tar.gz && \
-    cd luarocks-2.2.1 && \
+    curl -L -O http://luarocks.org/releases/luarocks-${luarocks_ver}.tar.gz && \
+    tar zxpf luarocks-${luarocks_ver}.tar.gz && \
+    rm luarocks-${luarocks_ver}.tar.gz && \
+    cd luarocks-${luarocks_ver} && \
     ./configure --prefix=/usr && \
     make bootstrap && \
     cd /tmp && \
-    rm -r /tmp/luarocks-2.2.1
+    rm -r /tmp/luarocks-${luarocks_ver}
 
 RUN cd /tmp && \
-    curl -L -O https://github.com/LMDB/lmdb/archive/LMDB_0.9.15.tar.gz && \
-    tar -xzf LMDB_0.9.15.tar.gz && \
-    rm LMDB_0.9.15.tar.gz && \
-    cd lmdb-LMDB_0.9.15/libraries/liblmdb && \
+    curl -L -O https://github.com/LMDB/lmdb/archive/LMDB_${lmdb_ver}.tar.gz && \
+    tar -xzf LMDB_${lmdb_ver}.tar.gz && \
+    rm LMDB_${lmdb_ver}.tar.gz && \
+    cd lmdb-LMDB_${lmdb_ver}/libraries/liblmdb && \
     make all install && \
     ldconfig && \
     cd /tmp && \
-    rm -r /tmp/lmdb-LMDB_0.9.15
+    rm -r /tmp/lmdb-LMDB_${lmdb_ver}
 
-RUN luarocks install copas 1.1.6-1
-RUN luarocks install lightningmdb
+
+RUN luarocks install copas
+RUN luarocks install lightningmdb ${lightningmdb_ver}
 RUN luarocks install luaposix
 RUN luarocks install lunitx
 
@@ -35,7 +40,7 @@ WORKDIR $HOME
 
 COPY *.lua $HOME/
 COPY tests $HOME/tests
-COPY fdi $HOME/fdi
+COPY fdi $HOME/fdi/
 RUN mkdir -p $HOME/tests/temp
 
 CMD lunit.sh tests/test_*.lua
