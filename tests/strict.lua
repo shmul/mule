@@ -7,7 +7,7 @@
 --
 
 -- a bypass for 5.3
-local getinfo, error, rawset, rawget = debug.getinfo, error, rawset, rawget
+local getinfo, error, rawset, rawget, unpack = debug.getinfo, error, rawset, rawget
 
 local mt = getmetatable(_G)
 if mt == nil then
@@ -34,7 +34,7 @@ mt.__newindex = function (t, n, v)
 end
 
 mt.__index = function (t, n)
-  if not mt.__declared[n] and what() ~= "C" and n then
+  if not mt.__declared[n] and what() ~= "C" and n and n ~= "unpack" and n ~= "module" then
     error("variable '"..n.."' is not declared", 2)
   end
   return rawget(t, n)
