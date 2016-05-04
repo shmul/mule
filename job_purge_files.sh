@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source /home/trusteer/.bashrc # we need the S3 access keys
 basedir=/home/trusteer/mule
 shareddir=$basedir/shared
 
@@ -18,7 +19,10 @@ for i in `seq 4 15`; do
     log "$j/$archive.tgz from $fulldir"
     if [[ -d $fulldir ]]; then
       tar zcf $j/$archive.tgz -C $j $dir --remove-files
+	log "uploading  $j/$archive.tgz to S3"
+	s3put -b mule-backup -p $j -k processed  -r $j/$archive.tgz
     fi
+
   done
 
 done
