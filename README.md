@@ -58,7 +58,7 @@
   - [lpack](#lpack)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
+[![Build Status](https://travis-ci.org/shmul/mule.svg?branch=master)](https://travis-ci.org/shmul/mule)
 # General
 
 Mule is a round-robin database tool (RRDtool) that can be used for applicative monitoring. Mule allows you to easily define families of metrics and to input data through a simple command line. Data can be retrieved from the Mule server using HTTP GET requests. Mule stores data according to user-defined retention settings, known as a *retention pair*.
