@@ -6,32 +6,32 @@ require "conf"
 
 local disable_cache = false
 
-local lightningmdb = _VERSION=="Lua 5.2" and lightningmdb_lib or lightningmdb
+local lightningmdb = _VERSION>="Lua 5.2" and lightningmdb_lib or lightningmdb
 
 local NUM_PAGES = 256000
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
-local MAX_CACHE_SIZE = 2000
-local CACHE_FLUSH_SIZE = 50
+local CACHE_CAPACITY = 100000
 
 local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _metas = {}
   local _pages = {}
   local _slots_per_page
-  local _cache = {}
-  local _nodes_cache = {}
+  local _cache = simple_cache(CACHE_CAPACITY)
+  local _nodes_cache = simple_cache(CACHE_CAPACITY)
   local _readonly_txn = {}
   local _increment = nil
 
   local function flush_cache_logger()
-    local a = table_size(_cache)
-    local b = table_size(_nodes_cache)
+    local a = _cache.size()
+    local b = _nodes_cache.size()
     if a>0 or b>0 then
       logi("lightning_mdb flush_cache",a,b)
     end
   end
 
   local _flush_cache_logger = every_nth_call(10,flush_cache_logger)
+
 
   local function acquire_readonly_txn(env_)
     if not _readonly_txn[env_] then
@@ -241,9 +241,9 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return native_put(k,v,special_key(k),idx)
     end
 
-    local idx = _cache[k] and _cache[k][2] or nil
-    _cache[k] = {v,idx,true}
-    return _cache[k][1]
+    local idx = _cache.get(k) and _cache.get(k)[2] or nil
+    _cache.set(k,{v,idx,true})
+    return _cache.get(k)[1]
   end
 
   local function put_node(k,node)
@@ -251,15 +251,15 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return native_put(k,pack_node(node),true)
     end
 
-    if not _nodes_cache[k] then
+    if not _nodes_cache.get(k) then
       -- a new key? We write it to the DB, so it will be picked up when looking for keys
       -- (find_keys, matching_keys, has_sub_keys)
       native_put(k,pack_node(node),true)
     end
 
-    local idx = _nodes_cache[k] and _nodes_cache[k][2] or nil
-    _nodes_cache[k] = {node,idx,true}
-    return _nodes_cache[k][1]
+    local idx = _nodes_cache.get(k) and _nodes_cache.get(k)[2] or nil
+    _nodes_cache.set(k,{node,idx,true})
+    return _nodes_cache.get(k)[1]
   end
 
   local function sync()
@@ -275,6 +275,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     helper(_metas)
     helper(_pages)
   end
+  local _delayed_sync = every_nth_call(10,sync)
 
   local function flush_cache(amount_,step_)
     _flush_cache_logger()
@@ -287,17 +288,15 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local insert = table.insert
 
     local function helper(cache_,meta_)
-      local size,st,en = random_table_region(cache_,amount_)
+      local size,st,en = random_table_region(nil,amount_,cache_.size())
       if size==0 then return 0 end
 
-      local keys_array = {}
+      local keys_array = cache_.keys(st,en)
 
-      for k,v in iterate_table(cache_,st,en) do
-        insert(keys_array,{k,v})
-      end
       for i=1,#keys_array,10 do
         for j=i,math.min(#keys_array,i+9) do
-          local k,vidx = keys_array[j][1],keys_array[j][2]
+          local k = keys_array[j]
+          local vidx = cache_.get(k)
           local v,idx,dirty = vidx[1],vidx[2],vidx[3]
           local payload = v
           if dirty then
@@ -311,7 +310,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
               native_put(k,payload,meta_,idx)
             end
           end
-          cache_[k] = nil
+          cache_.out(k)
         end
         if step_ then step_() end
         if log_progress then log_progress() end
@@ -321,13 +320,13 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     helper(_cache,false)
     local size = helper(_nodes_cache,true)
-    sync()
+    _delayed_sync()
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
 
   local function get(k,dont_cache_)
-    local cached = _cache[k]
+    local cached = _cache.get(k)
     if not (dont_cache_ or disable_cache) and cached then
       _increment("mule.lightning_mdb.get.cache_hit")
       return cached[1]
@@ -339,12 +338,12 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       return v
     end
     _increment("mule.lightning_mdb.get.cache_miss")
-    _cache[k] = {v,idx}
+    _cache.set(k,{v,idx})
     return v
   end
 
   local function get_node(k)
-    local cached = _nodes_cache[k]
+    local cached = _nodes_cache.get(k)
     if not disable_cache and cached then
       _increment("mule.lightning_mdb.get_node.cache_hit")
       return cached[1]
@@ -354,7 +353,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     v = v and unpack_node(k,v)
     if not v or disable_cache then return v end
     _increment("mule.lightning_mdb.get_node.cache_miss")
-    _nodes_cache[k] = {v,idx}
+    _nodes_cache.set(k,{v,idx})
     return v
   end
 
@@ -383,8 +382,8 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end
     end
 
-    _cache[k] = nil
-    _nodes_cache[k] = nil
+    _cache.out(k)
+    _nodes_cache.out(k)
     if meta_ or special_key(k) then
       return helper(_metas)
     end

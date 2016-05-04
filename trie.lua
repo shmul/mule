@@ -2,7 +2,7 @@
 require "helpers"
 local p = require "purepack"
 
-local new,unpack
+local new,_unpack
 local methods = nil
 
 local function split(string_)
@@ -110,7 +110,7 @@ end
 
 
 
-unpack = function(packed_)
+_unpack = function(packed_)
   local self = p.unpack(packed_)
   local function helper(n)
     for _,v in pairs(n._children or {}) do
@@ -142,5 +142,5 @@ end
 
 return {
   new = new,
-  unpack = unpack
+  unpack = _unpack
        }

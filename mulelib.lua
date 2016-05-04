@@ -160,7 +160,7 @@ function sequence(db_,name_)
   end
 
   local function update_batch(slots_,ts,ht,sm)
-    -- slots is a flat array of arrays.
+    -- slots is a flat array of 4-tuples.
     -- it is kind of ugly that we need to pass the indices to the various cells in each slot, but an inconsistency
     -- in the order that is too fundemental to change, forces us to.
     local j = 1
@@ -328,8 +328,7 @@ end
 
 
 local function wrap_json(stream_)
-  local str = stream_.get_string()
-  if #str==0 then return nil end
+  local str = stream_.get_string() or ""
   return string.format("{\"version\": %d,\n\"data\": %s\n}",
                        CURRENT_VERSION,
                        #str>0 and str or '""')
@@ -350,17 +349,18 @@ function mule(db_)
   local _alerts = {}
   local _anomalies = {} -- these do not persist as they can be recalulated
   local _db = db_
-  local _updated_sequences = {}
+  local _updated_sequences = simple_cache(MAX_CACHE_SIZE)
   local _hints = {}
   local _flush_cache_logger = every_nth_call(10,
                                              function()
-                                               local a = table_size(_updated_sequences)
+                                               local a = _updated_sequences.size()
                                                if a>0 then
                                                  logi("mulelib flush_cache",a)
                                                end
   end)
   local update_line = nil -- foreward declaration
   local _self_metrics = {}
+  local _factories_cache = simple_cache(FACTORIES_CACHE_CAPACITY)
 
   local function increment(metric_,sum_,hits_)
     local v = _self_metrics[metric_]
@@ -387,6 +387,7 @@ function mule(db_)
   end
 
   local function add_factory(metric_,retentions_)
+    _factories_cache.flush()
     metric_ = string.match(metric_,"^(.-)%.*$")
     for _,rp in ipairs(retentions_) do
       local step,period = parse_time_pair(rp)
@@ -408,28 +409,36 @@ function mule(db_)
 
 
   local function get_sequences(metric_)
-    return coroutine.wrap(
-      function()
-        local metric_rps = {}
-        local idx = 1
-        while idx<=#_sorted_factories and _sorted_factories[idx]<=metric_ do
-          if is_prefix(metric_,_sorted_factories[idx]) then
-            local fm = _sorted_factories[idx]
-            table.insert(metric_rps,{fm,_factories[fm]})
-          end
-          idx = idx + 1
+    -- TODO use a simple cache for metrics -> factories
+    local function get_seqs()
+      local metric_rps = {}
+      local idx = 1
+      while idx<=#_sorted_factories and _sorted_factories[idx]<=metric_ do
+        if is_prefix(metric_,_sorted_factories[idx]) then
+          local fm = _sorted_factories[idx]
+          table.insert(metric_rps,{fm,_factories[fm]})
         end
+        idx = idx + 1
+      end
 
-        local seqs = {}
-        for m in metric_hierarchy(metric_) do
-          for _,frp in ipairs(metric_rps) do
-            if is_prefix(m,frp[1]) then
-              for _,rp in ipairs(frp[2]) do
-                seqs[name(m,rp[1],rp[2])] = m
-              end
+      local seqs = {}
+      for m in metric_hierarchy(metric_) do
+        for _,frp in ipairs(metric_rps) do
+          if is_prefix(m,frp[1]) then
+            for _,rp in ipairs(frp[2]) do
+              seqs[name(m,rp[1],rp[2])] = m
             end
           end
         end
+      end
+      return seqs
+    end
+
+    return coroutine.wrap(
+      function()
+        local seqs = _factories_cache.get(metric_) or get_seqs()
+        _factories_cache.set(metric_,seqs)
+
         for n,m in pairs(seqs) do
           coroutine.yield(n,m)
         end
@@ -501,7 +510,7 @@ function mule(db_)
   end
 
   local function flush_cache_of_sequence(name_,sparse_)
-    sparse_ = sparse_  or _updated_sequences[name_]
+    sparse_ = sparse_  or _updated_sequences.get(name_)
     if not sparse_ then return nil end
 
     local seq = sequence(_db,name_)
@@ -521,7 +530,7 @@ function mule(db_)
       end
       alert_check(seq,now)
     end
-    _updated_sequences[name_] = nil
+    _updated_sequences.out(name_)
   end
 
   local function flush_cache(max_,step_)
@@ -535,18 +544,16 @@ function mule(db_)
     end
 
     -- we now update the real sequences
-    local num_processed = 0
-    local size,st,en = random_table_region(_updated_sequences,max_)
-    if size==0 then return false end
+    -- why bother with randomness? to avoid starvation
+    local kvs = _updated_sequences.random_region(max_)
+    if #kvs==0 then return false end
     increment("mule.mulelib.flush_cache")
-    for n,s in iterate_table(_updated_sequences,st,en) do
-      flush_cache_of_sequence(n,s)
-      num_processed = num_processed + 1
+    for _,n in ipairs(kvs) do
+      flush_cache_of_sequence(n,_updated_sequences.get(n))
     end
 
-    if num_processed==0 then return false end
     -- returns true if there are more items to process
-    return _updated_sequences and next(_updated_sequences)~=nil
+    return _updated_sequences and _updated_sequences.size()>0
   end
 
 
@@ -630,7 +637,7 @@ function mule(db_)
       local seq = sequence(db_,n)
       local a,msg = alert_check(seq,now)
       if a and a._critical_low and a._warning_low and a._warning_high and a._critical_high and a._period then
-        col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%s,%d,\"%s\",%d,\"%s\"]",
+        col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%d,%d,\"%s\",%d,\"%s\"]",
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
                         a._period,a._stale or "-1",a._sum,a._state,now,msg or ""))
       end
@@ -720,7 +727,7 @@ function mule(db_)
               col1.head()
             end,
             function(sum,hits,timestamp)
-              col1.elem(format("[%d,%d,%s]",sum,hits,timestamp))
+              col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
           end)
           col1.tail()
         end
@@ -856,7 +863,7 @@ function mule(db_)
       for name in db_.matching_keys(resource_,level) do
         if force then
           logi("reset",name)
-          _updated_sequences[name] = nil
+          _updated_sequences.out(name)
           _db.out(name)
           col.elem(format("\"%s\"",name))
         elseif timestamp then
@@ -1015,49 +1022,11 @@ function mule(db_)
     return wrap_json(str)
   end
 
-  local function merge_lines(sorted_file_,step_,period_,now_)
-    local last_metric,seq
-    local str = stdout("")
-    local format = string.format
-    local period = parse_time_unit(period_)
+  --[[ the file is assumed to be sorted by metric name (!) and each line is of the form
+    DDDD|metric;step:period where D are digits.
+  --]]
+  local function rebuild_db(file_)
 
-    local function output_sequence(metric_,seq_)
-      for _,s in ipairs(seq_.slots()) do
-        str.write(metric_," ",s._sum," ",s._timestamp," ",s._hits,"\n")
-      end
-    end
-
-    function helper(f)
-      for l in f:lines() do
-        local items,t = parse_input_line(l)
-        if t=="command" then
-          logw("sorted_line - command in input file. ignoring",l)
-        else
-          if items[1]~=last_metric then
-            if seq then
-              output_sequence(last_metric,seq)
-            end
-            last_metric = items[1]
-            seq = sparse_sequence(format("%s;%s:%s",last_metric,step_,period_))
-          end
-
-          local timestamp,hits,sum,_ = legit_input_line(items[1],items[2],items[3],items[4])
-          if not timestamp then
-            logw("merge_lines - bad params",l)
-          elseif timestamp>now_-period then
-            seq.update(timestamp,hits,sum)
-          end
-        end
-
-      end
-
-      if seq then
-        output_sequence(seq)
-      end
-      return true
-    end
-
-    with_file(sorted_file_,helper)
   end
 
   local function command(items_)
@@ -1099,9 +1068,6 @@ function mule(db_)
       end,
       dump = function()
         return dump(items_[2],qs_params(items_[3]))
-      end,
-      merge_lines = function()
-        return merge_lines(items_[2],items_[3],items_[4],items_[5])
       end,
     }
 
@@ -1153,6 +1119,7 @@ function mule(db_)
     local format = string.format
     local col = collectionout(str,"{","}")
     local force = is_true(options_ and options_.force)
+    _factories_cache.flush()
 
     col.head()
     for fm in split_helper(resource_,"/") do
@@ -1206,7 +1173,7 @@ function mule(db_)
       end
     end
 
-    local seq = _updated_sequences[name_]
+    local seq = _updated_sequences.get(name_)
     local new_key = false
     if not seq then
       -- this might be a new key and so we should add it to the DB as well. Kind of ugly, but we rely on the
@@ -1218,7 +1185,7 @@ function mule(db_)
     -- it might happen that we try to update a too old timestamp. In such a case
     -- the update function returns null
     if adjusted_timestamp then
-      _updated_sequences[name_] = seq
+      _updated_sequences.set(name_,seq)
       if new_key then
         flush_cache_of_sequence(name_,seq)
       end
@@ -1255,6 +1222,7 @@ function mule(db_)
   local function modify_factories(factories_modifications_)
     -- the factories_modifications_ is a list of triples,
     -- <pattern, original retention, new retention>
+    _factories_cache.flush()
     local to_remove = {}
     for _,f in ipairs(factories_modifications_) do
       local factory = _factories[f[1]]
@@ -1337,8 +1305,8 @@ function mule(db_)
       lines_count = lines_count + 1
       if lines_count==UPDATED_SEQUENCES_MAX then
         logi("process - forcing an update",lines_count)
-        flush_cache(UPDATE_AMOUNT)
-        lines_count = lines_count - UPDATE_AMOUNT
+        flush_cache(UPDATED_SEQUENCES_MAX)
+        lines_count = lines_count - UPDATED_SEQUENCES_MAX
       end
     end
 

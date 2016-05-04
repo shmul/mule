@@ -10,8 +10,6 @@ end
 require "helpers"
 local p = require "purepack"
 
-p.set_pack_lib("purepack")
-
 local function for_each_lib(func_)
   for _,v in ipairs({"lpack","bit","purepack"}) do
     p.set_pack_lib(v)
@@ -107,10 +105,11 @@ function test_binary()
 end
 
 function test_binary3()
+  local un = unpack or table.unpack
   local function helper()
     local tests = {{0, 10, 8}, {256, 65536, 16777216}}
     for i,v in ipairs(tests) do
-      local a,b,c = p.from_binary3(p.to_binary3(unpack(v)))
+      local a,b,c = p.from_binary3(p.to_binary3(un(v)))
       assert_equal(v[1],a,i)
       assert_equal(v[2],b,i)
       assert_equal(v[3],c,i)

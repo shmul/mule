@@ -58,7 +58,7 @@
   - [lpack](#lpack)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
+[![Build Status](https://travis-ci.org/shmul/mule.svg?branch=master)](https://travis-ci.org/shmul/mule)
 # General
 
 Mule is a round-robin database tool (RRDtool) that can be used for applicative monitoring. Mule allows you to easily define families of metrics and to input data through a simple command line. Data can be retrieved from the Mule server using HTTP GET requests. Mule stores data according to user-defined retention settings, known as a *retention pair*.
@@ -121,8 +121,8 @@ The following lists the retention units:
 #### Input Format
 Each input line should be in the following format:
 
-An *event*
-    <metric> <value> <timestamp>
+An *event* (the type param is optional)
+    <metric> <value> <timestamp> [<type>]
 
 or a *command*
 
@@ -279,21 +279,33 @@ If you do not provide a `name`, all the alerts are retrieved. The return value i
   "data": {
     "<name>": [<critical_low>,<warning_low>,<warning_high>,<critical_high>,<period>,<stale>,<value>,<state>,<check_timestamp>,<msg>]
   }
+  "anomalies": {
+    "<name>": [<timestamp_1>,...,<timestamp_n>]
+  }
 }
 ```
 The parameters are defined as follows:
 
 * `critical_low, warning_low, warning_high, critical_high` - The threshold value of the alerts.
-* `period` - The graph period.
+* `period` - The alert period.
 * `stale` - If the graph is not updated during a certain time period (in seconds), the state changes to `stale`. **Note**: Updating the graph with a 0 value is considered an update.
 * `value` - The graph's value at the time of the check.
 * `state` - The state of the alert: `NORMAL, CRITICAL_LOW, WARNING_LOW, WARNING_HIGH, CRITICAL_HIGH, stale`
 * `check_timestamp` - The time of the check.
 * `msg` - An optional text message.
 
+If there are detected anomalies in the data, they will be returned as a separate table. Each entry would be a graph name and the value would be an array of timestamps at which anomalies were detected. See the //Anomaly Detection in Time Series// section for a review of the anomaly detection code.
+
 
 ##### Defining Alerts
-TODO
+Defining an alert is done by issuing a PUT request to
+
+    http://muleserver/alert/<name>?critical_low=<critical_low>&warning_low=<warning_low>&warning_high=<warning_high>&critical_high=<critical_high>&period=<period>&stale=<stale>
+
+* `critical_low, warning_low, warning_high, critical_high` - The threshold value of the alerts.
+* `period` - The alert period. It needn't be necessarily the same as the graph step period.
+* `stale` - If the graph is not updated during a certain time period (in seconds), the state changes to `stale`. **Note**: Updating the graph with a 0 value is considered an update.
+
 
 #### Anomaly Detection in Time Series
 This code implement anomaly detection in time series representing aggregated counting of events over days, hours or minutes.
@@ -306,13 +318,19 @@ Although the API accepts an entire graph, the internal algorithm is online i.e. 
 
 General algorithmic note: In the time series experimented the changes were usually either short temporal changes (spikes) or steep step functions. In order to adjust quickly to spikes, after a change had been detected, the old model was kept for a duration smaller or equal to some fallback threshold. During this fallback duration, if a measurement suitable to the old model is observed, the algorithm falls back to the old model. In order to adjust quickly to steep step functions, the last detected abnormal value is kept. If subsequent values are evaluated as normal under the hypotheses this value is a correct model, for a stability period defined by another constant threshold, then we update the model according to this hypotheses. Furthermore, all time the hypothesized model fits, no alerts are produced, even if the new model was not yet accepted. The above mechanisms lead to a fast adjustment to the common spike and steep step changes. The price is slower adjustment to rare types of changes. For example, during a period of constantly instability, the algorithm alarm may blink rather than constantly alarm.
 
+##### Triggering the Anomaly Detection Algorithm
+In order to run the anomaly detection code, a GET request should be issued
+    http://muleserver/fdi/<metric-or-name>?<level>
 
-##### Stop
+The `<metric-or-name>` and `<level>` params are identical to those used by the `/graph` call.
+
+
+#### Stop
 You can stop the http daemon with the following command. This is not intended to be secure and provides basic protection from accidental termination.
 
     http://muleserver/stop?token=<stop_password>
 
-##### Backup
+#### Backup
 You can create a backup of the database with the following command. This command returns the path of the backup database.
 
     http://muleserver/backup
@@ -511,3 +529,7 @@ Copas of the Kepler project is used and is distributed under [this license](http
 
 ## lpack
 [lpack](http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lpack) is used.
+
+# Contribution
+
+Contributions to the project are welcomed. It is required however to provide alongside the pull request one of the contribution forms (CLA) that are a part of the project. If the contributor is operating in his individual or personal capacity, then he/she is to use the [individual CLA](./CLA-Individual.txt); if operating in his/her role at a company or entity, then he/she must use the [corporate CLA](CLA-Corporate.txt).

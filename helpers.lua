@@ -233,23 +233,25 @@ function shallow_clone_array(array_,max_idx_)
 end
 
 function split_helper(str_,delim_)
-  return coroutine.wrap(function()
-                          local start = 1
-                          local t
-                          local ds = #delim_
-                          local find,sub = string.find,string.sub
-                          local yield = coroutine.yield
-                          while str_ and start do
-                            t = find(str_,delim_,start,true)
-                            if t then
-                              yield(trim(sub(str_,start,t-1)))
-                              start = t+ds
-                            else
-                              yield(trim(sub(str_,start)))
-                              start = nil
-                            end
-                          end
-                        end)
+  return coroutine.wrap(
+    function()
+      local start = 1
+      local t,s
+      local ds = #delim_
+      local find,sub = string.find,string.sub
+      local yield = coroutine.yield
+      while str_ and start do
+        t = find(str_,delim_,start,true)
+        if t then
+          _,_,s = find(sub(str_,start,t-1),"^%s*(.-)%s*$")
+          start = t+ds
+        else
+          _,_,s = find(sub(str_,start),"^%s*(.-)%s*$")
+          start = nil
+        end
+        yield(s)
+      end
+  end)
 end
 
 function split(str_,delim_)
@@ -453,6 +455,12 @@ local TIME_UNITS_SORTED = (function()
                            end)()
 
 
+-- to handle 5.3's integers
+local tointeger = _VERSION>"Lua 5.2" and
+  function(num_) return math.tointeger(num_) end
+  or
+  function(num_) return num_ end
+
 local parse_time_unit_cache = {}
 
 function parse_time_unit(str_)
@@ -463,12 +471,13 @@ function parse_time_unit(str_)
   if not parse_time_unit_cache[str_] then
     string.gsub(str_,"^(%d+)([smhdwy])$",
                 function(num,unit)
-                  secs = num*TIME_UNITS[unit]
+                  secs = tointeger(num*TIME_UNITS[unit])
                 end)
     parse_time_unit_cache[str_] = secs or tonumber(str_) or 0
   end
   return parse_time_unit_cache[str_]
 end
+
 
 local secs_to_time_unit_cache = {}
 function secs_to_time_unit(secs_)
@@ -478,7 +487,7 @@ function secs_to_time_unit(secs_)
   local fmod = math.fmod
   for _,v in pairs(TIME_UNITS_SORTED) do
     if secs_>=v[1] and fmod(secs_,v[1])==0 then
-      local rv = (secs_/v[1])..v[2]
+      local rv = string.format("%d%s",secs_/v[1],v[2])
       secs_to_time_unit_cache[secs_] = rv
       return rv
     end
@@ -512,6 +521,9 @@ function to_timestamp_helper(expr_,now_,latest_)
   interpolated = string.gsub(interpolated,"(%w+)",parse_time_unit)
   if not string.match(interpolated,"^[%s%d%-%+]+$") then
     return nil
+  end
+  if _VERSION>="Lua 5.2" then
+    return math.abs(load("return "..interpolated)())
   end
   return math.abs(loadstring("return "..interpolated)())
 end
@@ -626,7 +638,7 @@ function uniq_pairs(array_)
   local insert = table.insert
 
   for prs,_ in pairs(ks) do
-    local a,b = match(prs,"^(%w+):(%w+)$")
+    local a,b = match(prs,"^([%d%.]+):([%d%.]+)$") -- TODO: consider caching
     insert(un,{tonumber(a),tonumber(b)})
   end
   table.sort(un,function(u,v) return u[1]<v[1] or (u[1]==v[1] and u[2]<v[2]) end)
@@ -1102,4 +1114,73 @@ function lua_version_number()
   end
 
   return lua_version_number_memo
+end
+
+function simple_cache(capacity_)
+  local num_keys = 0
+  local cache = {}
+
+  return {
+    get = function(k)
+      return cache[k]
+    end,
+
+    out = function(k)
+      if cache[k] then
+        cache[k] = nil
+        num_keys = num_keys - 1
+      end
+    end,
+
+    set = function(k,v)
+      if num_keys==capacity_ then
+        local key_to_remove,_ = next(cache)
+        out(key_to_remove)
+      end
+      if not cache[k] then
+        num_keys = num_keys + 1
+      end
+      cache[k] = v
+    end,
+
+    size = function() return num_keys end,
+
+    keys = function(start_,end_)
+      local ks = {}
+      local insert = table.insert
+
+      for k,v in pairs(cache) do
+        if start_ then
+          start_ = start_-1
+        end
+        if not start_ or start_<=0 then
+          insert(ks,k)
+        end
+        if end_ then
+          end_ = end_ - 1
+          if end_==0 then return ks end
+        end
+      end
+      return ks
+    end,
+
+    random_region = function(region_size_)
+      local st = 1
+      local en = num_keys
+      if en==0 then
+        return {}
+      end
+
+      if region_size_ and en>region_size_ then
+        st = math.random(math.max(en-region_size_,1))
+        en = st+region_size_
+      end
+      return key_value_list(st,en)
+    end,
+
+    flush = function()
+      cache = {}
+      num_keys = 0
+    end
+  }
 end

@@ -4,7 +4,7 @@ require "helpers"
 --local lr = require("luarocks.require")
 local p = require("purepack")
 local tr = require("trie")
-local unpack_compatibility = unpack or table.unpack
+local unpack_compatibility = _G.unpack or table.unpack
 
 --[[
   Sequences are stored column by column, i.e. all the Nth slots of each sequences are stored
