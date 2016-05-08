@@ -539,8 +539,18 @@ function to_timestamp(expr_,now_,latest_)
   return {from,to}
 end
 
+if lunit then
+  local hard_coded_time
+  function set_hard_coded_time(v)
+    hard_coded_time = v
+  end
 function time_now()
+    return hard_coded_time or os.time()
+  end
+  else
+    function time_now()
   return os.time()
+end
 end
 
 function parse_input_line(line_)
@@ -1120,6 +1130,25 @@ function simple_cache(capacity_)
   local num_keys = 0
   local cache = {}
 
+  local function key_value_list(start_,end_)
+    local ks = {}
+    local insert = table.insert
+
+    for k,v in pairs(cache) do
+      if start_ then
+        start_ = start_-1
+      end
+      if not start_ or start_<=0 then
+        insert(ks,k)
+      end
+      if end_ then
+        end_ = end_ - 1
+          if end_==0 then return ks end
+      end
+    end
+    return ks
+  end
+
   return {
     get = function(k)
       return cache[k]
@@ -1145,24 +1174,7 @@ function simple_cache(capacity_)
 
     size = function() return num_keys end,
 
-    keys = function(start_,end_)
-      local ks = {}
-      local insert = table.insert
-
-      for k,v in pairs(cache) do
-        if start_ then
-          start_ = start_-1
-        end
-        if not start_ or start_<=0 then
-          insert(ks,k)
-        end
-        if end_ then
-          end_ = end_ - 1
-          if end_==0 then return ks end
-        end
-      end
-      return ks
-    end,
+    keys = key_value_list,
 
     random_region = function(region_size_)
       local st = 1

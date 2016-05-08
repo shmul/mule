@@ -126,6 +126,15 @@ local function generic_get_handler(mule_,handler_,req_,resource_,qs_params_,cont
   return function() return mule_[handler_](resource_,qs_params_) end
 end
 
+local function fdi_handler(mule_,handler_,req_,resource_,qs_params_,content_)
+  if req_.verb~="POST" then
+    logw("Only POST can be used")
+    return
+  end
+
+  return mule_[handler_](resource_,qs_params_)
+end
+
 local function graph_handler(mule_,handler_,req_,resource_,qs_params_,content_)
   if req_.verb=="GET" then
     return generic_get_handler(mule_,handler_,req_,resource_,qs_params_,content_)
@@ -201,7 +210,7 @@ local handlers = { key = generic_get_handler,
                    gc = gc_handler,
                    latest = generic_get_handler,
                    slot = generic_get_handler,
-                   fdi = generic_get_handler,
+                   fdi = fdi_handler,
                    update = graph_handler,
                    config = config_handler,
                    stop = nop_handler,

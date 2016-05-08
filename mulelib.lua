@@ -45,8 +45,13 @@ function sequence(db_,name_)
     return at(idx_,0)
   end
 
-  local function set_latest(latest_timestamp_)
+  local function set_latest(latest_timestamp_,sum_is_zero_)
+    if sum_is_zero_ then
+      db_._zero_sum_latest.set(name_,latest_timestamp_)
+    else
     at(math.floor(_period/_step),0,latest_timestamp_)
+      db_._zero_sum_latest.out(name_) -- we don't want to mask the real latest with the zero one
+  end
   end
 
 
@@ -68,6 +73,11 @@ function sequence(db_,name_)
 
 
   local function latest_timestamp()
+    local zsl = db_._zero_sum_latest.get(name_)
+    if zsl then
+      return zsl
+    end
+
     local range_top = math.floor(_period/_step)
     local l = at(range_top,0)
     -- originally the latest value was the index of the slot last to be updated. Since the impl. changed to hold
@@ -150,9 +160,9 @@ function sequence(db_,name_)
       at(idx,nil,adjusted_timestamp,hits,sum)
     end
 
-    local lt = latest_timestamp()
-    if (ZERO_NOT_PROCESSED or lt>0) and adjusted_timestamp>lt then
-      set_latest(adjusted_timestamp)
+    local lt = latest_timestamp() or -1
+    if (ZERO_NOT_PROCESSED or lt>=0) and adjusted_timestamp>lt then
+      set_latest(adjusted_timestamp,sum_==0)
     end
 
     _seq_storage.save(_name)
@@ -219,8 +229,8 @@ function sequence(db_,name_)
 
     local now = time_now()
     local latest_ts = latest_timestamp()
-    local min_timestamp = (opts_.filter=="latest" and latest_ts-_period) or
-      (opts_.filter=="now" and now-_period) or nil
+    local min_timestamp = (opts_.filter=="latest" and (latest_ts-_period)) or
+      (opts_.filter=="now" and (now-_period)) or nil
 
     if opts_.all_slots then
       if not opts_.dont_cache then
@@ -361,6 +371,8 @@ function mule(db_)
   local update_line = nil -- foreward declaration
   local _self_metrics = {}
   local _factories_cache = simple_cache(FACTORIES_CACHE_CAPACITY)
+
+  _db._zero_sum_latest = simple_cache(MAX_CACHE_SIZE)
 
   local function increment(metric_,sum_,hits_)
     local v = _self_metrics[metric_]
@@ -960,16 +972,13 @@ function mule(db_)
     return wrap_json(output_alerts(as,#resource_==0))
   end
 
+
   local function fdi(resource_,options_)
     local str = strout("")
     local col = collectionout(str,"{","}")
     local now = time_now()
-    local last_days = to_timestamp(ANOMALIES_LAST_DAYS,now,nil)
-    local last_hours = to_timestamp(ANOMALIES_LAST_HOURS,now,nil)
-    local last_minutes = to_timestamp(ANOMALIES_LAST_MINUTES,now,nil)
-    local today = normalize_timestamp(now,86400)
-    local this_hour = normalize_timestamp(now,3600)
-    local this_5_minute = normalize_timestamp(now,300)
+    local current_bucket = normalize_timestamp(now,step)
+    local anomalies_tail = now-math.ceil(period*ANOMALIES_TAIL_FACTOR)
     local insert = table.insert
     local format = string.format
     col.head()
@@ -983,16 +992,10 @@ function mule(db_)
       logd("fdi",parse_time_unit(step),k)
       if metric and step and period then
         local anomalies = {}
-        local daily = step==86400
-        local hourly = step==3600
-        local minutely = step==300 -- actually five minutes
         for _,vv in ipairs(calculate_fdi(now,parse_time_unit(step),v) or {}) do
           local vv1 = vv[1]
           -- we ignore today/this-hour as it is likely to have only very partial data
-          if vv[2] and
-            ((daily and vv1~=today and vv1>=last_days) or
-                (hourly and vv1~=this_hour and vv1>=last_hours) or
-              (minutely and vv1~=this_5_minute) and vv1>=last_minutes) then
+          if vv[2] and vv1~=current_bucket and vv1>=anomalies_tail then
               insert(anomalies,vv1)
           end
         end
@@ -1002,6 +1005,7 @@ function mule(db_)
           col.elem(format("\"%s\": [%s]",k,ar))
           logd("fdi - anomalies detected",today,k,ar)
         else
+          logd("fdi - no anomalies detected",today,k,ar)
           _anomalies[k] = nil
         end
       else

@@ -41,6 +41,7 @@ local function for_each_db(name_,func_,no_mule_)
 
   for _,db in ipairs(dbs) do
     func_(no_mule_ and db or mule(db))
+    set_hard_coded_time(nil)
   end
 end
 
@@ -124,6 +125,7 @@ function test_sequences()
     assert_equal(60,step)
     assert_equal(3600,period)
     db_.set_increment(function() end)
+    db_._zero_sum_latest = simple_cache(MAX_CACHE_SIZE)
     local seq = sequence(db_,"seq;1m:60m")
     assert_equal(0,seq.slot_index(0))
     assert_equal(0,seq.slot_index(59))
@@ -170,7 +172,7 @@ function test_sequences()
     assert_equal(0,tbl[11])
     assert_equal(0,tbl[12])
 
-    --[[
+--[[
       local seq1 = sequence(db_,"seq")
       local tblin = tablein(tbl)
       local function read_3_values()
@@ -178,7 +180,7 @@ function test_sequences()
       end
 
       assert_equal("seq",seq1.deserialize(in_memory_db,true,read_3_values,read_3_values))
-    --]]
+--]]
 
     local tbl1 = {}
     seq.serialize({all_slots=true},insert_all_args(tbl1),insert_all_args(tbl1))
@@ -704,6 +706,7 @@ function test_update_only_relevant()
 
     assert(string.find(m.latest("beer.ale.pale;1m:12h"),"7,1,0",1,true))
     assert(string.find(m.latest("beer.ale.brown;1m:12h"),"[6,1,0]",1,true))
+
     assert(string.find(m.latest("beer.ale.burton;1m:12h"),"[32,1,60]",1,true))
     assert(string.find(m.latest("beer.ale;1m:12h"),"[32,1,60]",1,true))
     assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp=93}),"[32,1,60]",1,true))
@@ -776,7 +779,7 @@ function test_dump_restore()
   local function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 5m:2d"}))
     -- the maximal time stamp is 1353179400 and there are exactly 4 slots which are no more
-    -- than 48 hours ago
+    -- than 48 hours before it
     m.process(line)
     assert(string.find(m.graph("beer.stout.irish;5m:2d",{timestamp="latest-2d+1..latest",filter="latest"}),'"data": {"beer.stout.irish;5m:2d": [[1,1,1353179400],[2,1,1353019200],[1,1,1353074400],[1,1,1353087600]]',1,true))
     assert(string.find(m.graph("beer.stout.irish;5m:2d",{timestamp="latest-2d+1..latest",filter="now"}),'"data": {"beer.stout.irish;5m:2d": []',1,true))
@@ -1115,7 +1118,7 @@ function test_hits_provided()
     gr = m.graph("Johnston.Emilia.Sweet-Nuthin",{level=1,count=1,in_memory=true,stat="average"})
     assert(arrays_equal({0.5,100,0},gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"][1]))
   end
-  for_each_db("./tests/temp/test_hits_provided",helper)
+  for_each_db("test_hits_provided",helper)
 end
 
 function test_factor()
@@ -1132,7 +1135,7 @@ function test_factor()
     gr = m.graph("Johnston.Emilia.Sweet-Nuthin",{level=1,count=1,in_memory=true,factor=100})
     assert(arrays_equal({0.05,100,0},gr["Johnston.Emilia.Sweet-Nuthin;1h:12h"][1]))
   end
-  for_each_db("./tests/temp/test_factor",helper)
+  for_each_db("test_factor",helper)
 
 end
 
@@ -1149,7 +1152,7 @@ function test_same_prefix()
     assert(string.find(gr,'"beer.ale.pale;1m:12h": [[7,1,0]]',1,true))
     assert_nil(string.find(gr,'"beer;1m:1d": [[7,1,0]]',1,true))
   end
-  for_each_db("./tests/temp/test_same_prefix",helper)
+  for_each_db("test_same_prefix",helper)
 end
 
 function test_time_now()
@@ -1165,9 +1168,46 @@ function test_time_now()
     assert(string.find(gr,'"beer;1h:30d": [[7,1,'..now1..']]',1,true))
     assert(string.find(gr,'"beer;1m:12h": [[7,1,'..now2..']]',1,true))
   end
-  for_each_db("./tests/temp/test_time_now",helper)
+  for_each_db("test_time_now",helper)
 end
 
+function test_filter()
+  local function helper(m)
+    m.configure(table_itr({"beer 60s:1h"}))
+    set_hard_coded_time(0)
+    local now = time_now()
+    m.process("beer.ale.pale 1 "..(now+0))
+    m.process("beer.ale.pale 2 "..(now+60))
+    m.process("beer.ale.pale 4 "..(now+120))
+    local gr = m.graph("beer",{filter="now"})
+    assert(string.find(gr,'%[%[1,1,%d+%],%[2,1,%d+%],%[4,1,%d+%]'))
+    m.process("beer.ale.pale 8 "..3780)
+    set_hard_coded_time(4000)
+    gr = m.graph("beer",{filter="now"})
+    assert(string.find(gr,'%[%[8,1,%d+%]'))
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_filter_now",helper)
+end
 
+function test_zero_sum_latest()
+  local function helper(m)
+    m.configure(table_itr({"beer 60s:1h"}))
+    set_hard_coded_time(0)
+    local now = time_now()
+    m.process("beer.ale.pale 1 "..(now+0))
+    m.process("beer.ale.pale 2 "..(now+60))
+    m.process("beer.ale.pale 4 "..(now+120))
+    assert(string.find(m.latest("beer.ale.pale;1m:1h"),"[4,1,120]",1,true))
+    m.process("beer.ale.pale 0 "..(now+122))
+    assert(string.find(m.latest("beer.ale.pale;1m:1h"),"[4,1,120]",1,true))
+    m.process("beer.ale.pale 0 "..(now+190))
+    assert(string.find(m.latest("beer.ale.pale;1m:1h"),"[]",1,true))
+    set_hard_coded_time(nil)
+  end
+  if not ZERO_NOT_PROCESSED then
+    for_each_db("test_zero_sum_latest",helper)
+  end
+end
 --verbose_log(true)
 --profiler.start("profiler.out")
