@@ -1149,17 +1149,19 @@ function simple_cache(capacity_)
     return ks
   end
 
+  local function out(k)
+      if cache[k] then
+        cache[k] = nil
+        num_keys = num_keys - 1
+      end
+    end
+
   return {
     get = function(k)
       return cache[k]
     end,
 
-    out = function(k)
-      if cache[k] then
-        cache[k] = nil
-        num_keys = num_keys - 1
-      end
-    end,
+    out = out,
 
     set = function(k,v)
       if num_keys==capacity_ then

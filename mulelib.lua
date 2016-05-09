@@ -372,7 +372,7 @@ function mule(db_)
   local _self_metrics = {}
   local _factories_cache = simple_cache(FACTORIES_CACHE_CAPACITY)
 
-  _db._zero_sum_latest = simple_cache(MAX_CACHE_SIZE)
+  _db._zero_sum_latest = simple_cache(ZERO_SUM_LATEST_CACHE)
 
   local function increment(metric_,sum_,hits_)
     local v = _self_metrics[metric_]
