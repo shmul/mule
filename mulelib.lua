@@ -49,7 +49,7 @@ function sequence(db_,name_)
     if sum_is_zero_ then
       db_._zero_sum_latest.set(name_,latest_timestamp_)
     else
-    at(math.floor(_period/_step),0,latest_timestamp_)
+      at(math.floor(_period/_step),0,latest_timestamp_)
       db_._zero_sum_latest.out(name_) -- we don't want to mask the real latest with the zero one
   end
   end
@@ -421,7 +421,6 @@ function mule(db_)
 
 
   local function get_sequences(metric_)
-    -- TODO use a simple cache for metrics -> factories
     local function get_seqs()
       local metric_rps = {}
       local idx = 1
