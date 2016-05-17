@@ -45,13 +45,9 @@ function sequence(db_,name_)
     return at(idx_,0)
   end
 
-  local function set_latest(latest_timestamp_,sum_is_zero_)
-    if sum_is_zero_ then
-      db_._zero_sum_latest.set(name_,latest_timestamp_)
-    else
-      at(math.floor(_period/_step),0,latest_timestamp_)
-      db_._zero_sum_latest.out(name_) -- we don't want to mask the real latest with the zero one
-  end
+  local function set_latest(latest_timestamp_)
+    at(math.floor(_period/_step),0,latest_timestamp_)
+    db_._zero_sum_latest.out(name_) -- we don't want to mask the real latest with the zero one
   end
 
 
@@ -162,7 +158,7 @@ function sequence(db_,name_)
 
     local lt = latest_timestamp() or -1
     if (ZERO_NOT_PROCESSED or lt>=0) and adjusted_timestamp>lt then
-      set_latest(adjusted_timestamp,sum_==0)
+      set_latest(adjusted_timestamp)
     end
 
     _seq_storage.save(_name)
@@ -1025,9 +1021,7 @@ function mule(db_)
     return wrap_json(str)
   end
 
-  --[[ the file is assumed to be sorted by metric name (!) and each line is of the form
-    DDDD|metric;step:period where D are digits.
-  --]]
+  -- the file is assumed to be sorted by metric name (!) and each line is of the form DDDD|metric;step:period where D are digits.
   local function rebuild_db(file_)
 
   end
@@ -1169,6 +1163,11 @@ function mule(db_)
 
 
   local function update_sequence(name_,sum_,timestamp_,hits_,type_,now_)
+    if sum_==0 then
+      db_._zero_sum_latest.set(name_,timestamp_)
+      return
+    end
+
     if now_ then
       local metric,step,period = parse_name(name_)
       if timestamp_<now_-period then

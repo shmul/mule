@@ -180,7 +180,7 @@ function test_sequences()
       end
 
       assert_equal("seq",seq1.deserialize(in_memory_db,true,read_3_values,read_3_values))
---]]
+ --]]
 
     local tbl1 = {}
     seq.serialize({all_slots=true},insert_all_args(tbl1),insert_all_args(tbl1))
@@ -500,9 +500,9 @@ function test_modify_factories()
     m.modify_factories({{"beer.ale","1h:30d","2h:90d"}})
 
     assert(non_empty_metrics(m.matching_sequences("beer.ale")))
-    assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]',1,true))
-    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true),m.graph("beer.ale"))
-    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true))
+    assert_nil(string.find(m.graph("beer.ale;1h:30d"),'[20,1,74857800]',1,true))
+    assert(string.find(m.graph("beer.ale;2h:90d"),'[20,1,74851200]',1,true),m.graph("beer.ale"))
+    assert(string.find(m.graph("beer.ale;2h:90d"),'[20,1,74851200]',1,true))
   end
   for_each_db("modify_factories",helper)
 end
