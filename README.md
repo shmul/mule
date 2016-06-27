@@ -372,21 +372,17 @@ During testing on a c3.2xlarge AWS instance with SSD in RAID 0, Mule peaked at a
 * Install additional rocks - copas, lpack, luaposix, StackTracePlus (optional)
 
 ### Lightning Memory-Mapped Database (LMDB)
-Assuming `/home/user/projects` is the root of your development projects, run the following commands to install LMDB:
-
+First of all, LMDB needs to be installed.
 <pre>
 git clone https://github.com/LMDB/lmdb # This will create a directory ./mdb/libraries/liblmdb
 cd ./lmdb/libraries/liblmdb
 make
-cd /home/user/projects
-git clone git://github.com/shmul/lightningdbm.git
-cd ./lightningmdb
-cp ../lmdb/libraries/liblmdb/liblmdb.{a,so} .
-make
+sudo make install 
 </pre>
-
-copy `lightningmdb.so` to your mule directory
-
+Then install the ```lightningmdb```  rock
+<pre>
+sudo luarocks install lightningmdb
+</pre>
 
 ### Deployment model
 
