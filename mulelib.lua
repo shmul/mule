@@ -15,14 +15,13 @@ local nop = function() end
 local return_0 = function() return 0 end
 
 local SEQUENCE_TYPES = {
-  "standard",
-  "monotonic",
-  "log",
-  "singelton",
-  "min",
-  "max",
-  "gauge"
+  singleton = '!',
+  min = '_',
+  max = '^',
+  gauge = '=',
 }
+
+local SEQUENCE_TYPES_CALLBACKS -- will be lazily filled by the using func
 
 local NOP_SEQUENCE = {
   slots = function() return {} end,
@@ -167,13 +166,18 @@ function sequence(db_,name_)
       elseif type_=='^' then
         hits,sum = hits_ or 1,math.max(sum_,sum)
       elseif type_=='_' then
+
+        if (timestamp==0 and hits==0 and sum==0) or sum>sum_ then
+          sum = sum_
+        end
         hits = hits_ or 1
-        sum = sum and math.min(sum_,sum) or sum_
       end
+
       at(idx,nil,adjusted_timestamp,hits,sum)
     end
 
     local lt = latest_timestamp() or -1
+
     if (ZERO_NOT_PROCESSED or lt>=0) and adjusted_timestamp>lt then
       set_latest(adjusted_timestamp,sum_==0)
     end
@@ -359,6 +363,7 @@ end
 
 
 local function each_metric(db_,metrics_,retention_pair_,callback_)
+
   for m in split_helper(metrics_,"/") do
     for seq in sequences_for_prefix(db_,m,retention_pair_) do
       callback_(seq)
@@ -409,18 +414,15 @@ function mule(db_)
   local function add_factory(metric_,rest_)
     _factories_cache.flush()
 
-    -- the factories hold a triple for each metric - retentions,types,matcher
-    -- if matcher is not nil then:
-    --  true - metric is a substring
-    --  false - metric is a pattern
+    -- the factories hold a triple for each metric - retentions,type,matcher
     metric_ = string.match(metric_,"^(.-)%.*$")
-    local matcher = nil
+    local matcher = "prefix"
     if string.find(metric_,":",1,true) then -- a substring matcher
-      matcher = true
+      matcher = "substring"
       -- a substring. strip the head ':'
-       metric_ = string.sub(metric_,string.find(metric_,":",true,1)+1,-1)
-    elseif string.find(metric_,"[*+%%]") then -- a pattern matcher
-      matcher = false
+       metric_ = string.sub(metric_,string.find(metric_,":",1,true)+1,-1)
+    elseif string.find(metric_,"[*+$%%]") then -- a pattern matcher
+      matcher = "pattern"
     end
 
     for _,r in ipairs(rest_) do
@@ -428,7 +430,6 @@ function mule(db_)
       if step and period then -- this looks like a retention
         if step>period then
           loge("step greater than period",r,step,period)
-          error("step greater than period")
           return nil
         end
         _factories[metric_] = _factories[metric_] or {}
@@ -436,48 +437,46 @@ function mule(db_)
         _factories[metric_].rps = _factories[metric_].rps or {}
         table.insert(_factories[metric_].rps,{step,period})
       elseif SEQUENCE_TYPES[r] then  -- perhaps a type specifier
-        _factories[metric_].types = _factories[metric_].types or {}
-        table.insert(_factories[metric_].types,r)
+        if _factories[metric_].type then
+          logw("type already exists for factory",metric_,_factories[metric_].type)
+        else
+          _factories[metric_].type = r
+        end
       end
     end
-
     -- now we make sure the factories are unique
     uniq_factories()
     return true
   end
 
 
-  local function get_sequences(metric_)
+  local function get_sequences(metric_,typ)
     local function get_seqs()
       local matches = {}
       local find = string.find
 
       for m,f in pairs(_factories) do
-        if (f.matcher==nil and is_prefix(metric_,m)) or
-          (f.matcher==true and find(metric_,m,1,true)) or find(metric_,m)
-        then
+        if (f.matcher=="prefix" and is_prefix(metric_,m)) then
           matches[m] = f
+        elseif (f.matcher=="substring" and find(metric_,m,1,true)) or find(metric_,m) then
+          matches[metric_] = f
         end
       end
 
       local seqs = {}
       for m,f in pairs(matches) do
-        local compute_hierarchy
-        if not f.matcher then
-          compute_hierarchy = true
-        end
-
-        if compute_hierarchy then
+        if f.matcher~="prefix" or typ=='!' or f.type=="singleton"  then
+          for _,rp in ipairs(f.rps) do
+            seqs[name(m,rp[1],rp[2])] = f.type or false
+          end
+        else -- prefix
           for h in metric_hierarchy(metric_) do
             if is_prefix(h,m) then
               for _,rp in ipairs(f.rps) do
-                seqs[name(h,rp[1],rp[2])] = false
+                -- can't put nil here or it won't be added to the table
+                seqs[name(h,rp[1],rp[2])] = f.type or false
               end
             end
-          end
-        else
-          for _,rp in ipairs(f[2][1]) do
-            seqs[name(m,rp[1],rp[2])] = f.types
           end
         end
       end
@@ -703,7 +702,7 @@ function mule(db_)
   local function graph(resource_,options_)
     local str = strout("")
     options_ = options_ or {}
-    local timestamps = options_.timestamp and split(options_.timestamp,',') or nil
+    local timestamps = options_.timestamps and split(options_.timestamps,',') or nil
     local format = string.format
     local col = collectionout(str,"{","}")
     local opts = { all_slots=not timestamps,
@@ -802,9 +801,8 @@ function mule(db_)
   local function slot(resource_,options_)
     local str = strout("")
     local format = string.format
-    local opts = { timestamps={options_ and options_.timestamp},readable=is_true(options_.readable) }
+    local opts = { timestamps={options_ and options_.timestamps},readable=is_true(options_.readable) }
     local col = collectionout(str,"{","}")
-
     col.head()
     each_metric(db_,resource_,nil,
                 function(seq)
@@ -830,7 +828,7 @@ function mule(db_)
 
   local function latest(resource_,opts_)
     opts_ = opts_ or {}
-    opts_.timestamp = "latest"
+    opts_.timestamps = "latest"
     return slot(resource_,opts_)
   end
 
@@ -1150,9 +1148,7 @@ function mule(db_)
         col1.elem(format("\"%s:%s\" ",secs_to_time_unit(v[1]),secs_to_time_unit(v[2])))
       end
       col1.tail()
-      for _,v in ipairs(f.types or {}) do
-        col1.elem(format("\"%s\"",v))
-      end
+      col1.elem(format("\"%s\"",f.type))
       col1.elem(format("\"%s\"",f.matcher))
     end
 
@@ -1213,7 +1209,7 @@ function mule(db_)
   end
 
 
-  local function update_sequence(name_,sum_,timestamp_,hits_,inline_type_,types_,now_)
+  local function update_sequence(name_,sum_,timestamp_,hits_,inline_type_,factory_type_,now_)
     if now_ then
       local metric,step,period = parse_name(name_)
       if timestamp_<now_-period then
@@ -1221,22 +1217,46 @@ function mule(db_)
       end
     end
 
-    local seq = _updated_sequences.get(name_)
-    local new_key = false
-    if not seq then
-      -- this might be a new key and so we should add it to the DB as well. Kind of ugly, but we rely on the
-      -- DB (and not the caches) when looking for keys
-      seq = sparse_sequence(name_)
-      new_key = true
+    local format = string.format
+
+    local function standard(n,ts,ht,sm,tp)
+      local seq = _updated_sequences.get(n)
+      local new_key = false
+      if not seq then
+        -- this might be a new key and so we should add it to the DB as well.
+        -- Kind of ugly, but we rely on the DB (and not the caches) when looking for keys
+        seq = sparse_sequence(name_)
+        new_key = true
+      end
+
+      -- it might happen that we try to update a too old timestamp. In such a case
+      -- the update function returns null
+      local adjusted_timestamp,sum = seq.update(ts,ht,sm,tp)
+      if adjusted_timestamp then
+        _updated_sequences.set(n,seq)
+        if new_key then
+          flush_cache_of_sequence(n,seq)
+        end
+        return seq,sum
+      end
     end
-    -- TODO go over the types
-    local adjusted_timestamp,sum = seq.update(timestamp_,hits_,sum_,inline_type_)
-    -- it might happen that we try to update a too old timestamp. In such a case
-    -- the update function returns null
-    if adjusted_timestamp then
-      _updated_sequences.set(name_,seq)
-      if new_key then
-        flush_cache_of_sequence(name_,seq)
+
+    local function log(n,ts,ht,sm,tp)
+      local seq,_ = standard(n,ts,ht,sm,tp)
+      if seq then
+        local g = math.floor(math.log(sm,2))
+        local metric,step,period = parse_name(name_)
+        local new_name = name(format("%s.%d",metric,g),step,period)
+        standard(new_name,ts,1,1)
+      end
+    end
+
+    if inline_type_ or not factory_type_ then
+      standard(name_,timestamp_,hits_,sum_,inline_type_)
+    elseif factory_type_ then
+      local typ = SEQUENCE_TYPES[factory_type_]
+      if typ then
+        standard(name_,timestamp_,hits_,sum_,typ)
       end
     end
     return true
@@ -1254,8 +1274,8 @@ function mule(db_)
       return
     end
 
-    for n,types in get_sequences(metric_) do
-      update_sequence(n,sum,timestamp,hits,typ,types,now_)
+    for n,factory_type in get_sequences(metric_,typ) do
+      update_sequence(n,sum,timestamp,hits,typ,factory_type,now_)
     end
 
   end

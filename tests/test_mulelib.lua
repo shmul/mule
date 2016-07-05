@@ -22,13 +22,13 @@ end
 
 
 local function lightning_db_factory(name_)
-  p.set_pack_lib("lpack")
+  p.set_pack_lib("bits")
   local dir = create_test_directory(name_.."_mdb")
   return mdb.lightning_mdb(dir)
 end
 
 local function memory_db_factory(name_)
-  p.set_pack_lib("bit32")
+  p.set_pack_lib("purepack")
   return in_memory_db()
 end
 
@@ -468,7 +468,7 @@ function test_top_level_factories()
     assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
     assert(non_empty_metrics(m.matching_sequences("beer")))
     assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
---    print(m.latest("beer"))
+    --print(m.latest("beer"))
     assert(string.find(m.latest("beer"),"70,3,74857800"))
 
     m.process("beer.ale.brown.newcastle 98 74857954")
@@ -494,7 +494,6 @@ function test_modify_factories()
 
     m.process("beer.ale.mild 20 74857843")
     assert(non_empty_metrics(m.matching_sequences("beer.ale")))
-
     assert_equal(4,#m.matching_sequences("beer.ale"))
     assert(string.find(m.graph("beer.ale"),'"beer.ale;1m:12h": [[20,1,74857800]'))
     assert(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]'))
@@ -503,7 +502,7 @@ function test_modify_factories()
     assert(non_empty_metrics(m.matching_sequences("beer.ale")))
     assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]',1,true))
 
-    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true),m.graph("beer.ale"))
+    assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d":[^{}]+[20,1,74851200]'),m.graph("beer.ale"))
     assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true))
   end
   for_each_db("modify_factories",helper)
@@ -646,10 +645,10 @@ function test_latest()
 
     m.process("beer.ale.brown 3 3")
     assert(string.find(m.latest("beer.ale.brown;1m:12h"),"3,1,0"))
-    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamp="latest"}),"3,1,0"))
-    assert(string.find(m.slot("beer.ale.brown;1m:12h",{timestamp="1"}),"3,1,0"))
+    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamps="latest"}),"3,1,0"))
+    assert(string.find(m.slot("beer.ale.brown;1m:12h",{timestamps="1"}),"3,1,0"))
     assert(string.find(m.latest("beer.ale.pale;1m:12h"),'"data": {}'))
-    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest"}),'"data": {}',1,true))
+    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamps="latest"}),'"data": {}',1,true))
     assert(string.find(m.latest("beer.ale.pale;1h:30d"),'"data": {}'))
 
 
@@ -660,11 +659,11 @@ function test_latest()
 
     m.process("beer.ale.pale 2 3601")
     assert(string.find(m.latest("beer.ale.brown;1m:12h"),"3,1,0"))
-    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamp="latest-90"}),'"beer.ale.brown;1m:12h": []',1,true))
-    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="3604"}),"2,1,3600"))
-    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10s"}),"2,1,3600"))
-    assert_nil(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10m,now"}),"2,1,3600"))
-    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamp="latest+10m"}),'"beer.ale.pale;1m:12h": []',1,true))
+    assert(string.find(m.graph("beer.ale.brown;1m:12h",{timestamps="latest-90"}),'"beer.ale.brown;1m:12h": []',1,true))
+    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamps="3604"}),"2,1,3600"))
+    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamps="latest+10s"}),"2,1,3600"))
+    assert_nil(string.find(m.graph("beer.ale.pale;1m:12h",{timestamps="latest+10m,now"}),"2,1,3600"))
+    assert(string.find(m.graph("beer.ale.pale;1m:12h",{timestamps="latest+10m"}),'"beer.ale.pale;1m:12h": []',1,true))
     assert(string.find(m.latest("beer.ale;1h:30d"),"2,1,3600"))
 
     m.process("beer.ale.pale 7 4")
@@ -679,7 +678,7 @@ function test_latest()
 
     assert(string.find(g,"[[2,1,3600],[7,1,0]]"))
     m.process("beer.ale.pale 9 64")
-    g = m.graph("beer.ale.pale;1m:12h",{timestamp="latest..0"})
+    g = m.graph("beer.ale.pale;1m:12h",{timestamps="latest..0"})
     assert(string.find(g,"[[2,1,3600],[9,1,60],[7,1,0]]",1,true))
 
     m.process("beer.ale.brown 90 4400")
@@ -687,7 +686,7 @@ function test_latest()
     -- we have two hits 3+7 at times 3 and 4 which are adjusted to 0
 
     m.process("beer.ale.brown 77 7201")
-    assert_nil(string.find(m.graph("beer.ale;1h:30d",{timestamp="latest,latest-2h"}),"92,2,3600"))
+    assert_nil(string.find(m.graph("beer.ale;1h:30d",{timestamps="latest,latest-2h"}),"92,2,3600"))
     assert(string.find(m.graph("beer.ale;1h:30d","latest-3m"),"92,2,3600"))
   end
 
@@ -711,10 +710,10 @@ function test_update_only_relevant()
 
     assert(string.find(m.latest("beer.ale.burton;1m:12h"),"[32,1,60]",1,true))
     assert(string.find(m.latest("beer.ale;1m:12h"),"[32,1,60]",1,true))
-    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp=93}),"[32,1,60]",1,true))
+    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamps=93}),"[32,1,60]",1,true))
 
     m.process("beer.ale 132 121")
-    assert(string.find(m.slot("beer.ale;1m:12h",{timestamp="121"}),"[132,1,120]",1,true))
+    assert(string.find(m.slot("beer.ale;1m:12h",{timestamps="121"}),"[132,1,120]",1,true))
     assert(string.find(m.latest("beer.ale;1m:12h"),"[132,1,120]",1,true))
     assert(string.find(m.latest("beer.ale.pale;1m:12h"),"[7,1,0]",1,true))
     assert(string.find(m.latest("beer.ale.brown;1m:12h"),"[6,1,0]",1,true))
@@ -722,16 +721,16 @@ function test_update_only_relevant()
 
     m.process("beer.ale =94 121")
 
-    assert(string.find(m.slot("beer.ale;1m:12h",{timestamp="121"}),"[94,1,120]",1,true))
+    assert(string.find(m.slot("beer.ale;1m:12h",{timestamps="121"}),"[94,1,120]",1,true))
 
     m.process("beer.ale.burton =164 854")
-    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp="latest"}),"[164,1,840]",1,true))
+    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamps="latest"}),"[164,1,840]",1,true))
 
     m.process("beer.ale.burton ^90 854")
-    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp="latest"}),"[164,1,840]",1,true))
+    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamps="latest"}),"[164,1,840]",1,true))
 
     m.process("beer.ale.burton ^190 854")
-    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamp="latest"}),"[190,1,840]",1,true))
+    assert(string.find(m.slot("beer.ale.burton;1m:12h",{timestamps="latest"}),"[190,1,840]",1,true))
 
   end
 
@@ -783,8 +782,8 @@ function test_dump_restore()
     -- the maximal time stamp is 1353179400 and there are exactly 4 slots which are no more
     -- than 48 hours before it
     m.process(line)
-    assert(string.find(m.graph("beer.stout.irish;5m:2d",{timestamp="latest-2d+1..latest",filter="latest"}),'"data": {"beer.stout.irish;5m:2d": [[1,1,1353179400],[2,1,1353019200],[1,1,1353074400],[1,1,1353087600]]',1,true))
-    assert(string.find(m.graph("beer.stout.irish;5m:2d",{timestamp="latest-2d+1..latest",filter="now"}),'"data": {"beer.stout.irish;5m:2d": []',1,true))
+    assert(string.find(m.graph("beer.stout.irish;5m:2d",{timestamps="latest-2d+1..latest",filter="latest"}),'"data": {"beer.stout.irish;5m:2d": [[1,1,1353179400],[2,1,1353019200],[1,1,1353074400],[1,1,1353087600]]',1,true))
+    assert(string.find(m.graph("beer.stout.irish;5m:2d",{timestamps="latest-2d+1..latest",filter="now"}),'"data": {"beer.stout.irish;5m:2d": []',1,true))
     assert(string.find(m.graph("beer.stout.irish;5m:2d",{filter="latest"}),'"data": {"beer.stout.irish;5m:2d": [[1,1,1353074400],[1,1,1353087600],[1,1,1353179400],[2,1,1353019200]]',1,true))
 
   end
@@ -800,15 +799,15 @@ function test_pale()
 
     m.process("./tests/fixtures/pale.dump")
 
-    assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamp="1360800000"}),"274,244",1,true))
-    assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361127300"}),"1526,756",1,true))
+    assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamps="1360800000"}),"274,244",1,true))
+    assert(string.find(m.slot("beer.ale;5m:2d",{timestamps="1361127300"}),"1526,756",1,true))
     m.process("./tests/fixtures/pale.mule")
     --    m.flush_cache()
 
-    assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamp="1361300362"}),"19,11",1,true))
+    assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamps="1361300362"}),"19,11",1,true))
 
-    assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
-    assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361300362"}),"46,27",1,true))
+    assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamps="1361300428"}),"11,5",1,true))
+    assert(string.find(m.slot("beer.ale;5m:2d",{timestamps="1361300362"}),"46,27",1,true))
   end
 
   for_each_db("pale",helper,true)
@@ -1212,5 +1211,90 @@ function test_zero_sum_latest()
     for_each_db("test_zero_sum_latest",helper)
   end
 end
+
+function test_factory_types()
+  local function helper(m)
+    m.configure(table_itr({"beer 60s:1h gauge"}))
+    set_hard_coded_time(0)
+    local now = time_now()
+    m.process("beer.ale.pale 1 "..(now+0))
+    m.process("beer.ale.pale 2 "..(now+60))
+    m.process("beer.ale.pale 4 "..(now+120))
+    m.process("beer.ale.pale 8 "..(now+120))
+    --    print(m.latest("beer.ale.pale;1m:1h"))
+    m.flush_cache()
+    assert(string.find(m.latest("beer.ale.pale;1m:1h"),"[8,1,120]",1,true))
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_factory_types",helper)
+end
+
+function test_factory_suffix()
+  local function helper(m)
+    set_hard_coded_time(0)
+    local now = time_now()
+    m.configure(table_itr({"wine$ 60s:1h"}))
+    m.process("red.wine 1 "..(now+0))
+    m.process("white.wine 2 "..(now+60))
+    m.process("red.wine.chilled 4 "..(now+120))
+
+    assert(string.find(m.latest("red.wine;1m:1h"),"[1,1,0]",1,true))
+    assert(string.find(m.latest("white.wine;1m:1h"),"[2,1,60]",1,true))
+    assert(string.find(m.latest("red.wine.chilled;1m:1h"),'"data": {}',1,true))
+
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_factory_suffix",helper)
+end
+
+function test_factory_prefix()
+  local function helper(m)
+    m.configure(table_itr({":pale 60s:1h"}))
+    set_hard_coded_time(0)
+    local now = time_now()
+
+    m.process("beer.ale.pale 1 "..(now+0))
+    m.process("beer.ale.pale 2 "..(now+60))
+    m.process("beer.ale.pale 4 "..(now+120))
+
+    assert(string.find(m.graph("beer.ale.pale;1m:1h"),"[4,1,120]",1,true))
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_factory_prefix",helper)
+end
+
+function test_factory_max()
+  local function helper(m)
+    set_hard_coded_time(0)
+    local now = time_now()
+
+    m.configure(table_itr({"wine$ 60s:1h max"}))
+    m.process("red.wine 1 "..(now+0))
+    m.process("red.wine 2 "..(now+30))
+    m.process("red.wine 4 "..(now+40))
+    assert(string.find(m.latest("red.wine;1m:1h"),"[4,1,0]",1,true))
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_factory_max",helper)
+end
+
+
+function test_factory_min()
+  local function helper(m)
+    set_hard_coded_time(0)
+    local now = time_now()
+    m.configure(table_itr({":white 60s:1h min"}))
+    m.process("white.wine 1 "..(now+0))
+    m.process("white.wine 2 "..(now+30))
+    m.process("white.wine 1 "..(now+200))
+    m.process("white.wine 8 "..(now+180))
+
+    assert(string.find(m.latest("white.wine;1m:1h"),"[1,1,180]",1,true),m.latest("white.wine;1m:1h"))
+
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_factory_min",helper)
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")

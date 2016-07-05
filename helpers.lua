@@ -985,7 +985,6 @@ function sparse_sequence(name_,slots_)
 
   local function update(timestamp_,hits_,sum_,type_)
     local idx,adjusted_timestamp = calc_idx(timestamp_)
-
     if not idx then
       return nil
     end
@@ -995,6 +994,8 @@ function sparse_sequence(name_,slots_)
         slot._sum = sum_
       elseif type_=='^' then
         slot._sum = math.max(sum_,slot._sum)
+      elseif type_=='_' then
+        slot._sum = slot._hits==0 and sum_ or math.min(sum_,slot._sum)
       end
       slot._type = type_
       slot._hits = slot._hits+hits_
@@ -1203,4 +1204,12 @@ function simple_cache(capacity_)
       num_keys = 0
     end
   }
+end
+
+function array_contains(array_,element_)
+  if not array_ then return false end
+  for _,a in ipairs(array_) do
+    if a==element_ then return true end
+  end
+  return false
 end
