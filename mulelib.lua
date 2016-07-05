@@ -14,6 +14,16 @@ end
 local nop = function() end
 local return_0 = function() return 0 end
 
+local SEQUENCE_TYPES = {
+  "standard",
+  "monotonic",
+  "log",
+  "singelton",
+  "min",
+  "max",
+  "gauge"
+}
+
 local NOP_SEQUENCE = {
   slots = function() return {} end,
   name = function() return "" end,
@@ -144,7 +154,7 @@ function sequence(db_,name_)
 
     -- it can happen that we get a 0 sum to update. In this case we'll skip the update of the slot
     -- but will still update the latest timestamp
-    if sum_>0 or type_=="=" then
+    if sum_>0 or type_ then
       if (not type_) then
         if adjusted_timestamp==timestamp and hits>0 then
           -- no need to worry about the latest here, as we have the same (adjusted) timestamp
@@ -156,6 +166,9 @@ function sequence(db_,name_)
         hits,sum = hits_ or 1,sum_
       elseif type_=='^' then
         hits,sum = hits_ or 1,math.max(sum_,sum)
+      elseif type_=='_' then
+        hits = hits_ or 1
+        sum = sum and math.min(sum_,sum) or sum_
       end
       at(idx,nil,adjusted_timestamp,hits,sum)
     end
@@ -355,7 +368,6 @@ end
 
 function mule(db_)
   local _factories = {}
-  local _sorted_factories
   local _alerts = {}
   local _anomalies = {} -- these do not persist as they can be recalulated
   local _db = db_
@@ -389,28 +401,43 @@ function mule(db_)
   db_.set_increment(increment)
 
   local function uniq_factories()
-    local factories = _factories
-    _factories = {}
-    for fm,rps in pairs(factories) do
-      _factories[fm] = uniq_pairs(rps)
+    for m,f in pairs(_factories) do
+      _factories[m].rps = uniq_pairs(f.rps)
     end
-    _sorted_factories = keys(_factories)
-    table.sort(_sorted_factories)
   end
 
-  local function add_factory(metric_,retentions_)
+  local function add_factory(metric_,rest_)
     _factories_cache.flush()
+
+    -- the factories hold a triple for each metric - retentions,types,matcher
+    -- if matcher is not nil then:
+    --  true - metric is a substring
+    --  false - metric is a pattern
     metric_ = string.match(metric_,"^(.-)%.*$")
-    for _,rp in ipairs(retentions_) do
-      local step,period = parse_time_pair(rp)
-      if step and period then
+    local matcher = nil
+    if string.find(metric_,":",1,true) then -- a substring matcher
+      matcher = true
+      -- a substring. strip the head ':'
+       metric_ = string.sub(metric_,string.find(metric_,":",true,1)+1,-1)
+    elseif string.find(metric_,"[*+%%]") then -- a pattern matcher
+      matcher = false
+    end
+
+    for _,r in ipairs(rest_) do
+      local step,period = parse_time_pair(r)
+      if step and period then -- this looks like a retention
         if step>period then
-          loge("step greater than period",rp,step,period)
+          loge("step greater than period",r,step,period)
           error("step greater than period")
           return nil
         end
         _factories[metric_] = _factories[metric_] or {}
-        table.insert(_factories[metric_],{step,period})
+        _factories[metric_].matcher = matcher
+        _factories[metric_].rps = _factories[metric_].rps or {}
+        table.insert(_factories[metric_].rps,{step,period})
+      elseif SEQUENCE_TYPES[r] then  -- perhaps a type specifier
+        _factories[metric_].types = _factories[metric_].types or {}
+        table.insert(_factories[metric_].types,r)
       end
     end
 
@@ -422,26 +449,39 @@ function mule(db_)
 
   local function get_sequences(metric_)
     local function get_seqs()
-      local metric_rps = {}
-      local idx = 1
-      while idx<=#_sorted_factories and _sorted_factories[idx]<=metric_ do
-        if is_prefix(metric_,_sorted_factories[idx]) then
-          local fm = _sorted_factories[idx]
-          table.insert(metric_rps,{fm,_factories[fm]})
+      local matches = {}
+      local find = string.find
+
+      for m,f in pairs(_factories) do
+        if (f.matcher==nil and is_prefix(metric_,m)) or
+          (f.matcher==true and find(metric_,m,1,true)) or find(metric_,m)
+        then
+          matches[m] = f
         end
-        idx = idx + 1
       end
 
       local seqs = {}
-      for m in metric_hierarchy(metric_) do
-        for _,frp in ipairs(metric_rps) do
-          if is_prefix(m,frp[1]) then
-            for _,rp in ipairs(frp[2]) do
-              seqs[name(m,rp[1],rp[2])] = m
+      for m,f in pairs(matches) do
+        local compute_hierarchy
+        if not f.matcher then
+          compute_hierarchy = true
+        end
+
+        if compute_hierarchy then
+          for h in metric_hierarchy(metric_) do
+            if is_prefix(h,m) then
+              for _,rp in ipairs(f.rps) do
+                seqs[name(h,rp[1],rp[2])] = false
+              end
             end
+          end
+        else
+          for _,rp in ipairs(f[2][1]) do
+            seqs[name(m,rp[1],rp[2])] = f.types
           end
         end
       end
+
       return seqs
     end
 
@@ -449,7 +489,6 @@ function mule(db_)
       function()
         local seqs = _factories_cache.get(metric_) or get_seqs()
         _factories_cache.set(metric_,seqs)
-
         for n,m in pairs(seqs) do
           coroutine.yield(n,m)
         end
@@ -1103,15 +1142,20 @@ function mule(db_)
     local col = collectionout(str,"{","}")
 
     col.head()
-    for fm,rps in pairs(_factories) do
+    for fm,f in pairs(_factories) do
       local col1 = collectionout(str,"[","]\n")
       col.elem(format("\"%s\": ",fm))
       col1.head()
-      for _,v in ipairs(rps) do
+      for _,v in ipairs(f.rps) do
         col1.elem(format("\"%s:%s\" ",secs_to_time_unit(v[1]),secs_to_time_unit(v[2])))
       end
       col1.tail()
+      for _,v in ipairs(f.types or {}) do
+        col1.elem(format("\"%s\"",v))
+      end
+      col1.elem(format("\"%s\"",f.matcher))
     end
+
     col.tail()
     logi("export_configuration",table_size(_factories))
     return wrap_json(str)
@@ -1126,19 +1170,20 @@ function mule(db_)
 
     col.head()
     for fm in split_helper(resource_,"/") do
-      local rps = _factories[fm]
+      local f = _factories[fm]
       if force then
         _factories[fm] = nil
       end
-      if rps then
+      if f then
         local col1 = collectionout(str,"[","]\n")
         col.elem(format("\"%s\": ",fm))
         col1.head()
-        for _,v in ipairs(rps) do
+        for _,v in ipairs(f.rps) do
           col1.elem(format("\"%s:%s\" ",secs_to_time_unit(v[1]),secs_to_time_unit(v[2])))
         end
         col1.tail()
       end
+
     end
     col.tail()
     logi("factories_out",table_size(_factories))
@@ -1168,7 +1213,7 @@ function mule(db_)
   end
 
 
-  local function update_sequence(name_,sum_,timestamp_,hits_,type_,now_)
+  local function update_sequence(name_,sum_,timestamp_,hits_,inline_type_,types_,now_)
     if now_ then
       local metric,step,period = parse_name(name_)
       if timestamp_<now_-period then
@@ -1184,7 +1229,8 @@ function mule(db_)
       seq = sparse_sequence(name_)
       new_key = true
     end
-    local adjusted_timestamp,sum = seq.update(timestamp_,hits_,sum_,type_)
+    -- TODO go over the types
+    local adjusted_timestamp,sum = seq.update(timestamp_,hits_,sum_,inline_type_)
     -- it might happen that we try to update a too old timestamp. In such a case
     -- the update function returns null
     if adjusted_timestamp then
@@ -1208,8 +1254,8 @@ function mule(db_)
       return
     end
 
-    for n,_ in get_sequences(metric_) do
-      update_sequence(n,sum,timestamp,hits,typ,now_)
+    for n,types in get_sequences(metric_) do
+      update_sequence(n,sum,timestamp,hits,typ,types,now_)
     end
 
   end
@@ -1232,10 +1278,10 @@ function mule(db_)
       if factory then
         local orig_step,orig_period = parse_time_pair(f[2])
         local new_step,new_period = parse_time_pair(f[3])
-        for j,r in ipairs(factory) do
+        for j,r in ipairs(factory.rps) do
           if r[1]==orig_step and r[2]==orig_period then
             logd("found original factory:",f[1])
-            factory[j] = {new_step,new_period}
+            factory.rps[j] = {new_step,new_period}
             -- scan the metrics hierarchy. every matching sequence should be replaced with
             -- a new retention
             for seq in sequences_for_prefix(_db,f[1],f[2]) do

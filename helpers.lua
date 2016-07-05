@@ -318,6 +318,12 @@ function t2s(tbl)
   return table.concat(rep,',')
 end
 
+function po(...)
+  for _,v in ipairs({...}) do
+    print(t2s(v))
+  end
+end
+
 function table_size(tbl_)
   if not tbl_ then return 0 end
   if #tbl_>0 then return #tbl_ end
@@ -558,7 +564,7 @@ function parse_input_line(line_)
   if string.sub(line_,1,1)=='.' then
     -- command
     items = split(line_,' ')
-    items[1] = string.sub(items[1],2)
+    items[1] = trim(string.sub(items[1],2))
     return items,"command"
   end
   -- metrics

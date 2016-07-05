@@ -28,7 +28,7 @@ local function lightning_db_factory(name_)
 end
 
 local function memory_db_factory(name_)
-  p.set_pack_lib("purepack")
+  p.set_pack_lib("bit32")
   return in_memory_db()
 end
 
@@ -276,7 +276,7 @@ function test_factories()
   local function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.ale 60s:24h"}))
 
-    assert_equal(3,#m.get_factories()["beer.ale"])
+    assert_equal(3,#m.get_factories()["beer.ale"].rps)
     local factories = m.get_factories()
     assert(factories["beer.ale"])
     assert_equal(0,#m.matching_sequences("beer.ale"))
@@ -302,22 +302,22 @@ function test_modify_more_factories()
 
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.ale 60s:24h"}))
 
-    assert_equal(3,#m.get_factories()["beer.ale"])
+    assert_equal(3,#m.get_factories()["beer.ale"].rps)
 
     m.modify_factories({{"beer.ale","1h:30d","2h:90d"}})
-    assert_equal(3,#m.get_factories()["beer.ale"])
+    assert_equal(3,#m.get_factories()["beer.ale"].rps)
     local factories = m.get_factories()
     assert(factories["beer.ale"])
     -- first retention 60s:12h
-    assert_equal(60,factories["beer.ale"][1][1])
-    assert_equal(12*60*60,factories["beer.ale"][1][2])
+    assert_equal(60,factories["beer.ale"].rps[1][1])
+    assert_equal(12*60*60,factories["beer.ale"].rps[1][2])
     -- first retention 60s:24h
-    assert_equal(60,factories["beer.ale"][2][1])
-    assert_equal(24*60*60,factories["beer.ale"][2][2])
+    assert_equal(60,factories["beer.ale"].rps[2][1])
+    assert_equal(24*60*60,factories["beer.ale"].rps[2][2])
 
     -- 3rd retention is new 2h:90d
-    assert_equal(2*60*60,factories["beer.ale"][3][1])
-    assert_equal(90*24*60*60,factories["beer.ale"][3][2])
+    assert_equal(2*60*60,factories["beer.ale"].rps[3][1])
+    assert_equal(90*24*60*60,factories["beer.ale"].rps[3][2])
   end
   for_each_db("test_factories_1",helper)
 end
@@ -418,8 +418,8 @@ function test_process_in_memory()
     assert(factories["beer.ale"])
     assert(factories["beer.stout"])
     assert(not factories["beer.lager"])
-    assert_equal(1,#factories["beer.stout"])
-    assert_equal(2,#factories["beer.ale"])
+    assert_equal(1,#factories["beer.stout"].rps)
+    assert_equal(2,#factories["beer.ale"].rps)
     assert_equal(nil,factories["beer.ale.brown.newcastle"])
 
     m.process("beer.ale.mild 20 74857843")
@@ -452,6 +452,8 @@ function test_top_level_factories()
     m.configure(table_itr({"beer. 60s:12h 1h:30d","beer 3m:1h"}))
     assert_equal(0,#m.matching_sequences("beer.ale"))
     local factories = m.get_factories()
+
+
     assert_equal(1,table_size(factories))
     assert(factories["beer"])
     assert(not factories["beer.lager"])
@@ -460,12 +462,11 @@ function test_top_level_factories()
 
 
     m.process({"beer.ale.mild 20 74857843","beer.ale.mild.bitter 20 74857843","beer.ale.mild.sweet 30 74857843"})
-
+    assert(non_empty_metrics(m.matching_sequences("beer.ale")))
     assert(empty_metrics(m.matching_sequences("beer.stout")))
 
     assert(empty_metrics(m.matching_sequences("beer.ale.brown.newcastle")))
     assert(non_empty_metrics(m.matching_sequences("beer")))
-    assert(non_empty_metrics(m.matching_sequences("beer.ale")))
     assert(non_empty_metrics(m.matching_sequences("beer.ale.mild")))
 --    print(m.latest("beer"))
     assert(string.find(m.latest("beer"),"70,3,74857800"))
@@ -501,6 +502,7 @@ function test_modify_factories()
 
     assert(non_empty_metrics(m.matching_sequences("beer.ale")))
     assert_nil(string.find(m.graph("beer.ale"),'"beer.ale;1h:30d": [[20,1,74857800]',1,true))
+
     assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true),m.graph("beer.ale"))
     assert(string.find(m.graph("beer.ale"),'"beer.ale;2h:90d": [[20,1,74851200]',1,true))
   end
@@ -596,8 +598,8 @@ function test_save_load()
     local n = mule(db)
     n.load()
     assert_equal(2,table_size(n.get_factories()))
-    assert_equal(2,#n.get_factories()["beer.ale"])
-    assert_equal(1,#n.get_factories()["beer.stout"])
+    assert_equal(2,#n.get_factories()["beer.ale"].rps)
+    assert_equal(1,#n.get_factories()["beer.stout"].rps)
   end
   for_each_db("save_load",helper,true)
 end
@@ -611,8 +613,8 @@ function test_process_other_dbs()
     assert(factories["beer.ale"])
     assert(factories["beer.stout"])
     assert(not factories["beer.lager"])
-    assert_equal(1,#factories["beer.stout"])
-    assert_equal(2,#factories["beer.ale"])
+    assert_equal(1,#factories["beer.stout"].rps)
+    assert_equal(2,#factories["beer.ale"].rps)
     assert_equal(nil,factories["beer.ale.brown.newcastle"])
 
     m.process("beer.ale.mild 20 74857843")
@@ -801,7 +803,8 @@ function test_pale()
     assert(string.find(m.slot("beer.ale.pale;1h:30d",{timestamp="1360800000"}),"274,244",1,true))
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamp="1361127300"}),"1526,756",1,true))
     m.process("./tests/fixtures/pale.mule")
---    m.flush_cache()
+    --    m.flush_cache()
+
     assert(string.find(m.slot("beer.ale.pale;5m:2d",{timestamp="1361300362"}),"19,11",1,true))
 
     assert(string.find(m.slot("beer.ale.pale.rb;5m:2d",{timestamp="1361300428"}),"11,5",1,true))
@@ -1013,10 +1016,10 @@ function test_bad_input_lines()
     m.process("beer.ale.;brown 6 54")
     m.process("6 54")
 
-    assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
+    assert_equal('{"version": 4,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
 
     m.process("beer.al e.pale 1 1446711103")
-    assert_equal('{"version": 3,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
+    assert_equal('{"version": 4,\n"data": {}\n}',m.graph("beer.ale;1m:12h"))
   end
   for_each_db("test_bad_input_lines",helper)
 end
@@ -1032,9 +1035,9 @@ function test_uniq_factories()
   local function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d 60s:12h 1h:30d 60s:12h 1h:30d","beer.ale 60s:24h"}))
     local factories = m.get_factories()
-    assert_equal(3,table_size(factories["beer.ale"]))
-    assert_equal(60,factories["beer.ale"][1][1])
-    assert_equal(12*60*60,factories["beer.ale"][1][2])
+    assert_equal(3,table_size(factories["beer.ale"].rps))
+    assert_equal(60,factories["beer.ale"].rps[1][1])
+    assert_equal(12*60*60,factories["beer.ale"].rps[1][2])
   end
   for_each_db("test_uniq_factories",helper)
 end
