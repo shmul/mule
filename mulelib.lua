@@ -16,9 +16,11 @@ local return_0 = function() return 0 end
 
 local SEQUENCE_TYPES = {
   singleton = '!',
+  sum = '+',
   min = '_',
   max = '^',
   gauge = '=',
+  log = 'log'
 }
 
 local SEQUENCE_TYPES_CALLBACKS -- will be lazily filled by the using func
@@ -154,7 +156,7 @@ function sequence(db_,name_)
     -- it can happen that we get a 0 sum to update. In this case we'll skip the update of the slot
     -- but will still update the latest timestamp
     if sum_>0 or type_ then
-      if (not type_) then
+      if (not type_) or type_=='+' then
         if adjusted_timestamp==timestamp and hits>0 then
           -- no need to worry about the latest here, as we have the same (adjusted) timestamp
           hits,sum = hits+(hits_ or 1), sum+sum_
@@ -1255,10 +1257,23 @@ function mule(db_)
       standard(name_,timestamp_,hits_,sum_,inline_type_)
     elseif factory_type_ then
       local typ = SEQUENCE_TYPES[factory_type_]
-      if typ then
+
+      if typ=='log' then
+        -- we add this particular line as a standard one
+        local seq,_ = standard(name_,timestamp_,hits_,sum_)
+        if seq then
+          -- and generate a sub metric with the log count which is a singleton and we just count
+          -- occurrences
+          local g = math.floor(math.log(sum_,2))
+          local metric,step,period = parse_name(name_)
+          local new_name = name(format("log=%s.%d",metric,g),step,period)
+          standard(new_name,timestamp_,1,1)
+        end
+      elseif typ then
         standard(name_,timestamp_,hits_,sum_,typ)
       end
     end
+
     return true
   end
 

@@ -1296,5 +1296,34 @@ function test_factory_min()
   for_each_db("test_factory_min",helper)
 end
 
+function test_factory_log()
+  local function helper(m)
+    set_hard_coded_time(0)
+    local now = time_now()
+    m.configure(table_itr({":white 60s:1h 10m:24h log"}))
+    m.process("white.wine 1 "..(now+0))
+    m.process("white.wine 2 "..(now+30))
+    m.process("white.wine 1 "..(now+200))
+    m.process("white.wine 8 "..(now+180))
+    m.process("white.wine 64 "..(now+364))
+
+    assert(string.find(m.latest("white.wine;1m:1h"),"[64,1,360]",1,true))
+    assert(string.find(m.graph("log=white.wine.1;1m:1h"),"[1,1,0]",1,true))
+
+    -- we have two log hits. one at the 0 bucket and the other at the 180 one
+    assert(string.find(m.graph("log=white.wine.0;1m:1h"),"[1,1,180]",1,true))
+    assert(string.find(m.graph("log=white.wine.0;1m:1h"),"[1,1,0]",1,true))
+
+    assert(string.find(m.graph("log=white.wine.4;1m:1h"),'"data": {}',1,true))
+    assert(string.find(m.graph("log=white.wine.6;1m:1h"),"[1,1,360]",1,true))
+
+    assert(string.find(m.graph("log=white.wine.0;10m:1d"),"[2,2,0]",1,true))
+    assert(string.find(m.graph("log=white.wine.6;10m:1d"),"[1,1,0]",1,true))
+
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_factory_min",helper)
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")
