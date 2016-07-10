@@ -20,7 +20,11 @@ local SEQUENCE_TYPES = {
   min = '_',
   max = '^',
   gauge = '=',
-  log = 'log'
+  log = 'log',
+  deci = 10,
+  centi = 100,
+  milli = 1000,
+  micro = 1000000
 }
 
 local SEQUENCE_TYPES_CALLBACKS -- will be lazily filled by the using func
@@ -190,8 +194,8 @@ function sequence(db_,name_)
 
   local function update_batch(slots_,ts,ht,sm)
     -- slots is a flat array of 4-tuples.
-    -- it is kind of ugly that we need to pass the indices to the various cells in each slot, but an inconsistency
-    -- in the order that is too fundemental to change, forces us to.
+    -- it is kind of ugly that we need to pass the indices to the various cells in each slot,
+    -- but an inconsistency in the order that is too fundemental to change, forces us to.
     local j = 1
     local match = string.match
     while j<#slots_ do
@@ -389,6 +393,7 @@ function mule(db_)
   end)
   local update_line = nil -- foreward declaration
   local _self_metrics = {}
+  local _factories_seq_cache = simple_cache(FACTORIES_CACHE_CAPACITY)
   local _factories_cache = simple_cache(FACTORIES_CACHE_CAPACITY)
 
   _db._zero_sum_latest = simple_cache(ZERO_SUM_LATEST_CACHE)
@@ -415,8 +420,10 @@ function mule(db_)
 
   local function add_factory(metric_,rest_)
     _factories_cache.flush()
+    _factories_seq_cache.flush()
 
     -- the factories hold a triple for each metric - retentions,type,matcher
+    -- there is also an optional, informational only, unit specifier
     metric_ = string.match(metric_,"^(.-)%.*$")
     local matcher = "prefix"
     if string.find(metric_,":",1,true) then -- a substring matcher
@@ -444,6 +451,8 @@ function mule(db_)
         else
           _factories[metric_].type = r
         end
+      else -- we'll consider it a unit
+        _factories[metric_].unit = r
       end
     end
     -- now we make sure the factories are unique
@@ -451,18 +460,55 @@ function mule(db_)
     return true
   end
 
+  local function metric_factories(metric_)
+    local find = string.find
+    local yield = coroutine.yield
+    return coroutine.wrap(
+      function()
+        if _factories_cache.get(metric_) then
+          for m,f in pairs(_factories_cache.get(metric_)) do
+            yield(m,f)
+          end
+          return
+        end
+        local cache = {}
+
+        for m,f in pairs(_factories) do
+          if (f.matcher=="prefix" and is_prefix(metric_,m)) then
+            cache[m] = f
+            yield(m,f)
+          elseif (f.matcher=="substring" and find(metric_,m,1,true)) or find(metric_,m) then
+            cache[metric_] = f
+            yield(metric_,f)
+          end
+        end
+        _factories_cache.set(metric_,cache)
+    end)
+  end
+
+  local function metric_factory_with_factor(metric_)
+    for m,f in metric_factories(metric_) do
+      local t = f.type and SEQUENCE_TYPES[f.type]
+      if t and type(t)=="number" then
+        return t
+      end
+    end
+  end
+
+  local function metric_factory_with_unit(metric_)
+    for m,f in metric_factories(metric_) do
+      if f.unit then
+        return f.unit
+      end
+    end
+  end
 
   local function get_sequences(metric_,typ)
     local function get_seqs()
       local matches = {}
-      local find = string.find
 
-      for m,f in pairs(_factories) do
-        if (f.matcher=="prefix" and is_prefix(metric_,m)) then
-          matches[m] = f
-        elseif (f.matcher=="substring" and find(metric_,m,1,true)) or find(metric_,m) then
-          matches[metric_] = f
-        end
+      for m,f in metric_factories(metric_) do
+        matches[m] = f
       end
 
       local seqs = {}
@@ -488,10 +534,11 @@ function mule(db_)
 
     return coroutine.wrap(
       function()
-        local seqs = _factories_cache.get(metric_) or get_seqs()
-        _factories_cache.set(metric_,seqs)
+        local yield = coroutine.yield
+        local seqs = _factories_seq_cache.get(metric_) or get_seqs()
+        _factories_seq_cache.set(metric_,seqs)
         for n,m in pairs(seqs) do
-          coroutine.yield(n,m)
+          yield(n,m)
         end
     end)
   end
@@ -676,6 +723,20 @@ function mule(db_)
     return str
   end
 
+  local function output_units(units_)
+    local str = strout("","\n")
+    local format = string.format
+    local col = collectionout(str,"{","}")
+    local now = time_now()
+    col.head()
+
+    for k,v in pairs(units_) do
+      col.elem(format("\"%s\": \"%s\"",k,v))
+    end
+    col.tail()
+    return str
+  end
+
   local function output_alerts(names_,all_anomalies_)
     local str = strout("","\n")
     local format = string.format
@@ -716,8 +777,9 @@ function mule(db_)
                    factor=options_.factor,
                    skip_empty=true}
     local sequences_generator = immediate_metrics
-    local alerts = is_true(options_.alerts)
-    local names = {}
+    local include_alerts = is_true(options_.alerts)
+    local alerts = {}
+    local units = {}
     local level = options_.level and tonumber(options_.level)
     local insert = table.insert
     local now = time_now()
@@ -731,6 +793,7 @@ function mule(db_)
         local ranked_children = {}
         local metric,rp = string.match(m,"^([^;]+)(;%w+:%w+)$")
         metric = metric or m
+
         for seq in sequences_for_prefix(db_,metric,rp,level) do
           local name = seq.name()
           local name_level = count_dots(name)
@@ -756,6 +819,12 @@ function mule(db_)
       for seq in sequences_generator(db_,m,level) do
         flush_cache_of_sequence(seq)
         count = count+1
+        units[seq.name()] = metric_factory_with_unit(seq.name())
+
+        if not options_.factor then
+          opts.factor = metric_factory_with_factor(seq.name())
+        end
+
         if in_memory then
           local current = {}
           seq.serialize(
@@ -767,8 +836,8 @@ function mule(db_)
               insert(current,{sum,hits,timestamp})
           end)
         else
-          if alerts then
-            names[#names+1] = seq.name()
+          if include_alerts then
+            alerts[#alerts+1] = seq.name()
           end
           local col1 = collectionout(str,": [","]\n")
           seq.serialize(
@@ -778,7 +847,7 @@ function mule(db_)
               col1.head()
             end,
             function(sum,hits,timestamp)
-              col1.elem(format("[%d,%d,%d]",sum,hits,timestamp))
+              col1.elem(format(opts.factor and "[%s,%d,%d]" or "[%d,%d,%d]",sum,hits,timestamp))
           end)
           col1.tail()
         end
@@ -789,8 +858,11 @@ function mule(db_)
       return in_memory
     end
 
-    if alerts then
-      col.elem(format("\"alerts\": %s",output_alerts(names).get_string()))
+    if include_alerts then
+      col.elem(format("\"alerts\": %s",output_alerts(alerts).get_string()))
+    end
+    if next(units) then
+      col.elem(format("\"units\": %s",output_units(units).get_string()))
     end
 
     col.tail()
@@ -810,13 +882,16 @@ function mule(db_)
                 function(seq)
                   local col1 = collectionout(str,"[","]\n")
                   flush_cache_of_sequence(seq)
+                  opts.factor = metric_factory_with_factor(seq.name())
+
                   seq.serialize(opts,
                                 function()
                                   col.elem(format("\"%s\": ",seq.name()))
                                   col1.head()
                                 end,
                                 function(sum,hits,timestamp)
-                                  col1.elem(format("[%d,%d,%s]",sum,hits,timestamp))
+                                  col1.elem(format(opts.factor and "[%s,%d,%d]" or "[%d,%d,%d]",
+                                                   sum,hits,timestamp))
                                 end
                   )
                   col1.tail()
@@ -1165,6 +1240,7 @@ function mule(db_)
     local col = collectionout(str,"{","}")
     local force = is_true(options_ and options_.force)
     _factories_cache.flush()
+    _factories_seq_cache.flush()
 
     col.head()
     for fm in split_helper(resource_,"/") do
@@ -1269,6 +1345,8 @@ function mule(db_)
           local new_name = name(format("log=%s.%d",metric,g),step,period)
           standard(new_name,timestamp_,1,1)
         end
+      elseif type(typ)=="number" then
+        standard(name_,timestamp_,hits_,math.floor(sum_*typ),inline_type_)
       elseif typ then
         standard(name_,timestamp_,hits_,sum_,typ)
       end
@@ -1284,7 +1362,6 @@ function mule(db_)
       logw("update_line - bad params",metric_,sum_,timestamp_)
       return
     end
-
     if ZERO_NOT_PROCESSED and sum==0 then -- don't bother to update
       return
     end
@@ -1306,10 +1383,15 @@ function mule(db_)
   local function modify_factories(factories_modifications_)
     -- the factories_modifications_ is a list of triples,
     -- <pattern, original retention, new retention>
+    flush_all_caches()
     _factories_cache.flush()
+    _factories_seq_cache.flush()
     local to_remove = {}
+    local to_create = {}
+
     for _,f in ipairs(factories_modifications_) do
       local factory = _factories[f[1]]
+      logd("modify_factories",f[1],factory)
       if factory then
         local orig_step,orig_period = parse_time_pair(f[2])
         local new_step,new_period = parse_time_pair(f[3])
@@ -1323,8 +1405,9 @@ function mule(db_)
               logd("found original sequence:",seq.name())
               flush_cache_of_sequence(seq.name())
               local new_name = name(seq.metric(),new_step,new_period)
+              logd("channging to :",new_step,new_period)
               table.insert(to_remove,seq)
-              sequence(db_,new_name).update_batch(seq.slots(),0,1,2)
+              table.insert(to_create,{sequence(db_,new_name),seq.slots()})
             end
           end
         end
@@ -1332,12 +1415,17 @@ function mule(db_)
         logw("pattern not found",f[1])
       end
     end
+    logd(#to_remove,"sequence(s) removed")
+    flush_all_caches()
+    for _,seq in ipairs(to_create) do
+      seq[1].update_batch(seq[2],0,1,2)
+    end
 
     for _,seq in ipairs(to_remove) do
-      seq.reset_to_timestamp(time_now())
+      flush_cache_of_sequence(seq.name()) -- this will also remove the seq from the cache
       _db.out(seq.name())
     end
-    flush_all_caches()
+
   end
 
   local function process_line(metric_line_,no_commands_)

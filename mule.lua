@@ -36,16 +36,11 @@ local function guess_db(db_path_,readonly_)
   logd("guess_db",db_path_)
   -- strip a trailing / if it exists
   db_path_ = strip_slash(db_path_)
+  p.set_pack_lib("lpack")
   if string.find(db_path_,"_mdb$") then
-    if lua_version_number()>="5.3" then
-      p.set_pack_lib("bits")
-    else
-      p.set_pack_lib("lpack")
-    end
     _can_fork = false
     return l.lightning_mdb(db_path_,readonly_)
   elseif string.find(db_path_,"_cdb$") then
-    p.set_pack_lib("bits")
     return c.column_db(db_path_,readonly_)
   end
   loge("can't guess db",db_path_)

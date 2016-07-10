@@ -893,7 +893,7 @@ function test_stacked()
     local level1 = m.graph("Johnston.Morfin",{level=1})
     local level2 = m.graph("Johnston.Morfin",{level=2})
 
-    assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
+    assert(string.find(level2,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true),level2)
     assert(string.find(level2,"Johnston.Morfin.Jamal;1s:1m",1,true))
     assert_nil(string.find(level1,"Johnston.Morfin.Jamal.Marcela;1s:1m",1,true))
     assert(string.find(level1,"Johnston.Morfin.Jamal;1s:1m",1,true))
@@ -1131,6 +1131,7 @@ function test_factor()
 
 
     local gr = m.graph("Johnston.Morfin.Jamal.Marcela.Emilia",{level=1,in_memory=true,factor=10})
+    assert(gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"])
     assert(arrays_equal({0.8,4,0},gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"][1]))
     gr = m.graph("Johnston.Morfin.Jamal.Marcela.Emilia",{level=1,in_memory=true})
     assert(arrays_equal({8,4,0},gr["Johnston.Morfin.Jamal.Marcela.Emilia;1h:12h"][1]))
@@ -1148,7 +1149,7 @@ function test_same_prefix()
 
     local gr = m.graph("beer",{})
     assert(string.find(gr,'"beer;1h:30d": [[7,1,0]]',1,true)) -- both bee and beer define 1h:30d
-    assert(string.find(gr,'"beer;1m:12h": [[7,1,0]]',1,true))
+    assert(string.find(gr,'"beer;1m:12h": [[7,1,0]]',1,true),gr)
     gr = m.graph("beer.ale.pale",{})
     assert(string.find(gr,'"beer.ale.pale;1h:30d": [[7,1,0]]',1,true)) -- both bee and beer define 1h:30d
     assert(string.find(gr,'"beer.ale.pale;1m:12h": [[7,1,0]]',1,true))
@@ -1300,7 +1301,7 @@ function test_factory_log()
   local function helper(m)
     set_hard_coded_time(0)
     local now = time_now()
-    m.configure(table_itr({":white 60s:1h 10m:24h log"}))
+    m.configure(table_itr({":wine 60s:1h 10m:24h log"}))
     m.process("white.wine 1 "..(now+0))
     m.process("white.wine 2 "..(now+30))
     m.process("white.wine 1 "..(now+200))
@@ -1319,6 +1320,26 @@ function test_factory_log()
 
     assert(string.find(m.graph("log=white.wine.0;10m:1d"),"[2,2,0]",1,true))
     assert(string.find(m.graph("log=white.wine.6;10m:1d"),"[1,1,0]",1,true))
+
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_factory_min",helper)
+end
+
+function test_factor_with_unit()
+  local function helper(m)
+    set_hard_coded_time(0)
+    local now = time_now()
+    m.configure(table_itr({"white 60s:1h 10m:24h milli %"}))
+    m.process("white.wine 0.1 "..(now+0))
+    m.process("white.wine 0.02 "..(now+30))
+    m.process("white.wine 1 "..(now+200))
+    m.process("white.wine 0.008 "..(now+180))
+    m.process("white.wine 64 "..(now+364))
+
+    assert(string.find(m.latest("white.wine;1m:1h"),"[64.0,1,360]",1,true),m.graph("white.wine;1m:1h"))
+    assert(string.find(m.graph("white.wine;1m:1h"),"[0.12,2,0]",1,true),m.graph("white.wine;1m:1h"))
+    assert(string.find(m.graph("white.wine;1m:1h"),'"units": {"white.wine;1m:1h": "%"}',1,true))
 
     set_hard_coded_time(nil)
   end

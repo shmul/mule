@@ -573,7 +573,7 @@ function parse_input_line(line_)
 end
 
 function legit_input_line(metric_,sum_,timestamp_,hits_)
-  local typ,sum = string.match(sum_ or "","([=%^]?)(%d+)")
+  local typ,sum = string.match(sum_ or "","([=%^]?)([%d.]+)")
 
   if typ and #typ==0 then
     typ = nil
