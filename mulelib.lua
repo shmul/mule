@@ -436,7 +436,8 @@ function mule(db_)
       matcher = "pattern"
     end
 
-    _factories[metric_] = _factories[metric_] or {}
+    local new_factory = _factories[metric_] or {}
+    new_factory.matcher = matcher
     for _,r in ipairs(rest_) do
       local step,period = parse_time_pair(r)
       if step and period then -- this looks like a retention
@@ -444,19 +445,24 @@ function mule(db_)
           loge("step greater than period",r,step,period)
           return nil
         end
-        _factories[metric_].matcher = matcher
-        _factories[metric_].rps = _factories[metric_].rps or {}
-        table.insert(_factories[metric_].rps,{step,period})
+        new_factory.rps = new_factory.rps or {}
+        table.insert(new_factory.rps,{step,period})
       elseif SEQUENCE_TYPES[r] then  -- perhaps a type specifier
-        if _factories[metric_].type then
-          logw("type already exists for factory",metric_,_factories[metric_].type)
+        if new_factory.type then
+          logw("type already exists for factory",metric_,new_factory.type)
         else
-          _factories[metric_].type = r
+          new_factory.type = r
         end
       else -- we'll consider it a unit
-        _factories[metric_].unit = r
+        new_factory.unit = r
       end
     end
+
+    if not new_factory.rps or #new_factory.rps==0 then
+      logi("adding pseudo retention pair",metric_)
+      new_factory.rps = {{1,1}}
+    end
+    _factories[metric_] = new_factory
     -- now we make sure the factories are unique
     uniq_factories()
     return true
@@ -516,7 +522,7 @@ function mule(db_)
           local t
           if h==metric_ then
             t = f.type or false
-          elseif is_prefix(h,m) then
+          elseif f.matcher=='prefix' and is_prefix(h,m) then
             t = (singleton and 'parent') or f.type or false -- can't put nil here or it won't be added to the table
           end
           if t~=nil then
@@ -1154,10 +1160,13 @@ function mule(db_)
       else
         local metric = items[1]
         table.remove(items,1)
-        add_factory(metric,items)
+        if not add_factory(metric,items) then
+          return false
+        end
       end
     end
     logi("configure",table_size(_factories))
+
     save(true)
     return table_size(_factories)
   end
