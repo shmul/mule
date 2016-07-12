@@ -383,8 +383,9 @@ function test_export_configuration()
   local function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
 
-    assert(string.find(m.export_configuration(),'"beer.ale": ["1m:12h" ,"1h:30d" ]',1,true))
-    assert(string.find(m.export_configuration(),'"beer.wheat": ["10m:1y" ]',1,true))
+    assert(string.find(m.export_configuration(),'"beer.ale":{"matcher": "prefix","retentions":["1m:12h" ,"1h:30d" ]',1,true),
+           m.export_configuration())
+    assert(string.find(m.export_configuration(),'"beer.wheat":{"matcher": "prefix","retentions":["10m:1y" ]',1,true))
   end
   for_each_db("test_export_configuration",helper)
 end
@@ -392,11 +393,11 @@ end
 function test_factories_out()
   local function helper(m)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
-    assert(string.find(m.export_configuration(),'"beer.ale": ["1m:12h" ,"1h:30d" ]',1,true))
+    assert(string.find(m.export_configuration(),'"beer.ale":{"matcher": "prefix","retentions":["1m:12h" ,"1h:30d" ]',1,true))
 
     local fo = m.factories_out("beer.wheat")
     assert(string.find(fo,'"beer.wheat": ["10m:1y" ]',1,true))
-    assert(string.find(m.export_configuration(),'"beer.wheat": ["10m:1y" ]',1,true))
+    assert(string.find(m.export_configuration(),'"beer.wheat":{"matcher": "prefix","retentions":["10m:1y" ]',1,true))
 
     -- now really remove (with force)
     fo = m.factories_out("beer.wheat",{force=true})
@@ -1344,6 +1345,30 @@ function test_factor_with_unit()
     set_hard_coded_time(nil)
   end
   for_each_db("test_factory_min",helper)
+end
+
+function test_parent_nodes()
+    local function helper(m)
+      m.configure(table_itr({"beer 60s:1h gauge"}))
+      set_hard_coded_time(0)
+      local now = time_now()
+      m.process("beer.ale.pale 1 "..(now+0))
+      m.process("beer.ale.pale 2 "..(now+60))
+      m.process("beer.ale.pale 4 "..(now+120))
+      m.process("beer.ale.pale 8 "..(now+120))
+
+      m.flush_cache()
+      assert(string.find(m.latest("beer.ale.pale;1m:1h"),"[8,1,120]",1,true))
+      local k = m.key("beer",{level=2})
+      assert(string.find(k,"beer;",1,true),k)
+      assert(string.find(k,"beer.ale;",1,true))
+      local g = m.graph("beer",{level=2})
+      assert(string.find(g,'"beer;1m:1h": []',1,true))
+
+      set_hard_coded_time(nil)
+    end
+
+  for_each_db("test_parent_nodes",helper)
 end
 
 --verbose_log(true)

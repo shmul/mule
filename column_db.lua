@@ -131,7 +131,7 @@ local function column_db(base_dir_)
   local _increment = nil
   logi("column_db")
 
-  local function extract_from_name(name_)
+  local function create_node(name_)
     local node = index:find(name_)
 
     if not node then
@@ -144,6 +144,12 @@ local function column_db(base_dir_)
       node.value = index:size()-1 + index:find("metadata=column_db_deleted").count
       node.latest = 0
     end
+
+    return node
+  end
+
+  local function extract_from_name(name_)
+    local node = create_node(name_)
     return node.metric,node.step,node.period,node.value
   end
 
@@ -431,6 +437,7 @@ local function column_db(base_dir_)
     end,
     set_slot = internal_set_slot,
     get_slot = internal_get_slot,
+    create_node = create_node,
     find_keys = find_keys,
     has_sub_keys = has_sub_keys,
     matching_keys = matching_keys,

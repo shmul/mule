@@ -357,6 +357,18 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     return v
   end
 
+  local function create_node(name_)
+    local node = get_node(name_)
+
+    if not node then
+      -- a new node keeps a sparse_sequence instead of allocating actual pages for the slots
+      local _,step,period = split_name(name_)
+      node = { _latest = 0, _seq = sparse_sequence(name_), _size = period/step }
+      put_node(name_,node)
+    end
+    return node
+  end
+
 
   local function init()
     local function populate_env(array_,label_)
@@ -460,13 +472,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
 
     -- the name is used as a key for the metadata
-    local node = get_node(name_)
-
-    if not node then
-      -- a new node keeps a sparse_sequence instead of allocating actual pages for the slots
-      local _,step,period = split_name(name_)
-      node = { _latest = 0, _seq = sparse_sequence(name_), _size = period/step }
-    end
+    local node = create_node(name_)
 
     -- trying to access one past the sequence size is interpreted as
     -- getting the latest index
@@ -730,6 +736,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     search = search,
     set_slot = internal_set_slot,
     get_slot = internal_get_slot,
+    create_node = create_node,
     out = internal_out_slot,
     find_keys = find_keys,
     has_sub_keys = has_sub_keys,

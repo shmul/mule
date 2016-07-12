@@ -645,7 +645,7 @@ end
 function uniq_pairs(array_)
   local ks = {}
 
-  for _,prs in ipairs(array_) do
+  for _,prs in ipairs(array_ or {}) do
     ks[prs[1]..":"..prs[2]] = true
   end
 

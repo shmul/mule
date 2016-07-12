@@ -15,16 +15,18 @@ local nop = function() end
 local return_0 = function() return 0 end
 
 local SEQUENCE_TYPES = {
-  singleton = '!',
-  sum = '+',
-  min = '_',
-  max = '^',
-  gauge = '=',
-  log = 'log',
-  deci = 10,
-  centi = 100,
-  milli = 1000,
-  micro = 1000000
+  -- symbol,singleton or not
+  singleton = {'!',true},
+  sum = {'+',false},
+  min = {'_',false},
+  max = {'^',false},
+  gauge = {'=',true},
+  log = {'log',true},
+  parent = {'p',true},  -- just create the node but don't update the sequence (used for hierarchy creation)
+  deci = {10,false},
+  centi = {100,false},
+  milli = {1000,false},
+  micro = {1000000,false}
 }
 
 local SEQUENCE_TYPES_CALLBACKS -- will be lazily filled by the using func
@@ -434,6 +436,7 @@ function mule(db_)
       matcher = "pattern"
     end
 
+    _factories[metric_] = _factories[metric_] or {}
     for _,r in ipairs(rest_) do
       local step,period = parse_time_pair(r)
       if step and period then -- this looks like a retention
@@ -441,7 +444,6 @@ function mule(db_)
           loge("step greater than period",r,step,period)
           return nil
         end
-        _factories[metric_] = _factories[metric_] or {}
         _factories[metric_].matcher = matcher
         _factories[metric_].rps = _factories[metric_].rps or {}
         table.insert(_factories[metric_].rps,{step,period})
@@ -489,8 +491,8 @@ function mule(db_)
   local function metric_factory_with_factor(metric_)
     for m,f in metric_factories(metric_) do
       local t = f.type and SEQUENCE_TYPES[f.type]
-      if t and type(t)=="number" then
-        return t
+      if t and type(t[1])=="number" then
+        return t[1]
       end
     end
   end
@@ -505,25 +507,21 @@ function mule(db_)
 
   local function get_sequences(metric_,typ)
     local function get_seqs()
-      local matches = {}
-
-      for m,f in metric_factories(metric_) do
-        matches[m] = f
-      end
 
       local seqs = {}
-      for m,f in pairs(matches) do
-        if f.matcher~="prefix" or typ=='!' or f.type=="singleton"  then
-          for _,rp in ipairs(f.rps) do
-            seqs[name(m,rp[1],rp[2])] = f.type or false
+
+      for m,f in metric_factories(metric_) do
+        local singleton = f.matcher~="prefix" or (f.type and SEQUENCE_TYPES[f.type][2])
+        for h in metric_hierarchy(metric_) do
+          local t
+          if h==metric_ then
+            t = f.type or false
+          elseif is_prefix(h,m) then
+            t = (singleton and 'parent') or f.type or false -- can't put nil here or it won't be added to the table
           end
-        else -- prefix
-          for h in metric_hierarchy(metric_) do
-            if is_prefix(h,m) then
-              for _,rp in ipairs(f.rps) do
-                -- can't put nil here or it won't be added to the table
-                seqs[name(h,rp[1],rp[2])] = f.type or false
-              end
+          if t~=nil then
+            for _,rp in ipairs(f.rps) do
+              seqs[name(h,rp[1],rp[2])] = t
             end
           end
         end
@@ -824,7 +822,7 @@ function mule(db_)
         if not options_.factor then
           opts.factor = metric_factory_with_factor(seq.name())
         end
-
+        local ntuple_format = (opts.factor or opts.readable) and "[%s,%d,%s]" or "[%d,%d,%d]"
         if in_memory then
           local current = {}
           seq.serialize(
@@ -847,7 +845,7 @@ function mule(db_)
               col1.head()
             end,
             function(sum,hits,timestamp)
-              col1.elem(format(opts.factor and "[%s,%d,%d]" or "[%d,%d,%d]",sum,hits,timestamp))
+              col1.elem(format(ntuple_format,sum,hits,timestamp))
           end)
           col1.tail()
         end
@@ -925,8 +923,10 @@ function mule(db_)
       level = level - 1
     end
     local selector = db_.matching_keys
-    -- we are abusing the level param to hold the substring to be search, to make the for loop easier
+
     if options_.substring then
+      -- we are abusing the level param to hold the substring to be search,
+      -- to make the for loop easier
       selector = db_.find_keys
       level = options_.substring
     end
@@ -1146,6 +1146,52 @@ function mule(db_)
 
   end
 
+  local function configure(configuration_lines_)
+    for l in lines_without_comments(configuration_lines_) do
+      local items,t = parse_input_line(l)
+      if t then
+        logw("unexpexted type",t,l)
+      else
+        local metric = items[1]
+        table.remove(items,1)
+        add_factory(metric,items)
+      end
+    end
+    logi("configure",table_size(_factories))
+    save(true)
+    return table_size(_factories)
+  end
+
+  local function export_configuration()
+    local str = strout("")
+    local format = string.format
+    local col = collectionout(str,"{","}")
+
+    col.head()
+    for fm,f in pairs(_factories) do
+      local col0 = collectionout(str,"{","}\n")
+      local col1 = collectionout(str,"[","]\n")
+      col.elem(format("\"%s\":",fm))
+      col0.head()
+      col0.elem(format('"matcher": "%s"',f.matcher))
+      col0.elem('"retentions":')
+      col1.head()
+      for _,v in ipairs(f.rps) do
+        col1.elem(format("\"%s:%s\" ",secs_to_time_unit(v[1]),secs_to_time_unit(v[2])))
+      end
+      col1.tail()
+      col0.elem(format('"type": "%s"',f.type))
+      if f.unit then
+        col0.elem(format('"unit": "%s"',f.unit))
+      end
+      col0.tail()
+    end
+
+    col.tail()
+    logi("export_configuration",table_size(_factories))
+    return wrap_json(str)
+  end
+
   local function command(items_)
     local func = items_[1]
     local dispatch = {
@@ -1186,6 +1232,9 @@ function mule(db_)
       dump = function()
         return dump(items_[2],qs_params(items_[3]))
       end,
+      export_configuration = function()
+        return export_configuration()
+      end,
     }
 
     if dispatch[func] then
@@ -1195,44 +1244,6 @@ function mule(db_)
     loge("unknown command",func)
   end
 
-  local function configure(configuration_lines_)
-    for l in lines_without_comments(configuration_lines_) do
-      local items,t = parse_input_line(l)
-      if t then
-        logw("unexpexted type",t,l)
-      else
-        local metric = items[1]
-        table.remove(items,1)
-        add_factory(metric,items)
-      end
-    end
-    logi("configure",table_size(_factories))
-    save(true)
-    return table_size(_factories)
-  end
-
-  local function export_configuration()
-    local str = strout("")
-    local format = string.format
-    local col = collectionout(str,"{","}")
-
-    col.head()
-    for fm,f in pairs(_factories) do
-      local col1 = collectionout(str,"[","]\n")
-      col.elem(format("\"%s\": ",fm))
-      col1.head()
-      for _,v in ipairs(f.rps) do
-        col1.elem(format("\"%s:%s\" ",secs_to_time_unit(v[1]),secs_to_time_unit(v[2])))
-      end
-      col1.tail()
-      col1.elem(format("\"%s\"",f.type))
-      col1.elem(format("\"%s\"",f.matcher))
-    end
-
-    col.tail()
-    logi("export_configuration",table_size(_factories))
-    return wrap_json(str)
-  end
 
   local function factories_out(resource_,options_)
     local str = strout("")
@@ -1332,8 +1343,7 @@ function mule(db_)
     if inline_type_ or not factory_type_ then
       standard(name_,timestamp_,hits_,sum_,inline_type_)
     elseif factory_type_ then
-      local typ = SEQUENCE_TYPES[factory_type_]
-
+      local typ = SEQUENCE_TYPES[factory_type_][1]
       if typ=='log' then
         -- we add this particular line as a standard one
         local seq,_ = standard(name_,timestamp_,hits_,sum_)
@@ -1347,7 +1357,10 @@ function mule(db_)
         end
       elseif type(typ)=="number" then
         standard(name_,timestamp_,hits_,math.floor(sum_*typ),inline_type_)
-      elseif typ then
+      elseif typ=='p' then
+        -- no need to update the data, just make sure the node exists
+        _db.create_node(name_)
+      elseif typ~=nil then
         standard(name_,timestamp_,hits_,sum_,typ)
       end
     end

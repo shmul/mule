@@ -40,6 +40,7 @@ function in_memory_db()
     get = function(key_) return _storage[key_] end,
     put = function(key_,value_) _storage[key_] = value_ end,
     out = function(key_) _storage[key_] = nil end,
+    create_node = function(key_) _storage[key_] = "" end,
     has_sub_keys = has_sub_keys,
     find_keys = find_keys,
     matching_keys = matching_keys,
