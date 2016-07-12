@@ -835,7 +835,8 @@ function mule(db_)
           opts.factor = metric_factory_with_factor(seq.name())
         end
 
-        local ntuple_format = (opts.factor or opts.readable) and "[%s,%d,%s]" or "[%d,%d,%d]"
+        local ntuple_format = format("[%s,%%d,%s]",opts.factor and "%s" or "%d",
+                                     opts.readable and "%s" or "%d")
         if in_memory then
           local current = {}
           seq.serialize(
