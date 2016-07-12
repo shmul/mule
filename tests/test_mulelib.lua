@@ -1363,7 +1363,7 @@ function test_parent_nodes()
       assert(string.find(k,"beer;",1,true),k)
       assert(string.find(k,"beer.ale;",1,true))
       local g = m.graph("beer",{level=2})
-      assert(string.find(g,'"beer;1m:1h": []',1,true))
+      assert(string.find(g,'"beer;1m:1h": []',1,true),g)
 
       set_hard_coded_time(nil)
     end

@@ -23,10 +23,13 @@ local SEQUENCE_TYPES = {
   gauge = {'=',true},
   log = {'log',true},
   parent = {'p',true},  -- just create the node but don't update the sequence (used for hierarchy creation)
-  deci = {10,false},
-  centi = {100,false},
-  milli = {1000,false},
-  micro = {1000000,false}
+}
+
+local SEQUENCE_FACTORS = {
+  deci = 10,
+  centi = 100,
+  milli = 1000,
+  micro = 1000000
 }
 
 local SEQUENCE_TYPES_CALLBACKS -- will be lazily filled by the using func
@@ -453,6 +456,8 @@ function mule(db_)
         else
           new_factory.type = r
         end
+      elseif SEQUENCE_FACTORS[r] then  -- perhaps a facor
+        new_factory.factor = r
       else -- we'll consider it a unit
         new_factory.unit = r
       end
@@ -496,9 +501,9 @@ function mule(db_)
 
   local function metric_factory_with_factor(metric_)
     for m,f in metric_factories(metric_) do
-      local t = f.type and SEQUENCE_TYPES[f.type]
-      if t and type(t[1])=="number" then
-        return t[1]
+      local t = f.factor and SEQUENCE_FACTORS[f.factor]
+      if t then
+        return t
       end
     end
   end
@@ -523,11 +528,12 @@ function mule(db_)
           if h==metric_ then
             t = f.type or false
           elseif f.matcher=='prefix' and is_prefix(h,m) then
-            t = (singleton and 'parent') or f.type or false -- can't put nil here or it won't be added to the table
+            t = (singleton and 'parent') or f.type or false
           end
+
           if t~=nil then
             for _,rp in ipairs(f.rps) do
-              seqs[name(h,rp[1],rp[2])] = t
+              seqs[name(h,rp[1],rp[2])] = {t,f.factor}
             end
           end
         end
@@ -828,6 +834,7 @@ function mule(db_)
         if not options_.factor then
           opts.factor = metric_factory_with_factor(seq.name())
         end
+
         local ntuple_format = (opts.factor or opts.readable) and "[%s,%d,%s]" or "[%d,%d,%d]"
         if in_memory then
           local current = {}
@@ -1307,7 +1314,7 @@ function mule(db_)
   end
 
 
-  local function update_sequence(name_,sum_,timestamp_,hits_,inline_type_,factory_type_,now_)
+  local function update_sequence(name_,sum_,timestamp_,hits_,inline_type_,modifier_,now_)
     if now_ then
       local metric,step,period = parse_name(name_)
       if timestamp_<now_-period then
@@ -1349,29 +1356,31 @@ function mule(db_)
       end
     end
 
-    if inline_type_ or not factory_type_ then
+    if (modifier_[1]==false and not modifier_[2]) or inline_type_ then
       standard(name_,timestamp_,hits_,sum_,inline_type_)
-    elseif factory_type_ then
-      local typ = SEQUENCE_TYPES[factory_type_][1]
-      if typ=='log' then
-        -- we add this particular line as a standard one
-        local seq,_ = standard(name_,timestamp_,hits_,sum_)
-        if seq then
-          -- and generate a sub metric with the log count which is a singleton and we just count
-          -- occurrences
-          local g = math.floor(math.log(sum_,2))
-          local metric,step,period = parse_name(name_)
-          local new_name = name(format("log=%s.%d",metric,g),step,period)
-          standard(new_name,timestamp_,1,1)
-        end
-      elseif type(typ)=="number" then
-        standard(name_,timestamp_,hits_,math.floor(sum_*typ),inline_type_)
-      elseif typ=='p' then
-        -- no need to update the data, just make sure the node exists
-        _db.create_node(name_)
-      elseif typ~=nil then
-        standard(name_,timestamp_,hits_,sum_,typ)
+      return true
+    end
+
+    local typ = SEQUENCE_TYPES[modifier_[1]] and SEQUENCE_TYPES[modifier_[1]][1]
+    local factor = SEQUENCE_FACTORS[modifier_[2]]
+    if factor then
+      standard(name_,timestamp_,hits_,math.floor(sum_*factor),inline_type_)
+    elseif typ=='p' then
+      -- no need to update the data, just make sure the node exists
+      _db.create_node(name_)
+    elseif typ=='log' then
+      -- we add this particular line as a standard one
+      local seq,_ = standard(name_,timestamp_,hits_,sum_)
+      if seq then
+        -- and generate a sub metric with the log count which is a singleton and we just count
+        -- occurrences
+        local g = math.floor(math.log(sum_,2))
+        local metric,step,period = parse_name(name_)
+        local new_name = name(format("log=%s.%d",metric,g),step,period)
+        standard(new_name,timestamp_,1,1)
       end
+    elseif typ~=nil then
+      standard(name_,timestamp_,hits_,sum_,typ)
     end
 
     return true
@@ -1388,8 +1397,8 @@ function mule(db_)
       return
     end
 
-    for n,factory_type in get_sequences(metric_,typ) do
-      update_sequence(n,sum,timestamp,hits,typ,factory_type,now_)
+    for n,modifier in get_sequences(metric_,typ) do
+      update_sequence(n,sum,timestamp,hits,typ,modifier,now_)
     end
 
   end
