@@ -37,10 +37,10 @@ local function guess_db(db_path_,readonly_)
   -- strip a trailing / if it exists
   db_path_ = strip_slash(db_path_)
   p.set_pack_lib("lpack")
-  if string.find(db_path_,"_mdb$") then
+  if string.find(db_path_,"[_.]mdb$") then
     _can_fork = false
     return l.lightning_mdb(db_path_,readonly_)
-  elseif string.find(db_path_,"_cdb$") then
+  elseif string.find(db_path_,"[_.]cdb$") then
     return c.column_db(db_path_,readonly_)
   end
   loge("can't guess db",db_path_)
