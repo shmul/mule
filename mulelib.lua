@@ -834,7 +834,7 @@ function mule(db_)
         if not options_.factor then
           opts.factor = metric_factory_with_factor(seq.name())
         end
-
+        -- no mistake here, double % is intended
         local ntuple_format = format("[%s,%%d,%s]",opts.factor and "%s" or "%d",
                                      opts.readable and "%s" or "%d")
         if in_memory then
