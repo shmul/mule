@@ -21,6 +21,7 @@ function key_impl(initial_,key_,callback_,raw_) {
   var k = $.map(initial_,function(element,index) {return index});
   var rv = {};
   var add_rp = /;$/.test(key_) || raw_;
+  var synthetic_key = /^(.+?)(;1s:1s)$/;
 
   function push_key(e,dont_trim) {
     if ( add_rp || dont_trim) {
@@ -43,5 +44,9 @@ function key_impl(initial_,key_,callback_,raw_) {
     });
   }
 
-  callback_(string_set_keys(rv).sort());
+  var fks = $.map(string_set_keys(rv),function(e) {
+    var match = synthetic_key.exec(e);
+    return match ? match[1] : e;
+  }).filter(function(e) { return e!=key_;});
+  callback_(fks.sort());
 }

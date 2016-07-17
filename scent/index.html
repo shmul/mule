@@ -12,7 +12,7 @@
     <link href="./plugins/datatables/dataTables.bootstrap.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/AdminLTE/css/AdminLTE.min.css" rel="stylesheet" type="text/css" />
     <!-- AdminLTE Skins. Choose a skin from the css/skins
-          folder instead of downloading all of them to reduce the load. -->
+         folder instead of downloading all of them to reduce the load. -->
     <link href="./plugins/AdminLTE/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css" />
     <!-- link href="./plugins/qunit-1.17.1.css" rel="stylesheet" type="text/css" /-->
     <link href="./plugins/pnotify.custom.min.css" rel="stylesheet" type="text/css" />
@@ -95,7 +95,7 @@
                     </ul>
                   </li>
                   <li class="footer">
-                    <li class="footer"></li>
+                  <li class="footer"></li>
                   </li>
                 </ul>
               </li>
@@ -110,13 +110,13 @@
         <script id="search-form-template" type="text/x-jsrender">
           <form action="#" class="{{:class}}" id="{{:form_id}}">
             <div class="input-group">
-             <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
-               <span class="input-group-btn">
-               {{if add}}
-                 <button type="submit" class="btn btn-primary btn-flat">Add</button>
-               {{else}}
-                 <button type='submit' name='seach' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
-               {{/if}}
+              <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
+              <span class="input-group-btn">
+                {{if add}}
+                <button type="submit" class="btn btn-primary btn-flat">Add</button>
+                {{else}}
+                <button type='submit' name='seach' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
+                {{/if}}
               </span>
             </div>
           </form>
@@ -135,20 +135,20 @@
         </script>
 
         <script id="recent-template" type="text/x-jsrender">
-         <li><a href="#graph/{{:name}}" title="{{:name}}">{{:name}}</a></li>
+          <li><a href="#graph/{{:name}}" title="{{:name}}">{{:name}}</a></li>
         </script>
 
         <script id="alerts-menu-template" type="text/x-jsrender">
-         <li class="dropdown" title="{{:title}}">
-           <a href="#alert/{{:type}}">
-             {{:title}}
-             <span class="badge bg-{{:color}}" id="alert-menu-{{:type}}"></span>
-             </a>
+          <li class="dropdown" title="{{:title}}">
+            <a href="#alert/{{:type}}">
+              {{:title}}
+              <span class="badge bg-{{:color}}" id="alert-menu-{{:type}}"></span>
+            </a>
           </li>
         </script>
 
         <script id="alert-table-template" type="text/x-jsrender">
-          <table id="alert-{{:type}}" class="table table-bordered table-striped dataTable">
+          <table id="alert-{{:type}}" class="table table-bordered table-striped table-condensed dataTable">
             <thead>
               <tr>
                 {{if type==="anomaly"}}
@@ -166,12 +166,12 @@
               {{for records}}
               <tr>
                 {{if type==="anomaly"}}
-                  <td><a class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</a><td>{{:time}}</td>
+                <td><a class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</a><td>{{:time}}</td>
                 {{else}}
-                  <td><a class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</a></td><td>{{:value}}</td>
-                  <td>{{:period}}</td>
-                  <td>{{:stale}}</td>
-                  <td>{{:state}}</td>
+                <td><a class="alert-graph-name" data-target="{{:graph}}">{{:graph}}</a></td><td>{{:value}}</td>
+                <td>{{:period}}</td>
+                <td>{{:stale}}</td>
+                <td>{{:state}}</td>
                 {{/else}}
               </tr>
               {{/for}}
@@ -193,7 +193,7 @@
         </script>
 
         <script id="keys-table-template" type="text/x-jsrender">
-          <table id="keys-table" class="table-bordered table-striped compact">
+          <table id="keys-table" class="table-bordered table-striped compact table-condensed">
             <thead>
               <tr>
                 <th>Key</th>
@@ -206,7 +206,7 @@
                 <td><a class="keys-table-key" data-target="{{:key}}">{{:key}}&nbsp;&nbsp;</a></td>
                 <td>
                   {{for links}}
-                    <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
+                  <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
                   {{/for}}
                 </td>
               </tr>
@@ -224,43 +224,43 @@
             <div class="box-title">
               <div class="{{:klass}}-header graph-header">
                 <h4>
-                 {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
+                  {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
                 </h4>
               </div>
             </div>
             <div class="box-tools pull-right {{:klass}}-header">
               {{if alerted}}
-                <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
+              <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
               {{/if}}
               {{if klass == "small-graph"}}
-                {{for links}}
-                  {{if current}}
-                    <span class="label bg-light-blue">{{:rp}}</span>
-                  {{/if}}
-                {{/for}}
+              {{for links}}
+              {{if current}}
+              <span class="label bg-light-blue">{{:rp}}</span>
+              {{/if}}
+              {{/for}}
               {{else}}
-                {{for links}}
-                  {{if current}}
-                    <span class="label bg-light-blue">{{:rp}}</span>
-                  {{else}}
-                    <span class="label">
-                      {{if inner_navigation}}
-                        <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
-                      {{else}}
-                        <a href="#graph/{{:href}}">{{:rp}}</a>
-                      {{/if}}
-                    </span>
-                  {{/if}}
-                {{/for}}
+              {{for links}}
+              {{if current}}
+              <span class="label bg-light-blue">{{:rp}}</span>
+              {{else}}
+              <span class="label">
+                {{if inner_navigation}}
+                <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
+                {{else}}
+                <a href="#graph/{{:href}}">{{:rp}}</a>
+                {{/if}}
+              </span>
+              {{/if}}
+              {{/for}}
               {{/if}}
               {{if full}}
-                <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
+              <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
               {{/if}}
               {{if favorite}}
-                <i class="graph-favorite fa {{:favorite}}"></i>
+              <i class="graph-favorite fa {{:favorite}}"></i>
               {{/if}}
               {{if remove}}
-                <i class="graph-remove fa fa-trash"></i>
+              <i class="graph-remove fa fa-trash"></i>
               {{/if}}
             </div>
           </div>
@@ -283,242 +283,242 @@
         </script>
 
         <script id="piechart-container-template" type="text/x-jsrender">
-         <div class="row">
-           <div class="col-md-12" id="piechart-container">
-           </div>
-         </div>
+          <div class="row">
+            <div class="col-md-12" id="piechart-container">
+            </div>
+          </div>
         </script>
 
         <script id="piechart-template" type="text/x-jsrender">
-         <div class="row">
-          <div class="col-md-6">
-            <a href="#graph/{{:name}}">{{:graph}} </a>
-          </div>
-          {{if precentage}}
-          <div class="col-md-2">
+          <div class="row">
+            <div class="col-md-6">
+              <a href="#graph/{{:name}}">{{:graph}} </a>
+            </div>
+            {{if precentage}}
+            <div class="col-md-2">
               <span class="text-right">| {{:precentage}}%</span></a>
+</div>
+<div class="col-md-4">
+  <span class="sparkline-bullet">100,null,{{:precentage}}</span>
+</div>
+{{/if}}
+</div>
+</script>
+</div> <!-- ./templates -->
+
+<!-- Left side column. contains the sidebar -->
+<aside class="main-sidebar">
+  <!-- sidebar: style can be found in sidebar.less -->
+  <section class="sidebar" >
+    <!-- search form -->
+    <!-- /.search form - TODO add something here-->
+    <!-- sidebar menu: : style can be found in sidebar.less -->
+    <ul class="sidebar-menu">
+      <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
+    </ul>
+    <div id="keys-list">
+    </div>
+  </section>
+  <!-- /.sidebar -->
+</aside>
+
+<!-- =============================================== -->
+
+<!-- Right side column. Contains the navbar and content of the page -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <!--
+      <section class="content-header">
+        <h1 id="page-title"></h1>
+      </section>
+      -->
+
+  <!-- Main content -->
+  <section class="content">
+    <div id="main-box">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="box">
+            <div class="box-header with-border">
+              <h3 class="box-title">Keys</h3>
+              <div class="small-graph-header" id="main-keys-container-header"></div>
+            </div>
+            <div class="box-body container-fluid">
+              <div id="main-keys-container" class="keys-container">
+              </div>
+            </div>
           </div>
+        </div>
+        <div class="col-md-6">
+          <div class="row">
+            <div class="box" id="main-search-box">
+              <div class="box-header with-border">
+                <h3 class="box-title">Search for keys (use '.' and ';' to get subkeys)</h3>
+              </div>
+              <div class="box-body container-fluid">
+                <div id="main-search-container">
+                </div>
+              </div>
+            </div>
+
+            <div class="box">
+              <div class="box-header with-border">
+                <h3 class="box-title">Recent</h3>
+              </div>
+              <div class="box-body container-fluid">
+                <ul id="main-recent-container">
+                </ul>
+              </div>
+            </div>
+            <div class="box">
+              <div class="box-header with-border">
+                <h3 class="box-title">Favorite</h3>
+              </div>
+              <div class="box-body container-fluid">
+                <ul id="main-favorite-container">
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <div class="box" id="alert-box">
+      <div class="box-header with-border">
+        <h3 class="box-title"><strong id="alert-title"></strong></h3>
+
+        <div class="box-tools pull-right">
+        </div>
+      </div>
+
+      <div class="box-body container-fluid" id="alert-container">
+        <div class="row">
           <div class="col-md-4">
-            <span class="sparkline-bullet">100,null,{{:precentage}}</span>
-          </div>
-         {{/if}}
-         </div>
-        </script>
-      </div> <!-- ./templates -->
-
-      <!-- Left side column. contains the sidebar -->
-      <aside class="main-sidebar">
-        <!-- sidebar: style can be found in sidebar.less -->
-        <section class="sidebar" >
-          <!-- search form -->
-          <!-- /.search form - TODO add something here-->
-          <!-- sidebar menu: : style can be found in sidebar.less -->
-          <ul class="sidebar-menu">
-            <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
-          </ul>
-          <div id="keys-list">
-          </div>
-        </section>
-        <!-- /.sidebar -->
-      </aside>
-
-      <!-- =============================================== -->
-
-      <!-- Right side column. Contains the navbar and content of the page -->
-      <div class="content-wrapper">
-        <!-- Content Header (Page header) -->
-        <!--
-        <section class="content-header">
-          <h1 id="page-title"></h1>
-        </section>
-        -->
-
-        <!-- Main content -->
-        <section class="content">
-          <div id="main-box">
-            <div class="row">
-              <div class="col-md-6 col-md-offset-1">
-                <div class="box" id="main-search-box">
-                  <div class="box-header with-border">
-                    <h3 class="box-title">Search for keys (use '.' and ';' to get subkeys)</h3>
-                  </div>
-                  <div class="box-body container-fluid">
-                    <div id="main-search-container">
-                    </div>
-                  </div>
-                </div>
-                <div class="box">
-                  <div class="box-header with-border">
-                    <h3 class="box-title">Keys</h3>
-                    <div class="box-tools pull-right">
-                      <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
-                    </div>
-                    <div class="small-graph-header" id="main-keys-container-header"></div>
-                  </div>
-                  <div class="box-body container-fluid">
-                    <div id="main-keys-container" class="keys-container">
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="box">
-                  <div class="box-header with-border">
-                    <h3 class="box-title">Recent</h3>
-                  </div>
-                  <div class="box-body container-fluid">
-                    <ul id="main-recent-container">
-                    </ul>
-                  </div>
-                </div>
-                <div class="box">
-                  <div class="box-header with-border">
-                    <h3 class="box-title">Favorite</h3>
-                  </div>
-                  <div class="box-body container-fluid">
-                    <ul id="main-favorite-container">
-                    </ul>
-                  </div>
-                </div>
-              </div>
+            <div class="box" id="alert-table-container">
             </div>
           </div>
-
-          <div class="box" id="alert-box">
-            <div class="box-header with-border">
-              <h3 class="box-title"><strong id="alert-title"></strong></h3>
-
-              <div class="box-tools pull-right">
-              </div>
-            </div>
-
-            <div class="box-body container-fluid" id="alert-container">
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="box" id="alert-table-container">
-                  </div>
-                </div>
-                <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
-                </div>
-              </div>
-            </div><!-- /.box -->
+          <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
           </div>
-
-          <div class="box" id="graph-box">
-            <div class="box-body container-fluid">
-              <div class="row">
-                <div class="col-md-12">
-                  <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="box">
-                    <div class="box-header with-border">
-                      <h3 class="box-title">Keys</h3>
-                      <div class="box-tools pull-right">
-                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
-                      </div>
-
-                      <div class="small-graph-header" id="graph-box-keys-container-header"></div>
-                    </div>
-                    <div class="box-body container-fluid">
-                      <div id="graph-box-keys-container" class="keys-container">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="box" id="charts-box">
-
-            <div class="modal fade" id="charts-add-modal" tabindex="-1" role="dialog" aria-hidden="true">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3 class="modal-title">Add to dashboard</h3> (use '.' and ';' to get subkeys)
-                  </div>
-                  <div class="modal-body">
-                    <div id="charts-add-modal-form-container"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="box-header with-border">
-              <h3 class="box-title"><strong id="charts-title"></strong></h3>
-
-              <div class="box-tools pull-right">
-                <button class="btn btn-box-tool" data-toggle="modal" title="Add" data-target="#charts-add-modal">
-                  <i id="charts-add" class="fa fa-plus"></i>
-                </button>
-              </div>
-            </div>
-
-
-            <div class="box-body container-fluid">
-              <div id="charts-container">
-              </div><!-- /.box-body -->
-            </div><!-- /.box -->
-
-            <div class="box-footer">
-            </div>
-          </div><!-- /.box -->
-
-        </section><!-- /.content -->
-      </div><!-- /.content-wrapper -->
-
-      <footer class="main-footer">
-        <div class="pull-right hidden-xs">
-          <b>Version</b> 0.1 (based on <a href="http://almsaeedstudio.com/AdminLTE/" target="_blank">AdminLTE</a>)
         </div>
-        <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
-        <!-- Just some hidden elements to get the colors out of -->
-        <div display="none">
-          <span class="crit-high"></span>
-          <span class="crit-low"></span>
-          <span class="warn-low"></span>
-          <span class="warn-high"></span>
-          <span class="ok-green"></span>
-          <span class="anomaly"></span>
-          <span class="stale"></span>
+      </div><!-- /.box -->
+    </div>
+
+    <div class="box" id="graph-box">
+      <div class="box-body container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
+            </div>
+          </div>
         </div>
-      </footer>
-    </div><!-- ./wrapper -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="box">
+              <div class="box-header with-border">
+                <h3 class="box-title">Keys</h3>
+                <div class="box-tools pull-right">
+                  <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                </div>
 
-    <script src="./plugins/jquery.2.1.1.min.js"></script>
-    <script src="./plugins/bootstrap-3.3.2/js/bootstrap.min.js" type="text/javascript"></script>
-    <!-- SlimScroll -->
-    <script src="./plugins/slimScroll/jquery.slimscroll.min.js" type="text/javascript"></script>
-    <!-- AdminLTE App -->
-    <script src="./plugins/AdminLTE/js/app.min.js" type="text/javascript"></script>
-    <!-- jsrender -->
-    <script src="./plugins/jsrender/jsrender.min.js" type="text/javascript"></script>
-    <script src="./plugins/datatables/jquery.dataTables.js" type="text/javascript"></script>
-    <script src="./plugins/datatables/dataTables.bootstrap.js" type="text/javascript"></script>
-    <script src="./plugins/storage/jquery.storageapi-1.7.5.min.js" type="text/javascript"></script>
-    <!--script src="./plugins/qunit-1.17.1.js" type="text/javascript"></script-->
-    <script src="./plugins/grapnel.min.js" type="text/javascript"></script>
-    <script src="./plugins/Bootstrap-3-Typeahead-3.1.1/bootstrap3-typeahead.min.js" type="text/javascript"></script>
-    <script src="./plugins/bootbox-4.4.0.min.js" type="text/javascript"></script>
-    <script src="./plugins/flot/jquery.flot-0.8.3.min.js" type="text/javascript"></script>
-    <script src="./plugins/flot/jquery.flot.time-0.8.3.min.js" type="text/javascript"></script>
-    <script src="./plugins/flot/jquery.flot.selection-0.8.3.js" type="text/javascript"></script>
-    <script src="./plugins/flot/jquery.flot.crosshair-0.8.3.js" type="text/javascript"></script>
-    <script src="./plugins/jquery.ba-dotimeout.min.js" type="text/javascript"></script>
-    <script src="./plugins/cache.js" type="text/javascript"></script>
-    <script src="./plugins/pnotify.custom.min.js" type="text/javascript"></script>
-    <script src='./plugins/sparkline/jquery.sparkline.2.1.2.min.js'></script>
-    <script src="./config.js" type="text/javascript"></script>
-    <script src="./utils.js" type="text/javascript"></script>
-    <script src="./tests.js" type="text/javascript"></script>
-    <script src="./datasource.js" type="text/javascript"></script>
-    <!-- app -->
-    <script src="./app.js" type="text/javascript"></script>
+                <div class="small-graph-header" id="graph-box-keys-container-header"></div>
+              </div>
+              <div class="box-body container-fluid">
+                <div id="graph-box-keys-container" class="keys-container">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  </body>
+    <div class="box" id="charts-box">
+
+      <div class="modal fade" id="charts-add-modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h3 class="modal-title">Add to dashboard</h3> (use '.' and ';' to get subkeys)
+            </div>
+            <div class="modal-body">
+              <div id="charts-add-modal-form-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="box-header with-border">
+        <h3 class="box-title"><strong id="charts-title"></strong></h3>
+
+        <div class="box-tools pull-right">
+          <button class="btn btn-box-tool" data-toggle="modal" title="Add" data-target="#charts-add-modal">
+            <i id="charts-add" class="fa fa-plus"></i>
+          </button>
+        </div>
+      </div>
+
+
+      <div class="box-body container-fluid">
+        <div id="charts-container">
+        </div><!-- /.box-body -->
+      </div><!-- /.box -->
+
+      <div class="box-footer">
+      </div>
+    </div><!-- /.box -->
+
+  </section><!-- /.content -->
+</div><!-- /.content-wrapper -->
+
+<footer class="main-footer">
+  <div class="pull-right hidden-xs">
+    <b>Version</b> 0.2 (based on <a href="http://almsaeedstudio.com/AdminLTE/" target="_blank">AdminLTE</a>)
+  </div>
+  <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
+  <!-- Just some hidden elements to get the colors out of -->
+  <div display="none">
+    <span class="crit-high"></span>
+    <span class="crit-low"></span>
+    <span class="warn-low"></span>
+    <span class="warn-high"></span>
+    <span class="ok-green"></span>
+    <span class="anomaly"></span>
+    <span class="stale"></span>
+  </div>
+</footer>
+</div><!-- ./wrapper -->
+
+<script src="./plugins/jquery.2.1.1.min.js"></script>
+<script src="./plugins/bootstrap-3.3.2/js/bootstrap.min.js" type="text/javascript"></script>
+<!-- SlimScroll -->
+<script src="./plugins/slimScroll/jquery.slimscroll.min.js" type="text/javascript"></script>
+<!-- AdminLTE App -->
+<script src="./plugins/AdminLTE/js/app.min.js" type="text/javascript"></script>
+<!-- jsrender -->
+<script src="./plugins/jsrender/jsrender.min.js" type="text/javascript"></script>
+<script src="./plugins/datatables/jquery.dataTables.js" type="text/javascript"></script>
+<script src="./plugins/datatables/dataTables.bootstrap.js" type="text/javascript"></script>
+<script src="./plugins/storage/jquery.storageapi-1.7.5.min.js" type="text/javascript"></script>
+<!--script src="./plugins/qunit-1.17.1.js" type="text/javascript"></script-->
+<script src="./plugins/grapnel.min.js" type="text/javascript"></script>
+<script src="./plugins/Bootstrap-3-Typeahead-3.1.1/bootstrap3-typeahead.min.js" type="text/javascript"></script>
+<script src="./plugins/bootbox-4.4.0.min.js" type="text/javascript"></script>
+<script src="./plugins/flot/jquery.flot-0.8.3.min.js" type="text/javascript"></script>
+<script src="./plugins/flot/jquery.flot.time-0.8.3.min.js" type="text/javascript"></script>
+<script src="./plugins/flot/jquery.flot.selection-0.8.3.js" type="text/javascript"></script>
+<script src="./plugins/flot/jquery.flot.crosshair-0.8.3.js" type="text/javascript"></script>
+<script src="./plugins/jquery.ba-dotimeout.min.js" type="text/javascript"></script>
+<script src="./plugins/cache.js" type="text/javascript"></script>
+<script src="./plugins/pnotify.custom.min.js" type="text/javascript"></script>
+<script src='./plugins/sparkline/jquery.sparkline.2.1.2.min.js'></script>
+<script src="./config.js" type="text/javascript"></script>
+<script src="./utils.js" type="text/javascript"></script>
+<script src="./tests.js" type="text/javascript"></script>
+<script src="./datasource.js" type="text/javascript"></script>
+<!-- app -->
+<script src="./app.js" type="text/javascript"></script>
+
+</body>
 </html>
