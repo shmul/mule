@@ -14,6 +14,7 @@ local cdb = require "column_db"
 local mdb = require "lightning_mdb"
 local p = require "purepack"
 
+
 local function column_db_factory(name_)
   p.set_pack_lib("bits")
   local dir = create_test_directory(name_.."_cdb")
@@ -1369,6 +1370,21 @@ function test_parent_nodes()
     end
 
   for_each_db("test_parent_nodes",helper)
+end
+
+function test_factory_export_config_for_metric()
+  local function helper(m)
+    m.configure(table_itr({":wine 60s:1h 10m:24h log","beer 5m:3d 1d:2y"}))
+    assert(string.find(m.export_configuration("wine.red"),'"retentions":.+"1m:1h"'))
+    assert(string.find(m.export_configuration("wine.red"),'"retentions":.+"10m:1d"'))
+    assert(string.find(m.export_configuration("beer.ale"),'"retentions":.+"5m:3d'))
+    assert_nil(string.find(m.export_configuration("beer.ale/wine.red"),'"beer.ale":{ "retentions":.+"1m:1h'))
+    assert(string.find(m.export_configuration("beer.ale/wine.red"),'"beer.ale":{"retentions":.+"1d:2y'))
+    local now = time_now()
+    m.process("beer.ale.pale 8 "..(now+120))
+    assert(string.find(m.export_configuration("beer.ale.pale;1d:2y"),'"retentions":.+"5m:3d'))
+  end
+  for_each_db("test_factory_export_config_for_metric",helper)
 end
 
 --verbose_log(true)

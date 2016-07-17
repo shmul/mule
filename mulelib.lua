@@ -71,7 +71,7 @@ function sequence(db_,name_)
     else
       at(math.floor(_period/_step),0,latest_timestamp_)
       db_._zero_sum_latest.out(name_) -- we don't want to mask the real latest with the zero one
-  end
+    end
   end
 
 
@@ -1179,7 +1179,7 @@ function mule(db_)
     return table_size(_factories)
   end
 
-  local function export_configuration()
+  local function export_factories()
     local str = strout("")
     local format = string.format
     local col = collectionout(str,"{","}")
@@ -1207,6 +1207,48 @@ function mule(db_)
     col.tail()
     logi("export_configuration",table_size(_factories))
     return wrap_json(str)
+  end
+
+  local function export_configuration_for_metric(resource_,options_)
+    local str = strout("")
+    local format,sub,find = string.format,string.sub,string.find
+    local insert = table.insert
+    local col = collectionout(str,"{","}")
+    col.head()
+    for m in split_helper(resource_,"/") do
+      local rps = {}
+      local name,_,_ = split_name(m) or m
+      for n,_ in get_sequences(name) do
+        local metric,step,period = split_name(n)
+        if metric==name then -- we filter out parent matches
+          insert(rps,{step,period})
+        end
+      end
+
+      col.elem(format("\"%s\":",name))
+      local col0 = collectionout(str,"{","}\n")
+      local col1 = collectionout(str,"[","]\n")
+      col0.head()
+      col0.elem('"retentions":')
+      col1.head()
+      for _,rp in ipairs(rps) do
+        col1.elem(format("\"%s:%s\" ",secs_to_time_unit(rp[1]),secs_to_time_unit(rp[2])))
+      end
+      col1.tail()
+      col0.tail()
+    end
+    col.tail()
+
+    logi("export_configuration_for_metric",resource_)
+    return wrap_json(str)
+  end
+
+  local function export_configuration(resource_,options_)
+    if not resource_ or #resource_==0 then
+      return export_factories()
+    end
+
+    return export_configuration_for_metric(resource_)
   end
 
   local function command(items_)

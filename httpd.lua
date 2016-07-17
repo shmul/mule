@@ -170,7 +170,7 @@ local function config_handler(mule_,handler_,req_,resource_,qs_params_,content_)
     return mule_.factories_out(resource_,qs_params_)
   elseif req_.verb=="GET" then
     logd("calling",handler_)
-    return mule_.export_configuration()
+    return mule_.export_configuration(resource_,qs_params_)
   end
   return 405
 end
