@@ -472,15 +472,32 @@ function app() {
       }
       var tree = [];
       populate_tree(new_dashboards,tree,"");
+
+      var containers = ["#dashboards-dropdown-tree-container","#main-dashboards-container"];
+
       function force_link_color() {
         // the tree widget forces a style we want to override
-        $("#main-dashboards-container").find("a[href!='#']").removeAttr("style");
+        $.each(containers,function(_,c) {
+          $(c).find("a[href!='#']").removeAttr("style");
+          $(c).find("a[href='#']").removeAttr("href");
+        });
       }
 
-      $("#main-dashboards-container").treeview({data: tree,
-                                                enableLinks: true,
+      $.each(containers,function(_,c) {
+        $(c).treeview({data: tree,
+                       enableLinks: true,
+        });
       });
       force_link_color(); // TODO - this disappears when the tree is redrawn
+
+      $("#dashboards-dropdown-tree-container").click(function(e) {
+        var t = $(e.target);
+        if ( t.is("a") && t.attr("href")!='#' ) { return; }
+        if ( t.find("a").length==0 || t.find("a[href='#']").length>0 || t.attr("href")=='#' ) {
+          e.stopPropagation();
+        }
+      });
+
       dashboards = new_dashboards;
       return false;
     });
