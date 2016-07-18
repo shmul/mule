@@ -69,20 +69,7 @@
               <li class="dropdown messages-menu">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Dashboards">
                   <i class="fa fa-dashboard"></i>
-                  <span id="dashboard-count" class="label label-success"></span>
                 </a>
-                <ul class="dropdown-menu">
-                  <li class="header">Dashboards</li>
-                  <li>
-                    <ul id="dashboard-container" class="menu">
-                    </ul>
-                  </li>
-                  <li class="footer">
-                    <form action="#" id="dashboard-form">
-                      <input id="dashboard-add" type="text" class="form-control" placeholder="Add dashboard">
-                    </form>
-                  </li>
-                </ul>
               </li>
 
               <li class="dropdown messages-menu">
@@ -384,12 +371,10 @@
     </div>
 
       <div class="box" id="alert-box">
-      <div class="box-header with-border">
-        <h3 class="box-title"><strong id="alert-title"></strong></h3>
+        <div class="box-header with-border">
+          <h3 class="box-title"><strong id="alert-title"></strong></h3>
 
-        <div class="box-tools pull-right">
         </div>
-      </div>
 
       <div class="box-body container-fluid" id="alert-container">
         <div class="row">
@@ -434,27 +419,10 @@
 
     <div class="box" id="charts-box">
 
-      <div class="modal fade" id="charts-add-modal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-              <h3 class="modal-title">Add to dashboard</h3> (use '.' and ';' to get subkeys)
-            </div>
-            <div class="modal-body">
-              <div id="charts-add-modal-form-container"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="box-header with-border">
         <h3 class="box-title"><strong id="charts-title"></strong></h3>
 
         <div class="box-tools pull-right">
-          <button class="btn btn-box-tool" data-toggle="modal" title="Add" data-target="#charts-add-modal">
-            <i id="charts-add" class="fa fa-plus"></i>
-          </button>
         </div>
       </div>
 
