@@ -49,13 +49,12 @@
     font-size: 18px;
 }
 .small-graph-header {
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .graph-header h4 {
     display: inline;
     margin-right: 1em;
-    font-size: 14px;
 }
 
 .graph-favorite {

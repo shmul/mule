@@ -179,19 +179,6 @@
           </table>
         </script>
 
-        <script id="keys-list-template" type="text/x-jsrender">
-          <ul class="sidebar-menu">
-            <li class="header">Keys</li>
-            {{for graph_keys}}
-            <li>
-              <a href="{{:href}}">
-                <i class="fa fa-circle-o"></i>{{:last_part}}
-              </a>
-            </li>
-            {{/for}}
-          </ul>
-        </script>
-
         <script id="keys-table-template" type="text/x-jsrender">
           <table id="keys-table" class="table-bordered table-striped compact table-condensed">
             <thead>
@@ -220,48 +207,11 @@
         </script>
 
         <script id="graph-box-header-template" type="text/x-jsrender">
-          <div class="box-header with-border" data-graph="{{:graph}}">
+          <div data-graph="{{:graph}}">
             <div class="box-title">
               <div class="{{:klass}}-header graph-header">
-                <h4>
                   {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
-                </h4>
               </div>
-            </div>
-            <div class="box-tools pull-right {{:klass}}-header">
-              {{if alerted}}
-              <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
-              {{/if}}
-              {{if klass == "small-graph"}}
-              {{for links}}
-              {{if current}}
-              <span class="label bg-light-blue">{{:rp}}</span>
-              {{/if}}
-              {{/for}}
-              {{else}}
-              {{for links}}
-              {{if current}}
-              <span class="label bg-light-blue">{{:rp}}</span>
-              {{else}}
-              <span class="label">
-                {{if inner_navigation}}
-                <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
-                {{else}}
-                <a href="#graph/{{:href}}">{{:rp}}</a>
-                {{/if}}
-              </span>
-              {{/if}}
-              {{/for}}
-              {{/if}}
-              {{if full}}
-              <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
-              {{/if}}
-              {{if favorite}}
-              <i class="graph-favorite fa {{:favorite}}"></i>
-              {{/if}}
-              {{if remove}}
-              <i class="graph-remove fa fa-trash"></i>
-              {{/if}}
             </div>
           </div>
         </script>
@@ -276,6 +226,45 @@
           </div>
         </script>
 
+        <script id="graph-box-footer-template" type="text/x-jsrender">
+         <div class="box-footer">
+           <div class="box-tools pull-left {{:klass}}-header">
+          {{if alerted}}
+          <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
+          {{/if}}
+          {{if klass == "small-graph"}}
+          {{for links}}
+          {{if current}}
+          <span class="label bg-light-blue">{{:rp}}</span>
+          {{/if}}
+          {{/for}}
+          {{else}}
+          {{for links}}
+          {{if current}}
+          <span class="label bg-light-blue">{{:rp}}</span>
+          {{else}}
+          <span class="label">
+          {{if inner_navigation}}
+          <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
+          {{else}}
+          <a href="#graph/{{:href}}">{{:rp}}</a>
+          {{/if}}
+          </span>
+          {{/if}}
+          {{/for}}
+          {{/if}}
+          {{if full}}
+          <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
+          {{/if}}
+          {{if favorite}}
+          <i class="graph-favorite fa {{:favorite}}"></i>
+          {{/if}}
+          {{if remove}}
+          <i class="graph-remove fa fa-trash"></i>
+          {{/if}}
+          </div>
+         </div>
+        </script>
         <!-- just a data holder to make the template generation code easier without closure hacks -->
         <script id="chart-graph-template" type="text/x-jsrender">
           <div id="chart-{{:index}}-container" data-graph="{{:graph}}" class="graph-container col-md-{{:width}}">
@@ -316,8 +305,6 @@
     <ul class="sidebar-menu">
       <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
     </ul>
-    <div id="keys-list">
-    </div>
   </section>
   <!-- /.sidebar -->
 </aside>

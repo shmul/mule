@@ -42,8 +42,9 @@ function mule_ds() {
     });
   }
 
-  function config(callback_) {
-    mule_get("/config",callback_,120);
+  function config(graph_,callback_) {
+    var url = "/config"+ (graph_ ? "/"+graph_ : "");
+    mule_get(url,callback_,120);
   }
 
   function graph(graph_,callback_) {

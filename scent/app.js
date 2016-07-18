@@ -207,8 +207,8 @@ function app() {
     return null;
   }
 
-  function mule_config(callback_) {
-    scent_ds.config(function(conf_) {
+  function mule_config(graph_,callback_) {
+    scent_ds.config(graph_,function(conf_) {
       callback_(jQuery.extend(true,{},conf_));
     });
   }
@@ -233,19 +233,20 @@ function app() {
   }
 
   function generate_all_graphs(graph_,callback_) {
-    mule_config(function(conf_) {
-      var m = graph_.match(/^([\w\-]+)(\.|;)/);
-      if ( !m || !m[1] ) { return callback_(); }
-      var retentions = conf_[m[1]] && conf_[m[1]].retentions ? conf_[m[1]].retentions : null;
-      if ( !retentions ) { return callback_(); }
+    mule_config(graph_,function(conf_) {
       var gs = graph_split(graph_);
+      var retentions = conf_[gs[0]] && conf_[gs[0]].retentions ? conf_[gs[0]].retentions : null;
+      if ( !retentions ) { return callback_(); }
+
       if ( !gs || gs.length==0 ) { return callback_(); }
       var graph_rp = gs[1]+":"+gs[2];
       var selected_index = retentions.findIndex(function(rp) { return rp==graph_rp; } );
       if ( selected_index==-1 ) { return callback_(); }
       var c = [];
       for (var j=0; j<retentions.length; ++j) {
-        c.push(gs[0]+";"+c[j]);
+        if ( retentions[j]!="1s:1s") {
+          c.push(gs[0]+";" + retentions[j]);
+        }
       }
       // sort based on step
       c.sort(function(a,b) {
@@ -290,7 +291,9 @@ function app() {
     }
     $(container_).html($.templates("#graph-box-header-template").render(template_data));
     var graph_container = ($(container_).closest(".graph-container"))[0];
+    var box_body = ($(graph_container).find(".box-body"))[0];
     $(graph_container).attr("data-graph",template_data[0].graph);
+    $(box_body).append($.templates("#graph-box-footer-template").render(template_data));
   }
 
   function setup_menu_alerts() {
@@ -1124,10 +1127,11 @@ function app() {
             metric_parts[i] = { href: accum.join(".")+suffix, title: title }
           }
 
-          graph_box_header(graph_header_container_,{klass: klass_,
-                                                    type: "graph", title: metric, parts: metric_parts, graph: name_,
-                                                    links: links,favorite: favorite, alerted: ac.text, color: ac.color,
-                                                    full: !!inner_navigation_, remove: !!remove_callback_});
+          graph_box_header(graph_header_container_,
+                           {klass: klass_,
+                            type: "graph", title: metric, parts: metric_parts, graph: name_,
+                            links: links,favorite: favorite, alerted: ac.text, color: ac.color,
+                            full: !!inner_navigation_, remove: !!remove_callback_});
           if ( remove_callback_ ) {
             $(".graph-remove").unbind("click").click(remove_callback_);
           }
@@ -1187,7 +1191,6 @@ function app() {
     var metric = graph_split(name_);
     scent_ds.key(metric[0],function(keys_) {
       populate_keys_table(keys_,"#graph-box-keys-container");
-      populate_keys_list(keys_,"#keys-list",name_);
     },true);
 
     push_graph_to_recent(name_);
@@ -1196,25 +1199,6 @@ function app() {
   function teardown_graph() {
     $("#graph-box").hide();
     $("#graph-box-container").empty();
-  }
-
-  // Populate the sidebar's keys list with one link per metric, all to the same
-  // time span of the currently displayed graph.
-  function populate_keys_list(keys_,target_, current_graph_name_) {
-    var metric = graph_split(current_graph_name_);
-    var suffix = [";",metric[1],":",metric[2]].join("");
-    var graph_keys = [];
-    var processed_keys = {};
-    for (var i in keys_) {
-      var k = graph_split(keys_[i]);
-      if (!processed_keys[k[0]]) {
-        var metric_parts = k[0].split(".");
-        var last_part = metric_parts[metric_parts.length - 1];
-        graph_keys.push({key: k[0], last_part: last_part, href: "#graph/"+k[0]+suffix});
-        processed_keys[k[0]] = true;
-      }
-    }
-    $(target_).empty().html($.templates("#keys-list-template").render({graph_keys: graph_keys}));
   }
 
   function populate_keys_table(keys_,target_) {
@@ -1267,7 +1251,7 @@ function app() {
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     var dt = $("#keys-table").DataTable({
       bRetrieve: true,
-      sDom: "ftrlp", // Show the record count select box *below* the table
+      sDom: "trlfp", // Show the record count select box *below* the table
       aoColumns: [
         { sWidth: "70%" },
         { sWidth: "30%" }
