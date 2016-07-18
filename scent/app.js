@@ -1308,16 +1308,17 @@ function app() {
 
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     var dt = $("#keys-table").DataTable({
+
       bRetrieve: true,
-      sDom: "trlfp", // Show the record count select box *below* the table
+//      sDom: "trflp", // Show the record count select box *below* the table
       aoColumns: [
-        { sWidth: "70%" },
-        { sWidth: "30%" }
+        { bSortable: false },
+        { bSearchable: false, bSortable: false }
       ],
       iDisplayLength: 10,
       aLengthMenu: [ 10, 20, 40 ],
       destroy: true,
-      order: [[ 2, "desc" ]]
+      order: [[ 0, "asc" ]]
     });
 
     set_click_behavior();
