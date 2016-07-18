@@ -7,6 +7,7 @@
 
 /* override some AdminLTE
  */
+
 .sidebar-menu .treeview-menu  li > a {
     padding: 5px 5px 5px 15px;
     display: block;
@@ -147,6 +148,12 @@
 
 .ok-green {
     background-color: #1d995b;
+}
+
+
+#main-dashboards-container > ul > li > a {
+    cursor: pointer;
+    color: #3c8dbc;
 }
 
 /* these were pulled from pnotify's index.html :( */

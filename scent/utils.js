@@ -50,3 +50,13 @@ function key_impl(initial_,key_,callback_,raw_) {
   }).filter(function(e) { return e!=key_;});
   callback_(fks.sort());
 }
+
+
+function deep_key(table_,key_) {
+  var parts = key_.split(".");
+  var current = table_;
+  for (var i=0; i<parts.length && current; ++i) {
+    current = current[parts[i]];
+  }
+  return current;
+}

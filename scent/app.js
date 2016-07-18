@@ -3,6 +3,7 @@ function app() {
   var router = new Grapnel();
   var notified_graphs = {};
   var stack_bar_bottom = {"dir1": "up", "dir2": "left", "spacing1": 2, "spacing2": 2};
+  var dashboards = {};
 
   // from Rickshaw
   function formatKMBT(y,dec) {
@@ -413,21 +414,33 @@ function app() {
 
   function setup_menus() {
 
+    load_recent(function(recent_) {
+      load_graphs_lists("#recent-container","#recent-template",recent_);
+    });
+
     load_persistent(function(persistent_) {
       load_graphs_lists("#favorite-container","#favorite-template",persistent_.favorites);
-      load_graphs_lists("#dashboard-container","#dashboard-template",persistent_.dashboards);
-
-      $(".dashboard-delete").click(function(e) {
-        var name = $(e.target).attr("data-target");
-        bootbox.confirm("Are you sure you want to delete the dashboard '"+name+"' ?", function(result) {
-          if ( result ) {
-            delete_dashboard(name);
-          }
-        });
-      });
-
-
     });
+    var template_data = [{class: "",//"sidebar-form",
+                          form_id: "topnav-search-form",
+                          input_id: "search-keys-input"
+    }];
+    $("#topnav-search-container").empty().html($.templates("#search-form-template").render(template_data));
+  }
+
+  function build_dashboard_nav_menu() {
+
+    load_graphs_lists("#dashboard-container","#dashboard-template",dashboards.manual);
+
+    $(".dashboard-delete").click(function(e) {
+      var name = $(e.target).attr("data-target");
+      bootbox.confirm("Are you sure you want to delete dashboard '"+name+"' ?", function(result) {
+        if ( result ) {
+          delete_dashboard(name);
+        }
+      });
+    });
+
 
     $("#dashboard-form").submit(function(e) {
       var name = $("#dashboard-add").val();
@@ -449,25 +462,72 @@ function app() {
     });
 
     function delete_dashboard(name_) {
-      load_persistent(function(persistent_) {
-        if ( persistent_.dashboards[name_] ) {
-          delete persistent_.dashboards[name_];
-          load_graphs_lists("#dashboard-container","#dashboard-template",persistent_.dashboards);
-          scent_ds.save(user,"persistent",persistent_,function() {
-            router.navigate('/');
-          });
+      if ( !dashboards.manual && !dashboards.manual[name_] ) {
+        return;
         }
+      delete persistent_.dashboards[name_];
+      load_graphs_lists("#dashboard-container","#dashboard-template",persistent_.dashboards);
+      scent_ds.save(user,"persistent",persistent_,function() {
+        router.navigate('/');
       });
     }
 
-    load_recent(function(recent_) {
-      load_graphs_lists("#recent-container","#recent-template",recent_);
+  }
+
+
+
+  function setup_dashboards() {
+    // TODO do we need to build this mapping all the time or can we do it every couple of secs
+    // or upon demand?
+    var new_dashboards = {};
+    new_dashboards.static = scent_config().static_dashboards;
+    load_persistent(function(persistent_) {
+      new_dashboards.manual = persistent_.dashboards;
     });
-    var template_data = [{class: "",//"sidebar-form",
-                          form_id: "topnav-search-form",
-                          input_id: "search-keys-input"
-    }];
-    $("#topnav-search-container").empty().html($.templates("#search-form-template").render(template_data));
+
+    scent_config().auto_dashboards(scent_ds,function(autos_) {
+      new_dashboards.auto = autos_;
+    });
+
+
+    function populate_tree(src_node_,dest_node_,path_) {
+      if ( $.type(src_node_)!="object" ) {
+        return;
+        }
+      $.each(src_node_,function(k,v) {
+        var new_node = { text: k, path: (path_.length>0 ? [path_,".",k].join("") : k) };
+        if ( $.type(v)=="array") {
+          new_node.dashboard = v;
+          new_node.href = "#dashboard/"+new_node.path;
+        } else {
+          new_node.nodes = [];
+          populate_tree(v,new_node.nodes,new_node.path);
+        }
+        dest_node_.push(new_node);
+      });
+    }
+
+    $.doTimeout(100,function() {
+
+      if ( !new_dashboards.manual || !new_dashboards.static ) {
+        return true;
+      }
+      var tree = [];
+      populate_tree(new_dashboards,tree,"");
+      build_dashboard_nav_menu();
+      function force_link_color() {
+        // the tree widget forces a style we want to override
+        $("#main-dashboards-container").find("a[href!='#']").removeAttr("style");
+      }
+
+      $("#main-dashboards-container").treeview({data: tree,
+                                                enableLinks: true,
+      });
+      force_link_color(); // TODO - this disappears when the tree is redrawn
+      dashboards = new_dashboards;
+      return false;
+    });
+
   }
 
   // Add a .smoothed_value property to each datum using Double-Exponential Smoothing.
@@ -915,6 +975,11 @@ function app() {
   }
 
   function setup_charts(dashboard_name) {
+    var dashboard = deep_key(dashboards,dashboard_name);
+    if ( !dashboard ) {
+      notify('Rrrr. Something went wrong','Can\'t find dashboard "'+dashboard_name+'".');
+      return;
+    }
 
     function add_to_dashboard(graph_) {
       load_persistent(function(persistent_) {
@@ -949,35 +1014,28 @@ function app() {
                       });
     }
 
-    load_persistent(function(persistent_) {
-      var dashboard = persistent_.dashboards[dashboard_name];
-      if ( !dashboard ) {
-        notify('Rrrr. Something went wrong','Can\'t find dashboard "'+dashboard_name+'".');
-        return;
-      }
-      $("#charts-container").html("");
-      var charts_per_row = scent_config().charts_per_row;
-      var chart_width = Math.ceil(12/charts_per_row);
-      var current_row;
+    $("#charts-container").html("");
+    var charts_per_row = scent_config().charts_per_row;
+    var chart_width = Math.ceil(12/charts_per_row);
+    var current_row;
 
-      for (var i in dashboard) {
-        var name = dashboard[i];
-        if ( (i % charts_per_row)==0 ) {
-          current_row = $('<div class="row">');
-          $("#charts-container").append(current_row);
-        }
-        current_row.append($.templates("#chart-graph-template").render([{index: i,name: name, width: chart_width}]));
+    for (var i in dashboard) {
+      var name = dashboard[i];
+      if ( (i % charts_per_row)==0 ) {
+        current_row = $('<div class="row">');
+        $("#charts-container").append(current_row);
       }
+      current_row.append($.templates("#chart-graph-template").render([{index: i,name: name, width: chart_width}]));
+    }
 
-      for (var i in dashboard) {
-        var name = dashboard[i];
-        var id = "chart-"+i+"-container";
-        $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
-        load_graph(name,"#"+id+" .graph-body");
-        setup_graph_header(name,"#"+id+" .graph-header",true,graph_remove_callback,"small-graph");
-      }
+    for (var i in dashboard) {
+      var name = dashboard[i];
+      var id = "chart-"+i+"-container";
+      $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
+      load_graph(name,"#"+id+" .graph-body");
+      setup_graph_header(name,"#"+id+" .graph-header",true,graph_remove_callback,"small-graph");
+    }
 
-    });
 
     $("#charts-title").text(dashboard_name);
 
@@ -1374,6 +1432,7 @@ function app() {
                           router.navigate('graph/'+name_);
                         });
       update_alerts(); // with no selected category it just updates the count
+      setup_dashboards();
     }
 
     router.get(/^(index.html)?$/i, function(req) {
