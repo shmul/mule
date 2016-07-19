@@ -1000,6 +1000,69 @@ function app() {
     $("#charts-box").hide();
   }
 
+  function setup_checks() {
+
+    function build_status_filter() {
+      var records = [
+        {criteria:"all", label:"All"},
+        {criteria:"normal", label:"Normal"},
+        {criteria:"warning", label:"Warning"},
+        {criteria:"critical", label:"Critical"},
+      ];
+      render_template("#checks-table-filter-container","#checks-table-filter-template",
+                      {records:records});
+      $("#check-status-all").attr("checked","");
+      $("#check-status").change( function(e) {
+        $("#checks-table").DataTable().draw();
+      })
+    }
+
+    function callback(checks_) {
+      var records = [];
+      var ignore_pat = /;1s:1s$/;
+
+      $.each(checks_,function(k,v) {
+        if ( ignore_pat.test(k) ) {
+          return;
+        }
+        var status; // TODO - translate to normal/warning/critical/flapping
+        var ts;
+        records.push({check: k, status: status, time: ts});
+      });
+
+      render_template("#checks-table-container","#checks-table-template",{records:records});
+      var dt = $("#checks-table").DataTable({
+        bRetrieve: true,
+        iDisplayLength: 40,
+        aLengthMenu: [ 40, 80, 120 ],
+        destroy: true,
+        order: [[ 0, "asc" ]]
+      });
+
+      $.fn.dataTable.ext.search.push(
+        function( settings, data, dataIndex ) {
+          // TODO - get the radio group state and filter accordingly
+          var criteria = $("#check-status").val();
+          var min = parseInt( $('#min').val(), 10 );
+          var max = parseInt( $('#max').val(), 10 );
+          var status = data[1];
+
+        return criteria==status;
+        });
+      build_status_filter();
+      // TODO - setup event on radio group change
+      //$("#checks-criteria").
+    }
+
+
+    scent_ds.latest("checker",callback);
+  }
+
+  function teardown_checks() {
+    $("#checks-table-container").empty();
+    $("#checks-box").hide();
+  }
+
   function setup_search_keys(form_,input_,callback_) {
     $(form_).submit(function(e) {
       var name = $(input_).val();
@@ -1180,7 +1243,7 @@ function app() {
 
 
   function setup_graph(name_) {
-    $("#graph-box-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
+    render_template("#graph-box-container","#graph-template",[{klass: "tall-graph"}]);
     load_graph(name_,"#graph-box .graph-body");
     setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph");
     $("#graph-box").show();
@@ -1234,8 +1297,9 @@ function app() {
           }
           metric_parts.unshift({ key: "", title:"[root]&nbsp;"});
           $(target_+"-header").empty().html($.templates("#keys-table-header-template").render([{parts:metric_parts}]));
-        } else
-        $(target_+"-header").empty();
+        } else {
+          $(target_+"-header").empty();
+        }
 
         scent_ds.key(key,function(keys_) {
           populate_keys_table(keys_,target_)
@@ -1381,6 +1445,7 @@ function app() {
       teardown_alerts();
       teardown_charts();
       teardown_graph();
+      teardown_checks();
     });
 
     router.get('alert/:category', function(req) {
@@ -1391,7 +1456,20 @@ function app() {
       teardown_charts();
       teardown_graph();
       teardown_alerts(); // we need to clear the displayed alert table/graph when navigating between alerts
+      teardown_checks();
       update_alerts(category);
+      refresh_loaded_graphs();
+    });
+
+    router.get('checks', function(req) {
+      set_title("Checks");
+      var category = req.params.category;
+      globals();
+      teardown_main();
+      teardown_charts();
+      teardown_graph();
+      teardown_alerts();
+      setup_checks();
       refresh_loaded_graphs();
     });
 
@@ -1400,6 +1478,7 @@ function app() {
       globals();
       teardown_main();
       teardown_alerts();
+      teardown_checks();
       teardown_charts();
       var id = req.params.id;
       setup_graph(id);
@@ -1412,6 +1491,7 @@ function app() {
       var id = req.params.id;
       teardown_main();
       teardown_alerts();
+      teardown_checks();
       teardown_graph();
       setup_charts(id);
       refresh_loaded_graphs();

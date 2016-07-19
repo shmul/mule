@@ -36,6 +36,14 @@
 
 
           <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav">
+              <li class="dropdown" title="Checks">
+                <a href="#checks">
+                  Checks
+                  <i class="fa fa-check"></i>
+                </a>
+              </li>
+            </ul>
             <ul class="nav navbar-nav" id="alerts-menu-container">
             </ul>
             <ul class="nav navbar-nav">
@@ -195,6 +203,43 @@
 
         <script id="keys-table-header-template" type="text/x-jsrender">
           {{for parts}}<a class="keys-table-key" data-target="{{:key}}">{{:title}}</a>{{/for}}
+        </script>
+
+        <script id="checks-table-template" type="text/x-jsrender">
+          <table id="checks-table" class="table table-bordered table-striped table-condensed">
+            <thead>
+              <tr>
+                <th>Check</th>
+                <th>Status</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{for records}}
+              <tr>
+                <td>{{:check}}</td>
+                <td>{{:status}}</td>
+                <td>{{:time}}</td>
+                  </td>
+              </tr>
+              {{/for}}
+            </tbody>
+          </table>
+        </script>
+
+        <script id="checks-table-filter-template" type="text/x-jsrender">
+          <div class="form-group" id="check-status">
+            <label class="col-lg-2 control-label">Filter by Status</label>
+            <div class="col-lg-10">
+              {{for records}}
+              <div class="radio-inline">
+                <label>
+                  <input type="radio" name="status-filter" id="check-status-{{:criteria}}" value="status-{{:criteria}}">{{:label}}
+                </label>
+              </div>
+              {{/for}}
+            </div>
+          </div>
         </script>
 
         <script id="graph-box-header-template" type="text/x-jsrender">
@@ -373,11 +418,10 @@
       </div>
     </div>
 
-      <div class="box" id="alert-box">
-        <div class="box-header with-border">
-          <h3 class="box-title"><strong id="alert-title"></strong></h3>
-
-        </div>
+    <div class="box" id="alert-box">
+      <div class="box-header with-border">
+        <h3 class="box-title"><strong id="alert-title"></strong></h3>
+      </div>
 
       <div class="box-body container-fluid" id="alert-container">
         <div class="row">
@@ -388,8 +432,26 @@
           <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
           </div>
         </div>
-      </div><!-- /.box -->
+      </div>
     </div>
+
+    <div class="box" id="checks-box">
+      <div class="box-header with-border">
+        <h3 class="box-title"><strong>Checks</strong></h3>
+      </div>
+
+      <div class="box-body container-fluid" id="alert-container">
+        <div class="row">
+          <div class="col-md-8">
+            <div id="checks-table-filter-container">
+            </div>
+            <div id="checks-table-container">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <div class="box" id="graph-box">
       <div class="box-body container-fluid">

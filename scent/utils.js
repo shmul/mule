@@ -60,3 +60,8 @@ function deep_key(table_,key_) {
   }
   return current;
 }
+
+
+function render_template(target_,template_,data_) {
+  $(target_).empty().html($.templates(template_).render(data_));
+}

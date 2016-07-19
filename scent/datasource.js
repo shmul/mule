@@ -69,6 +69,12 @@ function mule_ds() {
              },300);
   }
 
+  function latest(graph_,callback_) {
+    mule_get("/latest/"+graph_+"?level=3",function(data_) {
+      callback_(data_);
+    },30);
+  }
+
   function alerts(callback_) {
     mule_get("/alert",callback_,60);
   }
@@ -111,6 +117,7 @@ function mule_ds() {
     piechart : piechart,
     key : key,
     alerts : alerts,
+    latest : latest,
     load: load,
     save: save,
   }
