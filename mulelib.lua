@@ -1155,7 +1155,7 @@ function mule(db_)
 
   --[[ the file is assumed to be sorted by metric name (!) and each line is of the form
     DDDD|metric;step:period where D are digits.
-  --]]
+  ]]
   local function rebuild_db(file_)
 
   end

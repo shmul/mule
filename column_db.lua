@@ -18,7 +18,7 @@ local unpack_compatibility = _G.unpack or table.unpack
   - idx - the column to updated
   - sid - sequence id with in the store
 
---]]
+]]
 
 
 local PACK_FACTOR = 100
@@ -44,7 +44,7 @@ local function cell_store(file_,num_sequences_,slots_per_sequence_,slot_size_)
       local cmd = string.format("dd if=/dev/zero of=%s bs=%d count=%d &> /dev/null",
       file_,block_size,math.ceil(file_size/block_size))
       os.execute(cmd)
-    --]]
+    ]]
   end
 
   local function open()
