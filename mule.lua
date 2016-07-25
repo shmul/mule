@@ -208,12 +208,6 @@ function main(opts,out_)
     return false
   end
 
-  if not opts["c"] and not db_exists then
-    fatal("database does not exist and no configuration is provided. existing",out_)
-    return false
-  end
-
-
   if opts["r"] then
     logi("creating",opts["d"],"using configuration",opts["c"])
     local db = guess_db(opts["d"],false)
