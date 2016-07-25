@@ -111,8 +111,8 @@ local function incoming_queue(db_path_,incoming_queue_path_)
 
   local executing = false
   local minute_dir = nil
-  local processed = string.gsub(incoming_queue_path_,"_incoming","_processed")
-  local failed = string.gsub(incoming_queue_path_,"_incoming","_failed")
+  local processed = string.gsub(incoming_queue_path_,"incoming","processed")
+  local failed = string.gsub(incoming_queue_path_,"incoming","failed")
 
   local function helper(m,count)
     if executing then return 0 end
