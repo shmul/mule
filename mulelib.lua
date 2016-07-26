@@ -819,7 +819,7 @@ function mule(db_)
         sequences_generator = function()
           return coroutine.wrap(
             function()
-              for i=1,(math.min(#ranked_children,options_.count or DEFAULT_COUNT)) do
+              for i=1,(math.min(#ranked_children,tonumber(options_.count) or DEFAULT_COUNT)) do
                 coroutine.yield(ranked_children[i][1])
               end
           end)
