@@ -156,8 +156,18 @@
     color: #3c8dbc;
 }
 
+
+#graph-tooltip {
+	position: absolute;
+	display: none;
+	border: 1px solid;
+	padding: 2px;
+	background-color: #ffffe0;
+	opacity: 0.90;
+}
+
 /* these were pulled from pnotify's index.html :( */
-..stack-bar-top {
+.stack-bar-top {
     right: 0;
     top: 0;
 }

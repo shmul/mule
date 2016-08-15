@@ -9,7 +9,7 @@ function app() {
   function formatKMBT(y,dec) {
     var abs_y = Math.abs(y);
 	if (abs_y >= 1000000000000)   { return (y / 1000000000000).toFixed(dec) + "T"; }
-    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(dec) + "B"; }
+    if (abs_y >= 1000000000) { return (y / 1000000000).toFixed(dec) + "G"; }
     if (abs_y >= 1000000)    { return (y / 1000000).toFixed(dec) + "M"; }
     if (abs_y >= 1000)       { return (y / 1000).toFixed(dec) + "K"; }
     if (abs_y < 1 && y > 0)  { return y.toFixed(dec)+""; }
@@ -101,6 +101,13 @@ function app() {
 
   function time_format(t_) {
     return $.plot.formatDate(t_,"%H:%M (%y-%m-%d)");//"%y-%m-%dT%H:%M");
+  }
+
+  function date_from_utc_time(t_) {
+    var d = new Date();
+    // ugly hack to override a flot bug - formatDate assume the browser timezone
+    d.setTime(t_+(60*1000*d.getTimezoneOffset()));
+    return d;
   }
 
   function graph_to_id(graph_) {
@@ -599,8 +606,12 @@ function app() {
         for (var i in sorted_data) {
           sorted_data[i].precentage = (100*sorted_data[i].value/sum).toPrecision(3);
         }
-      } else
-      sorted_data.push({ graph: "No data to present"});
+      } else {
+        sorted_data.push({ graph: "No sub metrics (dialog will automatically close)"});
+        $.doTimeout(5000,function() {
+          bootbox.hideAll();
+        });
+      }
 
       var content = $.templates("#piechart-container-template").render([{}]);
       $(".bootbox-body").html(content);
@@ -670,6 +681,7 @@ function app() {
       xaxis: {
         mode: "time",
         timeformat: choose_timestamp_format(name_),
+        timezone: "utc",
         minTickSize: choose_tick_size(name_)
       },
       yaxis: {
@@ -697,6 +709,7 @@ function app() {
 		autoHighlight: true,
 	  },
       series: {
+        shadowSize: 0,	// Drawing is faster without shadows,
 		lines: {
 		  show: true,
 		},
@@ -735,7 +748,8 @@ function app() {
         } else {
           var pl = $(target_).data("plot");
           pl.setData(plot_data);
-          pl.draw();
+          pl.setupGrid();
+	      pl.draw();
         }
       });
     }
@@ -773,9 +787,10 @@ function app() {
     $(target_).bind("dblclick",function (e) {
       //console.log("dblclick",is_graph_zoomed(target_));
       if ( is_graph_zoomed(target_) ) { // if the graph is in zoomed state, redraw it
-        plot = plot_it();
+        $(target_).data("plot",null);
+        plot_it();
       } else {
-        show_piechart(name_, new Date(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
+        show_piechart(name_, date_from_utc_time(dtooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
       }
       e.stopPropagation();
     });
@@ -793,7 +808,7 @@ function app() {
         return;
       tooltip_data = {
         x: dataset[idx][0],
-        dt: $.plot.formatDate(new Date(dataset[idx][0]),"%H:%M (%y-%m-%d)"),
+        dt: time_format(date_from_utc_time(dataset[idx][0])),
         v: dataset[idx][1]
       }
       $("#graph-tooltip").html(formatNumber(tooltip_data.v)+" @ "+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
@@ -890,11 +905,7 @@ function app() {
       scent_ds.alerts(function(alerts_) {
         var data = new Array();
         for (var rw in raw_data_) {
-          var dt = raw_data_[rw][2];
-          var v = raw_data_[rw][0];
-          if ( dt>100000 ) {
-            data.push([dt * 1000,v]);
-          }
+          data.push([raw_data_[rw][2] * 1000,raw_data_[rw][0]]);
         };
         data.sort(function(a,b) { return a[0]-b[0]});
         //data = fill_in_missing_slots(name_, data)
@@ -1249,7 +1260,7 @@ function app() {
     $("#graph-box").show();
     var metric = graph_split(name_);
     scent_ds.key(metric[0],function(keys_) {
-      populate_keys_table(keys_,"#graph-box-keys-container");
+      populate_keys_table(metric[0],keys_,"#graph-box-keys-container");
     },true);
 
     push_graph_to_recent(name_);
@@ -1260,7 +1271,7 @@ function app() {
     $("#graph-box-container").empty();
   }
 
-  function populate_keys_table(keys_,target_) {
+  function populate_keys_table(parent_key_,keys_,target_) {
     var unified = {};
 
     for (var i in keys_) {
@@ -1283,32 +1294,35 @@ function app() {
     }
 
 
+    function set_header(key) {
+      if ( key && key.length>0 ) {
+        var metric_parts = key.split(".");
+        var accum = [];
+        for (var i in metric_parts) {
+          accum.push(metric_parts[i]);
+          var title = (accum.length>1 ? "." : "") + metric_parts[i];
+          metric_parts[i] = { key: accum.join("."), title: title }
+        }
+        metric_parts.unshift({ key: "", title:"[root]&nbsp;"});
+        $(target_+"-header").empty().html($.templates("#keys-table-header-template").render([{parts:metric_parts}]));
+      } else {
+        $(target_+"-header").empty();
+      }
+    }
     function set_click_behavior() {
       $(".keys-table-key").click(function(e) {
         var key = $(e.target).attr("data-target");
 
-        if ( key && key.length>0 ) {
-          var metric_parts = key.split(".");
-          var accum = [];
-          for (var i in metric_parts) {
-            accum.push(metric_parts[i]);
-            var title = (accum.length>1 ? "." : "") + metric_parts[i];
-            metric_parts[i] = { key: accum.join("."), title: title }
-          }
-          metric_parts.unshift({ key: "", title:"[root]&nbsp;"});
-          $(target_+"-header").empty().html($.templates("#keys-table-header-template").render([{parts:metric_parts}]));
-        } else {
-          $(target_+"-header").empty();
-        }
-
+        set_header(key);
         scent_ds.key(key,function(keys_) {
-          populate_keys_table(keys_,target_)
+          populate_keys_table(key,keys_,target_)
         },true);
         e.stopPropagation();
       });
     }
 
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
+    set_header(parent_key_);
     var dt = $("#keys-table").DataTable({
 
       bRetrieve: true,
@@ -1347,7 +1361,7 @@ function app() {
 
 
     scent_ds.key(key_ || "",function(keys_) {
-      populate_keys_table(keys_,"#main-keys-container")
+      populate_keys_table(key_,keys_,"#main-keys-container")
     },true);
 
     $("#main-box").show();
@@ -1414,14 +1428,7 @@ function app() {
   }
 
   function setup_flot() {
-    $("<div id='graph-tooltip'></div>").css({
-	  position: "absolute",
-	  display: "none",
-	  border: "1px solid",
-	  padding: "2px",
-	  "background-color": "#ffffe0",
-	  opacity: 0.90
-	}).appendTo("body");
+    $("<div id='graph-tooltip'></div>").appendTo("body");
   }
 
   function setup_router() {
