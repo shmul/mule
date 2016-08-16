@@ -677,6 +677,7 @@ function app() {
       color: background_color('.'+alert_to_css(alert_name_))
     }];
     var tooltip_data;
+
     var plot_options = {
       xaxis: {
         mode: "time",
@@ -685,7 +686,7 @@ function app() {
         minTickSize: choose_tick_size(name_)
       },
       yaxis: {
-        tickFormatter: flot_axis_format
+        tickFormatter: flot_axis_format,
       },
       legend: {
         show: true,
@@ -809,9 +810,9 @@ function app() {
       tooltip_data = {
         x: dataset[idx][0],
         dt: time_format(date_from_utc_time(dataset[idx][0])),
-        v: dataset[idx][1]
+        v: formatKMBT(dataset[idx][1],2)
       }
-      $("#graph-tooltip").html(formatNumber(tooltip_data.v)+" @ "+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+      $("#graph-tooltip").html(tooltip_data.v+"<br>"+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
 	});
 
     $(target_).bind("mouseleave",  function (e) {
@@ -1505,7 +1506,7 @@ function app() {
     });
 
     router.on('navigate', function(event){
-      console.log('URL changed to %s', this.fragment.get());
+      //console.log('URL changed to %s', this.fragment.get());
     });
   }
 
