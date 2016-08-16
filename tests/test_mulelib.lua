@@ -1325,7 +1325,25 @@ function test_factory_log()
 
     set_hard_coded_time(nil)
   end
-  for_each_db("test_factory_min",helper)
+  for_each_db("test_factory_log",helper)
+end
+
+function test_factory_with_factor()
+  local function helper(m)
+    set_hard_coded_time(0)
+    local now = time_now()
+    m.configure(table_itr({":alcohol_pct 60s:1h 10m:24h gauge centi"}))
+    m.process("wine.white.alcohol_pct 12.87 "..now)
+    m.process("wine.white.alcohol_pct 13.11 "..now+1)
+    m.process("wine.red.alcohol_pct 11.41 "..now)
+    m.process("wine.rose.alcohol_pct 10.444 "..now)
+
+    assert(string.find(m.graph("wine.white.alcohol_pct;10m:1d"),"13.11",1,true))
+    assert(string.find(m.graph("wine.red.alcohol_pct;10m:1d"),"11.41",1,true))
+    assert(string.find(m.graph("wine.rose.alcohol_pct;10m:1d"),"10.44",1,true))
+    set_hard_coded_time(nil)
+  end
+  for_each_db("test_factory_with_factor",helper)
 end
 
 function test_factor_with_unit()
@@ -1333,7 +1351,7 @@ function test_factor_with_unit()
     set_hard_coded_time(0)
     local now = time_now()
     m.configure(table_itr({"white 60s:1h 10m:24h milli %"}))
-    m.process("white.wine 0.1 "..(now+0))
+    m.process("white.wine 0.1 "..now)
     m.process("white.wine 0.02 "..(now+30))
     m.process("white.wine 1 "..(now+200))
     m.process("white.wine 0.008 "..(now+180))
@@ -1345,7 +1363,7 @@ function test_factor_with_unit()
 
     set_hard_coded_time(nil)
   end
-  for_each_db("test_factory_min",helper)
+  for_each_db("test_factory_with_unit",helper)
 end
 
 function test_parent_nodes()
@@ -1353,7 +1371,7 @@ function test_parent_nodes()
       m.configure(table_itr({"beer 60s:1h gauge"}))
       set_hard_coded_time(0)
       local now = time_now()
-      m.process("beer.ale.pale 1 "..(now+0))
+      m.process("beer.ale.pale 1 "..now)
       m.process("beer.ale.pale 2 "..(now+60))
       m.process("beer.ale.pale 4 "..(now+120))
       m.process("beer.ale.pale 8 "..(now+120))

@@ -456,7 +456,7 @@ function mule(db_)
         else
           new_factory.type = r
         end
-      elseif SEQUENCE_FACTORS[r] then  -- perhaps a facor
+      elseif SEQUENCE_FACTORS[r] then  -- perhaps a factor
         new_factory.factor = r
       else -- we'll consider it a unit
         new_factory.unit = r
@@ -1198,6 +1198,9 @@ function mule(db_)
       end
       col1.tail()
       col0.elem(format('"type": "%s"',f.type))
+      if f.factor then
+        col0.elem(format('"factor": "%s"',f.unit))
+      end
       if f.unit then
         col0.elem(format('"unit": "%s"',f.unit))
       end
@@ -1407,7 +1410,7 @@ function mule(db_)
     local typ = SEQUENCE_TYPES[modifier_[1]] and SEQUENCE_TYPES[modifier_[1]][1]
     local factor = SEQUENCE_FACTORS[modifier_[2]]
     if factor then
-      standard(name_,timestamp_,hits_,math.floor(sum_*factor),inline_type_)
+      standard(name_,timestamp_,hits_,math.floor(sum_*factor),inline_type_ or typ)
     elseif typ=='p' then
       -- no need to update the data, just make sure the node exists
       _db.create_node(name_)
