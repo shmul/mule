@@ -17,17 +17,30 @@ function app() {
     return y.toFixed(dec)+"";
   };
 
-  function flot_axis_format(y,axis) {
+  function formatTimestamp(secs,dec) {
+    const s=1, m=60, h=3600, d=3600*24, w=3600*24*7, y=3600*24*365;
+    if ( secs>=y ) { return (secs/y).toFixed(dec) + "y"+formatTimestamp(secs%y,dec); }
+    if ( secs>=w ) { return (secs/w).toFixed(dec) + "w"+formatTimestamp(secs%w,dec); }
+    if ( secs>=d ) { return (secs/d).toFixed(dec) + "d"+formatTimestamp(secs%d,dec); }
+    if ( secs>=h ) { return (secs/h).toFixed(dec) + "h"+formatTimestamp(secs%h,dec); }
+    if ( secs>=m ) { return (secs/m).toFixed(dec) + "m"+formatTimestamp(secs%m,dec); }
+
+    return secs+"s";
+  }
+
+  function flot_axis_format(y,axis,use_timestamp) {
     var label,dec = axis.tickDecimals;
     var exists;
+    var format_func = use_timestamp ? formatTimestamp : formatKMBT;
 
     // a kludge around flot's original tick formatting implementation to avoid 2 things:
-    // 1) not to have multiple ticks that due to our special formatting are the same, for example 1.6M and 1.8M both
-    //   changed to 2M
-    // 2) to make sure there is a consistency in the number of digits past decimal point being used.
+    // 1) not to have multiple ticks that due to our special formatting are the same,
+    //    for example 1.6M and 1.8M both changed to 2M
+    // 2) to make sure there is a consistency in the number of digits
+    //    past decimal point being used.
 
     do {
-      label = formatKMBT(y,dec);
+      label = format_func(y,dec);
       ++dec;
       // we scan back to see whether the label was already used
       exists = false;
@@ -36,18 +49,22 @@ function app() {
       }
     } while ( exists );
 
-    // this may be redundant if the ticks are already properly formatted (as specified above), but to avoid
-    // ugly checks, we do it anyway.
+    // this may be redundant if the ticks are already properly formatted (as specified above),
+    //but to avoid ugly checks, we do it anyway.
     for (var j in axis.ticks ) {
-      var modified_label = formatKMBT(axis.ticks[j].v,dec);
+      var modified_label = format_func(axis.ticks[j].v,dec);
       if ( !modified_label || modified_label.indexOf(".")==-1 ) {
         continue;
       }
-      modified_label = modified_label.replace(/\.?0+([TBMK]?)$/,"$1");
+      modified_label = modified_label.replace(/\.?0+([TGMKywdhms]?)$/,"$1");
       axis.ticks[j].label = modified_label;
     }
     return label;
-  };
+  }
+
+  function flot_axis_timestamp_format(y,axis) {
+    return flot_axis_format(y,axis,true);
+  }
 
   function formatBase1024KMGTP(y) {
     var abs_y = Math.abs(y);
@@ -448,10 +465,10 @@ function app() {
     // TODO do we need to build this mapping all the time or can we do it every couple of secs
     // or upon demand?
     var new_dashboards = {};
-    new_dashboards.static = scent_config().static_dashboards;
+    new_dashboards.Static = scent_config().static_dashboards;
 
     scent_config().auto_dashboards(scent_ds,function(autos_) {
-      new_dashboards.auto = autos_;
+      new_dashboards.Auto = autos_;
     });
 
 
@@ -474,7 +491,7 @@ function app() {
 
     $.doTimeout(100,function() {
 
-      if ( !new_dashboards.auto ) {
+      if ( !new_dashboards.Auto ) {
         return true;
       }
       var tree = [];
@@ -661,7 +678,7 @@ function app() {
     return $(graph_container_).hasClass("flot-zoomed");
   }
 
-  function draw_graph(name_,data_,from_percent_,to_percent_,thresholds_,anomalies_,target_,alert_name_) {
+  function draw_graph(name_,data_,thresholds_,anomalies_,target_,alert_name_) {
     /*
        if ($(target_).hasClass("tall-graph")) {
        var use_small_fonts = false;
@@ -677,6 +694,7 @@ function app() {
       color: background_color('.'+alert_to_css(alert_name_))
     }];
     var tooltip_data;
+    var formatter = flot_axis_format; //TODO - use flot_axis_timestamp_format when the unit is timestamp. It appears in the raw_data units
 
     var plot_options = {
       xaxis: {
@@ -686,7 +704,7 @@ function app() {
         minTickSize: choose_tick_size(name_)
       },
       yaxis: {
-        tickFormatter: flot_axis_format,
+        tickFormatter: formatter,
       },
       legend: {
         show: true,
@@ -947,9 +965,7 @@ function app() {
           anomalies.push(dt);
           alert_name = "anomaly";
         }
-        var from_percent = 0;
-        var to_percent = 100;
-        draw_graph(name_,data,from_percent,to_percent,thresholds,anomalies,target_,alert_name);
+        draw_graph(name_,data,thresholds,anomalies,target_,alert_name);
 
         //remove_spinner(target_);
       });
@@ -1522,3 +1538,5 @@ function app() {
 
 
 $(app);
+
+//# sourceURL=./app.js
