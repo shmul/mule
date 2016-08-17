@@ -24,3 +24,10 @@ function test_directory_exists()
   assert_false(directory_exists("tests/fixtures/no-such-dir"))
   assert_false(directory_exists("tests/fixtures/mule.cfg"))
 end
+
+
+function test_pp_timestamp()
+  assert_equal(pp_timestamp(1000),"16m40s")
+  assert_equal(pp_timestamp(10000),"2h46m40s")
+  assert_equal(pp_timestamp(3*365*24*60*60),"3y")
+end

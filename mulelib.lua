@@ -1199,7 +1199,7 @@ function mule(db_)
       col1.tail()
       col0.elem(format('"type": "%s"',f.type))
       if f.factor then
-        col0.elem(format('"factor": "%s"',f.unit))
+        col0.elem(format('"factor": "%s"',f.factor))
       end
       if f.unit then
         col0.elem(format('"unit": "%s"',f.unit))

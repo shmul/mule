@@ -486,6 +486,7 @@ end
 
 
 local secs_to_time_unit_cache = {}
+
 function secs_to_time_unit(secs_)
   if secs_to_time_unit_cache[secs_] then
     return secs_to_time_unit_cache[secs_]
@@ -500,6 +501,21 @@ function secs_to_time_unit(secs_)
   end
 
   return nil
+end
+
+
+function pp_timestamp(seconds_)
+  local s = seconds_
+  local output = {}
+  for _,v in pairs(TIME_UNITS_SORTED) do
+    local p = math.floor(s/v[1])
+    local q = math.fmod(s,v[1])
+    if p>0 then
+      table.insert(output,p..v[2])
+      s = q
+    end
+  end
+  return table.concat(output)
 end
 
 
