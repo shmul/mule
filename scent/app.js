@@ -809,7 +809,7 @@ function app() {
         $(target_).data("plot",null);
         plot_it();
       } else {
-        show_piechart(name_, date_from_utc_time(dtooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
+        show_piechart(name_, date_from_utc_time(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
       }
       e.stopPropagation();
     });
