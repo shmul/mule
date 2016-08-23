@@ -128,7 +128,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
             os.remove(file)
             return
           end
-          if sz>1048576 then
+          if sz>16777216 then
             logi("large file",file,sz)
             new_name = string.format("%s/%s",failed,posix_libgen.basename(file))
             os.rename(file,new_name)
