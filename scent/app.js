@@ -1334,11 +1334,18 @@ function app() {
     load_graph(name_,"#graph-box .graph-body",more_);
     setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph",more_);
     $("#graph-box").show();
-    var metric = graph_split(name_);
-    scent_ds.key(metric[0],function(keys_) {
-      populate_keys_table(metric[0],keys_,"#graph-box-keys-container",true);
-    },true);
 
+    function keys_helper(key_) {
+      var metric = graph_split(key_) || [key_];
+      scent_ds.key(key_ || "",function(keys_) {
+        if ( keys_.length==0 ) {
+          var parent_key = key_.replace(/\.[^\.;]+(;\d\w+:\d\w+)?$/,"");
+          return keys_helper(parent_key);
+        }
+        populate_keys_table(metric[0],keys_,"#graph-box-keys-container",true);
+      },true);
+    }
+    keys_helper(name_);
     push_graph_to_recent(name_);
   }
 
