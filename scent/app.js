@@ -854,20 +854,34 @@ function app() {
         //console.log("no plot found");
         return;
       }
-      var dataset = $(target_).data("plot").getData()[0].data; // TODO - figure out which graph is hovered
-      var idx = binarySearch(dataset,pos.x);
-      if ( !idx || !dataset[idx] )
-        return;
-      tooltip_data = {
-        x: dataset[idx][0],
-        dt: time_format(date_from_utc_time(dataset[idx][0])),
-        v: formatKMBT(dataset[idx][1],2)
+      var all_data = $(target_).data("plot").getData();
+      var tooltip_data = [];
+      var ts;
+      for (var j=0; j<all_data.length; ++j) {
+        var dataset = all_data[j].data;
+        var idx = binarySearch(dataset,pos.x);
+        if ( !idx || !dataset[idx] )
+          continue;
+        ts = dataset[idx][0];
+        tooltip_data.push({
+          n: all_data[j].label,
+          c: all_data[j].color,
+          x: dataset[idx][0],
+          v: dataset[idx][1].toLocaleString() //formatKMBT(dataset[idx][1],2)
+        });
       }
-      $("#graph-tooltip").html(tooltip_data.v+"<br>"+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+      var content = $.templates("#graph-tooltip-template").render(tooltip_data);
+      //$("#graph-tooltip").html(tooltip_data.v+"<br>"+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+      $("#graph-tooltip-container").show();
+      $("#graph-tooltip-timestamp").show();
+      $("#graph-tooltip").html(content);//.css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+      $("#graph-tooltip-timestamp").html(time_format(date_from_utc_time(ts)));
 	});
 
     $(target_).bind("mouseleave",  function (e) {
-      $("#graph-tooltip").fadeOut(200);
+      //$("#graph-tooltip").fadeOut(200);
+      $("#graph-tooltip-container").hide();
+      $("#graph-tooltip-timestamp").hide();
     });
   }
 
@@ -1490,10 +1504,6 @@ function app() {
     });
   }
 
-  function setup_flot() {
-    $("<div id='graph-tooltip'></div>").appendTo("body");
-  }
-
   function setup_router() {
 
     function globals() {
@@ -1589,8 +1599,6 @@ function app() {
   setup_pnotify();
 
   setup_router();
-
-  setup_flot();
 }
 
 

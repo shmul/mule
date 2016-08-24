@@ -219,7 +219,7 @@
               <tr>
                 <td>{{:check}}</td>
                 <td>{{:status}}</td>
-                <td>{{:time}}</td>
+                <td>@ {{:time}}</td>
                   </td>
               </tr>
               {{/for}}
@@ -329,197 +329,217 @@
          {{/if}}
          </div>
         </script>
+
+        <script id="graph-tooltip-template" type="text/x-jsrender">
+         <tr>
+           <td class="legendColorBox">
+             <div style="border:1px solid #ccc;padding:1px">
+               <div style="width:4px;height:0;border:5px solid {{:c}} ;overflow:hidden"></div>
+             </div>
+           </td>
+           <td>{{:n}}</td>
+           <td class="text-right">{{:v}}</td>
+         </tr>
+        </script>
       </div> <!-- ./templates -->
 
       <!-- Left side column. contains the sidebar -->
       <aside class="main-sidebar">
-  <!-- sidebar: style can be found in sidebar.less -->
-  <section class="sidebar" >
-    <!-- search form -->
-    <!-- /.search form - TODO add something here-->
-    <!-- sidebar menu: : style can be found in sidebar.less -->
-    <ul class="sidebar-menu">
-      <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
-    </ul>
-  </section>
-  <!-- /.sidebar -->
-</aside>
+        <!-- sidebar: style can be found in sidebar.less -->
+        <section class="sidebar" >
+          <!-- search form -->
+          <!-- /.search form - TODO add something here-->
+          <!-- sidebar menu: : style can be found in sidebar.less -->
+          <ul class="sidebar-menu">
+            <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
+          </ul>
+        </section>
+        <!-- /.sidebar -->
+      </aside>
 
       <!-- =============================================== -->
 
       <!-- Right side column. Contains the navbar and content of the page -->
       <div class="content-wrapper">
-  <!-- Content Header (Page header) -->
-  <!--
-      <section class="content-header">
-        <h1 id="page-title"></h1>
-      </section>
-      -->
+        <!-- Content Header (Page header) -->
+        <!--
+             <section class="content-header">
+             <h1 id="page-title"></h1>
+             </section>
+           -->
 
-  <!-- Main content -->
-  <section class="content">
-    <div id="main-box">
-      <div class="row">
-        <div class="col-md-6">
-          <div class="box">
+       <!-- Main content -->
+        <section class="content">
+          <div id="main-box">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="box">
+                  <div class="box-header with-border">
+                    <h3 class="box-title">Dashboards</h3>
+                    <div id="main-dashboards-container-header"></div>
+                  </div>
+                  <div class="box-body container-fluid">
+                    <div id="main-dashboards-container">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="row">
+                  <div class="box">
+                    <div class="box-header with-border">
+                      <h3 class="box-title">Keys</h3>
+                      <div  id="main-keys-container-header"></div>
+                    </div>
+                    <div class="box-body container-fluid">
+                      <div id="main-keys-container" class="keys-container">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="box" id="main-search-box">
+                    <div class="box-header with-border">
+                      <h3 class="box-title">Search for keys (use '.' and ';' to get subkeys)</h3>
+                    </div>
+                    <div class="box-body container-fluid">
+                      <div id="main-search-container">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="box">
+                    <div class="box-header with-border">
+                      <h3 class="box-title">Recent</h3>
+                    </div>
+                    <div class="box-body container-fluid">
+                      <ul id="main-recent-container">
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="box">
+                    <div class="box-header with-border">
+                      <h3 class="box-title">Favorite</h3>
+                    </div>
+                    <div class="box-body container-fluid">
+                      <ul id="main-favorite-container">
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="box" id="alert-box">
             <div class="box-header with-border">
-              <h3 class="box-title">Dashboards</h3>
-              <div id="main-dashboards-container-header"></div>
+              <h3 class="box-title"><strong id="alert-title"></strong></h3>
             </div>
+
+            <div class="box-body container-fluid" id="alert-container">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="box" id="alert-table-container">
+                  </div>
+                </div>
+                <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="box" id="checks-box">
+            <div class="box-header with-border">
+              <h3 class="box-title"><strong>Checks</strong></h3>
+            </div>
+
+            <div class="box-body container-fluid" id="alert-container">
+              <div class="row">
+                <div class="col-md-8">
+                  <div id="checks-table-filter-container">
+                  </div>
+                  <div id="checks-table-container">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="box" id="graph-box">
             <div class="box-body container-fluid">
-              <div id="main-dashboards-container">
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="row">
-            <div class="box">
-              <div class="box-header with-border">
-                <h3 class="box-title">Keys</h3>
-                <div  id="main-keys-container-header"></div>
-              </div>
-              <div class="box-body container-fluid">
-                <div id="main-keys-container" class="keys-container">
+              <div class="row">
+                <div class="col-md-12">
+                  <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="box" id="main-search-box">
-              <div class="box-header with-border">
-                <h3 class="box-title">Search for keys (use '.' and ';' to get subkeys)</h3>
-              </div>
-              <div class="box-body container-fluid">
-                <div id="main-search-container">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="box">
+                    <div class="box-header with-border">
+                      <h3 class="box-title">Keys</h3>
+                      <div class="box-tools pull-right">
+                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                      </div>
+
+                      <div class="small-graph-header" id="graph-box-keys-container-header"></div>
+                    </div>
+                    <div class="box-body container-fluid">
+                      <div id="graph-box-keys-container" class="keys-container">
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <div class="box">
-              <div class="box-header with-border">
-                <h3 class="box-title">Recent</h3>
-              </div>
-              <div class="box-body container-fluid">
-                <ul id="main-recent-container">
-                </ul>
-              </div>
-            </div>
-            <div class="box">
-              <div class="box-header with-border">
-                <h3 class="box-title">Favorite</h3>
-              </div>
-              <div class="box-body container-fluid">
-                <ul id="main-favorite-container">
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="box" id="alert-box">
-      <div class="box-header with-border">
-        <h3 class="box-title"><strong id="alert-title"></strong></h3>
-      </div>
-
-      <div class="box-body container-fluid" id="alert-container">
-        <div class="row">
-          <div class="col-md-4">
-            <div class="box" id="alert-table-container">
-            </div>
-          </div>
-          <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="box" id="checks-box">
-      <div class="box-header with-border">
-        <h3 class="box-title"><strong>Checks</strong></h3>
-      </div>
-
-      <div class="box-body container-fluid" id="alert-container">
-        <div class="row">
-          <div class="col-md-8">
-            <div id="checks-table-filter-container">
-            </div>
-            <div id="checks-table-container">
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <div class="box" id="graph-box">
-      <div class="box-body container-fluid">
-        <div class="row">
-          <div class="col-md-12">
-            <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="box">
-              <div class="box-header with-border">
-                <h3 class="box-title">Keys</h3>
-                <div class="box-tools pull-right">
-                  <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                <div class="col-md-4">
+                  <div class="box">
+                    <div class="box-header with-border">
+                      <h3 class="box-title"><span id="graph-tooltip-timestamp"></span></h3>
+                    </div>
+                    <div id="graph-tooltip-container" class="box-body container-fluid">
+                      <table class="table" id='graph-tooltip'>
+                      </table>
+                    </div>
+                  </div>
                 </div>
 
-                <div class="small-graph-header" id="graph-box-keys-container-header"></div>
-              </div>
-              <div class="box-body container-fluid">
-                <div id="graph-box-keys-container" class="keys-container">
-                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="box" id="charts-box">
+          <div class="box" id="charts-box">
 
-      <div class="box-header with-border">
-        <h3 class="box-title"><strong id="charts-title"></strong></h3>
+            <div class="box-header with-border">
+              <h3 class="box-title"><strong id="charts-title"></strong></h3>
 
-        <div class="box-tools pull-right">
-        </div>
-      </div>
+              <div class="box-tools pull-right">
+              </div>
+            </div>
+          </div>
 
+          <div class="box-body container-fluid">
+            <div id="charts-container">
+            </div><!-- /.box-body -->
+          </div>
+        </section>
 
-      <div class="box-body container-fluid">
-        <div id="charts-container">
-        </div><!-- /.box-body -->
-      </div><!-- /.box -->
-
-      <div class="box-footer">
-      </div>
-    </div><!-- /.box -->
-
-  </section><!-- /.content -->
-</div><!-- /.content-wrapper -->
+      </div><!-- /.content-wrapper -->
 
       <footer class="main-footer">
-  <div class="pull-right hidden-xs">
-    <b>Version</b> 0.2 (based on <a href="http://almsaeedstudio.com/AdminLTE/" target="_blank">AdminLTE</a>)
-  </div>
-  <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
-  <!-- Just some hidden elements to get the colors out of -->
-  <div display="none">
-    <span class="crit-high"></span>
-    <span class="crit-low"></span>
-    <span class="warn-low"></span>
-    <span class="warn-high"></span>
-    <span class="ok-green"></span>
-    <span class="anomaly"></span>
-    <span class="stale"></span>
-  </div>
-</footer>
+        <div class="pull-right hidden-xs">
+          <b>Version</b> 0.2 (based on <a href="http://almsaeedstudio.com/AdminLTE/" target="_blank">AdminLTE</a>)
+        </div>
+        <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
+        <!-- Just some hidden elements to get the colors out of -->
+        <div display="none">
+          <span class="crit-high"></span>
+          <span class="crit-low"></span>
+          <span class="warn-low"></span>
+          <span class="warn-high"></span>
+          <span class="ok-green"></span>
+          <span class="anomaly"></span>
+          <span class="stale"></span>
+        </div>
+      </footer>
     </div><!-- ./wrapper -->
 
     <!-- script src="./plugins/jquery.2.1.1.min.js"></script> -->
@@ -548,5 +568,6 @@
     <script src="./tests.js"></script>
     <script src="./datasource.js"></script>
     <script src="./app.js"></script>
+
   </body>
 </html>
