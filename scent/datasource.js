@@ -49,7 +49,7 @@ function mule_ds() {
 
   function graph(graph_,callback_) {
     mule_get("/graph/"+graph_+"?filter=now",function(data_) {
-      callback_(data_[graph_]);
+      callback_(data_);
     },30);
   }
 

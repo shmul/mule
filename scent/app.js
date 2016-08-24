@@ -3,6 +3,9 @@ function app() {
   var router = new Grapnel();
   var notified_graphs = {};
   var stack_bar_bottom = {"dir1": "up", "dir2": "left", "spacing1": 2, "spacing2": 2};
+  const more_colors = ["#88AA99","#79B5F2","#ADC3D8","#115588","#2B2B2B","#001122"];
+  //const more_colors = ["#457f3f", "#117788", "#3D4C44", "#88AA99", "#557777", "#2B2B2B"];
+
   var dashboards = {};
 
   // from Rickshaw
@@ -299,7 +302,7 @@ function app() {
    */
 
   // --- application functions
-  function graph_box_header(container_,options_) {
+  function graph_box_header(container_,options_,more_) {
     var template_data = [{}];
     jQuery.extend(template_data[0],options_);
     if ( options_.add_callback ) {
@@ -318,6 +321,9 @@ function app() {
     var graph_container = ($(container_).closest(".graph-container"))[0];
     var box_body = ($(graph_container).find(".box-body"))[0];
     $(graph_container).attr("data-graph",template_data[0].graph);
+    if ( more_ ) {
+      $(graph_container).attr("data-graph-more",more_);
+    }
     $(box_body).append($.templates("#graph-box-footer-template").render(template_data));
   }
 
@@ -678,7 +684,7 @@ function app() {
     return $(graph_container_).hasClass("flot-zoomed");
   }
 
-  function draw_graph(name_,data_,thresholds_,anomalies_,target_,alert_name_) {
+  function draw_graph(names_,points_,thresholds_,anomalies_,target_,alert_name_) {
     /*
        if ($(target_).hasClass("tall-graph")) {
        var use_small_fonts = false;
@@ -688,27 +694,35 @@ function app() {
        var x_axis_ticks_count = 5;
        }
      */
-    var plot_data = [{
-      label: graph_split(name_)[0],
-      data: data_,
-      color: background_color('.'+alert_to_css(alert_name_))
-    }];
-    var tooltip_data;
-    var formatter = flot_axis_format; //TODO - use flot_axis_timestamp_format when the unit is timestamp. It appears in the raw_data units
+    var names = names_,
+        points = points_;
 
+    if ( typeof(names_)=="string" ) {
+      names = [names_];
+      points = [points_];
+    }
+    if ( names.length!=points.length ) {
+      console.log('draw_graph params mismatch');
+      notify('Unable to draw the graph(s)',names.join(", "));
+      return;
+    }
+    var plot_data = [];
+    // TODO - the first graph is used for setting up the axes. This may need to be changed.
+    // TODO - the first graph is used for setting up labels
     var plot_options = {
       xaxis: {
         mode: "time",
-        timeformat: choose_timestamp_format(name_),
+        timeformat: choose_timestamp_format(names[0]),
         timezone: "utc",
-        minTickSize: choose_tick_size(name_)
+        minTickSize: choose_tick_size(names[0])
       },
       yaxis: {
         tickFormatter: formatter,
       },
       legend: {
-        show: true,
-        labelFormatter: function(label, series) {
+        show: names.length>1, // we show the legend only if there is a need
+        position: "ne",
+        _labelFormatter: function(label, series) {
           if ( series.label.indexOf("crit")>-1 || series.label.indexOf("warn")>-1 ) {
             return series.label+" "+series.data[0][1];
           }
@@ -721,7 +735,8 @@ function app() {
 		mode: "x"
 	  },
       crosshair: {
-		mode: "x" //TODO - change the color
+		mode: "x",
+        color: "#225599"
 	  },
       grid: {
 		hoverable: true,
@@ -734,28 +749,47 @@ function app() {
 		},
 	  },
     };
-
-    if ( thresholds_.length>0 ) {
-      var xmin = data_[0][0],
-          xmax = data_[data_.length-1][0],
-          reveresed = thresholds_.reverse();
-      // generate a line for each
-      for (var i in reveresed) {
-        plot_data.push({
-          label: reveresed[i].label,
-          color: background_color('.'+reveresed[i].label),
-          data: [[xmin,reveresed[i].value],[xmax,reveresed[i].value]]
-        });
-      }
+    var colors = [background_color('.'+alert_to_css(alert_name_))];
+    for (var i=1; i<names.length; ++i) {
+      colors.push(more_colors[i % more_colors.length]);
     }
 
-    for (var i in anomalies_) {
+
+    for (var i=0; i<names.length; ++i) {
+      var c = colors[i];
       plot_data.push({
-        label: "Anomalies",
-        data: anomalies_[i],
-        points: { show: true, radius: 8},
-        lines: { show: false }
+        label: graph_split(names[i])[0],
+        data: points[i],
+        color: c
       });
+      var tooltip_data;
+      var formatter = flot_axis_format; //TODO - use flot_axis_timestamp_format when the unit is timestamp. It appears in the raw_data units
+
+      if ( i==0 ) {  // note - the alerts are relevant for the first graph. ditto for anomalies
+        if ( thresholds_.length>0 ) {
+          var pts = points[i],
+              xmin = pts[0][0],
+              xmax = pts[pts.length-1][0],
+              reveresed = thresholds_.reverse();
+          // generate a line for each
+          for (var i in reveresed) {
+            plot_data.push({
+              label: reveresed[i].label,
+              color: background_color('.'+reveresed[i].label),
+              data: [[xmin,reveresed[i].value],[xmax,reveresed[i].value]]
+            });
+          }
+        }
+
+        for (var i in anomalies_) {
+          plot_data.push({
+            label: "Anomalies",
+            data: anomalies_[i],
+            points: { show: true, radius: 8},
+            lines: { show: false }
+          });
+        }
+      }
     }
 
     function plot_it() {
@@ -774,6 +808,7 @@ function app() {
     }
 
     plot_it();
+
     $(target_).bind("plotselected", function (event, ranges) {
 	  // do the zooming
       var ymax = -1;
@@ -797,8 +832,8 @@ function app() {
 	  plot.draw();
 	  plot.clearSelection();
 
-      // we add an artificial class to the container so an observer (like the auto refresh code) can check
-      // whether the graph is zoomed.
+      // we add an artificial class to the container so an observer
+      // (like the auto refresh code) can check whether the graph is zoomed.
       $(target_).addClass("flot-zoomed");
 	});
 
@@ -809,19 +844,17 @@ function app() {
         $(target_).data("plot",null);
         plot_it();
       } else {
-        show_piechart(name_, date_from_utc_time(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
+        show_piechart(names[i], date_from_utc_time(tooltip_data.x), tooltip_data.x/1000, tooltip_data.v);
       }
       e.stopPropagation();
     });
-
-    var legends = $("#placeholder .legendLabel");
 
     $(target_).bind("plothover",  function (event, pos, item) {
       if ( !$(target_).data("plot") ) {
         //console.log("no plot found");
         return;
       }
-      var dataset = $(target_).data("plot").getData()[0].data; // we are always interested in the graph data which is at the first index
+      var dataset = $(target_).data("plot").getData()[0].data; // TODO - figure out which graph is hovered
       var idx = binarySearch(dataset,pos.x);
       if ( !idx || !dataset[idx] )
         return;
@@ -910,25 +943,33 @@ function app() {
     return full_data;
   }
 
-  function load_graph(name_,target_) {
+  function load_graph(name_,target_,more_) {
+    var names = [name_];
+
     function callback(raw_data_) {
-      if ( !raw_data_ || raw_data_.length==0 ) {
+      if ( !raw_data_ || !raw_data_[name_] || raw_data_[name_].length==0 ) {
         if ( !notified_graphs[name_] ) {
           notify('Unable to load graph','No data for "'+name_+'".');
           notified_graphs[name_] = true;
         }
-        //remove_spinner(target_);
         return;
       }
 
+      var data = new Array();
+      for (var g in raw_data_) {
+        var graph_data = raw_data_[g];
+        var d = [];
+        for (var rw in graph_data) {
+          var current = graph_data[rw];
+          d.push([current[2] * 1000,current[0]]);
+        }
+        d.sort(function(a,b) { return a[0]-b[0]});
+        data.push(d);
+      };
+      //data = fill_in_missing_slots(name_, data)
+      //add_bounds(data);
+
       scent_ds.alerts(function(alerts_) {
-        var data = new Array();
-        for (var rw in raw_data_) {
-          data.push([raw_data_[rw][2] * 1000,raw_data_[rw][0]]);
-        };
-        data.sort(function(a,b) { return a[0]-b[0]});
-        //data = fill_in_missing_slots(name_, data)
-        //add_bounds(data);
         var graph_alerts = alerts_[name_];
         var thresholds = [];
         var alert_name = "NORMAL";
@@ -965,15 +1006,17 @@ function app() {
           anomalies.push(dt);
           alert_name = "anomaly";
         }
-        draw_graph(name_,data,thresholds,anomalies,target_,alert_name);
-
-        //remove_spinner(target_);
+        draw_graph(names,data,thresholds,anomalies,target_,alert_name,more_);
       });
 
     }
-    //add_spinner(target_);
 
-    scent_ds.graph(name_,callback);
+    var graph_url = name_;
+    if ( more_ ) {
+      graph_url += "/"+more_;
+      names = names.concat(more_.split("/"));
+    }
+    scent_ds.graph(graph_url,callback);
   }
 
   function setup_charts(dashboard_name) {
@@ -1170,7 +1213,8 @@ function app() {
     });
   }
 
-  function setup_graph_header(name_,graph_header_container_,inner_navigation_,remove_callback_,klass_) {
+  function setup_graph_header(name_,graph_header_container_,inner_navigation_,
+                              remove_callback_,klass_,more_) {
 
     generate_all_graphs(name_,function(pairs_) {
       var links = [];
@@ -1218,7 +1262,7 @@ function app() {
                            {klass: klass_,
                             type: "graph", title: metric, parts: metric_parts, graph: name_,
                             links: links,favorite: favorite, alerted: ac.text, color: ac.color,
-                            full: !!inner_navigation_, remove: !!remove_callback_});
+                            full: !!inner_navigation_, remove: !!remove_callback_},more_);
           if ( remove_callback_ ) {
             $(".graph-remove").unbind("click").click(remove_callback_);
           }
@@ -1236,7 +1280,8 @@ function app() {
             var graph_view = $(container).find(".graph-view");
             console.log('inner navigation %s', graph);
             load_graph(href,container_id+" .graph-body");
-            setup_graph_header(href,container_id+" .graph-header",true,remove_callback_,klass_);
+            setup_graph_header(href,container_id+" .graph-header",true,remove_callback_,
+                               klass_,more_);
             graph_view.parent().attr("href","#/graph/"+href);
           });
 
@@ -1270,10 +1315,10 @@ function app() {
   }
 
 
-  function setup_graph(name_) {
+  function setup_graph(name_,more_) {
     render_template("#graph-box-container","#graph-template",[{klass: "tall-graph"}]);
-    load_graph(name_,"#graph-box .graph-body");
-    setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph");
+    load_graph(name_,"#graph-box .graph-body",more_);
+    setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph",more_);
     $("#graph-box").show();
     var metric = graph_split(name_);
     scent_ds.key(metric[0],function(keys_) {
@@ -1407,10 +1452,11 @@ function app() {
           return;
         }
         var graph = $(container).attr("data-graph");
+        var more = $(container).attr("data-graph-more");
 
         if ( graph_split(graph) ) {
-          load_graph(graph,graph_container_id);
-          //console.log('refresh_loaded_graphs: %s',graph);
+          load_graph(graph,graph_container_id,more);
+          console.log('refresh_loaded_graphs: %s',graph);
         }
       });
       return true;
@@ -1497,16 +1543,27 @@ function app() {
       refresh_loaded_graphs();
     });
 
-    router.get('graph/:id', function(req) {
+    function route_graph(id,more) {
       set_title("Graph");
       globals();
       teardown_main();
       teardown_alerts();
       teardown_checks();
       teardown_charts();
-      var id = req.params.id;
-      setup_graph(id);
+      setup_graph(id,more);
       refresh_loaded_graphs();
+    }
+    // couldn't manage to get grapnel handle these two patterns in the same route...
+    router.get('graph/:id', function(req) {
+      route_graph(req.params.id);
+    });
+
+    router.get('graph/:id/*', function(req) {
+      var more = [];
+      for (var i=1; req.params[i]; ++i) {
+        more.push(req.params[i]);
+      }
+      route_graph(req.params.id,more.join("/"));
     });
 
     router.get('dashboard/:id', function(req) {
