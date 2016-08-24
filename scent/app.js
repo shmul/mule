@@ -1336,7 +1336,7 @@ function app() {
     $("#graph-box").show();
     var metric = graph_split(name_);
     scent_ds.key(metric[0],function(keys_) {
-      populate_keys_table(metric[0],keys_,"#graph-box-keys-container");
+      populate_keys_table(metric[0],keys_,"#graph-box-keys-container",true);
     },true);
 
     push_graph_to_recent(name_);
@@ -1347,7 +1347,7 @@ function app() {
     $("#graph-box-container").empty();
   }
 
-  function populate_keys_table(parent_key_,keys_,target_) {
+  function populate_keys_table(parent_key_,keys_,target_,plus_) {
     var unified = {};
 
     for (var i in keys_) {
@@ -1365,8 +1365,19 @@ function app() {
     }
 
     var records = [];
+    var hash = window.location.hash;
+    var first_graph_rp = hash.match(/#graph\/[\w\[\]\.\-]+(;\d\w+:\d\w+)/);
     for (var i in unified) {
-      records.push({key: i, links: unified[i]});
+      var in_url = hash.indexOf(i);
+      var record = {key: i, links: unified[i]}
+      if (plus_ ) {
+        if ( in_url==-1) {
+          record.plus = [hash,"/",i,first_graph_rp[1]].join("");
+        } else if ( in_url>7 ) { // 7 is "#graph/".length which is true only for the primary
+          record.minus = hash.replace(["/",i,first_graph_rp[1]].join(""),"");
+        }
+      }
+      records.push(record);
     }
 
 
@@ -1391,7 +1402,7 @@ function app() {
 
         set_header(key);
         scent_ds.key(key,function(keys_) {
-          populate_keys_table(key,keys_,target_)
+          populate_keys_table(key,keys_,target_,plus_)
         },true);
         e.stopPropagation();
       });
@@ -1399,14 +1410,16 @@ function app() {
 
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     set_header(parent_key_);
+    var columns = [
+      { bSortable: false },
+      { bSearchable: false, bSortable: false }
+    ];
+
     var dt = $("#keys-table").DataTable({
 
       bRetrieve: true,
 //      sDom: "trflp", // Show the record count select box *below* the table
-      aoColumns: [
-        { bSortable: false },
-        { bSearchable: false, bSortable: false }
-      ],
+      aoColumns: columns,
       iDisplayLength: 10,
       aLengthMenu: [ 10, 20, 40 ],
       destroy: true,
@@ -1470,7 +1483,7 @@ function app() {
 
         if ( graph_split(graph) ) {
           load_graph(graph,graph_container_id,more);
-          console.log('refresh_loaded_graphs: %s',graph);
+          //console.log('refresh_loaded_graphs: %s',graph);
         }
       });
       return true;
@@ -1603,5 +1616,3 @@ function app() {
 
 
 $(app);
-
-//# sourceURL=./app.js

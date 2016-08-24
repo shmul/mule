@@ -192,8 +192,15 @@
                 <td><a class="keys-table-key" data-target="{{:key}}">{{:key}}&nbsp;&nbsp;</a></td>
                 <td>
                   {{for links}}
-                  <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
+                    <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
                   {{/for}}
+                  {{if plus}}
+                    <a href="{{:plus}}"><i class="fa fa-plus"></i></a>
+                  {{/if}}
+                  {{if minus}}
+                    <a href="{{:minus}}"><i class="fa fa-minus"></i></a>
+                  {{/if}}
+
                 </td>
               </tr>
               {{/for}}
