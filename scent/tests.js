@@ -38,7 +38,7 @@ function mule_mockup () {
     $.doTimeout(2,func_);
   }
 
-  function config(callback_) {
+  function config(path_,callback_) {
     delayed(function() {
       callback_(fixtures["config"]);
     });
@@ -47,7 +47,9 @@ function mule_mockup () {
   function graph(graph_name_,callback_) {
     delayed(function() {
       var gr = fixtures["graph"];
-      callback_(gr[graph_name_] || gr["penninsala;1d:2y"]);
+      var rv = {};
+      rv[graph_name_] = gr[graph_name_] || gr["penninsala;1d:2y"];
+      callback_(rv);
     });
   }
 
