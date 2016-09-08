@@ -300,7 +300,11 @@ If there are detected anomalies in the data, they will be returned as a separate
 ##### Defining Alerts
 Defining an alert is done by issuing a PUT request to
 
-    http://muleserver/alert/<name>?critical_low=<critical_low>&warning_low=<warning_low>&warning_high=<warning_high>&critical_high=<critical_high>&period=<period>&stale=<stale>
+    http://muleserver/alert/
+
+with the request body being
+
+    critical_low=<critical_low>&warning_low=<warning_low>&warning_high=<warning_high>&critical_high=<critical_high>&period=<period>&stale=<stale>
 
 * `critical_low, warning_low, warning_high, critical_high` - The threshold value of the alerts.
 * `period` - The alert period. It needn't be necessarily the same as the graph step period.
@@ -377,7 +381,7 @@ First of all, LMDB needs to be installed.
 git clone https://github.com/LMDB/lmdb # This will create a directory ./mdb/libraries/liblmdb
 cd ./lmdb/libraries/liblmdb
 make
-sudo make install 
+sudo make install
 </pre>
 Then install the ```lightningmdb```  rock
 <pre>
