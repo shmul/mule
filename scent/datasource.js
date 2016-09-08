@@ -12,7 +12,7 @@ function mule_ds() {
   }
 
   function mule_get(resource_,callback_,cache_period_) {
-    var cached =cache.getItem(resource_);
+    var cached = cache.getItem(resource_);
     if ( cached ) {
       //console.log("cache hit: %s",resource_);
       delayed(callback_(cached));
@@ -42,8 +42,8 @@ function mule_ds() {
     });
   }
 
-  function config(graph_,callback_) {
-    var url = "/config"+ (graph_ ? "/"+graph_ : "");
+  function config(path_,callback_) {
+    var url = "/config"+ (path_ ? "/"+path_ : "");
     mule_get(url,callback_,120);
   }
 
@@ -79,6 +79,26 @@ function mule_ds() {
     mule_get("/alert",callback_,60);
   }
 
+  function set_alert(graph_,alert_values_,callback_) {
+    var path = ["/alert/",graph_].join(""),
+        data = ["critical_low=",alert_values_[0],"&warning_low=",alert_values_[1],
+                "&warning_high=",alert_values_[2],"&critical_high=",alert_values_[3],
+                "&period=",alert_values_[4],"&stale=",alert_values_[5]].join("");
+    $.ajax({
+      method: "PUT",
+      url: mule_server+path,
+      data: data,
+      async: true,
+      timeout: 20*1000,
+      success: function (response_) {
+        cache.clear();
+        callback_(response_.data);
+      },
+      error: function(xhr_,internal_error_,http_status_) {
+        console.log("%s <%s,%s>",path,internal_error_,http_status_);
+      }
+    });
+  }
   // if key == "persistent" the data is taken from the server, otherwise session storage
   // is used
   function load(user_,key_,callback_) {
@@ -117,11 +137,14 @@ function mule_ds() {
     piechart : piechart,
     key : key,
     alerts : alerts,
+    set_alert : set_alert,
     latest : latest,
     load: load,
     save: save,
   }
 
 }
-
+if ( /\/test\//.test(location.href) ) {
+  $.getScript("./tests.js");
+}
 scent_ds = /\/test\//.test(location.href) ? mule_mockup() : mule_ds();

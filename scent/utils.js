@@ -36,7 +36,7 @@ function key_impl(initial_,key_,callback_,raw_) {
         push_key(e);
     });
   } else {
-    var re = new RegExp("^" + key_+"[\\w;:-]*");
+    var re = new RegExp("^" + key_+"[\\w;:-]*"); //  var re = new RegExp("^" + key_+"[\\w:;-]+");
     var key_sc = key_+";";
     $.each(k,function(idx,e) {
       if ( re.test(e) )

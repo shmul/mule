@@ -17,6 +17,7 @@
     <!-- link href="./plugins/qunit-1.17.1.css" rel="stylesheet" type="text/css" /-->
     <link href="./plugins/pnotify.custom.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.css" rel="stylesheet" type="text/css" />
+    <link href="./plugins/bootstrap-switch-3.3.2/css/bootstrap3/bootstrap-switch.min.css"  rel="stylesheet" type="text/css"/>
     <link href="./scent.css" rel="stylesheet" type="text/css" />
 
     <link rel="icon" type="image/png" href="./img/favicon.ico" sizes="16x16 32x32" type="image/vnd.microsoft.icon"/>
@@ -276,25 +277,25 @@
           <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
           {{/if}}
           {{if klass == "small-graph"}}
-          {{for links}}
-          {{if current}}
-          <span class="label bg-light-blue">{{:rp}}</span>
-          {{/if}}
-          {{/for}}
+            {{for links}}
+            {{if current}}
+            <span class="label bg-light-blue">{{:rp}}</span>
+            {{/if}}
+            {{/for}}
           {{else}}
-          {{for links}}
-          {{if current}}
-          <span class="label bg-light-blue">{{:rp}}</span>
-          {{else}}
-          <span class="label">
-          {{if inner_navigation}}
-          <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
-          {{else}}
-          <a href="#graph/{{:href}}">{{:rp}}</a>
-          {{/if}}
-          </span>
-          {{/if}}
-          {{/for}}
+           {{for links}}
+            {{if current}}
+            <span class="label bg-light-blue">{{:rp}}</span>
+            {{else}}
+            <span class="label">
+            {{if inner_navigation}}
+            <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
+            {{else}}
+            <a href="#graph/{{:href}}">{{:rp}}</a>
+            {{/if}}
+            </span>
+            {{/if}}
+           {{/for}}
           {{/if}}
           {{if full}}
           <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
@@ -304,6 +305,11 @@
           {{/if}}
           {{if remove}}
           <i class="graph-remove fa fa-trash"></i>
+          {{/if}}
+          <i class="graph-set-alerts fa fa-wrench"></i>
+          {{if klass != "small-graph"}}
+          <input id="graph-yaxis-zoom" type="checkbox" checked data-toggle="toggle" data-size="mini" data-label-text="Zoom">
+          <input id="graph-delta" type="checkbox" data-toggle="toggle" data-size="mini" data-label-text="Delta">
           {{/if}}
           </div>
          </div>
@@ -345,8 +351,19 @@
              </div>
            </td>
            <td>{{:n}}</td>
-           <td class="text-right">{{:v}}</td>
+           <td class="text-left" data-value="{{:v}}">{{:v}}</td>
+           <td class="text-right">{{:sec}}</td>
+           <td class="text-right">{{:minute}}</td>
          </tr>
+        </script>
+
+        <script id="alert-modal-template" type="text/x-jsrender">
+          <div class="form-group">
+            <label class="col-md-3 control-label text-{{:color}}" for="textinput">{{:label}}</label>
+            <div class="col-md-3">
+              <input id="{{:id}}" value="{{:value}}" name="textinput" type="text" placeholder="{{:placeholder}}" class="form-control input-md">
+            </div>
+          </div>
         </script>
       </div> <!-- ./templates -->
 
@@ -497,13 +514,21 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-5">
                   <div class="box">
                     <div class="box-header with-border">
-                      <h3 class="box-title"><span id="graph-tooltip-timestamp"></span></h3>
                     </div>
-                    <div id="graph-tooltip-container" class="box-body container-fluid">
-                      <table class="table" id='graph-tooltip'>
+                    <div id="graph-tooltip-container" class="box-body container-fluid" display="none">
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th colspan="3"><span id="graph-tooltip-timestamp"></span></th>
+                            <th class="text-right">/1s</th>
+                            <th class="text-right">/1m</th>
+                          </tr>
+                        </thead>
+                        <tbody id='graph-tooltip'>
+                        </tbody>
                       </table>
                     </div>
                   </div>
@@ -546,15 +571,26 @@
           <span class="anomaly"></span>
           <span class="stale"></span>
         </div>
+
+        <div class="form-group" id="alert-modal" display="none">
+          <form class="form-horizontal">
+            <fieldset>
+              <div class="form-group" id="alert-modal-form-container">
+              </div>
+            </fieldset>
+          </form>
+
       </footer>
     </div><!-- ./wrapper -->
 
-    <!-- script src="./plugins/jquery.2.1.1.min.js"></script> -->
-    <script src="./plugins/jquery-3.1.0.min.js"></script>
+    <!--script src="./plugins/jquery.2.1.1.min.js"></script-->
+    <script src="./plugins/jquery-3.1.0.js"></script>
 
     <script src="./plugins/bootstrap-3.3.2/js/bootstrap.min.js"></script>
+    <script src="./plugins/bootstrap-switch-3.3.2/js/bootstrap-switch.js"></script>
     <script src="./plugins/bootbox-4.4.0.js"></script>
     <script src="./plugins/slimScroll/jquery.slimscroll.min.js"></script>
+
     <script src="./plugins/DataTables-1.10.12/datatables.min.js"></script>
     <script src="./plugins/jsrender-0.9.79/jsrender.min.js"></script>
     <script src="./plugins/AdminLTE/js/app.min.js"></script>
@@ -570,9 +606,10 @@
     <script src="./plugins/pnotify.custom.min.js"></script>
     <script src="./plugins/sparkline/jquery.sparkline.2.1.2.min.js"></script>
     <script src="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.js"></script>
+    <!--script src="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.js"></script-->
+
     <script src="./config.js"></script>
     <script src="./utils.js"></script>
-    <script src="./tests.js"></script>
     <script src="./datasource.js"></script>
     <script src="./app.js"></script>
 
