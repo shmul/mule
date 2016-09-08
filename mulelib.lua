@@ -759,9 +759,9 @@ function mule(db_)
       local seq = sequence(db_,n)
       local a,msg = alert_check(seq,now)
       if a and a._critical_low and a._warning_low and a._warning_high and a._critical_high and a._period then
-        col.elem(format("\"%s\": [%d,%d,%d,%d,%d,%d,%d,\"%s\",%d,\"%s\"]",
+        col.elem(format("\"%s\": [%s,%s,%s,%s,%s,%s,%s,\"%s\",%s,\"%s\"]",
                         n,a._critical_low,a._warning_low,a._warning_high,a._critical_high,
-                        a._period,a._stale or "-1",a._sum,a._state,now,msg or ""))
+                        a._period,tonumber(a._stale) or "-1",a._sum,a._state,now,msg or ""))
       end
       if not all_anomalies_ then
         ans[n] = true
