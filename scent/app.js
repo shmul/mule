@@ -21,6 +21,7 @@ function app() {
   };
 
   function formatTimestamp(secs,dec) {
+    dec = 0;
     if ( !secs ) { return ""; }
     const s=1, m=60, h=3600, d=3600*24, w=3600*24*7, y=3600*24*365;
     if ( secs>=y ) { return (secs/y).toFixed(dec) + "y"+formatTimestamp(secs%y,dec); }
@@ -33,7 +34,7 @@ function app() {
   }
 
   function flot_axis_format(y,axis,use_timestamp) {
-    var label,dec = axis.tickDecimals;
+    var label,dec = 0;
     var exists;
     var format_func = use_timestamp ? formatTimestamp : formatKMBT;
 
@@ -43,14 +44,19 @@ function app() {
     // 2) to make sure there is a consistency in the number of digits
     //    past decimal point being used.
 
+    if ( use_timestamp ) {
+      return format_func(Math.round(y),0);
+    }
+
+    var dec = axis.tickDecimals;
     do {
       label = format_func(y,dec);
-      ++dec;
       // we scan back to see whether the label was already used
       exists = false;
       for (var j in axis.ticks ) {
         exists = exists || label==axis.ticks[j].label;
       }
+      ++dec;
     } while ( exists );
 
     // this may be redundant if the ticks are already properly formatted (as specified above),
@@ -63,6 +69,7 @@ function app() {
       modified_label = modified_label.replace(/\.?0+([TGMKywdhms]?)$/,"$1");
       axis.ticks[j].label = modified_label;
     }
+
     return label;
   }
 
@@ -324,19 +331,27 @@ function app() {
       template_data[0].full = true;
     }
     $(container_).html($.templates("#graph-box-header-template").render(template_data));
-    var $graph_container = $(($(container_).closest(".graph-container"))[0]);
-    var box_body = ($graph_container.find(".box-body"))[0];
+    var $graph_container = $(($(container_).closest(".graph-container"))[0]),
+        $box_body = $($graph_container.find(".box-body")[0]),
+        footer = $.templates("#graph-box-footer-template").render(template_data);
     $graph_container.attr("data-graph",template_data[0].graph);
     if ( more_ ) {
       $graph_container.attr("data-graph-more",more_);
     }
-    $(box_body).append($.templates("#graph-box-footer-template").render(template_data));
+
+    if ( $box_body.find(".box-footer") ) {
+      $($box_body.find(".box-footer")[0]).remove();
+    }
+    $box_body.append(footer);
+
+
     $.each(['#graph-yaxis-zoom','#graph-delta'],function(_,t) {
       $(t).bootstrapSwitch(
         {
           onSwitchChange: function(e,s) {
             var current = $(e.target),
                 cb = $graph_container.data(current.attr('id')+"-switch");
+            current.toggleClass("graph-paused");
             return cb ? cb(e,s) : undefined;
           }
         }
@@ -409,7 +424,7 @@ function app() {
       function set_click_behavior() {
         $(".alert-graph-name").click(function(e) {
           var graph = $(e.target).attr("data-target");
-          $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "tall-graph"}]));
+          $("#alert-graph-container").html($.templates("#graph-template").render([{klass: "medium-graph"}]));
           $("#alert-graph-container").attr("data-graph",graph);
           setup_graph_header(graph,".graph-header",true,null,"medium-graph");
           load_graph(graph,".graph-body");
@@ -696,11 +711,11 @@ function app() {
     return [1,"month"];
   }
 
-  function is_graph_zoomed(graph_container_) {
-    return $(graph_container_).hasClass("flot-zoomed");
+  function is_graph_paused(graph_container_) {
+    return $(graph_container_).hasClass("graph-paused");
   }
 
-  function draw_graph(names_,points_,thresholds_,anomalies_,target_,alert_name_) {
+  function draw_graph(names_,points_,units_,thresholds_,anomalies_,target_,alert_name_) {
     /*
        if ($(target_).hasClass("tall-graph")) {
        var use_small_fonts = false;
@@ -712,8 +727,13 @@ function app() {
      */
     var names = names_,
         points = points_,
-        $target = $(target_);
+        $target = $(target_),
+        tooltip_prefix = "#graph";
 
+    // TODO - recognize this is an alert page and switch to "#alert"
+    if ( $($target.closest(".graph-body")[0]).hasClass("medium-graph") ) {
+      tooltip_prefix = "#alert"
+    }
     if ( typeof(names_)=="string" ) {
       names = [names_];
       points = [points_];
@@ -723,10 +743,11 @@ function app() {
       notify('Unable to draw the graph(s)',names.join(", "));
       return;
     }
-    var plot_data = [];
     // the first graph is used for setting up labels
     // the first graph is used for setting up the axes. This may need to be changed.
-    var formatter = flot_axis_format; //TODO - use flot_axis_timestamp_format when the unit is timestamp. It appears in the raw_data units
+    var plot_data = [],
+        use_timestamp = units_ ? units_[names[0]]=="timestamp" : false,
+        formatter = use_timestamp ? flot_axis_timestamp_format : flot_axis_format;
 
     var plot_options = {
       xaxis: {
@@ -812,7 +833,7 @@ function app() {
 
     function plot_it() {
       $.doTimeout(2,function() {
-        $target.removeClass("flot-zoomed");
+        $target.removeClass("graph-paused");
         // if it is the first time, we call plot, otherwise, we'll call setData and draw t
         if ( !$target.data("plot") ) {
           $target.data("plot",$.plot(target_,plot_data,plot_options));
@@ -851,14 +872,14 @@ function app() {
 	  plot.clearSelection();
 
       // we add an artificial class to the container so an observer
-      // (like the auto refresh code) can check whether the graph is zoomed.
-      $target.addClass("flot-zoomed");
+      // (like the auto refresh code) can check whether the graph is paused.
+      $target.addClass("graph-paused");
 	});
 
     $target.off("dblclick"); // clear previous listeners
     $target.on("dblclick",function (e) {
       //console.log("dblclick",is_graph_zoomed(target_));
-      if ( is_graph_zoomed(target_) ) { // if the graph is in zoomed state, redraw it
+      if ( is_graph_paused(target_) ) { // if the graph is in paused state, redraw it
         $target.data("plot",null);
         plot_it();
       } else {
@@ -891,25 +912,26 @@ function app() {
           n: label,
           c: all_data[j].color,
           x: dataset[idx][0],
-          v: dataset[idx][1].toLocaleString(), //formatKMBT(dataset[idx][1],2)
+          v: use_timestamp ? formatTimestamp(dataset[idx][1]) : dataset[idx][1].toLocaleString(), //formatKMBT(dataset[idx][1],2)
           sec: sec ? sec.toFixed(2).toLocaleString() : "",
           minute: minute ? minute.toFixed(2).toLocaleString() : "",
         });
       }
       var content = $.templates("#graph-tooltip-template").render(tooltip_data);
-      //$("#graph-tooltip").html(tooltip_data.v+"<br>"+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
-      var $tooltip_timestamp = $("#graph-tooltip-timestamp");
-      $("#graph-tooltip-container").show();
+      // TODO - for dashboards, enable this tooltip - $("#graph-tooltip").html(tooltip_data.v+"<br>"+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+
+      var $tooltip_timestamp = $(tooltip_prefix+"-tooltip-timestamp");
+      $(tooltip_prefix+"-tooltip-container").show();
       $tooltip_timestamp.show();
-      $("#graph-tooltip").html(content);//.css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+      $(tooltip_prefix+"-tooltip").html(content);//.css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
       $tooltip_timestamp.html(time_format(date_from_utc_time(ts)));
       $tooltip_timestamp.attr("data-timestamp",ts);
 	});
 
     $target.on("mouseleave",  function (e) {
       //$("#graph-tooltip").fadeOut(200);
-      $("#graph-tooltip-container").hide();
-      $("#graph-tooltip-timestamp").hide();
+      $(tooltip_prefix+"-tooltip-container").hide();
+      $(tooltip_prefix+"-tooltip-timestamp").hide();
     });
 
     var $graph_container = $(($target.closest(".graph-container"))[0]);
@@ -1033,8 +1055,10 @@ function app() {
         }
         return;
       }
+      var units = raw_data_.units,
+          data = new Array();
+      delete raw_data_.units;
 
-      var data = new Array();
       for (var g in raw_data_) {
         var graph_data = raw_data_[g];
         var d = [];
@@ -1085,7 +1109,7 @@ function app() {
           anomalies.push(dt);
           alert_name = "anomaly";
         }
-        draw_graph(names,data,thresholds,anomalies,target_,alert_name,more_);
+        draw_graph(names,data,units,thresholds,anomalies,target_,alert_name,more_);
       });
 
     }
@@ -1529,7 +1553,7 @@ function app() {
 
     var records = [];
     var hash = window.location.hash;
-    var first_graph_rp = hash.match(/#graph\/[\w\[\]\.\-]+(;\d\w+:\d\w+)/);
+    var first_graph_rp = hash.match(/#graph\/[\w\[\]\.\-]+(;\d\w+:\d\w+)?/);
     for (var i in unified) {
       var in_url = hash.indexOf(i+";"); // we add the ";" to make sure this isn't a prefix match
       var record = {key: i, links: unified[i]}
@@ -1636,7 +1660,7 @@ function app() {
         return;
       }
       var graph_container_id = "#"+$(container).attr('id')+" .graph-body";
-      if ( is_graph_zoomed(graph_container_id) ) {
+      if ( is_graph_paused(graph_container_id) ) {
         return;
       }
       var graph = $(container).attr("data-graph");

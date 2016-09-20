@@ -273,9 +273,6 @@
         <script id="graph-box-footer-template" type="text/x-jsrender">
          <div class="box-footer">
            <div class="box-tools pull-left {{:klass}}-header">
-          {{if alerted}}
-          <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
-          {{/if}}
           {{if klass == "small-graph"}}
             {{for links}}
             {{if current}}
@@ -311,6 +308,10 @@
           <input id="graph-yaxis-zoom" type="checkbox" checked data-toggle="toggle" data-size="mini" data-label-text="Zoom">
           <input id="graph-delta" type="checkbox" data-toggle="toggle" data-size="mini" data-label-text="Delta">
           {{/if}}
+          {{if alerted}}
+           <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
+          {{/if}}
+
           </div>
          </div>
         </script>
@@ -469,6 +470,28 @@
                 </div>
               </div>
             </div>
+            <div class="col-md-4">
+            </div>
+            <div class="col-md-5">
+              <div class="box">
+                <div class="box-header with-border">
+                </div>
+                <div id="alert-tooltip-container" class="box-body container-fluid" display="none">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th colspan="3"><span id="alert-tooltip-timestamp"></span></th>
+                        <th class="text-right">/1s</th>
+                        <th class="text-right">/1m</th>
+                      </tr>
+                    </thead>
+                    <tbody id='alert-tooltip'>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div class="box" id="checks-box">
