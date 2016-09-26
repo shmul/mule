@@ -476,27 +476,32 @@ function mule(db_)
   local function metric_factories(metric_)
     local find = string.find
     local yield = coroutine.yield
-    return coroutine.wrap(
-      function()
-        if _factories_cache.get(metric_) then
-          for m,f in pairs(_factories_cache.get(metric_)) do
-            yield(m,f)
-          end
-          return
-        end
-        local cache = {}
 
-        for m,f in pairs(_factories) do
+    local function fill_cache()
+      local cache = {}
+      for m,f in pairs(_factories) do
           if (f.matcher=="prefix" and is_prefix(metric_,m)) then
             cache[m] = f
             yield(m,f)
           elseif (f.matcher=="substring" and find(metric_,m,1,true)) or find(metric_,m) then
-            cache[metric_] = f
-            yield(metric_,f)
+            cache[m] = f
+            yield(m,f)
           end
+      end
+      _factories_cache.set(metric_,cache)
+    end
+
+    return coroutine.wrap(
+      function()
+        if not _factories_cache.get(metric_) then
+          fill_cache()
         end
-        _factories_cache.set(metric_,cache)
+        for m,f in pairs(_factories_cache.get(metric_)) do
+          yield(m,f)
+        end
+        return
     end)
+
   end
 
   local function metric_factory_with_factor(metric_)

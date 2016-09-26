@@ -21,16 +21,16 @@ function app() {
   };
 
   function formatTimestamp(secs,dec) {
-    dec = 0;
-    if ( !secs ) { return ""; }
+    dec = dec || 1;
+    if ( !dec || !secs ) { return ""; }
     const s=1, m=60, h=3600, d=3600*24, w=3600*24*7, y=3600*24*365;
-    if ( secs>=y ) { return (secs/y).toFixed(dec) + "y"+formatTimestamp(secs%y,dec); }
-    if ( secs>=w ) { return (secs/w).toFixed(dec) + "w"+formatTimestamp(secs%w,dec); }
-    if ( secs>=d ) { return (secs/d).toFixed(dec) + "d"+formatTimestamp(secs%d,dec); }
-    if ( secs>=h ) { return (secs/h).toFixed(dec) + "h"+formatTimestamp(secs%h,dec); }
-    if ( secs>=m ) { return (secs/m).toFixed(dec) + "m"+formatTimestamp(secs%m,dec); }
+    if ( secs>=y ) { return (secs/y).toFixed(0) + "y"+formatTimestamp(secs%y,--dec); }
+    if ( secs>=w ) { return (secs/w).toFixed(0) + "w"+formatTimestamp(secs%w,--dec); }
+    if ( secs>=d ) { return (secs/d).toFixed(0) + "d"+formatTimestamp(secs%d,--dec); }
+    if ( secs>=h ) { return (secs/h).toFixed(0) + "h"+formatTimestamp(secs%h,--dec); }
+    if ( secs>=m ) { return (secs/m).toFixed(0) + "m"+formatTimestamp(secs%m,--dec); }
 
-    return secs+"s";
+    return Math.round(secs)+"s";
   }
 
   function flot_axis_format(y,axis,use_timestamp) {
@@ -44,10 +44,10 @@ function app() {
     // 2) to make sure there is a consistency in the number of digits
     //    past decimal point being used.
 
-    if ( use_timestamp ) {
-      return format_func(Math.round(y),0);
-    }
-
+    /* if ( use_timestamp ) {
+     *   return format_func(Math.round(y),0);
+     * }
+     */
     var dec = axis.tickDecimals;
     do {
       label = format_func(y,dec);
@@ -730,7 +730,6 @@ function app() {
         $target = $(target_),
         tooltip_prefix = "#graph";
 
-    // TODO - recognize this is an alert page and switch to "#alert"
     if ( $($target.closest(".graph-body")[0]).hasClass("medium-graph") ) {
       tooltip_prefix = "#alert"
     }
@@ -749,6 +748,10 @@ function app() {
         use_timestamp = units_ ? units_[names[0]]=="timestamp" : false,
         formatter = use_timestamp ? flot_axis_timestamp_format : flot_axis_format;
 
+    if ( !use_timestamp ) {
+      console.log("plothover "+use_timestamp+" "+(units_ ? units_[names[0]]=="timestamp" : false));
+    }
+
     var plot_options = {
       xaxis: {
         mode: "time",
@@ -758,6 +761,7 @@ function app() {
       },
       yaxis: {
         tickFormatter: formatter,
+        ticks: 3
       },
       legend: {
         show: names.length>1, // we show the legend only if there is a need
@@ -908,11 +912,12 @@ function app() {
         ts = dataset[idx][0];
         var sec = dataset[idx][1]/all_data[j].step,
             minute = sec*60;
+
         tooltip_data.push({
           n: label,
           c: all_data[j].color,
           x: dataset[idx][0],
-          v: use_timestamp ? formatTimestamp(dataset[idx][1]) : dataset[idx][1].toLocaleString(), //formatKMBT(dataset[idx][1],2)
+          v: use_timestamp ? formatTimestamp(dataset[idx][1],4) : dataset[idx][1].toLocaleString(),
           sec: sec ? sec.toFixed(2).toLocaleString() : "",
           minute: minute ? minute.toFixed(2).toLocaleString() : "",
         });
@@ -926,6 +931,7 @@ function app() {
       $(tooltip_prefix+"-tooltip").html(content);//.css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
       $tooltip_timestamp.html(time_format(date_from_utc_time(ts)));
       $tooltip_timestamp.attr("data-timestamp",ts);
+      event.stopPropagation();
 	});
 
     $target.on("mouseleave",  function (e) {
