@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <title></title>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
-    <link href="./plugins/bootstrap-3.3.2/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- link href="./plugins/bootstrap-3.3.2/css/bootstrap.min.css" rel="stylesheet" type="text/css" /-->
+    <link href="./plugins/superhero/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/font-awesome-4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
     <!-- Ionicons -->
     <link href="./plugins/ionicons.2.0.0.min.css" rel="stylesheet" type="text/css" />
     <!-- Theme style -->
     <link href="./plugins/DataTables-1.10.12/datatables.min.css" rel="stylesheet" type="text/css" />
-    <link href="./plugins/AdminLTE/css/AdminLTE.min.css" rel="stylesheet" type="text/css" />
-    <!-- AdminLTE Skins. Choose a skin from the css/skins
-         folder instead of downloading all of them to reduce the load. -->
-    <link href="./plugins/AdminLTE/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css" />
     <!-- link href="./plugins/qunit-1.17.1.css" rel="stylesheet" type="text/css" /-->
     <link href="./plugins/pnotify.custom.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.css" rel="stylesheet" type="text/css" />
@@ -22,91 +19,34 @@
 
     <link rel="icon" type="image/png" href="./img/favicon.ico" sizes="16x16 32x32" type="image/vnd.microsoft.icon"/>
   </head>
-  <body class="skin-blue sidebar-collapse">
-    <!-- Site wrapper -->
-    <div class="wrapper">
-      <header class="main-header">
-        <a href="./index.html" class="logo">
-          <img src="./img/mule_light_hires.png" height="100%">
-        </a>
-        <nav class="navbar navbar-static-top" role="navigation">
-          <!-- Sidebar toggle button-->
-          <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
-            <span class="sr-only">Toggle navigation</span>
+  <body>
+    <!-- =============================================== -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">
+            <a href="./index.html">
+              <img src="./img/mule_light_hires.png" class="logo">
+            </a>
           </a>
+        </div>
 
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="#checks">Checks<i class="fa fa-check"></i></a></li>
+            <li>
+              <ul class="nav navbar-nav" id="alerts-menu-container"></ul>
+            </li>
+          </ul>
 
-          <div class="navbar-custom-menu">
-            <ul class="nav navbar-nav">
-              <li class="dropdown" title="Checks">
-                <a href="#checks">
-                  Checks
-                  <i class="fa fa-check"></i>
-                </a>
-              </li>
-            </ul>
-            <ul class="nav navbar-nav" id="alerts-menu-container">
-            </ul>
-            <ul class="nav navbar-nav">
-              <li class="dropdown messages-menu">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Search" id="topnav-search-dropdown">
-                  <i class="fa fa-search"></i>
-                </a>
-                <ul class="dropdown-menu">
-                  <li>
-                    <ul id="topnav-search-container" class="menu">
-                    </ul>
-                  </li>
-                </ul>
-              </li>
+          <ul class="nav navbar-nav navbar-right" id="navbar-right-container">
+          </ul>
+        </div>
+      </div>
+    </nav>
 
-              <li class="dropdown messages-menu">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Favorites">
-                  <i class="fa fa-star-o"></i>
-                  <span id="favorite-count" class="label label-success"></span>
-                </a>
-                <ul class="dropdown-menu">
-                  <li class="header">Favorites</li>
-                  <li>
-                    <ul id="favorite-container" class="menu">
-                    </ul>
-                  </li>
-                  <li class="footer"><a href="#">Scroll down to see all</a></li>
-                </ul>
-              </li>
-
-              <li class="dropdown messages-menu">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Dashboards">
-                  <i class="fa fa-dashboard"></i>
-                </a>
-                <ul class="dropdown-menu">
-                  <div id="dashboards-dropdown-tree-container"></div>
-                </ul>
-              </li>
-
-              <li class="dropdown messages-menu">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Recent">
-                  <i class="fa fa-history"></i>
-                </a>
-                <ul class="dropdown-menu">
-                  <li class="header">Recent</li>
-                  <li>
-                    <ul id="recent-container" class="menu">
-                    </ul>
-                  </li>
-                  <li class="footer">
-                    <li class="footer"></li>
-                  </li>
-                </ul>
-              </li>
-
-            </ul>
-          </div>
-        </nav>
-      </header>
-
-      <!-- =============================================== -->
-      <div id="templates" class="hide">
+    <!-- =============================================== -->
+    <div id="templates" class="hide">
         <script id="search-form-template" type="text/x-jsrender">
           <form action="#" class="{{:class}}" id="{{:form_id}}">
             <div class="input-group">
@@ -139,11 +79,20 @@
         </script>
 
         <script id="alerts-menu-template" type="text/x-jsrender">
-          <li class="dropdown" title="{{:title}}">
+          <li title="{{:title}}">
             <a href="#alert/{{:type}}">
               {{:title}}
               <span class="badge bg-{{:color}}" id="alert-menu-{{:type}}"></span>
             </a>
+          </li>
+        </script>
+
+        <script id="navbar-right-template" type="text/x-jsrender">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" title="{{:title}}"><i class="fa fa-{{:icon}}"></i>
+            </a>
+            <ul id="{{:container}}-container" class="dropdown-menu" role="menu">
+            </ul>
           </li>
         </script>
 
@@ -632,6 +581,7 @@
     <!--script src="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.js"></script-->
 
     <script src="./config.js"></script>
+    <script src="./tests.js"></script>
     <script src="./utils.js"></script>
     <script src="./datasource.js"></script>
     <script src="./app.js"></script>

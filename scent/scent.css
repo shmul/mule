@@ -179,3 +179,7 @@
 #graph-tooltip td {
     padding: 5px;
 }
+
+.logo {
+    max-height: 40px;
+}

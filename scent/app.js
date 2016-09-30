@@ -367,6 +367,16 @@ function app() {
     $("#alerts-menu-container").html($.templates("#alerts-menu-template").render(template_data));
   }
 
+  function setup_navbar_right() {
+    var template_data = [
+      { title: "Search", container: "topnav-search", icon: "search"},
+      { title: "Favorites", container: "favorite", icon: "star-o"},
+      { title: "Dashboards", container: "dashboards-dropdown-tree", icon: "dashboard"},
+      { title: "Recent", container: "recent", icon: "history"},
+    ];
+    $("#navbar-right-container").html($.templates("#navbar-right-template").render(template_data));
+  }
+
   function update_alerts(category_to_show_) {
     scent_ds.alerts(function(raw_data_) {
 
@@ -1713,6 +1723,7 @@ function app() {
   function setup_router() {
 
     function globals() {
+      setup_navbar_right();
       setup_menus();
       setup_menu_alerts();
       setup_search_keys("#topnav-search-form","#search-keys-input",
