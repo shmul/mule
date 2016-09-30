@@ -1405,5 +1405,39 @@ function test_factory_export_config_for_metric()
   for_each_db("test_factory_export_config_for_metric",helper)
 end
 
+function test_key_glob()
+  local function helper(m)
+    m.configure(table_itr({"beer. 60s:12h 1h:30d","beer 3m:1h"}))
+    m.process({"beer.ale.mild 20 74857843",
+               "beer.ale.mild.bitter 20 74857843",
+               "beer.ale.mild.sweet 30 74857843",
+               "beer.lager.mild 720 74857843",
+               "beer.lager.mild.bitter 72 74857843",
+               "beer.lager.mild.sweet 74 74857843"
+              })
+    print(m.graph("beer.*.mild",{level=0,count=100}))
+    print(m.graph("beer.*.*.",{level=1,count=100}))
+  end
+
+  for_each_db("test_key_glob",helper)
+end
+
+
+function test_parent_and_dashes()
+  local function helper(m)
+    m.configure(table_itr({"beer. parent",":.ale-mild 3m:1h"}))
+    m.process({"beer.ale-mild 20 74857843",
+               "beer.ale-mild.bitter 20 74857843",
+               "beer.ale-mild.sweet 30 74857843",
+               "beer.lager.mild 720 74857843",
+               "beer.lager.mild.bitter 72 74857843",
+               "beer.lager.mild.sweet 74 74857843"
+              })
+    assert(string.find(m.graph("beer.ale-mild.bitter",{level=1}),"[20,1,74857680]",1,true))
+  end
+
+  for_each_db("test_parent_and_dashes",helper)
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")

@@ -345,9 +345,26 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_,level_)
       local find = string.find
       local yield = coroutine.yield
       prefix_ = (prefix_=="*" and "") or prefix_
-      for name in db_.matching_keys(prefix_,level_) do
-        if not retention_pair_ or find(name,retention_pair_,1,true) then
-          yield(sequence(db_,name))
+      local asterix = find(prefix_,".*.",1,true)
+      if asterix then
+        -- we split by the (first) asterix, look for the prefix and then add the tail to each.
+        local head = string.sub(prefix_,1,asterix)
+        local tail = string.sub(prefix_,asterix+2)
+        local uniq_heads = {}
+        for h in db_.matching_keys(head,1) do
+          local m,_,_ = split_name(h)
+          uniq_heads[m] = true
+        end
+        for h,_ in pairs(uniq_heads) do
+          for t in sequences_for_prefix(db_,h..tail,retention_pair_,level_) do
+            yield(t)
+          end
+        end
+      else
+        for name in db_.matching_keys(prefix_,level_) do
+          if not retention_pair_ or find(name,retention_pair_,1,true) then
+            yield(sequence(db_,name))
+          end
         end
       end
   end)
