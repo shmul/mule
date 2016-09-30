@@ -1551,18 +1551,23 @@ function mule(db_)
 
   end
 
-  local function process(data_,dont_update_,no_commands_)
+  local function process(data_,dont_update_,no_commands_,step_func)
     local lines_count = 0
+    local resume = coroutine.resume
+    local yield =  coroutine.yield
 
-    local function spillover_protection()
-      -- we protect from _updated_sequences growing too large if the input data is large
-      lines_count = lines_count + 1
-      if lines_count==UPDATED_SEQUENCES_MAX then
-        logi("process - forcing an update",lines_count)
-        flush_cache(UPDATED_SEQUENCES_MAX)
-        lines_count = lines_count - UPDATED_SEQUENCES_MAX
+    local spillover_protection = coroutine.create(
+      function()
+        -- we protect from _updated_sequences growing too large if the input data is large
+        lines_count = lines_count + 1
+        if lines_count==UPDATED_SEQUENCES_MAX then
+          logi("process - forcing an update",lines_count)
+          flush_cache(UPDATED_SEQUENCES_MAX)
+          lines_count = 0
+        end
+        yield(lines_count)
       end
-    end
+    )
 
     -- strings are handled as file pointers if they exist or as a line
     -- tables as arrays of lines
@@ -1573,7 +1578,10 @@ function mule(db_)
                                       function(f)
                                         for l in f:lines() do
                                           process_line(l,no_commands_)
-                                          spillover_protection()
+                                          local r = resume(spillover_protection)
+                                          if step_func and r%10==0 then
+                                            step_func()
+                                          end
                                         end
                                         return true
         end)
@@ -1587,7 +1595,7 @@ function mule(db_)
         local rv
         for _,d in ipairs(data_) do
           rv = process_line(d)
-          spillover_protection()
+          resume(spillover_protection)
         end
         return rv
       end
@@ -1598,7 +1606,7 @@ function mule(db_)
       for d in data_ do
         rv = process_line(d)
         count = count + 1
-        spillover_protection()
+        resume(spillover_protection)
       end
       logd("processed",count)
       return rv

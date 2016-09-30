@@ -377,7 +377,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
     copas.step(adaptive_timeout)
   end
 
-  while not stop_cond_() do
+  local function run()
     step()
     if can_fork_ then
       noblock_wait_for_children()
@@ -391,5 +391,9 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
           adaptive_timeout = 1
         end
     end)
+  end
+
+  while not stop_cond_() do
+    pcall(run)
   end
 end
