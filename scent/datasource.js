@@ -7,10 +7,6 @@ function mule_ds() {
   var cache = new Cache(conf.cache_size);
 
 
-  function delayed(func_) {
-    $.doTimeout(2,func_);
-  }
-
   function mule_get(resource_,callback_,cache_period_) {
     var cached = cache.getItem(resource_);
     if ( cached ) {

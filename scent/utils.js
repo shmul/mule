@@ -1,3 +1,8 @@
+function delayed(func_) {
+  $.doTimeout(2,func_);
+}
+
+
 function string_set_keys(set_) {
   return $.map(set_ || {},function(key_,idx_) { return idx_; });
 }
@@ -64,4 +69,12 @@ function deep_key(table_,key_) {
 
 function render_template(target_,template_,data_) {
   $(target_).empty().html($.templates(template_).render(data_));
+}
+
+function hide(selector_) {
+  $(selector_).toggleClass("hidden",true);
+}
+
+function show(selector_) {
+  $(selector_).toggleClass("hidden",false);
 }

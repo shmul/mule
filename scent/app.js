@@ -229,12 +229,13 @@ function app() {
   }
 
   function alert_category(alert_) {
-    if ( !lookup[0].hex_color ) {
-      for (var i in lookup) {
-        lookup[i].hex_color = background_color('.'+lookup[i].color);
-        ++i;
-      }
-    }
+    /*
+     * if ( !lookup[0].hex_color ) {
+     *   for (var i in lookup) {
+     *     lookup[i].hex_color = background_color('.'+lookup[i].color);
+     *     ++i;
+     *   }
+     * }*/
     return lookup[alert_];
   }
 
@@ -444,7 +445,7 @@ function app() {
 
       var tr = alert_category(category_idx);
       if ( tr ) {
-        $("#alert-box").show();
+        show("#alert-box");
         $("#alert-table-container").empty().html($.templates("#alert-table-template").render(template_data));
         var dt = $("#alert-"+tr.type).dataTable(
           {
@@ -465,7 +466,7 @@ function app() {
   }
 
   function teardown_alerts() {
-    $("#alert-box").hide();
+    hide("#alert-box");
     $("#alert-table-container").empty();
     $("#alert-graph-container").empty();
   }
@@ -738,10 +739,10 @@ function app() {
     var names = names_,
         points = points_,
         $target = $(target_),
-        tooltip_prefix = "#graph";
+        tooltip_prefix = "graph";
 
     if ( $($target.closest(".graph-body")[0]).hasClass("medium-graph") ) {
-      tooltip_prefix = "#alert"
+      tooltip_prefix = "alert"
     }
     if ( typeof(names_)=="string" ) {
       names = [names_];
@@ -932,22 +933,27 @@ function app() {
           minute: minute ? minute.toFixed(2).toLocaleString() : "",
         });
       }
-      var content = $.templates("#graph-tooltip-template").render(tooltip_data);
+
+      var wrapper = $.templates("#graph-tooltip-wrapper-template").render([{prefix:tooltip_prefix}]),
+          content = $.templates("#graph-tooltip-template").render(tooltip_data),
+          container_id = "#"+tooltip_prefix+"-tooltip-container";
       // TODO - for dashboards, enable this tooltip - $("#graph-tooltip").html(tooltip_data.v+"<br>"+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
 
-      var $tooltip_timestamp = $(tooltip_prefix+"-tooltip-timestamp");
-      $(tooltip_prefix+"-tooltip-container").show();
-      $tooltip_timestamp.show();
-      $(tooltip_prefix+"-tooltip").html(content);//.css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
+      show(container_id);
+      $(container_id).html(wrapper);
+      var $tooltip_timestamp = $(container_id+" .tooltip-timestamp");
+      show($tooltip_timestamp);
+      $(container_id+" .tooltip-tbody").html(content);
       $tooltip_timestamp.html(time_format(date_from_utc_time(ts)));
       $tooltip_timestamp.attr("data-timestamp",ts);
+
       event.stopPropagation();
 	});
 
     $target.on("mouseleave",  function (e) {
       //$("#graph-tooltip").fadeOut(200);
-      $(tooltip_prefix+"-tooltip-container").hide();
-      $(tooltip_prefix+"-tooltip-timestamp").hide();
+      hide("#"+tooltip_prefix+"-tooltip-container");
+      hide("#"+tooltip_prefix+"-tooltip-timestamp");
     });
 
     var $graph_container = $(($target.closest(".graph-container"))[0]);
@@ -1182,12 +1188,12 @@ function app() {
     $("#charts-title").text(dashboard_name);
 
 
-    $("#charts-box").show();
+    show("#charts-box");
   }
 
   function teardown_charts() {
     $("#charts-container").empty();
-    $("#charts-box").hide();
+    hide("#charts-box");
   }
 
   function setup_checks() {
@@ -1250,7 +1256,7 @@ function app() {
 
   function teardown_checks() {
     $("#checks-table-container").empty();
-    $("#checks-box").hide();
+    hide("#checks-box");
   }
 
   function setup_search_keys(form_,input_,callback_) {
@@ -1539,14 +1545,14 @@ function app() {
     render_template("#graph-box-container","#graph-template",[{klass: "tall-graph"}]);
     setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph",more_);
     load_graph(name_,"#graph-box .graph-body",more_);
-    $("#graph-box").show();
+    show("#graph-box");
 
     keys_table_helper(name_,"#graph-box-keys-container",true);
     push_graph_to_recent(name_);
   }
 
   function teardown_graph() {
-    $("#graph-box").hide();
+    hide("#graph-box");
     $("#graph-box-container").empty();
   }
 
@@ -1655,11 +1661,11 @@ function app() {
       populate_keys_table(key_,keys_,"#main-keys-container")
     },true);
 
-    $("#main-box").show();
+    show("#main-box");
   }
 
   function teardown_main() {
-    $("#main-box").hide();
+    hide("#main-box");
   }
 
   function set_title(title_) {

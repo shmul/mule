@@ -129,7 +129,7 @@
         </script>
 
         <script id="keys-table-template" type="text/x-jsrender">
-          <table id="keys-table" class="table table-bordered table-striped table-condensed">
+          <table id="keys-table" class="table table-striped table-condensed">
             <thead>
               <tr>
                 <th>Key</th>
@@ -297,7 +297,7 @@
          <tr>
            <td class="legendColorBox">
              <div style="border:1px solid #ccc;padding:1px">
-               <div style="width:4px;height:0;border:5px solid {{:c}} ;overflow:hidden"></div>
+               <div style="width:100%;height:0;border:5px solid {{:c}} ;overflow:hidden;"></div>
              </div>
            </td>
            <td>{{:n}}</td>
@@ -305,6 +305,24 @@
            <td class="text-right">{{:sec}}</td>
            <td class="text-right">{{:minute}}</td>
          </tr>
+        </script>
+
+        <script id="graph-tooltip-wrapper-template" type="text/x-jsrender">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th colspan="3"><span class="tooltip-timestamp"></span></th>
+                    <th class="text-right">/1s</th>
+                    <th class="text-right">/1m</th>
+                  </tr>
+                </thead>
+                <tbody class='tooltip-tbody'>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </script>
 
         <script id="alert-modal-template" type="text/x-jsrender">
@@ -317,243 +335,200 @@
         </script>
       </div> <!-- ./templates -->
 
-      <!-- Left side column. contains the sidebar -->
-      <aside class="main-sidebar">
-        <!-- sidebar: style can be found in sidebar.less -->
-        <section class="sidebar" >
-          <!-- search form -->
-          <!-- /.search form - TODO add something here-->
-          <!-- sidebar menu: : style can be found in sidebar.less -->
-          <ul class="sidebar-menu">
-            <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
-          </ul>
-        </section>
-        <!-- /.sidebar -->
-      </aside>
-
       <!-- =============================================== -->
 
-      <!-- Right side column. Contains the navbar and content of the page -->
-      <div class="content-wrapper">
-        <!-- Content Header (Page header) -->
-        <!--
-             <section class="content-header">
-             <h1 id="page-title"></h1>
-             </section>
-           -->
+    <div>
+      <!-- Main content -->
+      <div id="main-box">
+        <div class="page-header"></div>
 
-       <!-- Main content -->
-        <section class="content">
-          <div id="main-box">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="box">
-                  <div class="box-header with-border">
-                    <h3 class="box-title">Dashboards</h3>
-                    <div id="main-dashboards-container-header"></div>
-                  </div>
-                  <div class="box-body container-fluid">
-                    <div id="main-dashboards-container">
-                    </div>
-                  </div>
-                </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h4>Dashboards</h4>
+                <div id="main-dashboards-container-header"></div>
               </div>
-              <div class="col-md-6">
-                <div class="row">
-                  <div class="box">
-                    <div class="box-header with-border">
-                      <h3 class="box-title">Keys</h3>
-                      <div  id="main-keys-container-header"></div>
-                    </div>
-                    <div class="box-body container-fluid">
-                      <div id="main-keys-container" class="keys-container">
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="box" id="main-search-box">
-                    <div class="box-header with-border">
-                      <h3 class="box-title">Search for keys (use '.' and ';' to get subkeys)</h3>
-                    </div>
-                    <div class="box-body container-fluid">
-                      <div id="main-search-container">
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="box">
-                    <div class="box-header with-border">
-                      <h3 class="box-title">Recent</h3>
-                    </div>
-                    <div class="box-body container-fluid">
-                      <ul id="main-recent-container">
-                      </ul>
-                    </div>
-                  </div>
-                  <div class="box">
-                    <div class="box-header with-border">
-                      <h3 class="box-title">Favorite</h3>
-                    </div>
-                    <div class="box-body container-fluid">
-                      <ul id="main-favorite-container">
-                      </ul>
-                    </div>
-                  </div>
+              <div class="panel-body">
+                <div id="main-dashboards-container">
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="box" id="alert-box">
-            <div class="box-header with-border">
-              <h3 class="box-title"><strong id="alert-title"></strong></h3>
-            </div>
-
-            <div class="box-body container-fluid" id="alert-container">
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="box" id="alert-table-container">
+          <div class="col-md-6">
+            <div class="row">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4>Keys</h4>
+                  <div id="main-keys-container-header"></div>
+                </div>
+                <div class="panel-body">
+                  <div id="main-keys-container" class="keys-container">
                   </div>
                 </div>
-                <div id="alert-graph-container" data-graph="" class="graph-container col-md-8">
+              </div>
+
+              <div class="panel panel-default" id="main-search-box">
+                <div class="panel-heading">
+                  <h4>Search for keys (use '.' and ';' to get subkeys)</h4>
+                </div>
+                <div class="panel-body">
+                  <div id="main-search-container">
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4>Recent</h4>
+                </div>
+                <div class="panel-body">
+                  <ul id="main-recent-container">
+                  </ul>
+                </div>
+              </div>
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4>Favorite</h4>
+                </div>
+                <div class="panel-body">
+                  <ul id="main-favorite-container">
+                  </ul>
                 </div>
               </div>
             </div>
-            <div class="col-md-4">
+          </div>
+        </div>
+      </div>
+
+      <div id="alert-box">
+        <div class="page-header"></div>
+
+        <div class="row">
+          <div class="col-md-5">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h4 id="alert-title"></h4>
+              </div>
+
+              <div class="panel-body" id="alert-container">
+                <div class="panel panel-default" id="alert-table-container">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="row">
+              <div id="alert-graph-container" data-graph="" class="graph-container">
+              </div>
+            </div>
+            <div class="col-md-8">
+              <div class="row hidden" id="alert-tooltip-container">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel-default" id="checks-box">
+        <div class="panel-heading">
+          <h4><strong>Checks</strong></h4>
+        </div>
+
+        <div class="panel-body" id="alert-container">
+          <div class="row">
+            <div class="col-md-8">
+              <div id="checks-table-filter-container">
+              </div>
+              <div id="checks-table-container">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel-default" id="graph-box">
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="panel panel-default">
+                <div class="panel-body">
+                  <div class="small-graph-header" id="graph-box-keys-container-header"></div>
+                  <div id="graph-box-keys-container">
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="col-md-5">
-              <div class="box">
-                <div class="box-header with-border">
+              <div class="panel panel-default">
+                <div class="panel-heading">
                 </div>
-                <div id="alert-tooltip-container" class="box-body container-fluid" display="none">
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th colspan="3"><span id="alert-tooltip-timestamp"></span></th>
-                        <th class="text-right">/1s</th>
-                        <th class="text-right">/1m</th>
-                      </tr>
-                    </thead>
-                    <tbody id='alert-tooltip'>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <div class="box" id="checks-box">
-            <div class="box-header with-border">
-              <h3 class="box-title"><strong>Checks</strong></h3>
-            </div>
-
-            <div class="box-body container-fluid" id="alert-container">
-              <div class="row">
-                <div class="col-md-8">
-                  <div id="checks-table-filter-container">
-                  </div>
-                  <div id="checks-table-container">
-                  </div>
+                <div class="row hidden" id="graph-tooltip-container">
                 </div>
               </div>
             </div>
           </div>
-
-          <div class="box" id="graph-box">
-            <div class="box-body container-fluid">
-              <div class="row">
-                <div class="col-md-12">
-                  <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
-                  </div>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="box">
-                    <div class="box-header with-border">
-                      <h3 class="box-title">Keys</h3>
-                      <div class="box-tools pull-right">
-                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
-                      </div>
-
-                      <div class="small-graph-header" id="graph-box-keys-container-header"></div>
-                    </div>
-                    <div class="box-body container-fluid">
-                      <div id="graph-box-keys-container" class="keys-container">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-5">
-                  <div class="box">
-                    <div class="box-header with-border">
-                    </div>
-                    <div id="graph-tooltip-container" class="box-body container-fluid" display="none">
-                      <table class="table">
-                        <thead>
-                          <tr>
-                            <th colspan="3"><span id="graph-tooltip-timestamp"></span></th>
-                            <th class="text-right">/1s</th>
-                            <th class="text-right">/1m</th>
-                          </tr>
-                        </thead>
-                        <tbody id='graph-tooltip'>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-
-          <div class="box" id="charts-box">
-
-            <div class="box-header with-border">
-              <h3 class="box-title"><strong id="charts-title"></strong></h3>
-
-              <div class="box-tools pull-right">
-              </div>
-            </div>
-          </div>
-
-          <div class="box-body container-fluid">
-            <div id="charts-container">
-            </div><!-- /.box-body -->
-          </div>
-        </section>
-
-      </div><!-- /.content-wrapper -->
-
-      <footer class="main-footer">
-        <div class="pull-right hidden-xs">
-          <b>Version</b> 0.2 (based on <a href="http://almsaeedstudio.com/AdminLTE/" target="_blank">AdminLTE</a>)
         </div>
-        <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
-        <!-- Just some hidden elements to get the colors out of -->
-        <div display="none">
-          <span class="crit-high"></span>
-          <span class="crit-low"></span>
-          <span class="warn-low"></span>
-          <span class="warn-high"></span>
-          <span class="ok-green"></span>
-          <span class="anomaly"></span>
-          <span class="stale"></span>
+      </div>
+
+      <div class="panel panel-default" id="charts-box">
+        <div class="panel-heading">
+          <h4><strong id="charts-title"></strong></h4>
+
+          <div class="box-tools pull-right">
+          </div>
         </div>
+      </div>
 
-        <div class="form-group" id="alert-modal" display="none">
-          <form class="form-horizontal">
-            <fieldset>
-              <div class="form-group" id="alert-modal-form-container">
-              </div>
-            </fieldset>
-          </form>
+      <div class="panel-body">
+        <div id="charts-container">
+        </div><!-- /.box-body -->
+      </div>
 
-      </footer>
-    </div><!-- ./wrapper -->
+    </div><!-- /.content-wrapper -->
+
+    <footer>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-1"></div>
+          <div class="col-md-8">
+            <div class="pull-right hidden-xs">
+              Version 0.9
+            </div>
+            <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
+            <!-- Just some hidden elements to get the colors out of -->
+            <div class="hidden">
+              <span class="crit-high bg-danger"></span>
+              <span class="crit-low bg-danger"></span>
+              <span class="warn-low bg-warning"></span>
+              <span class="warn-high bg-warning"></span>
+              <span class="ok-green bg-sucess"></span>
+              <span class="anomaly bg-info"></span>
+              <span class="stale bg-default"></span>
+            </div>
+
+            <div class="form-group hiden" id="alert-modal">
+              <form class="form-horizontal">
+                <fieldset>
+                  <div class="form-group" id="alert-modal-form-container">
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
 
     <!--script src="./plugins/jquery.2.1.1.min.js"></script-->
     <script src="./plugins/jquery-3.1.0.js"></script>
@@ -565,7 +540,6 @@
 
     <script src="./plugins/DataTables-1.10.12/datatables.min.js"></script>
     <script src="./plugins/jsrender-0.9.79/jsrender.min.js"></script>
-    <script src="./plugins/AdminLTE/js/app.min.js"></script>
     <script src="./plugins/storage/jquery.storageapi-1.7.5.min.js"></script>
     <script src="./plugins/grapnel-0.6.4.min.js"></script>
     <script src="./plugins/Bootstrap-3-Typeahead-3.1.1/bootstrap3-typeahead.min.js"></script>
