@@ -82,7 +82,7 @@
           <li title="{{:title}}">
             <a href="#alert/{{:type}}">
               {{:title}}
-              <span class="badge bg-{{:color}}" id="alert-menu-{{:type}}"></span>
+              <span class="label label-{{:indicator}}" id="alert-menu-{{:type}}"></span>
             </a>
           </li>
         </script>
@@ -101,13 +101,13 @@
             <thead>
               <tr>
                 {{if type==="anomaly"}}
-                <th>Graph</th><th>Time</th>
+                 <th>Graph</th><th>Time</th>
                 {{else}}
-                <th>Graph</th>
-                <th>Value</th>
-                <th>Period</th>
-                <th>Stale</th>
-                <th>State</th>
+                 <th>Graph</th>
+                 <th>Value</th>
+                 <th>Period</th>
+                 <th>Stale</th>
+                 <th>State</th>
                 {{/else}}
               </tr>
             </thead>
@@ -199,70 +199,67 @@
           </div>
         </script>
 
-        <script id="graph-box-header-template" type="text/x-jsrender">
+        <script id="-graph-box-header-template" type="text/x-jsrender">
           <div data-graph="{{:graph}}">
-            <div class="box-title">
-              <div class="{{:klass}}-header graph-header">
-                  {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
+            <div class="panel-heading">
+              <div class="{{:klass}}-header">
+                {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
               </div>
             </div>
           </div>
         </script>
 
         <script id="graph-template" type="text/x-jsrender">
-          <div class="box box-primary">
-            <div class="box-header graph-header">
-            </div>
-            <div class="box-body">
-              <div class="graph-body {{:klass}}"></div>
+          <div class="panel panel-default">
+            <div class="graph-header"></div>
+            <div class="panel-body">
+              <div class="graph-body {{:klass}}" data-toggle="tooltip" data-delay="0"></div>
             </div>
           </div>
         </script>
 
         <script id="graph-box-footer-template" type="text/x-jsrender">
-         <div class="box-footer">
-           <div class="box-tools pull-left {{:klass}}-header">
-          {{if klass == "small-graph"}}
-            {{for links}}
-            {{if current}}
-            <span class="label bg-light-blue">{{:rp}}</span>
-            {{/if}}
-            {{/for}}
-          {{else}}
-           {{for links}}
-            {{if current}}
-            <span class="label bg-light-blue">{{:rp}}</span>
-            {{else}}
-            <span class="label">
-            {{if inner_navigation}}
-            <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
-            {{else}}
-            <a href="#graph/{{:href}}">{{:rp}}</a>
-            {{/if}}
-            </span>
-            {{/if}}
-           {{/for}}
-          {{/if}}
-          {{if full}}
-          <a href="#graph/{{:graph}}"><i class="graph-view fa fa-arrow-circle-up"></i></a>
-          {{/if}}
-          {{if favorite}}
-          <i class="graph-favorite fa {{:favorite}}"></i>
-          {{/if}}
-          {{if remove}}
-          <i class="graph-remove fa fa-trash"></i>
-          {{/if}}
-          <i class="graph-set-alerts fa fa-wrench"></i>
-          {{if klass != "small-graph"}}
-          <input id="graph-yaxis-zoom" type="checkbox" checked data-toggle="toggle" data-size="mini" data-label-text="Zoom">
-          <input id="graph-delta" type="checkbox" data-toggle="toggle" data-size="mini" data-label-text="Delta">
-          {{/if}}
-          {{if alerted}}
-           <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
-          {{/if}}
+          <div class="panel-footer">
+            <div class="{{:klass}}-header">
+              {{for parts}}<a href="#graph/{{:href}}">{{:title}}</a>{{/for}}
+              {{if klass == "small-graph"}}
+                {{for links}}
+                 {{if current}}
+                  <span class="label bg-light-blue">{{:rp}}</span>
+                 {{/if}}
+                {{/for}}
+              {{else}}
+                {{for links}}
+                 {{if current}}
+                  <span class="label label-primary">{{:rp}}</span>
+                 {{else}}
+                  <span class="label">
+                   {{if inner_navigation}}
+                    <a data-graph="{{:href}}" class="inner-navigation">{{:rp}}</a>
+                   {{else}}
+                    <a href="#graph/{{:href}}">{{:rp}}</a>
+                   {{/if}}
+                  </span>
+                 {{/if}}
+                {{/for}}
+              {{/if}}
+              {{if favorite}}
+              <i class="graph-favorite fa {{:favorite}}"></i>
+              {{/if}}
+              {{if remove}}
+              <i class="graph-remove fa fa-trash"></i>
+              {{/if}}
+              <i class="graph-set-alerts fa fa-wrench"></i>
+              {{if klass != "small-graph"}}
+              <input id="graph-yaxis-zoom" type="checkbox" checked data-toggle="toggle" data-size="mini" data-label-text="Zoom">
+              <input id="graph-delta" type="checkbox" data-toggle="toggle" data-size="mini" data-label-text="Delta">
+              {{/if}}
+              {{if alerted}}
+              <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
+              {{/if}}
 
+            </div>
           </div>
-         </div>
         </script>
         <!-- just a data holder to make the template generation code easier without closure hacks -->
         <script id="chart-graph-template" type="text/x-jsrender">
@@ -337,7 +334,7 @@
 
       <!-- =============================================== -->
 
-    <div>
+    <div class="container">
       <!-- Main content -->
       <div id="main-box">
         <div class="page-header"></div>
@@ -432,69 +429,72 @@
         </div>
       </div>
 
-      <div class="panel panel-default" id="checks-box">
-        <div class="panel-heading">
-          <h4><strong>Checks</strong></h4>
-        </div>
-
-        <div class="panel-body" id="alert-container">
-          <div class="row">
-            <div class="col-md-8">
-              <div id="checks-table-filter-container">
-              </div>
-              <div id="checks-table-container">
-              </div>
+      <div id="checks-box">
+        <div class="page-header"></div>
+        <div class="row">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4><strong>Checks</strong></h4>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div class="panel panel-default" id="graph-box">
-        <div class="panel-body">
-          <div class="row">
-            <div class="col-md-12">
-              <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div class="panel panel-default">
-                <div class="panel-body">
-                  <div class="small-graph-header" id="graph-box-keys-container-header"></div>
-                  <div id="graph-box-keys-container">
+            <div class="panel-body" id="alert-container">
+              <div class="row">
+                <div class="col-md-8">
+                  <div id="checks-table-filter-container">
+                  </div>
+                  <div id="checks-table-container">
                   </div>
                 </div>
               </div>
             </div>
-            <div class="col-md-5">
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                </div>
-                <div class="row hidden" id="graph-tooltip-container">
+          </div>
+        </div>
+      </div>
+
+      <div id="graph-box">
+        <div class="page-header"></div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div data-graph="" id="graph-box-container" class="graph-container col-md-12">
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="panel panel-default" id="charts-box">
-        <div class="panel-heading">
-          <h4><strong id="charts-title"></strong></h4>
-
-          <div class="box-tools pull-right">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div id="graph-box-keys-container-header"></div>
+                <div id="graph-box-keys-container">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="panel panel-default">
+              <div class="row hidden" id="graph-tooltip-container"></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="panel-body">
-        <div id="charts-container">
-        </div><!-- /.box-body -->
-      </div>
+      <div id="charts-box">
+        <div class="page-header"></div>
+        <div class="panel panel-default">
+          <!-- <div class="panel-heading">
+               <h4><strong id="charts-title"></strong></h4>
+               <div class="pull-right">
+               </div>
+               </div> -->
 
-    </div><!-- /.content-wrapper -->
+          <div class="panel-body">
+            <div id="charts-container"></div>
+          </div>
+        </div>
+      </div>
 
     <footer>
       <div class="container">
@@ -507,13 +507,11 @@
             <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
             <!-- Just some hidden elements to get the colors out of -->
             <div class="hidden">
-              <span class="crit-high bg-danger"></span>
-              <span class="crit-low bg-danger"></span>
-              <span class="warn-low bg-warning"></span>
-              <span class="warn-high bg-warning"></span>
-              <span class="ok-green bg-sucess"></span>
-              <span class="anomaly bg-info"></span>
-              <span class="stale bg-default"></span>
+              <span class="critical bg-danger text-danger"></span>
+              <span class="warning bg-warning text-warning"></span>
+              <span class="stale badge "></span>
+              <span class="normal bg-success text-success"></span>
+              <span class="anomaly bg-info text-info"></span>
             </div>
 
             <div class="form-group hiden" id="alert-modal">

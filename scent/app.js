@@ -205,37 +205,39 @@ function app() {
       case "WARNING HIGH": return "warn-high";
       case "anomaly": return alert_string_;
       case "stale": return alert_string_;
-      case "NORMAL": return "ok-green";
+      case "NORMAL": return "normal";
     }
     return -1;
   }
 
   const lookup = {
-    0: { title: "Critical", type: "critical", indicator: "danger", color: "red"},
-    1: { title: "Warning", type: "warning", indicator: "warning", color: "orange"},
-    2: { title: "Anomaly", type: "anomaly", indicator: "info", color: "anomaly"},
-    3: { title: "Stale", type: "stale", indicator: "info", color: "purple"},
-    4: { title: "Normal", type: "normal", indicator: "success", color: "green"},
-
-    critical: 0,
-    warning: 1,
-    anomaly: 2,
-    stale: 3,
-    normal: 4
+    0: { title: "Critical", type: "critical", indicator: "danger"},
+    1: { title: "Warning", type: "warning", indicator: "warning"},
+    2: { title: "Anomaly", type: "anomaly", indicator: "info"},
+    3: { title: "Stale", type: "stale", indicator: "default"},
+    4: { title: "Normal", type: "normal", indicator: "success"}
   }
 
   function background_color(selector_) {
     return $(selector_+':eq(0)').css('backgroundColor');
   }
 
+  function foreground_color(selector_) {
+    return $(selector_+':eq(0)').css('color');
+  }
+
   function alert_category(alert_) {
-    /*
-     * if ( !lookup[0].hex_color ) {
-     *   for (var i in lookup) {
-     *     lookup[i].hex_color = background_color('.'+lookup[i].color);
-     *     ++i;
-     *   }
-     * }*/
+    if ( !lookup[0].hex_color ) {
+      for (var i in lookup) {
+        lookup[i].color = foreground_color('.'+lookup[i].type);
+        lookup[i].hex_color = background_color('.'+lookup[i].type);
+        lookup[i].idx = parseInt(i);
+        lookup[lookup[i].type] = lookup[i]; // allows access by the type name
+      }
+      // and additinoal helpers
+      lookup["crit-high"] = lookup["crit-low"] = lookup.critical;
+      lookup["warn-high"] = lookup["warn-low"] = lookup.warning;
+    }
     return lookup[alert_];
   }
 
@@ -331,19 +333,19 @@ function app() {
     if ( options_.full ) {
       template_data[0].full = true;
     }
-    $(container_).html($.templates("#graph-box-header-template").render(template_data));
+    //$(container_).html($.templates("#graph-box-header-template").render(template_data));
     var $graph_container = $(($(container_).closest(".graph-container"))[0]),
-        $box_body = $($graph_container.find(".box-body")[0]),
+        $box_body = $($graph_container.find(".panel-body")[0]),
         footer = $.templates("#graph-box-footer-template").render(template_data);
     $graph_container.attr("data-graph",template_data[0].graph);
     if ( more_ ) {
       $graph_container.attr("data-graph-more",more_);
     }
 
-    if ( $box_body.find(".box-footer") ) {
-      $($box_body.find(".box-footer")[0]).remove();
+    if ( $graph_container.find(".panel-footer") ) {
+      $($graph_container.find(".panel-footer")[0]).remove();
     }
-    $box_body.append(footer);
+    $box_body.parent().append(footer);
 
 
     $.each(['#graph-yaxis-zoom','#graph-delta'],function(_,t) {
@@ -399,12 +401,12 @@ function app() {
       }
 
       var template_data = [];
-      var category_idx = alert_category(category_to_show_);
+      var category = alert_category(category_to_show_);
       for (var i=0; i<5; ++i) {
         var len = alerts[i].length;
         var tr = alert_category(i);
         $("#alert-menu-"+tr.type).text(len);
-        if ( i!=category_idx ) {
+        if ( category && i!=category.idx ) {
           continue;
         }
         var d = [];
@@ -443,24 +445,23 @@ function app() {
         });
       }
 
-      var tr = alert_category(category_idx);
-      if ( tr ) {
+      if ( category ) {
         show("#alert-box");
         $("#alert-table-container").empty().html($.templates("#alert-table-template").render(template_data));
-        var dt = $("#alert-"+tr.type).dataTable(
+        var dt = $("#alert-"+category.type).dataTable(
           {
             bRetrieve: true,
           //      sDom: "trflp", // Show the record count select box *below* the table
-          iDisplayLength: 15,
-          aLengthMenu: [ 15, 30, 60 ],
-          destroy: true,
-          order: [[ 2, "desc" ]]
+            iDisplayLength: 15,
+            aLengthMenu: [ 15, 30, 60 ],
+            destroy: true,
+            order: [ category.type==="anomaly" ? [0,"desc"] : [ 2, "desc" ]]
 
           });
 
         set_click_behavior();
         dt.on('draw',set_click_behavior);
-        $("#alert-title").text(tr.title);
+        $("#alert-title").text(category.title);
       }
     });
   }
@@ -804,7 +805,7 @@ function app() {
 		},
 	  },
     };
-    var colors = [background_color('.'+alert_to_css(alert_name_))];
+    var colors = [lookup[alert_to_css(alert_name_)].color];
     for (var i=1; i<names.length; ++i) {
       colors.push(more_colors[i % more_colors.length]);
     }
@@ -831,7 +832,7 @@ function app() {
       for (var i in reveresed) {
         plot_data.push({
           label: reveresed[i].label,
-          color: background_color('.'+reveresed[i].label),
+          color: lookup[reveresed[i].label].color,
           data: [[xmin,reveresed[i].value],[xmax,reveresed[i].value]]
         });
       }
@@ -933,19 +934,22 @@ function app() {
           minute: minute ? minute.toFixed(2).toLocaleString() : "",
         });
       }
-
+      var timestamp = time_format(date_from_utc_time(ts));
+      if ( $target.closest("#charts-box")[0] ) {
+        $($target.closest(".graph-body")[0]).attr("title",tooltip_data[0].v+" @ "+timestamp);
+      } else {
       var wrapper = $.templates("#graph-tooltip-wrapper-template").render([{prefix:tooltip_prefix}]),
           content = $.templates("#graph-tooltip-template").render(tooltip_data),
           container_id = "#"+tooltip_prefix+"-tooltip-container";
-      // TODO - for dashboards, enable this tooltip - $("#graph-tooltip").html(tooltip_data.v+"<br>"+tooltip_data.dt).css({top: pos.pageY+5, left: pos.pageX+5}).fadeIn(200);
 
-      show(container_id);
-      $(container_id).html(wrapper);
-      var $tooltip_timestamp = $(container_id+" .tooltip-timestamp");
-      show($tooltip_timestamp);
-      $(container_id+" .tooltip-tbody").html(content);
-      $tooltip_timestamp.html(time_format(date_from_utc_time(ts)));
-      $tooltip_timestamp.attr("data-timestamp",ts);
+        show(container_id);
+        $(container_id).html(wrapper);
+        var $tooltip_timestamp = $(container_id+" .tooltip-timestamp");
+        show($tooltip_timestamp);
+        $(container_id+" .tooltip-tbody").html(content);
+        $tooltip_timestamp.html(timestamp);
+        $tooltip_timestamp.attr("data-timestamp",ts);
+      }
 
       event.stopPropagation();
 	});
@@ -992,15 +996,6 @@ function app() {
       plot_it();
     });
 
-  }
-
-  function remove_spinner(anchor_) {
-    var box_body = $(anchor_).closest(".box-body")[0];
-    $(box_body).find(".overlay").remove();
-  }
-  function add_spinner(anchor_) {
-    var box_body = $(anchor_).closest(".box-body")[0];
-    $(box_body).append('<div class="overlay"><i class="fa fa-refresh fa-spin"></i></div>');
   }
 
   function get_center_pos(width, top) {
@@ -1405,8 +1400,8 @@ function app() {
             var graph = $(container).attr("data-graph"); // this is the existing graph
             var graph_view = $(container).find(".graph-view");
             console.log('inner navigation %s', graph);
-            setup_graph_header(href,container_id+" .graph-header",true,remove_callback_,
-                               klass_,more_);
+            setup_graph_header(href,container_id+" .graph-header",true,
+                               remove_callback_,klass_,more_);
             load_graph(href,container_id+" .graph-body");
             graph_view.parent().attr("href","#/graph/"+href);
           });
@@ -1468,17 +1463,17 @@ function app() {
                 graph_alerts[5] = step*3;
               }
               var fields = $.templates("#alert-modal-template").render([
-                { label:"Critical High", id: "crit-high", color: alert_category(lookup.critical).color,
+                { label:"Critical High", id: "crit-high", color: lookup.critical.color,
                   value: graph_alerts[3]},
-                { label:"Warning High", id: "warn-high", color: alert_category(lookup.warning).color,
+                { label:"Warning High", id: "warn-high", color: lookup.warning.color,
                   value: graph_alerts[2]},
-                { label:"Warning Low", id: "warn-low", color: alert_category(lookup.warning).color,
+                { label:"Warning Low", id: "warn-low", color: lookup.warning.color,
                   value: graph_alerts[1],},
-                { label:"Critical Low", id: "crit-low", color: alert_category(lookup.critical).color,
+                { label:"Critical Low", id: "crit-low", color: lookup.critical.color,
                   value: graph_alerts[0],},
                 { label:"Period", id: "period",
                   value: formatTimestamp(graph_alerts[4])},
-                { label:"Stale", id: "stale", color: alert_category(lookup.stale).color,
+                { label:"Stale", id: "stale", color: lookup.stale.color,
                   value: formatTimestamp(graph_alerts[5])}
               ]);
               $("#alert-modal-form-container").html(fields);
@@ -1543,7 +1538,7 @@ function app() {
 
   function setup_graph(name_,more_) {
     render_template("#graph-box-container","#graph-template",[{klass: "tall-graph"}]);
-    setup_graph_header(name_,"#graph-box .graph-header",false,null,"tall-graph",more_);
+    setup_graph_header(name_,"#graph-box .graph-header",true,null,"tall-graph",more_);
     load_graph(name_,"#graph-box .graph-body",more_);
     show("#graph-box");
 
@@ -1671,13 +1666,13 @@ function app() {
   function set_title(title_) {
     $("title").text("Scent of a Mule | "+title_);
     //$("#page-title").text(title_);
-    $("#qunit > a").text(title_);
+    //$("#qunit > a").text(title_);
   }
 
   function refresh_loaded_graphs_now() {
     $(".graph-body").each(function(idx_,obj_) {
       var container = ($(obj_).closest(".graph-container"))[0];
-      var container_box = ($(container).closest(".box"))[0];
+      var container_box = ($(container).closest("."))[0];
       if ( $(container_box).css("display")=="none" ) {
         return;
       }

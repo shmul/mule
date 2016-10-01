@@ -124,34 +124,6 @@
     margin-top: 12px;
 }
 
-/* .crit-low { */
-/*     background-color: #fa3d2f; */
-/* } */
-
-/* .warn-low { */
-/*     background-color: #fe8b03; */
-/* } */
-
-/* .warn-high { */
-/*     background-color: #f9c014; */
-/* } */
-
-/* .crit-high { */
-/*     background-color: #c5080f; */
-/* } */
-
-/* .stale { */
-/*     background-color: #8846ec; */
-/* } */
-
-/* .bg-anomaly, .anomaly { */
-/*     background-color: #3684af; */
-/* } */
-
-/* .ok-green { */
-/*     background-color: #1d995b; */
-/* } */
-
 
 #main-dashboards-container > ul > li > a {
     cursor: pointer;
