@@ -4,19 +4,17 @@
     <meta charset="UTF-8">
     <title></title>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
-    <!-- link href="./plugins/bootstrap-3.3.2/css/bootstrap.min.css" rel="stylesheet" type="text/css" /-->
+    <!-- <link href="./plugins/bootstrap-3.3.2/css/bootstrap.min.css" rel="stylesheet" type="text/css"/> -->
     <link href="./plugins/superhero/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/font-awesome-4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
-    <!-- Ionicons -->
+
     <link href="./plugins/ionicons.2.0.0.min.css" rel="stylesheet" type="text/css" />
-    <!-- Theme style -->
     <link href="./plugins/DataTables-1.10.12/datatables.min.css" rel="stylesheet" type="text/css" />
     <!-- link href="./plugins/qunit-1.17.1.css" rel="stylesheet" type="text/css" /-->
     <link href="./plugins/pnotify.custom.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/bootstrap-switch-3.3.2/css/bootstrap3/bootstrap-switch.min.css"  rel="stylesheet" type="text/css"/>
     <link href="./scent.css" rel="stylesheet" type="text/css" />
-
     <link rel="icon" type="image/png" href="./img/favicon.ico" sizes="16x16 32x32" type="image/vnd.microsoft.icon"/>
   </head>
   <body>
@@ -307,7 +305,7 @@
         <script id="graph-tooltip-wrapper-template" type="text/x-jsrender">
           <div class="panel panel-default">
             <div class="panel-body">
-              <table class="table">
+              <table class="table" id="{{:prefix}}-tooltip-table">
                 <thead>
                   <tr>
                     <th colspan="3"><span class="tooltip-timestamp"></span></th>
@@ -530,10 +528,9 @@
 
     <!--script src="./plugins/jquery.2.1.1.min.js"></script-->
     <script src="./plugins/jquery-3.1.0.js"></script>
-
     <script src="./plugins/bootstrap-3.3.2/js/bootstrap.min.js"></script>
-    <script src="./plugins/bootstrap-switch-3.3.2/js/bootstrap-switch.js"></script>
     <script src="./plugins/bootbox-4.4.0.js"></script>
+    <script src="./plugins/bootstrap-switch-3.3.2/js/bootstrap-switch.js"></script>
     <script src="./plugins/slimScroll/jquery.slimscroll.min.js"></script>
 
     <script src="./plugins/DataTables-1.10.12/datatables.min.js"></script>

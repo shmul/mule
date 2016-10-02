@@ -157,3 +157,8 @@
 .logo {
     max-height: 40px;
 }
+
+/* my hero save my modal day - http://stackoverflow.com/questions/29144858/twitter-bootstrap-3-and-bootswatch-flatly-template-modal-not-working-anylonger */
+.modal-dialog {
+    z-index: 1050;
+}

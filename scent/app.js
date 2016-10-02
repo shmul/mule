@@ -899,9 +899,9 @@ function app() {
         $target.data("plot",null);
         plot_it();
       } else {
-        var $tooltip_data = $($("#graph-tooltip [data-value]")[0]),
-            v = parseInt($tooltip_data.attr("data-value")),
-            x = parseInt($("#graph-tooltip-timestamp").attr("data-timestamp"));
+        var $tooltip_holder = $($("#"+tooltip_prefix+"-tooltip-table").find(".tooltip-timestamp")[0]),
+            v = parseInt($tooltip_holder.attr("data-value")),
+            x = parseInt($tooltip_holder.attr("data-timestamp"));
         show_piechart(names[0], date_from_utc_time(x), x/1000, v);
       }
       e.stopPropagation();
@@ -938,7 +938,7 @@ function app() {
       if ( $target.closest("#charts-box")[0] ) {
         $($target.closest(".graph-body")[0]).attr("title",tooltip_data[0].v+" @ "+timestamp);
       } else {
-      var wrapper = $.templates("#graph-tooltip-wrapper-template").render([{prefix:tooltip_prefix}]),
+        var wrapper = $.templates("#graph-tooltip-wrapper-template").render([{          prefix: tooltip_prefix}]),
           content = $.templates("#graph-tooltip-template").render(tooltip_data),
           container_id = "#"+tooltip_prefix+"-tooltip-container";
 
@@ -948,6 +948,7 @@ function app() {
         show($tooltip_timestamp);
         $(container_id+" .tooltip-tbody").html(content);
         $tooltip_timestamp.html(timestamp);
+        $tooltip_timestamp.attr("data-value",dataset[idx][1]);
         $tooltip_timestamp.attr("data-timestamp",ts);
       }
 
