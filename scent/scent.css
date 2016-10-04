@@ -58,9 +58,8 @@
     margin-right: 1em;
 }
 
-.graph-favorite {
-  color: #f39c12;
-  cursor: pointer;
+.graph-favorite, .graph-set-alerts, .graph-delta, .graph-yaxis-zoom {
+    cursor: pointer;
 }
 
 .mg-x-axis text, .mg-y-axis text, .mg-histogram .axis text,
@@ -130,9 +129,6 @@
     color: #3c8dbc;
 }
 
-
-#graph-tooltip {
-}
 
 /* these were pulled from pnotify's index.html :( */
 .stack-bar-top {

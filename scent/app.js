@@ -348,17 +348,22 @@ function app() {
     $box_body.parent().append(footer);
 
 
-    $.each(['#graph-yaxis-zoom','#graph-delta'],function(_,t) {
-      $(t).bootstrapSwitch(
-        {
-          onSwitchChange: function(e,s) {
-            var current = $(e.target),
-                cb = $graph_container.data(current.attr('id')+"-switch");
-            current.toggleClass("graph-paused");
-            return cb ? cb(e,s) : undefined;
-          }
+    $.each(['graph-yaxis-zoom','graph-delta'],function(_,t) {
+      $("."+t).click(function(e) {
+        e.stopPropagation();
+        var $current = $(e.target),
+            cb = $graph_container.data(t+"-switch"),
+            paused = $($current.toggleClass("graph-paused")[0]).attr('class'),
+            s = paused.indexOf("graph-paused")>-1; // this is a sign the "button" was clicked"
+        if ( t=="graph-yaxis-zoom" ) {
+          $current.removeClass(s ? "fa-search-plus" : "fa-search-minus");
+          $current.addClass(s ? "fa-search-minus" : "fa-search-plus");
+        } else {
+          // TODO - find an icon to represent delta
         }
-      );
+
+        return cb ? cb(e,s) : undefined;
+        });
     });
   }
 
@@ -1423,7 +1428,7 @@ function app() {
                 $target.attr("class","graph-favorite fa fa-star");
               } else {
                 favorites.splice(idx,1);
-                $target.attr("class","graph-favorire fa fa-star-o");
+                $target.attr("class","graph-favorite fa fa-star-o");
               }
               scent_ds.save(user,"persistent",persistent_,function() {
                 setup_menus();
@@ -1673,7 +1678,7 @@ function app() {
   function refresh_loaded_graphs_now() {
     $(".graph-body").each(function(idx_,obj_) {
       var container = ($(obj_).closest(".graph-container"))[0];
-      var container_box = ($(container).closest("."))[0];
+      var container_box = ($(container).closest(".box"))[0];
       if ( $(container_box).css("display")=="none" ) {
         return;
       }
@@ -1819,6 +1824,5 @@ function app() {
 
   setup_router();
 }
-
 
 $(app);

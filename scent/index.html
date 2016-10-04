@@ -13,7 +13,6 @@
     <!-- link href="./plugins/qunit-1.17.1.css" rel="stylesheet" type="text/css" /-->
     <link href="./plugins/pnotify.custom.min.css" rel="stylesheet" type="text/css" />
     <link href="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.css" rel="stylesheet" type="text/css" />
-    <link href="./plugins/bootstrap-switch-3.3.2/css/bootstrap3/bootstrap-switch.min.css"  rel="stylesheet" type="text/css"/>
     <link href="./scent.css" rel="stylesheet" type="text/css" />
     <link rel="icon" type="image/png" href="./img/favicon.ico" sizes="16x16 32x32" type="image/vnd.microsoft.icon"/>
   </head>
@@ -242,15 +241,15 @@
                 {{/for}}
               {{/if}}
               {{if favorite}}
-              <i class="graph-favorite fa {{:favorite}}"></i>
+                <i class="graph-favorite fa {{:favorite}}" title="Favorite">&nbsp;</i>
               {{/if}}
               {{if remove}}
-              <i class="graph-remove fa fa-trash"></i>
+                <i class="graph-remove fa fa-trash">&nbsp;</i>
               {{/if}}
-              <i class="graph-set-alerts fa fa-wrench"></i>
+              <i class="graph-set-alerts fa fa-wrench" title="Set thresholds">&nbsp;</i>
               {{if klass != "small-graph"}}
-              <input id="graph-yaxis-zoom" type="checkbox" checked data-toggle="toggle" data-size="mini" data-label-text="Zoom">
-              <input id="graph-delta" type="checkbox" data-toggle="toggle" data-size="mini" data-label-text="Delta">
+                <i class="graph-yaxis-zoom fa fa-search-plus" title="Zoom">&nbsp;</i>
+                <i class="graph-delta fa fa-magic" title="Delta">&nbsp;</i>
               {{/if}}
               {{if alerted}}
               <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
@@ -334,7 +333,7 @@
 
     <div class="container">
       <!-- Main content -->
-      <div id="main-box">
+      <div id="main-box" class="box">
         <div class="page-header"></div>
 
         <div class="row">
@@ -398,7 +397,7 @@
         </div>
       </div>
 
-      <div id="alert-box">
+      <div id="alert-box" class="box">
         <div class="page-header"></div>
 
         <div class="row">
@@ -427,7 +426,7 @@
         </div>
       </div>
 
-      <div id="checks-box">
+      <div id="checks-box" class="box">
         <div class="page-header"></div>
         <div class="row">
           <div class="panel panel-default">
@@ -449,7 +448,7 @@
         </div>
       </div>
 
-      <div id="graph-box">
+      <div id="graph-box" class="box">
         <div class="page-header"></div>
         <div class="row">
           <div class="col-md-12">
@@ -473,13 +472,13 @@
           </div>
           <div class="col-md-5">
             <div class="panel panel-default">
-              <div class="row hidden" id="graph-tooltip-container"></div>
+              <div class="hidden" id="graph-tooltip-container"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div id="charts-box">
+      <div id="charts-box" class="box">
         <div class="page-header"></div>
         <div class="panel panel-default">
           <!-- <div class="panel-heading">
@@ -494,66 +493,65 @@
         </div>
       </div>
 
-    <footer>
-      <div class="container">
-        <div class="row">
-          <div class="col-md-1"></div>
-          <div class="col-md-8">
-            <div class="pull-right hidden-xs">
-              Version 0.9
-            </div>
-            <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
-            <!-- Just some hidden elements to get the colors out of -->
-            <div class="hidden">
-              <span class="critical bg-danger text-danger"></span>
-              <span class="warning bg-warning text-warning"></span>
-              <span class="stale badge "></span>
-              <span class="normal bg-success text-success"></span>
-              <span class="anomaly bg-info text-info"></span>
-            </div>
+      <footer>
+        <div class="container">
+          <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-8">
+              <div class="pull-right hidden-xs">
+                Version 0.9
+              </div>
+              <strong><a href="#" id="scent-of-a-mule">Scent of a mule</a>, you better watch out where <a href="#" id="govt-mule">you go</a></strong>
+              <!-- Just some hidden elements to get the colors out of -->
+              <div class="hidden">
+                <span class="critical bg-danger text-danger"></span>
+                <span class="warning bg-warning text-warning"></span>
+                <span class="stale badge "></span>
+                <span class="normal bg-success text-success"></span>
+                <span class="anomaly bg-info text-info"></span>
+              </div>
 
-            <div class="form-group hiden" id="alert-modal">
-              <form class="form-horizontal">
-                <fieldset>
-                  <div class="form-group" id="alert-modal-form-container">
-                  </div>
-                </fieldset>
-              </form>
+              <div class="form-group hiden" id="alert-modal">
+                <form class="form-horizontal">
+                  <fieldset>
+                    <div class="form-group" id="alert-modal-form-container">
+                    </div>
+                  </fieldset>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </footer>
+      </footer>
 
 
-    <!--script src="./plugins/jquery.2.1.1.min.js"></script-->
-    <script src="./plugins/jquery-3.1.0.js"></script>
-    <script src="./plugins/bootstrap-3.3.2/js/bootstrap.min.js"></script>
-    <script src="./plugins/bootbox-4.4.0.js"></script>
-    <script src="./plugins/bootstrap-switch-3.3.2/js/bootstrap-switch.js"></script>
-    <script src="./plugins/slimScroll/jquery.slimscroll.min.js"></script>
+      <!--script src="./plugins/jquery.2.1.1.min.js"></script-->
+      <script src="./plugins/jquery-3.1.0.js"></script>
+      <script src="./plugins/bootstrap-3.3.2/js/bootstrap.min.js"></script>
+      <script src="./plugins/bootbox-4.4.0.js"></script>
+      <script src="./plugins/slimScroll/jquery.slimscroll.min.js"></script>
 
-    <script src="./plugins/DataTables-1.10.12/datatables.min.js"></script>
-    <script src="./plugins/jsrender-0.9.79/jsrender.min.js"></script>
-    <script src="./plugins/storage/jquery.storageapi-1.7.5.min.js"></script>
-    <script src="./plugins/grapnel-0.6.4.min.js"></script>
-    <script src="./plugins/Bootstrap-3-Typeahead-3.1.1/bootstrap3-typeahead.min.js"></script>
-    <script src="./plugins/flot/jquery.flot-0.8.3.min.js"></script>
-    <script src="./plugins/flot/jquery.flot.time-0.8.3.min.js"></script>
-    <script src="./plugins/flot/jquery.flot.selection-0.8.3.js"></script>
-    <script src="./plugins/flot/jquery.flot.crosshair-0.8.3.js"></script>
-    <script src="./plugins/jquery.ba-dotimeout.min.js"></script>
-    <script src="./plugins/cache.js"></script>
-    <script src="./plugins/pnotify.custom.min.js"></script>
-    <script src="./plugins/sparkline/jquery.sparkline.2.1.2.min.js"></script>
-    <script src="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.js"></script>
-    <!--script src="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.js"></script-->
+      <script src="./plugins/DataTables-1.10.12/datatables.min.js"></script>
+      <script src="./plugins/jsrender-0.9.79/jsrender.min.js"></script>
+      <script src="./plugins/storage/jquery.storageapi-1.7.5.min.js"></script>
+      <script src="./plugins/grapnel-0.6.4.min.js"></script>
+      <script src="./plugins/Bootstrap-3-Typeahead-3.1.1/bootstrap3-typeahead.min.js"></script>
+      <script src="./plugins/flot/jquery.flot-0.8.3.min.js"></script>
+      <script src="./plugins/flot/jquery.flot.time-0.8.3.min.js"></script>
+      <script src="./plugins/flot/jquery.flot.selection-0.8.3.js"></script>
+      <script src="./plugins/flot/jquery.flot.crosshair-0.8.3.js"></script>
+      <script src="./plugins/jquery.ba-dotimeout.min.js"></script>
+      <script src="./plugins/cache.js"></script>
+      <script src="./plugins/pnotify.custom.min.js"></script>
+      <script src="./plugins/sparkline/jquery.sparkline.2.1.2.min.js"></script>
+      <script src="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.js"></script>
+      <!--script src="./plugins/bootstrap-treeview-1.2.0/bootstrap-treeview.min.js"></script-->
 
-    <script src="./config.js"></script>
-    <script src="./tests.js"></script>
-    <script src="./utils.js"></script>
-    <script src="./datasource.js"></script>
-    <script src="./app.js"></script>
-
+      <script src="./config.js"></script>
+      <script src="./tests.js"></script>
+      <script src="./utils.js"></script>
+      <script src="./datasource.js"></script>
+      <script src="./app.js"></script>
+    </div>
   </body>
 </html>
