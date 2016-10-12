@@ -453,19 +453,15 @@ function app() {
       if ( category ) {
         show("#alert-box");
         $("#alert-table-container").empty().html($.templates("#alert-table-template").render(template_data));
-        var dt = $("#alert-"+category.type).dataTable(
+        var dt = $("#alert-"+category.type).bootstrapTable(
           {
-            bRetrieve: true,
-          //      sDom: "trflp", // Show the record count select box *below* the table
-            iDisplayLength: 15,
-            aLengthMenu: [ 15, 30, 60 ],
-            destroy: true,
-            order: [ category.type==="anomaly" ? [0,"desc"] : [ 2, "desc" ]]
-
-          });
-
+            pagination: true,
+            search: true,
+            pageSize: 15,
+            pageList: [ 15, 30, 60 ],
+            }
+        );
         set_click_behavior();
-        dt.on('draw',set_click_behavior);
         $("#alert-title").text(category.title);
       }
     });
@@ -774,7 +770,7 @@ function app() {
         mode: "time",
         timeformat: choose_timestamp_format(names[0]),
         timezone: "utc",
-        minTickSize: choose_tick_size(names[0])
+        minTickSize: choose_tick_size(names[0]),
       },
       yaxis: {
         tickFormatter: formatter,
@@ -1624,19 +1620,18 @@ function app() {
       { bSearchable: false, bSortable: false }
     ];
 
-    var dt = $("#keys-table").DataTable({
-
-      bRetrieve: true,
-//      sDom: "trflp", // Show the record count select box *below* the table
-      aoColumns: columns,
-      iDisplayLength: 10,
-      aLengthMenu: [ 10, 20, 40 ],
-      destroy: true,
-      order: [[ 0, "asc" ]]
-    });
+    var dt = $("#keys-table").bootstrapTable(
+      {
+        pagination: true,
+        search: true,
+        smartDisplay: true,
+        pageSize: 10,
+        pageList: [ 10, 20, 40 ],
+      }
+    );
 
     set_click_behavior();
-    dt.on('draw',set_click_behavior);
+    //dt.on('draw',set_click_behavior);
   }
 
   function setup_main(key_) {
