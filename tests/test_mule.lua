@@ -33,7 +33,8 @@ function test_create()
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest = {".key beer.ale"}},str)
-  assert_equal(weak_hash('{"version": 4,\n"data": {"beer.ale;1d:3y": {"children": true},"beer.ale;1h:30d": {"children": true},"beer.ale;5m:2d": {"children": true}}\n}'),weak_hash(str.get_string()))
+
+  assert_equal(weak_hash('{"version": 4,\n"data": {"beer.ale;1d:3y": true,"beer.ale;1h:30d": true,"beer.ale;5m:2d": true}\n}'),weak_hash(str.get_string()))
 
   str = strout("")
   main({ v=false,d=db("test_create"),rest={"./tests/fixtures/input2.mule"}},str)
@@ -82,5 +83,5 @@ function test_first_files()
 
 end
 
---verbose_log(true)
+verbose_log(true)
 --profiler.start("profiler.out")

@@ -30,6 +30,9 @@ RUN luarocks install bit32
 RUN luarocks install copas 1.1.6-1
 RUN luarocks install lightningmdb
 RUN luarocks install luaposix
+RUN luarocks install lsqlite3
+RUN luarocks install xxhash
+
 RUN apt-get install -y nginx-extras
 RUN apt-get install -y vim
 

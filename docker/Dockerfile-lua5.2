@@ -34,6 +34,8 @@ RUN luarocks install copas
 RUN luarocks install lightningmdb ${lightningmdb_ver}
 RUN luarocks install luaposix
 RUN luarocks install lunitx
+RUN luarocks install lsqlite3
+RUN luarocks install xxhash
 
 ENV HOME /root
 WORKDIR $HOME

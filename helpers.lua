@@ -1,5 +1,6 @@
 local _,lr = require "luarocks.require"
 local url = require "socket.url"
+local socket = require "socket"
 local pp = require "purepack"
 local posix_fcntl = require "posix.fcntl"
 local posix_glob = require "posix.glob"
@@ -24,6 +25,12 @@ local logfile_name = nil
 local verbose_logging = false
 local logfile_rotation_day = nil
 local rotation_counter = 0
+local gettime = socket.gettime
+local floor = math.floor
+
+local function mantissa(num)
+  return num-floor(num)
+end
 
 function verbose_log(on_)
   verbose_logging = on_
@@ -1029,7 +1036,8 @@ function sparse_sequence(name_,slots_)
     update = update,
     find_by_index = find_by_index,
     latest_timestamp = function() return _latest_timestamp end,
-    slots = function() return _slots end
+    slots = function() return _slots end,
+    metric = function() return _metric end
          }
 end
 

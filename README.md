@@ -530,6 +530,12 @@ Copas of the Kepler project is used and is distributed under [this license](http
 ## lpack
 [lpack](http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lpack) is used.
 
+## lsqlite3
+[lsqlite3]http://lua.sqlite.org/index.cgi/doc/tip/doc/lsqlite3.wiki#license is used.
+
+## lua-xxhash
+[lua-xxhash]http://lua.sqlite.org/index.cgi/doc/tip/doc/lsqlite3.wiki#license is used.
+
 # Contribution
 
 Contributions to the project are welcomed. It is required however to provide alongside the pull request one of the contribution forms (CLA) that are a part of the project. If the contributor is operating in his individual or personal capacity, then he/she is to use the [individual CLA](./CLA-Individual.txt); if operating in his/her role at a company or entity, then he/she must use the [corporate CLA](CLA-Corporate.txt).

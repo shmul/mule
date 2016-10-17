@@ -2,7 +2,7 @@ require "helpers"
 local pp = require("purepack")
 require "conf"
 require "fdi/calculate_fdi"
-
+local indexer = require("indexer")
 
 
 local function name(metric_,step_,period_)
@@ -399,11 +399,13 @@ local function each_metric(db_,metrics_,retention_pair_,callback_)
   end
 end
 
-function mule(db_)
+function mule(db_,indexer_)
   local _factories = {}
   local _alerts = {}
   local _anomalies = {} -- these do not persist as they can be recalulated
   local _db = db_
+  local _indexer = indexer_
+
   local _updated_sequences = simple_cache(MAX_CACHE_SIZE)
   local _hints = {}
   local _flush_cache_logger = every_nth_call(10,
@@ -660,6 +662,7 @@ function mule(db_)
       end
       alert_check(seq,now)
     end
+    _indexer.insert_one(seq.metric())
     _updated_sequences.out(name_)
   end
 
@@ -678,10 +681,16 @@ function mule(db_)
     local kvs = _updated_sequences.random_region(max_)
     if #kvs==0 then return false end
     increment("mule.mulelib.flush_cache")
+    local metrics = {}
+
     for _,n in ipairs(kvs) do
-      flush_cache_of_sequence(n,_updated_sequences.get(n))
+      local seq = _updated_sequences.get(n)
+      flush_cache_of_sequence(n,seq)
+      metrics[#metrics+1] = seq.metric()
     end
 
+    local count = _indexer.insert(metrics)
+    increment("mule.mulelib.indexed_metrics",count)
     -- returns true if there are more items to process
     return _updated_sequences and _updated_sequences.size()>0
   end
@@ -951,6 +960,9 @@ function mule(db_)
     local col = collectionout(str,"{","}")
     local level = tonumber(options_.level) or 0
     local count = 0
+    local in_memory = options_.in_memory and {}
+    local search = is_true(options_.search)
+
     col.head()
 
     if not resource_ or resource_=="" or resource_=="*" then
@@ -967,21 +979,34 @@ function mule(db_)
       level = options_.substring
     end
 
+    local function write_one(key)
+      local metric,_,_ = split_name(key)
+      count = count+1
+      local subkeys = metric and db_.has_sub_keys(metric) and "true" or "false"
+      if in_memory then
+        in_memory[key] = subkeys
+      else
+        col.elem(format("\"%s\": %s",key,subkeys))
+      end
+    end
+
     logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
-      for k in selector(prefix,level) do
-        local metric,_,_ = split_name(k)
-        count = count+1
-        if metric then
-          local hash = db_.has_sub_keys(metric) and "{\"children\": true}" or "{}"
-          col.elem(format("\"%s\": %s",k,hash))
+      if search then
+        for k in _indexer.search(prefix) do
+          write_one(k)
+        end
+      else
+        for k in selector(prefix,level) do
+          write_one(k)
         end
       end
     end
     increment("mule.mulelib.key",count)
     logd("key - done traversing")
     col.tail()
-    return wrap_json(str)
+
+    return in_memory or wrap_json(str)
   end
 
 

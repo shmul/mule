@@ -13,7 +13,18 @@ require "memory_store"
 local cdb = require "column_db"
 local mdb = require "lightning_mdb"
 local p = require "purepack"
+require "indexer"
 
+local function indexer_factory(name_)
+  if not name_ then
+    return indexer()
+  end
+  local full_path = "./tests/temp/"..name_
+  if not directory_exists(full_path) then
+    os.execute("mkdir -p "..full_path)
+  end
+  return indexer(full_path.."/fts.sqlite3")
+end
 
 local function column_db_factory(name_)
   p.set_pack_lib("bits")
@@ -33,15 +44,16 @@ local function memory_db_factory(name_)
   return in_memory_db()
 end
 
-local function for_each_db(name_,func_,no_mule_)
+local function for_each_db(name_,func_)
   local dbs = {
     memory_db_factory(),
     lightning_db_factory(name_),
-    column_db_factory(name_)
+    --column_db_factory(name_)
   }
 
+  local ind = indexer_factory()
   for _,db in ipairs(dbs) do
-    func_(no_mule_ and db or mule(db))
+    func_(mule(db,ind),db)
     set_hard_coded_time(nil)
   end
 end
@@ -121,7 +133,7 @@ end
 
 
 function test_sequences()
-  function helper(db_)
+  function helper(_,db_)
     local step,period = parse_time_pair("1m:60m")
     assert_equal(60,step)
     assert_equal(3600,period)
@@ -215,7 +227,7 @@ function test_sequences()
     assert_equal(10740,tbl[last-3])
 
   end
-  for_each_db("test_sequences",helper,true)
+  for_each_db("test_sequences",helper)
 end
 
 function test_to_timestamp()
@@ -585,9 +597,7 @@ function test_reset2()
 end
 
 function test_save_load()
-  local function helper(db)
-    local m = mule(db)
-
+  local function helper(m,db)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h"}))
     assert_equal(2,table_size(m.get_factories()))
     m.process("beer.ale.mild 20 74857843")
@@ -602,7 +612,7 @@ function test_save_load()
     assert_equal(2,#n.get_factories()["beer.ale"].rps)
     assert_equal(1,#n.get_factories()["beer.stout"].rps)
   end
-  for_each_db("save_load",helper,true)
+  for_each_db("save_load",helper)
 end
 
 
@@ -741,8 +751,7 @@ end
 
 
 function test_metric_one_level_children()
-  local function helper(db)
-    local m = mule(db)
+  local function helper(m,db)
     m.configure(table_itr({"beer.ale 60s:12h 1h:30d","beer.stout 3m:1h","beer.wheat 10m:1y"}))
 
     m.process("beer.ale.pale 7 4")
@@ -795,8 +804,7 @@ end
 
 
 function test_pale()
-  local function helper(db)
-    local m = mule(db)
+  local function helper(m,db)
     m.configure(table_itr({"beer. 5m:48h 1h:30d 1d:3y","mule. 5m:3d 1h:90d"}))
 
     m.process("./tests/fixtures/pale.dump")
@@ -812,12 +820,11 @@ function test_pale()
     assert(string.find(m.slot("beer.ale;5m:2d",{timestamps="1361300362"}),"46,27",1,true))
   end
 
-  for_each_db("pale",helper,true)
+  for_each_db("pale",helper)
 end
 
 function test_key()
-  local function helper(db)
-    local m = mule(db)
+  local function helper(m,db)
     m.configure(table_itr({"beer 5m:48h 1h:30d 1d:3y"}))
 
     m.process("./tests/fixtures/pale.mule")
@@ -847,7 +854,7 @@ function test_key()
     assert_equal(1+2*3,#split(all_keys,","))
 
   end
-  for_each_db("key",helper,true)
+  for_each_db("key",helper)
 end
 
 function test_bounded_by_level()
@@ -886,8 +893,7 @@ function test_dashes_in_keys()
 end
 
 function test_stacked()
-  function helper(db)
-    local m = mule(db)
+  function helper(m)
     m.configure(n_lines(110,io.lines("./tests/fixtures/d_conf")))
     m.process("Johnston.Morfin.Jamal.Marcela.Emilia.Zulema 5 10")
     m.process("Johnston.Emilia.Sweet-Nuthin 78 300")
@@ -925,7 +931,7 @@ function test_stacked()
     assert(string.find(level0,"Johnston.Morfin.Jamal;1s:1m",1,true))
     assert_nil(string.find(level0,"Johnston.Morfin.Jamal.",1,true))
   end
-  for_each_db("stacked",helper,true)
+  for_each_db("stacked",helper)
 end
 
 function test_rank_output()
@@ -1415,11 +1421,38 @@ function test_key_glob()
                "beer.lager.mild.bitter 72 74857843",
                "beer.lager.mild.sweet 74 74857843"
               })
-    print(m.graph("beer.*.mild",{level=0,count=100}))
-    print(m.graph("beer.*.*.",{level=1,count=100}))
+    local keys = m.graph("beer.*.mild",{level=0,count=100,in_memory=true})
+    assert_equal(6,table_size(keys))
+    keys = m.graph("beer.*.*.",{level=1,count=100,in_memory=true})
+    assert_equal(12,table_size(keys))
+
   end
 
   for_each_db("test_key_glob",helper)
+end
+
+function test_fts()
+  local function helper(m)
+    m.configure(table_itr({"beer. 60s:12h 1h:30d","beer 3m:1h"}))
+    m.process({"beer.ale.mild 20 74857843",
+               "beer.ale.mild.bitter 20 74857843",
+               "beer.ale.mild.sweet 30 74857843",
+               "beer.lager.mild 720 74857843",
+               "beer.lager.mild.bitter 72 74857843",
+               "beer.lager.mild.sweet 74 74857843"
+              })
+    local keys = m.key("mild",{level=0,count=100,in_memory=true,search=true})
+    assert_equal(6,table_size(keys))
+    keys = m.key("ale",{level=0,count=100,in_memory=true,search=true})
+    assert_equal(4,table_size(keys))
+    keys = m.key("sweet",{level=0,count=100,in_memory=true,search=true})
+    assert_equal(2,table_size(keys))
+    keys = m.key("sour",{level=0,count=100,in_memory=true,search=true})
+    assert_equal(0,table_size(keys))
+
+  end
+
+  for_each_db("test_fts",helper)
 end
 
 

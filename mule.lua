@@ -49,10 +49,11 @@ end
 
 local function new_mule(db_path_,readonly_)
   local db = guess_db(db_path_,readonly_)
-  if not db then
+  local ind = indexer(db_path_.."/fts.sqlite3")
+  if not db or not ind then
     return
   end
-  local m = mule(db)
+  local m = mule(db,ind)
   logi("loading",db_path_,readonly_ and "read" or "write")
   m.load()
   return m,db
