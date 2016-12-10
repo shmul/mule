@@ -4,9 +4,10 @@
 .modal-wide .modal-body {
     overflow-y: auto;
 }
-
-/* override some AdminLTE
- */
+.list-group-item {
+    padding: 5px 10px;
+    font-size: 14px;
+}
 
 .sidebar-menu .treeview-menu  li > a {
     padding: 5px 5px 5px 15px;
@@ -43,11 +44,11 @@
 }
 
 .tall-graph-header {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .medium-graph-header {
-    font-size: 18px;
+    font-size: 16px;
 }
 .small-graph-header {
     font-size: 12px;

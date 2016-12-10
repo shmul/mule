@@ -5,6 +5,16 @@ function app() {
   var stack_bar_bottom = {"dir1": "up", "dir2": "left", "spacing1": 2, "spacing2": 2};
   const more_colors = ["#88AA99","#79B5F2","#ADC3D8","#115588","#2B2B2B","#001122"];
   //const more_colors = ["#457f3f", "#117788", "#3D4C44", "#88AA99", "#557777", "#2B2B2B"];
+  const axis_font = {
+    size: 11,
+    lineHeight: 13,
+    style: "italic",
+    weight: "bold",
+    family: "sans-serif",
+    variant: "small-caps",
+    color: "white"
+  };
+
 
   var dashboards = {};
 
@@ -771,13 +781,16 @@ function app() {
         timeformat: choose_timestamp_format(names[0]),
         timezone: "utc",
         minTickSize: choose_tick_size(names[0]),
+        font: axis_font
       },
       yaxis: {
         tickFormatter: formatter,
-        ticks: 3
+        ticks: 3,
+        font: axis_font
       },
       legend: {
         show: names.length>1, // we show the legend only if there is a need
+
         position: "ne",
         _labelFormatter: function(label, series) {
           if ( series.label.indexOf("crit")>-1 || series.label.indexOf("warn")>-1 ) {
@@ -798,6 +811,7 @@ function app() {
       grid: {
 		hoverable: true,
 		autoHighlight: true,
+        color: "white"
 	  },
       series: {
         shadowSize: 0,	// Drawing is faster without shadows,
