@@ -131,24 +131,27 @@
             <thead>
               <tr>
                 <th data-sortable="true">Key</th>
-                <th>Graphs</th>
               </tr>
             </thead>
             <tbody>
               {{for records}}
               <tr>
-                <td><a class="keys-table-key" data-target="{{:key}}">{{:key}}&nbsp;&nbsp;</a></td>
                 <td>
-                  {{for links}}
-                    <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
-                  {{/for}}
-                  {{if plus}}
-                    <a href="{{:plus}}"><i class="fa fa-plus"></i></a>
-                  {{/if}}
-                  {{if minus}}
-                    <a href="{{:minus}}"><i class="fa fa-minus"></i></a>
-                  {{/if}}
-
+                  <a class="keys-table-key" data-trigger="manual"
+                  data-html="true" data-toggle="popover" data-placement="right"
+                  data-title='<a class="keys-table-popover-title" data-target="{{:key}}">{{:key}}</a>'
+                  data-content='
+                           {{for links}}
+                             <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
+                           {{/for}}
+                           {{if plus}}
+                             <a href="{{:plus}}"><i class="fa fa-plus"></i></a>
+                           {{/if}}
+                           {{if minus}}
+                             <a href="{{:minus}}"><i class="fa fa-minus"></i></a>
+                         {{/if}}'>
+                   {{:key}}
+                 </a>
                 </td>
               </tr>
               {{/for}}

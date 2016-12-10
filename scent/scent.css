@@ -100,17 +100,14 @@
   width: fit-content;
 }
 
-.alert-graph-name {
+.alert-graph-name,
+.keys-table-key,
+.keys-table-popover-title,
+.inner-navigation
+{
     cursor: pointer;
 }
 
-.keys-table-key {
-    cursor: pointer;
-}
-
-.inner-navigation {
-    cursor: pointer;
-}
 
 .keys-container {
     padding: 10px;

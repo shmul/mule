@@ -1617,14 +1617,32 @@ function app() {
       }
     }
     function set_click_behavior() {
-      $(".keys-table-key").click(function(e) {
-        var key = $(e.target).attr("data-target");
+      // thanks http://stackoverflow.com/a/19684440
+      $(".keys-table-key").popover().on("mouseenter",function () {
+        var _this = this;
+        $(this).popover("show");
+        $(".popover").on("mouseleave", function () {
+          $(_this).popover('hide');
+        });
 
-        set_header(key);
-        keys_table_helper(key,target_,plus_);
+        $(".keys-table-popover-title").click(function(e) {
+          var key = $(e.target).attr("data-target");
 
-        e.stopPropagation();
+          set_header(key);
+          keys_table_helper(key,target_,plus_);
+
+          e.stopPropagation();
+        });
+
+      }).on("mouseleave", function () {
+        var _this = this;
+        setTimeout(function () {
+          if (!$(".popover:hover").length) {
+            $(_this).popover("hide");
+          }
+        }, 300);
       });
+
     }
 
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
@@ -1645,6 +1663,7 @@ function app() {
     );
 
     set_click_behavior();
+
     //dt.on('draw',set_click_behavior);
   }
 
