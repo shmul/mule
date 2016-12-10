@@ -4,6 +4,19 @@
 .modal-wide .modal-body {
     overflow-y: auto;
 }
+
+.panel-heading {
+    padding: 5px 10px;
+}
+
+.panel-body {
+    padding: 5px 10px;
+}
+
+.form-control {
+    padding: 4px 8px;
+}
+
 .list-group-item {
     padding: 5px 10px;
     font-size: 14px;
@@ -108,11 +121,6 @@
     cursor: pointer;
 }
 
-
-.keys-container {
-    padding: 10px;
-}
-
 .panel {
     _margin-top: 20px;
 }
@@ -121,6 +129,10 @@
     margin-top: 12px;
 }
 
+.fixed-table-toolbar .search {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
 
 #main-dashboards-container > ul > li > a {
     cursor: pointer;

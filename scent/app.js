@@ -18,6 +18,14 @@ function app() {
 
   var dashboards = {};
 
+  function formatShowingRows(pageFrom, pageTo, totalRows) {
+    return [pageFrom,"-",pageTo,"/",totalRows].join("");
+  }
+
+  function formatRecordsPerPage(pageNumber) {
+    return "| # Rows "+pageNumber;
+  }
+
   // from Rickshaw
   function formatKMBT(y,dec) {
     var abs_y = Math.abs(y);
@@ -117,6 +125,7 @@ function app() {
     var max = data.length - 1;
     var guess,dx;
 
+    if ( max<0 ) { return 0; }
     while (min <= max) {
       guess = Math.floor((min + max) / 2);
       dx = data[guess][0];
@@ -469,7 +478,9 @@ function app() {
             search: true,
             pageSize: 15,
             pageList: [ 15, 30, 60 ],
-            }
+            formatShowingRows: formatShowingRows,
+            formatRecordsPerPage: formatRecordsPerPage,
+          }
         );
         set_click_behavior();
         $("#alert-title").text(category.title);
@@ -772,7 +783,7 @@ function app() {
         formatter = use_timestamp ? flot_axis_timestamp_format : flot_axis_format;
 
     if ( !use_timestamp ) {
-      console.log("plothover "+use_timestamp+" "+(units_ ? units_[names[0]]=="timestamp" : false));
+      //console.log("plothover "+use_timestamp+" "+(units_ ? units_[names[0]]=="timestamp" : false));
     }
 
     var plot_options = {
@@ -927,9 +938,11 @@ function app() {
         //console.log("no plot found");
         return;
       }
+      event.stopPropagation();
+
       var all_data = $target.data("plot").getData();
       var tooltip_data = [];
-      var ts;
+      var ts,dv;
       for (var j=0; j<all_data.length; ++j) {
         var dataset = all_data[j].data,
             label = all_data[j].label,
@@ -937,6 +950,7 @@ function app() {
         if ( !idx || !dataset[idx] || label.startsWith("crit-") || label.startsWith("warn-") )
           continue;
         ts = dataset[idx][0];
+        dv = dataset[idx][1];
         var sec = dataset[idx][1]/all_data[j].step,
             minute = sec*60;
 
@@ -949,6 +963,7 @@ function app() {
           minute: minute ? minute.toFixed(2).toLocaleString() : "",
         });
       }
+      if ( !dv ) { return; }
       var timestamp = time_format(date_from_utc_time(ts));
       if ( $target.closest("#charts-box")[0] ) {
         $($target.closest(".graph-body")[0]).attr("title",tooltip_data[0].v+" @ "+timestamp);
@@ -963,11 +978,10 @@ function app() {
         show($tooltip_timestamp);
         $(container_id+" .tooltip-tbody").html(content);
         $tooltip_timestamp.html(timestamp);
-        $tooltip_timestamp.attr("data-value",dataset[idx][1]);
+        $tooltip_timestamp.attr("data-value",dv);
         $tooltip_timestamp.attr("data-timestamp",ts);
       }
 
-      event.stopPropagation();
 	});
 
     $target.on("mouseleave",  function (e) {
@@ -1640,18 +1654,13 @@ function app() {
           if (!$(".popover:hover").length) {
             $(_this).popover("hide");
           }
-        }, 300);
+        }, 5);
       });
 
     }
 
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     set_header(parent_key_);
-    var columns = [
-      { bSortable: false },
-      { bSearchable: false, bSortable: false }
-    ];
-
     var dt = $("#keys-table").bootstrapTable(
       {
         pagination: true,
@@ -1659,6 +1668,8 @@ function app() {
         smartDisplay: true,
         pageSize: 10,
         pageList: [ 10, 20, 40 ],
+        formatShowingRows: formatShowingRows,
+        formatRecordsPerPage: formatRecordsPerPage,
       }
     );
 
