@@ -792,12 +792,12 @@ function app() {
         timeformat: choose_timestamp_format(names[0]),
         timezone: "utc",
         minTickSize: choose_tick_size(names[0]),
-        font: axis_font
+        font: axis_font,
       },
       yaxis: {
         tickFormatter: formatter,
         ticks: 3,
-        font: axis_font
+        font: axis_font,
       },
       legend: {
         show: names.length>1, // we show the legend only if there is a need
@@ -831,6 +831,12 @@ function app() {
 		},
 	  },
     };
+    if ( points_[0].length==0 ) {
+      // TODO - oddly, if we set this, then inner navigations where data IS available, doesn't
+      //        redraw the axis.
+      //plot_options.xaxis.ticks = [[0,"No Data"]];
+      //plot_options.yaxis.ticks = [0];
+    }
     var colors = [lookup[alert_to_css(alert_name_)].color];
     for (var i=1; i<names.length; ++i) {
       colors.push(more_colors[i % more_colors.length]);
@@ -1100,7 +1106,7 @@ function app() {
           notify('Unable to load graph','No data for "'+name_+'".');
           notified_graphs[name_] = true;
         }
-        return;
+        //return;
       }
       var units = raw_data_.units,
           data = new Array();
@@ -1417,9 +1423,6 @@ function app() {
             $(".graph-remove").off("click").click(remove_callback_);
           }
 
-          if ( notified_graphs[name_] ) {
-            return;
-          }
           var $graph_container = $(($(graph_header_container_).closest(".graph-container"))[0]);
           var container_id = "#"+$graph_container.attr("id");
 
@@ -1603,7 +1606,8 @@ function app() {
     var first_graph_rp = hash.match(/#graph\/[\w\[\]\.\-]+(;\d\w+:\d\w+)?/);
     for (var i in unified) {
       var in_url = hash.indexOf(i+";"); // we add the ";" to make sure this isn't a prefix match
-      var record = {key: i, links: unified[i]}
+      var metric_parts = i.split(".");
+      var record = {key: i, short_key: metric_parts[metric_parts.length-1], links: unified[i]}
       if ( plus_ && unified[i].length>1 ) {
         if ( in_url==-1) {
           record.plus = [hash,"/",i,first_graph_rp[1]].join("");
@@ -1670,12 +1674,12 @@ function app() {
         pageList: [ 10, 20, 40 ],
         formatShowingRows: formatShowingRows,
         formatRecordsPerPage: formatRecordsPerPage,
+        onPageChange: set_click_behavior,
       }
     );
 
     set_click_behavior();
 
-    //dt.on('draw',set_click_behavior);
   }
 
   function setup_main(key_) {

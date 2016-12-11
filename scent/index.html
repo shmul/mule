@@ -137,7 +137,7 @@
               {{for records}}
               <tr>
                 <td>
-                  <a class="keys-table-key" data-trigger="manual"
+                  <a class="keys-table-key" data-trigger="manual" data-container="body"
                   data-html="true" data-toggle="popover" data-placement="right"
                   data-title='<a class="keys-table-popover-title" data-target="{{:key}}">{{:key}}</a>'
                   data-content='
@@ -150,7 +150,7 @@
                            {{if minus}}
                              <a href="{{:minus}}"><i class="fa fa-minus"></i></a>
                          {{/if}}'>
-                   {{:key}}
+                   {{:short_key}}
                  </a>
                 </td>
               </tr>
