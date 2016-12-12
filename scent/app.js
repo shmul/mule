@@ -1636,6 +1636,8 @@ function app() {
     }
     function set_click_behavior() {
       // thanks http://stackoverflow.com/a/19684440
+
+      // TODO - when clicking a link in the popover, the popover should be hidden
       $(".keys-table-key").popover().on("mouseenter",function () {
         var _this = this;
         $(this).popover("show");
@@ -1651,6 +1653,7 @@ function app() {
 
           e.stopPropagation();
         });
+
 
       }).on("mouseleave", function () {
         var _this = this;
