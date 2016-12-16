@@ -1593,7 +1593,7 @@ function mule(db_,indexer_)
 
   end
 
-  local function process(data_,dont_update_,no_commands_,step_func)
+  local function process(data_,dont_update_,no_commands_,step_func_)
     local lines_count = 0
     local resume = coroutine.resume
     local yield =  coroutine.yield
@@ -1616,17 +1616,19 @@ function mule(db_,indexer_)
     -- functions as iterators of lines
     local function helper()
       if type(data_)=="string" then
-        local file_exists = with_file(data_,
-                                      function(f)
-                                        for l in f:lines() do
-                                          process_line(l,no_commands_)
-                                          local r = resume(spillover_protection)
-                                          if step_func and r%10==0 then
-                                            step_func()
-                                          end
-                                        end
-                                        return true
-        end)
+
+        local function file_process(f)
+          for l in f:lines() do
+            process_line(l,no_commands_)
+            local r = resume(spillover_protection)
+            if step_func_ and r%10==0 then
+              step_func_()
+            end
+          end
+          return true
+        end
+
+        local file_exists = with_file(data_,file_process)
         if file_exists then
           return true
         end

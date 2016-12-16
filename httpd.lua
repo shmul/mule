@@ -384,7 +384,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
     end
     with_mule_(function(mule_)
         mule_.flush_cache(UPDATE_AMOUNT,step)
-        local process_files = incoming_queue_callback_(mule_,NUM_INCOMING_FILES)
+        local process_files = incoming_queue_callback_(mule_,NUM_INCOMING_FILES,step)
         if process_files and process_files>0 then
           adaptive_timeout = 0
         else

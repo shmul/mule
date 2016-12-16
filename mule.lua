@@ -115,7 +115,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
   local processed = string.gsub(incoming_queue_path_,"incoming","processed")
   local failed = string.gsub(incoming_queue_path_,"incoming","failed")
 
-  local function helper(m,count)
+  local function helper(m,count,step_callback_)
     if executing then return 0 end
     local now = time_now()
     local num_files = 0
@@ -129,7 +129,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
             os.remove(file)
             return
           end
-          if sz>16777216 then
+          if sz>LARGE_FILE_SIZE then
             logi("large file",file,sz)
             new_name = string.format("%s/%s",failed,posix_libgen.basename(file))
             os.rename(file,new_name)
@@ -138,7 +138,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
           num_files = num_files + 1
           logi("incoming_queue file",file,sz)
           -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
-          m.process(file,true,true)
+          m.process(file,true,true,step_callback_)
           local cm = os.date("%y/%m/%d/%H/%M")
           if minute_dir~=cm then
             minute_dir = cm
