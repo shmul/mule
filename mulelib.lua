@@ -339,7 +339,7 @@ function sequence(db_,name_)
 end
 
 
-local function sequences_for_prefix(db_,prefix_,retention_pair_,level_)
+local function sequences_for_prefix(db_,prefix_,retention_pair_,level_,just_key_)
   return coroutine.wrap(
     function()
       local find = string.find
@@ -356,14 +356,14 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_,level_)
           uniq_heads[m] = true
         end
         for h,_ in pairs(uniq_heads) do
-          for t in sequences_for_prefix(db_,h..tail,retention_pair_,level_) do
+          for t in sequences_for_prefix(db_,h..tail,retention_pair_,level_,just_key_) do
             yield(t)
           end
         end
       else
         for name in db_.matching_keys(prefix_,level_) do
           if not retention_pair_ or find(name,retention_pair_,1,true) then
-            yield(sequence(db_,name))
+            yield(just_key_ and name or sequence(db_,name))
           end
         end
       end
@@ -662,7 +662,9 @@ function mule(db_,indexer_)
       end
       alert_check(seq,now)
     end
-    _indexer.insert_one(seq.metric())
+    if _indexer then
+      _indexer.insert_one(seq.metric())
+    end
     _updated_sequences.out(name_)
   end
 
@@ -689,8 +691,10 @@ function mule(db_,indexer_)
       metrics[#metrics+1] = seq.metric()
     end
 
-    local count = _indexer.insert(metrics)
-    increment("mule.mulelib.indexed_metrics",count)
+    if _indexer then
+      local count = _indexer.insert(metrics)
+      increment("mule.mulelib.indexed_metrics",count)
+    end
     -- returns true if there are more items to process
     return _updated_sequences and _updated_sequences.size()>0
   end
@@ -970,7 +974,10 @@ function mule(db_,indexer_)
       resource_ = table.concat(distinct_prefixes(keys(_factories)),"/")
       level = level - 1
     end
-    local selector = db_.matching_keys
+    local selector = function(prefix_,level_)
+      local rp = string.match(prefix_,"^([^;]+)(;%w+:%w+)$")
+      return sequences_for_prefix(db_,prefix_,rp,level_,true)
+    end
 
     if options_.substring then
       -- we are abusing the level param to hold the substring to be search,
@@ -992,7 +999,7 @@ function mule(db_,indexer_)
 
     logd("key - start traversing")
     for prefix in split_helper(resource_ or "","/") do
-      if search then
+      if search and _indexer then
         for k in _indexer.search(prefix) do
           write_one(k)
         end

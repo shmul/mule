@@ -83,5 +83,5 @@ function test_first_files()
 
 end
 
-verbose_log(true)
+--verbose_log(true)
 --profiler.start("profiler.out")
