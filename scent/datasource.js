@@ -55,13 +55,19 @@ function mule_ds() {
     },30);
   }
 
-  function key(key_,callback_,raw_) {
+  function key(key_,raw_,remove_synthetic_,callback_) {
+    if ( $.isFunction(raw_) ) {
+      callback_ = raw_;
+    }
+    if ( $.isFunction(remove_synthetic_) ) {
+      callback_ = remove_synthetic_;
+    }
     if (key_[key_.length-1]=='.' ) {
       key_ = key_.slice(0,key_.length-1);
     }
     mule_get("/key/"+key_+"?level=1",
              function(keys_) {
-               return key_impl(keys_,key_,callback_,raw_);
+               return key_impl(keys_,key_,callback_,raw_,remove_synthetic_);
              },300);
   }
 

@@ -366,7 +366,6 @@ function app() {
     }
     $box_body.parent().append(footer);
 
-
     $.each(['graph-yaxis-zoom','graph-delta'],function(_,t) {
       $("."+t).click(function(e) {
         e.stopPropagation();
@@ -475,7 +474,7 @@ function app() {
         var dt = $("#alert-"+category.type).bootstrapTable(
           {
             pagination: true,
-            search: true,
+            search: template_data.length>15,
             pageSize: 15,
             pageList: [ 15, 30, 60 ],
             formatShowingRows: formatShowingRows,
@@ -739,7 +738,7 @@ function app() {
     if ( step<TIME_UNITS.d ) {
       return [1,"hour"];
     }
-    if ( step<TIME_UNITS.w ) {
+    if ( TIME_UNITS.w<step ) {
       return [7,"day"];
     }
     return [1,"month"];
@@ -785,14 +784,21 @@ function app() {
     if ( !use_timestamp ) {
       //console.log("plothover "+use_timestamp+" "+(units_ ? units_[names[0]]=="timestamp" : false));
     }
-
-    var plot_options = {
+    var first = points_[0],
+        plot_options = {
       xaxis: {
         mode: "time",
         timeformat: choose_timestamp_format(names[0]),
         timezone: "utc",
         minTickSize: choose_tick_size(names[0]),
         font: axis_font,
+        ticks: function(axis) {
+          var ticks = axis.tickGenerator(axis);
+          ticks.unshift(first[0][0]);
+          ticks.pop();
+          ticks[ticks.length-1] = first[first.length-1][0];
+          return ticks;
+        }
       },
       yaxis: {
         tickFormatter: formatter,
@@ -800,11 +806,11 @@ function app() {
         font: axis_font,
       },
       legend: {
-        show: names.length>1, // we show the legend only if there is a need
+        show: 1<names.length, // we show the legend only if there is a need
 
         position: "ne",
         _labelFormatter: function(label, series) {
-          if ( series.label.indexOf("crit")>-1 || series.label.indexOf("warn")>-1 ) {
+          if ( -1<series.label.indexOf("crit") || -1<series.label.indexOf("warn") ) {
             return series.label+" "+series.data[0][1];
           }
           if ( series.label=="Anomalies" ) {
@@ -949,6 +955,10 @@ function app() {
       var all_data = $target.data("plot").getData();
       var tooltip_data = [];
       var ts,dv;
+      var first_graph = all_data[0].data,
+          first_ts = time_format(date_from_utc_time(first_graph[0][0])),
+          last_ts = time_format(date_from_utc_time(first_graph[first_graph.length-1][0]));
+
       for (var j=0; j<all_data.length; ++j) {
         var dataset = all_data[j].data,
             label = all_data[j].label,
@@ -974,7 +984,7 @@ function app() {
       if ( $target.closest("#charts-box")[0] ) {
         $($target.closest(".graph-body")[0]).attr("title",tooltip_data[0].v+" @ "+timestamp);
       } else {
-        var wrapper = $.templates("#graph-tooltip-wrapper-template").render([{          prefix: tooltip_prefix}]),
+        var wrapper = $.templates("#graph-tooltip-wrapper-template").render([{prefix: tooltip_prefix}]),
           content = $.templates("#graph-tooltip-template").render(tooltip_data),
           container_id = "#"+tooltip_prefix+"-tooltip-container";
 
@@ -1176,6 +1186,36 @@ function app() {
   }
 
   function setup_charts(dashboard_name) {
+    function helper(dashboards_) {
+      $("#charts-container").html("");
+      var charts_per_row = scent_config().charts_per_row;
+      var chart_width = Math.ceil(12/charts_per_row);
+      var current_row;
+
+      for (var i in dashboards_) {
+        var name = dashboards_[i];
+        if ( (i % charts_per_row)==0 ) {
+          current_row = $('<div class="row">');
+          $("#charts-container").append(current_row);
+        }
+        current_row.append($.templates("#chart-graph-template").render([{index: i,name: name, width: chart_width}]));
+      }
+
+      for (var i in dashboards_) {
+        var name = dashboards_[i];
+        var id = "chart-"+i+"-container";
+        $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
+        setup_graph_header(name,"#"+id+" .graph-header",true,null,"small-graph");
+        load_graph(name,"#"+id+" .graph-body");
+      }
+
+
+      $("#charts-title").text(dashboard_name);
+
+
+      show("#charts-box");
+    }
+
     // perhaps we need to wait for the dashboards to be loaded
     if ( $.isEmptyObject(dashboards) ) {
       $.doTimeout(100,function() {
@@ -1187,39 +1227,19 @@ function app() {
       });
       return;
     }
-    var dashboard = deep_key(dashboards,dashboard_name);
-    if ( !dashboard ) {
-      notify('Rrrr. Something went wrong','Can\'t find dashboard "'+dashboard_name+'".');
-      return;
+    var ds = deep_key(dashboards,dashboard_name);
+    if ( ds ) {
+      return helper(ds);
     }
 
-    $("#charts-container").html("");
-    var charts_per_row = scent_config().charts_per_row;
-    var chart_width = Math.ceil(12/charts_per_row);
-    var current_row;
-
-    for (var i in dashboard) {
-      var name = dashboard[i];
-      if ( (i % charts_per_row)==0 ) {
-        current_row = $('<div class="row">');
-        $("#charts-container").append(current_row);
-      }
-      current_row.append($.templates("#chart-graph-template").render([{index: i,name: name, width: chart_width}]));
-    }
-
-    for (var i in dashboard) {
-      var name = dashboard[i];
-      var id = "chart-"+i+"-container";
-      $('#'+id).append($.templates("#graph-template").render([{klass: "small-graph"}]));
-      setup_graph_header(name,"#"+id+" .graph-header",true,null,"small-graph");
-      load_graph(name,"#"+id+" .graph-body");
-    }
+    // perhaps a selection of graphs
+    var d = scent_config().dashboard_template(dashboard_name);
+    scent_ds.key(d,true,true,function(keys_) {
+      helper(keys_.length>0 ? keys_ : [d]);
+    });
 
 
-    $("#charts-title").text(dashboard_name);
 
-
-    show("#charts-box");
   }
 
   function teardown_charts() {
@@ -1418,7 +1438,10 @@ function app() {
                            {klass: klass_,
                             type: "graph", title: metric, parts: metric_parts, graph: name_,
                             links: links,favorite: favorite, alerted: ac.text, color: ac.color,
-                            full: !!inner_navigation_, remove: !!remove_callback_},more_);
+                            full: !!inner_navigation_, remove: !!remove_callback_,
+                            dashboard_href: scent_config().dashboard_template(metric)
+                           },
+                           more_);
           if ( remove_callback_ ) {
             $(".graph-remove").off("click").click(remove_callback_);
           }
@@ -1545,6 +1568,15 @@ function app() {
             scent_ds.alerts(callback);
           });
 
+          $(".graph-dashboard").click(function(e) {
+            e.stopPropagation();
+            var $target = $(e.target),
+                container = $target.closest(".graph-container"),
+                graph = $(container[0]).attr("data-graph");
+            router.navigate('dashboard/'+graph);
+          });
+
+
         });
 
       });
@@ -1553,7 +1585,7 @@ function app() {
 
   function keys_table_helper(key_,target_,plus_) {
     var metric = graph_split(key_) || [key_];
-    scent_ds.key(key_ || "",function(keys_) {
+    scent_ds.key(key_ || "",true,function(keys_) {
       if ( keys_.length==0 ) {
         var parent_key = key_.replace(/\.[^\.;]+(;\d\w+:\d\w+)?$/,"");
         if ( parent_key==key_ ) {
@@ -1566,7 +1598,7 @@ function app() {
         return keys_table_helper(first_key,target_,plus_);
       }
       populate_keys_table(metric[0],keys_,target_,plus_);
-    },true);
+    });
   }
 
   function setup_graph(name_,more_) {
@@ -1635,12 +1667,19 @@ function app() {
       }
     }
     function set_click_behavior() {
-      // thanks http://stackoverflow.com/a/19684440
+      $(".keys-table-key-header").click(function(e) {
+        var key = $(e.target).attr("data-target");
+        set_header(key);
+        keys_table_helper(key,target_,plus_);
+        e.stopPropagation();
+      });
 
-      // TODO - when clicking a link in the popover, the popover should be hidden
-      $(".keys-table-key").popover().on("mouseenter",function () {
+      // thanks http://stackoverflow.com/a/19684440
+      $(".keys-table-key-header[data-toggle='popover']").popover().on("mouseenter",function () {
         var _this = this;
         $(this).popover("show");
+
+
         $(".popover").on("mouseleave", function () {
           $(_this).popover('hide');
         });
@@ -1650,8 +1689,6 @@ function app() {
 
           set_header(key);
           keys_table_helper(key,target_,plus_);
-
-          e.stopPropagation();
         });
 
 
@@ -1662,6 +1699,9 @@ function app() {
             $(_this).popover("hide");
           }
         }, 5);
+      }).on("click",function() {
+        $('.keys-table-key').popover('hide');
+        return true;
       });
 
     }
@@ -1671,7 +1711,7 @@ function app() {
     var dt = $("#keys-table").bootstrapTable(
       {
         pagination: true,
-        search: true,
+        search: records.length>10,
         smartDisplay: true,
         pageSize: 10,
         pageList: [ 10, 20, 40 ],
@@ -1682,6 +1722,12 @@ function app() {
     );
 
     set_click_behavior();
+
+    // kind of brutal, but catches all clicks
+    $('html').on('click', function(e) {
+      $('.keys-table-key').popover('hide');
+      return true;
+    });
 
   }
 
@@ -1704,9 +1750,9 @@ function app() {
     });
 
 
-    scent_ds.key(key_ || "",function(keys_) {
+    scent_ds.key(key_ || "",true,function(keys_) {
       populate_keys_table(key_,keys_,"#main-keys-container")
-    },true);
+    });
 
     show("#main-box");
   }

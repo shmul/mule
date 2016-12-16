@@ -31,7 +31,7 @@
 
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="#checks">Checks<i class="fa fa-check"></i></a></li>
+            <!-- <li><a href="#checks">Checks<i class="fa fa-check"></i></a></li> -->
             <li>
               <ul class="nav navbar-nav" id="alerts-menu-container"></ul>
             </li>
@@ -137,10 +137,11 @@
               {{for records}}
               <tr>
                 <td>
-                  <a class="keys-table-key" data-trigger="manual" data-container="body"
-                  data-html="true" data-toggle="popover" data-placement="right"
-                  data-title='<a class="keys-table-popover-title" data-target="{{:key}}">{{:key}}</a>'
-                  data-content='
+                  <a class="keys-table-key-header" data-trigger="focus" data-container="body"
+                     data-html="true" data-toggle="popover" data-placement="right"
+                     data-target="{{:key}}"
+                     data-title='<a class="keys-table-popover-title" data-target="{{:key}}">{{:key}}</a>'
+                     data-content='
                            {{for links}}
                              <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
                            {{/for}}
@@ -160,7 +161,7 @@
         </script>
 
         <script id="keys-table-header-template" type="text/x-jsrender">
-          {{for parts}}<a class="keys-table-key" data-target="{{:key}}">{{:title}}</a>{{/for}}
+          {{for parts}}<a class="keys-table-key-header" data-target="{{:key}}">{{:title}}</a>{{/for}}
         </script>
 
         <script id="checks-table-template" type="text/x-jsrender">
@@ -244,6 +245,7 @@
                  {{/if}}
                 {{/for}}
               {{/if}}
+              &nbsp;&nbsp;
               {{if favorite}}
                 <i class="graph-favorite fa {{:favorite}}" title="Favorite">&nbsp;</i>
               {{/if}}
@@ -254,9 +256,10 @@
               {{if klass != "small-graph"}}
                 <i class="graph-yaxis-zoom fa fa-search-plus" title="Zoom">&nbsp;</i>
                 <i class="graph-delta fa fa-magic" title="Delta">&nbsp;</i>
+                <i class="graph-dashboard fa fa-dashboard" title="Dashboard">&nbsp;</i>
               {{/if}}
               {{if alerted}}
-              <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
+                <span class="label bg-{{:color}}">{{:alerted}}</span>&nbsp;&nbsp
               {{/if}}
 
             </div>
@@ -311,7 +314,9 @@
               <table class="table" id="{{:prefix}}-tooltip-table">
                 <thead>
                   <tr>
-                    <th colspan="3"><span class="tooltip-timestamp"></span></th>
+                    <th colspan="3">
+                      <span class="tooltip-timestamp text-center"></span>
+                    </th>
                     <th class="text-right">/1s</th>
                     <th class="text-right">/1m</th>
                   </tr>
@@ -517,7 +522,7 @@
                 <span class="anomaly bg-info text-info"></span>
               </div>
 
-              <div class="form-group hiden" id="alert-modal">
+              <div class="form-group hidden" id="alert-modal">
                 <form class="form-horizontal">
                   <fieldset>
                     <div class="form-group" id="alert-modal-form-container">

@@ -60,7 +60,14 @@ function mule_mockup () {
     });
   }
 
-  function key(key_,callback_,raw_) {
+  function key(key_,raw_,remove_synthetic_,callback_) {
+    if ( $.isFunction(raw_) ) {
+      callback_ = raw_;
+    }
+    if ( $.isFunction(remove_synthetic_) ) {
+      callback_ = remove_synthetic_;
+    }
+
     delayed(function() {
       var all_keys = fixtures["key"];
       key_impl(all_keys,key_,callback_,raw_);

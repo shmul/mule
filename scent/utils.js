@@ -22,11 +22,13 @@ function string_set_add_array(set_,keys_) {
   return set_;
 }
 
-function key_impl(initial_,key_,callback_,raw_) {
+const synthetic_key = /^(.+?)(;1s:1s)$/;
+
+function key_impl(initial_,key_,callback_,raw_,remove_synthetic_) {
   var k = $.map(initial_,function(element,index) {return index});
   var rv = {};
   var add_rp = /;$/.test(key_) || raw_;
-  var synthetic_key = /^(.+?)(;1s:1s)$/;
+
 
   function push_key(e,dont_trim) {
     if ( add_rp || dont_trim) {
@@ -38,22 +40,27 @@ function key_impl(initial_,key_,callback_,raw_) {
   if ( key_=="" ) { // no dots -> bring top level only
     $.each(k,function(idx,e) {
       if ( /^[\w-]+;/.test(e) )
-        push_key(e);
+        push_key(e,raw_);
     });
   } else {
     var re = new RegExp("^" + key_+"[\\w;:-]*"); //  var re = new RegExp("^" + key_+"[\\w:;-]+");
     var key_sc = key_+";";
     $.each(k,function(idx,e) {
       if ( re.test(e) )
-        push_key(e,e.startsWith(key_sc));
+        push_key(e,raw_ || e.startsWith(key_sc));
     });
   }
 
-  var fks = $.map(string_set_keys(rv),function(e) {
-    var match = synthetic_key.exec(e);
-    return match ? match[1] : e;
-  }).filter(function(e) { return e!=key_;});
-  callback_(fks.sort());
+  var ks = string_set_keys(rv);
+  if ( remove_synthetic_ ) {
+    ks = ks.filter(function(e) { return !synthetic_key.test(e); });
+  } else {
+    ks = $.map(ks,function(e) {
+      var match = synthetic_key.exec(e);
+      return match ? match[1] : e;
+    });
+  }
+  callback_(ks.filter(function(e) { return raw_ ? true : e!=key_;}).sort());
 }
 
 
