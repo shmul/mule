@@ -15,7 +15,6 @@ function app() {
     color: "white"
   };
 
-
   var dashboards = {};
 
   function formatShowingRows(pageFrom, pageTo, totalRows) {
@@ -397,7 +396,7 @@ function app() {
     var template_data = [
       { title: "Search", container: "topnav-search", icon: "search"},
       { title: "Favorites", container: "favorite", icon: "star-o"},
-      { title: "Dashboards", container: "dashboards-dropdown-tree", icon: "dashboard"},
+      //{ title: "Dashboards", container: "dashboards-dropdown-tree", icon: "dashboard"},
       { title: "Recent", container: "recent", icon: "history"},
     ];
     $("#navbar-right-container").html($.templates("#navbar-right-template").render(template_data));
@@ -471,18 +470,20 @@ function app() {
       if ( category ) {
         show("#alert-box");
         $("#alert-table-container").empty().html($.templates("#alert-table-template").render(template_data));
-        var dt = $("#alert-"+category.type).bootstrapTable(
-          {
-            pagination: true,
-            search: template_data.length>15,
-            pageSize: 15,
-            pageList: [ 15, 30, 60 ],
-            formatShowingRows: formatShowingRows,
-            formatRecordsPerPage: formatRecordsPerPage,
-          }
-        );
-        set_click_behavior();
-        $("#alert-title").text(category.title);
+        $.doTimeout(1,function() {
+          $("#alert-"+category.type).bootstrapTable(
+            {
+              pagination: true,
+              search: template_data.length>15,
+              pageSize: 15,
+              pageList: [ 15, 30, 60 ],
+              formatShowingRows: formatShowingRows,
+              formatRecordsPerPage: formatRecordsPerPage,
+            }
+          );
+          set_click_behavior();
+          $("#alert-title").text(category.title);
+        });
       }
     });
   }
@@ -578,8 +579,12 @@ function app() {
       }
 
       $.each(containers,function(_,c) {
+        // the hover color is taken from the theme's default. We actually need the backgroundColor
+        // of a "a.list-group-item:hover" but since we can't copy from one, we opt for the
+        // panel-footer
         $(c).treeview({data: tree,
                        enableLinks: true,
+                       onhoverColor: $(".panel-footer").css("backgroundColor") //"#485563"
         });
       });
       force_link_color(); // TODO - this disappears when the tree is redrawn
@@ -1237,9 +1242,6 @@ function app() {
     scent_ds.key(d,true,true,function(keys_) {
       helper(keys_.length>0 ? keys_ : [d]);
     });
-
-
-
   }
 
   function teardown_charts() {
@@ -1585,7 +1587,7 @@ function app() {
 
   function keys_table_helper(key_,target_,plus_) {
     var metric = graph_split(key_) || [key_];
-    scent_ds.key(key_ || "",true,function(keys_) {
+    scent_ds.key(key_ || "",false,false,function(keys_) {
       if ( keys_.length==0 ) {
         var parent_key = key_.replace(/\.[^\.;]+(;\d\w+:\d\w+)?$/,"");
         if ( parent_key==key_ ) {
@@ -1650,7 +1652,6 @@ function app() {
       records.push(record);
     }
 
-
     function set_header(key) {
       if ( key && key.length>0 ) {
         var metric_parts = key.split(".");
@@ -1666,41 +1667,13 @@ function app() {
         $(target_+"-header").empty();
       }
     }
+
     function set_click_behavior() {
       $(".keys-table-key-header").click(function(e) {
         var key = $(e.target).attr("data-target");
         set_header(key);
         keys_table_helper(key,target_,plus_);
         e.stopPropagation();
-      });
-
-      // thanks http://stackoverflow.com/a/19684440
-      $(".keys-table-key-header[data-toggle='popover']").popover().on("mouseenter",function () {
-        var _this = this;
-        $(this).popover("show");
-
-
-        $(".popover").on("mouseleave", function () {
-          $(_this).popover('hide');
-        });
-
-        $(".keys-table-popover-title").click(function(e) {
-          var key = $(e.target).attr("data-target");
-
-          set_header(key);
-          keys_table_helper(key,target_,plus_);
-        });
-
-
-      }).on("mouseleave", function () {
-        var _this = this;
-        setTimeout(function () {
-          if (!$(".popover:hover").length) {
-            $(_this).popover("hide");
-          }
-        }, 5);
-      }).on("click",function() {
-        $('.keys-table-key').popover('hide');
         return true;
       });
 
@@ -1708,27 +1681,23 @@ function app() {
 
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     set_header(parent_key_);
-    var dt = $("#keys-table").bootstrapTable(
-      {
-        pagination: true,
-        search: records.length>10,
-        smartDisplay: true,
-        pageSize: 10,
-        pageList: [ 10, 20, 40 ],
-        formatShowingRows: formatShowingRows,
-        formatRecordsPerPage: formatRecordsPerPage,
-        onPageChange: set_click_behavior,
+    $.doTimeout(1,function() {
+      $("#keys-table").bootstrapTable(
+        {
+          pagination: true,
+          search: records.length>10,
+          smartDisplay: true,
+          pageSize: 10,
+          pageList: [ 10, 20, 40 ],
+          formatShowingRows: formatShowingRows,
+          formatRecordsPerPage: formatRecordsPerPage,
+          onPageChange: set_click_behavior,
+        }
+      );
+
+      set_click_behavior();
       }
     );
-
-    set_click_behavior();
-
-    // kind of brutal, but catches all clicks
-    $('html').on('click', function(e) {
-      $('.keys-table-key').popover('hide');
-      return true;
-    });
-
   }
 
   function setup_main(key_) {
@@ -1750,7 +1719,7 @@ function app() {
     });
 
 
-    scent_ds.key(key_ || "",true,function(keys_) {
+    scent_ds.key(key_ || "",true,false,function(keys_) {
       populate_keys_table(key_,keys_,"#main-keys-container")
     });
 
@@ -1831,12 +1800,12 @@ function app() {
                           router.navigate('graph/'+name_);
                         });
       update_alerts(); // with no selected category it just updates the count
-      setup_dashboards();
     }
 
     router.get(/^(index.html)?$/i, function(req) {
       set_title("");
       globals();
+      setup_dashboards();
       setup_main(req.params[1]);
       teardown_alerts();
       teardown_charts();
@@ -1895,6 +1864,7 @@ function app() {
     router.get('dashboard/:id', function(req) {
       set_title("Dashboard");
       globals();
+      setup_dashboards();
       var id = req.params.id;
       teardown_main();
       teardown_alerts();

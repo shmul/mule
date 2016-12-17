@@ -53,7 +53,7 @@
                 {{if add}}
                 <button type="submit" class="btn btn-primary btn-flat">Add</button>
                 {{else}}
-                <button type='submit' name='seach' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
+                <button type='submit' name='search' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
                 {{/if}}
               </span>
             </div>
@@ -131,28 +131,26 @@
             <thead>
               <tr>
                 <th data-sortable="true">Key</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {{for records}}
               <tr>
                 <td>
-                  <a class="keys-table-key-header" data-trigger="focus" data-container="body"
-                     data-html="true" data-toggle="popover" data-placement="right"
-                     data-target="{{:key}}"
-                     data-title='<a class="keys-table-popover-title" data-target="{{:key}}">{{:key}}</a>'
-                     data-content='
-                           {{for links}}
-                             <a href="#graph/{{:href}}">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
-                           {{/for}}
-                           {{if plus}}
-                             <a href="{{:plus}}"><i class="fa fa-plus"></i></a>
-                           {{/if}}
-                           {{if minus}}
-                             <a href="{{:minus}}"><i class="fa fa-minus"></i></a>
-                         {{/if}}'>
-                   {{:short_key}}
-                 </a>
+                  <a class="keys-table-key-header" data-target="{{:key}}"> {{:short_key}}</a>
+                </td>
+                <td class="text-right">
+                  {{for links}}
+                    <a href="#graph/{{:href}}" click="popover_hide">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
+                  {{/for}}
+                  {{if plus}}
+                    <a href="{{:plus}}"><i class="fa fa-plus"></i></a>
+                  {{/if}}
+                  {{if minus}}
+                    <a href="{{:minus}}"><i class="fa fa-minus"></i></a>
+                  {{/if}}
+
                 </td>
               </tr>
               {{/for}}
@@ -523,6 +521,7 @@
               </div>
 
               <div class="form-group hidden" id="alert-modal">
+                <span class="hidden panel-footer"></span>
                 <form class="form-horizontal">
                   <fieldset>
                     <div class="form-group" id="alert-modal-form-container">
@@ -540,7 +539,6 @@
       <script src="./plugins/jquery-3.1.0.js"></script>
       <script src="./plugins/bootstrap-3.3.2/js/bootstrap.min.js"></script>
       <script src="./plugins/bootbox-4.4.0.js"></script>
-      <script src="./plugins/slimScroll/jquery.slimscroll.min.js"></script>
       <script src="./plugins/bootstrap-table-1.11.0/bootstrap-table.min.js"></script>
       <script src="./plugins/jsrender-0.9.79/jsrender.min.js"></script>
       <script src="./plugins/storage/jquery.storageapi-1.7.5.min.js"></script>
