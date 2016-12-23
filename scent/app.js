@@ -776,7 +776,7 @@ function app() {
       points = [points_];
     }
     if ( names.length!=points.length ) {
-      console.log('draw_graph params mismatch');
+      console.log('draw_graph params mismatch',names.join(", "));
       notify('Unable to draw the graph(s)',names.join(", "));
       return;
     }
@@ -1681,23 +1681,21 @@ function app() {
 
     $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     set_header(parent_key_);
-    $.doTimeout(1,function() {
-      $("#keys-table").bootstrapTable(
-        {
-          pagination: true,
-          search: records.length>10,
-          smartDisplay: true,
-          pageSize: 10,
-          pageList: [ 10, 20, 40 ],
-          formatShowingRows: formatShowingRows,
-          formatRecordsPerPage: formatRecordsPerPage,
-          onPageChange: set_click_behavior,
-        }
-      );
+    $("#keys-table").bootstrapTable({
+      pagination: true,
+      search: records.length>10,
+      smartDisplay: true,
+      pageSize: 10,
+      pageList: [ 10, 20, 40 ],
+      formatShowingRows: formatShowingRows,
+      formatRecordsPerPage: formatRecordsPerPage,
+      onPageChange: set_click_behavior,
+    });
+    $("#keys-table").on('load-error.bs.table',function(e) {
+      alert("what an error "+e);
+    });
 
-      set_click_behavior();
-      }
-    );
+    set_click_behavior();
   }
 
   function setup_main(key_) {
