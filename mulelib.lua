@@ -1627,8 +1627,8 @@ function mule(db_,indexer_)
         local function file_process(f)
           for l in f:lines() do
             process_line(l,no_commands_)
-            local r = resume(spillover_protection)
-            if step_func_ and r%10==0 then
+            resume(spillover_protection)
+            if step_func_ and lines_count%10==0 then
               step_func_()
             end
           end
