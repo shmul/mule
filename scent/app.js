@@ -799,9 +799,11 @@ function app() {
         font: axis_font,
         ticks: function(axis) {
           var ticks = axis.tickGenerator(axis);
-          ticks.unshift(first[0][0]);
-          ticks.pop();
-          ticks[ticks.length-1] = first[first.length-1][0];
+          if ( first && first.length>0 ) {
+            ticks.unshift(first[0][0]);
+            ticks.pop();
+            ticks[ticks.length-1] = first[first.length-1][0];
+          }
           return ticks;
         }
       },
