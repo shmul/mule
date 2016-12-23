@@ -345,11 +345,18 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_,level_,just_key_
       local find = string.find
       local yield = coroutine.yield
       prefix_ = (prefix_=="*" and "") or prefix_
-      local asterix = find(prefix_,".*.",1,true)
-      if asterix then
+      local function find_glob(p)
+        local asterix = find(p,".*.",1,true) or find(p,".*;",1,true)
+        if asterix then
+          -- we split by the (first) asterix, look for the prefix and then add the tail to each.
+          local head = string.sub(p,1,asterix)
+          local tail = string.sub(p,asterix+2)
+          return head,tail
+        end
+      end
+      local head,tail = find_glob(prefix_)
+      if head and tail then
         -- we split by the (first) asterix, look for the prefix and then add the tail to each.
-        local head = string.sub(prefix_,1,asterix)
-        local tail = string.sub(prefix_,asterix+2)
         local uniq_heads = {}
         for h in db_.matching_keys(head,1) do
           local m,_,_ = split_name(h)
@@ -709,7 +716,7 @@ function mule(db_,indexer_)
     local timestamp = tonumber(options_.timestamp)
 
     if not timestamp then
-      str.write('{"error": "timestamp must be provided"}');
+      str.write('{"error": "timestamp must be provided"}')
     else
       col.head()
 
@@ -975,7 +982,7 @@ function mule(db_,indexer_)
       level = level - 1
     end
     local selector = function(prefix_,level_)
-      local rp = string.match(prefix_,"^([^;]+)(;%w+:%w+)$")
+      local _,rp = string.match(prefix_,"^([^;]+)(;%w+:%w+)$")
       return sequences_for_prefix(db_,prefix_,rp,level_,true)
     end
 
@@ -1051,7 +1058,7 @@ function mule(db_,indexer_)
 
     col.head()
     if resource_=="" then
-      logw("reset - got empty key. bailing out");
+      logw("reset - got empty key. bailing out")
     else
       for name in db_.matching_keys(resource_,level) do
         if force then
