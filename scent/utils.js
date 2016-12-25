@@ -29,40 +29,21 @@ function key_impl(initial_,key_,callback_,raw_,remove_synthetic_) {
   var rv = {};
   var add_rp = /;$/.test(key_) || raw_;
 
-
-  function push_key(e,dont_trim) {
-    if ( add_rp || dont_trim) {
-      rv[e] = true;
-    } else
-      rv[e.replace(/;.+$/,"")] = true;
-  }
-
-  if ( key_=="" ) { // no dots -> bring top level only
-    $.each(k,function(idx,e) {
-      if ( /^[\w-]+;/.test(e) )
-        push_key(e,raw_);
-    });
-  } else {
-    var re = new RegExp("^" + key_+"[\\w;:-]*"); //  var re = new RegExp("^" + key_+"[\\w:;-]+");
-    var key_sc = key_+";";
-    $.each(k,function(idx,e) {
-      if ( re.test(e) )
-        push_key(e,raw_ || e.startsWith(key_sc));
-    });
-  }
-
   var ks = string_set_keys(rv);
   if ( remove_synthetic_ ) {
-    ks = ks.filter(function(e) { return !synthetic_key.test(e); });
+    k = k.filter(function(e) { return !synthetic_key.test(e); });
   } else {
-    ks = $.map(ks,function(e) {
+    k = $.map(k,function(e) {
       var match = synthetic_key.exec(e);
       return match ? match[1] : e;
     });
   }
-  callback_(ks.filter(function(e) { return raw_ ? true : e!=key_;}).sort());
+  callback_(k.filter(function(e) { return raw_ ? true : e!=key_;}).sort());
 }
 
+function search_impl(initial_,key_,callback_) {
+  callback_($.map(initial_,function(element,index) {return index}).sort());
+}
 
 function deep_key(table_,key_) {
   var parts = key_.split(".");

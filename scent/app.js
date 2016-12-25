@@ -528,7 +528,13 @@ function app() {
                           form_id: "topnav-search-form",
                           input_id: "search-keys-input"
     }];
-    $("#topnav-search-container").empty().html($.templates("#search-form-template").render(template_data));
+
+    var $search_container = $("#topnav-search-container");
+    $search_container.empty().html($.templates("#search-form-template").render(template_data));
+    $search_container.parent().on("shown.bs.dropdown",function(e) {
+      $("#search-keys-input").focus();
+    });
+
   }
 
 
@@ -1317,9 +1323,6 @@ function app() {
   function setup_search_keys(form_,input_,callback_) {
     $(form_).submit(function(e) {
       var name = $(input_).val();
-      if ( !graph_split(name) ) {
-        return false;
-      }
       $(input_).blur();
       e.preventDefault();
       e.stopPropagation();
@@ -1339,43 +1342,30 @@ function app() {
         //console.log('in source', query,context.scent_keys);
 
         function callback(keys_) {
+          if ( keys_.length==0 ) {
+            return;
+          }
           context.scent_keys = string_set_add_array(context.scent_keys || {},keys_);
-          context.just_selected = false;
           $(add_button).html(original);
           //console.log('out source', context.scent_keys);
           process(string_set_keys(context.scent_keys));
         }
 
         context.query = query;
-        scent_ds.key(query,callback);
+        scent_ds.search(query,callback);
 
-        if ( !context.scent_keys || (query.length==0 && $(input_).val().length==0)) {
-          $(add_button).html('<i class="fa fa-spinner"></i>');
-          scent_ds.key("",callback);
-        } else if ( context.just_selected || /[\.;]$/.test(context.query) ) {
-          $(add_button).html('<i class="fa fa-spinner"></i>');
-          scent_ds.key(query,callback);
-        } else {
-          return string_set_keys(context.scent_keys);
-        }
-
+        return string_set_keys(context.scent_keys);
       },
 
-      afterSelect : function(query) {
-        if ( !/;\d+\w:\d+\w$/.test(query) ) {
-          //console.log('after select %s', query);
-          var ths = this;
-          $.doTimeout(2,function() {
-            context.just_selected = true;
-            ths.lookup();
-          });
-        }
+      afterSelect : function(item) {
+        $(form_).submit();
       },
 
-      minLength: 0,
+      minLength: 3,
+      hint: true,
       autoSelect: false,
       showHintOnFocus: true,
-      items: 'all',
+      items: 10,
     });
 
   }
@@ -1605,14 +1595,19 @@ function app() {
     });
   }
 
-  function setup_graph(name_,more_) {
+  function setup_graph(name_,more_,query_) {
     render_template("#graph-box-container","#graph-template",[{klass: "tall-graph"}]);
-    setup_graph_header(name_,"#graph-box .graph-header",true,null,"tall-graph",more_);
-    load_graph(name_,"#graph-box .graph-body",more_);
+    if ( name_ && !query_ ) {
+      setup_graph_header(name_,"#graph-box .graph-header",true,null,"tall-graph",more_);
+      load_graph(name_,"#graph-box .graph-body",more_);
+      push_graph_to_recent(name_);
+      keys_table_helper(name_,"#graph-box-keys-container",true);
+    } else {
+      scent_ds.search(query_,function(keys_) {
+        populate_keys_table(query_,keys_,"#graph-box-keys-container",true);
+      });
+    }
     show("#graph-box");
-
-    keys_table_helper(name_,"#graph-box-keys-container",true);
-    push_graph_to_recent(name_);
   }
 
   function teardown_graph() {
@@ -1637,18 +1632,25 @@ function app() {
       unified[key].push({href: keys_[i], rp: rp});
     }
 
-    var records = [];
-    var hash = window.location.hash;
-    var first_graph_rp = hash.match(/#graph\/[\w\[\]\.\-]+(;\d\w+:\d\w+)?/);
+    var records = [],
+        hash = window.location.hash,
+        first_graph_rp = hash.match(/#graph\/[\w\[\]\.\-]+(;\d\w+:\d\w+)?/);
+
     for (var i in unified) {
-      var in_url = hash.indexOf(i+";"); // we add the ";" to make sure this isn't a prefix match
-      var metric_parts = i.split(".");
-      var record = {key: i, short_key: metric_parts[metric_parts.length-1], links: unified[i]}
-      if ( plus_ && unified[i].length>1 ) {
-        if ( in_url==-1) {
-          record.plus = [hash,"/",i,first_graph_rp[1]].join("");
+      var in_url = hash.indexOf(i+";"), // we add the ";" to make sure this isn't a prefix match
+          short_key = i.startsWith(parent_key_) ? i.substring(parent_key_.length+1) : i;
+
+      var record = {key: i, short_key: short_key, links: unified[i]}
+      if ( first_graph_rp && plus_ && unified[i].length>1 ) {
+        if ( in_url==-1 ) {
+          record.icon = "plus";
+          record.icon_href = [hash,"/",i,first_graph_rp[1]].join("");
         } else if ( in_url>7 ) { // 7 is "#graph/".length which is true only for the primary
-          record.minus = hash.replace(["/",i,first_graph_rp[1]].join(""),"");
+          record.icon = "minus";
+          record.icon_href = hash.replace(["/",i,first_graph_rp[1]].join(""),"");
+        } else {
+          record.icon = "check";
+          record.icon_href = hash;
         }
       }
       records.push(record);
@@ -1681,22 +1683,23 @@ function app() {
 
     }
 
-    $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
     set_header(parent_key_);
-    $("#keys-table").bootstrapTable({
-      pagination: true,
-      search: records.length>10,
-      smartDisplay: true,
-      pageSize: 10,
-      pageList: [ 10, 20, 40 ],
-      formatShowingRows: formatShowingRows,
-      formatRecordsPerPage: formatRecordsPerPage,
-      onPageChange: set_click_behavior,
-    });
-    $("#keys-table").on('load-error.bs.table',function(e) {
-      alert("what an error "+e);
-    });
-
+    if ( records.length>=0 ) {
+      $(target_).empty().html($.templates("#keys-table-template").render({records: records}));
+      $("#keys-table").bootstrapTable({
+        pagination: true,
+        search: records.length>10,
+        smartDisplay: true,
+        pageSize: 10,
+        pageList: [ 10, 20, 40 ],
+        formatShowingRows: formatShowingRows,
+        formatRecordsPerPage: formatRecordsPerPage,
+        onPageChange: set_click_behavior,
+      });
+      $("#keys-table").on('load-error.bs.table',function(e) {
+        alert("what an error "+e);
+      });
+    }
     set_click_behavior();
   }
 
@@ -1705,10 +1708,11 @@ function app() {
                           form_id: "main-search-form",
                           input_id: "main-search-keys-input"
     }];
-    $("#main-search-container").empty().html($.templates("#search-form-template").render(template_data));
+    $("#main-search-container").empty().html(
+      $.templates("#search-form-template").render(template_data));
     setup_search_keys("#main-search-form","#main-search-keys-input",
                       function(name_) {
-                        router.navigate('graph/'+name_);
+                        router.navigate('search/'+name_);
                       });
     load_persistent(function(persistent_) {
       load_graphs_lists("#main-favorite-container","#favorite-template",persistent_.favorites);
@@ -1797,7 +1801,7 @@ function app() {
       setup_search_keys("#topnav-search-form","#search-keys-input",
                         function(name_) {
                           $("#topnav-search-dropdown").dropdown("toggle");
-                          router.navigate('graph/'+name_);
+                          router.navigate('search/'+name_);
                         });
       update_alerts(); // with no selected category it just updates the count
     }
@@ -1838,14 +1842,15 @@ function app() {
       refresh_loaded_graphs();
     });
 
-    function route_graph(id,more) {
+    function route_graph(id,more,query) {
       set_title("Graph");
       globals();
       teardown_main();
       teardown_alerts();
       teardown_checks();
       teardown_charts();
-      setup_graph(id,more);
+      teardown_graph();
+      setup_graph(id,more,query);
       refresh_loaded_graphs();
     }
     // couldn't manage to get grapnel handle these two patterns in the same route...
@@ -1859,6 +1864,10 @@ function app() {
         more.push(req.params[i]);
       }
       route_graph(req.params.id,more.join("/"));
+    });
+
+    router.get('search/:query', function(req) {
+      route_graph(null,null,req.params.query);
     });
 
     router.get('dashboard/:id', function(req) {

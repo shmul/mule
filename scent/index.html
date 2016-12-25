@@ -50,11 +50,9 @@
             <div class="input-group">
               <input id="{{:input_id}}" type="text" class="form-control" placeholder="Search..." data-provide="typeahead" autocomplete="off"/>
               <span class="input-group-btn">
-                {{if add}}
-                <button type="submit" class="btn btn-primary btn-flat">Add</button>
-                {{else}}
-                <button type='submit' name='search' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i></button>
-                {{/if}}
+               <button type='submit' name='search' id='search-btn' class="btn btn-flat">
+                 <i class="fa fa-search"></i>
+               </button>
               </span>
             </div>
           </form>
@@ -144,13 +142,7 @@
                   {{for links}}
                     <a href="#graph/{{:href}}" click="popover_hide">{{:rp}}</a>&nbsp;&nbsp;&nbsp;
                   {{/for}}
-                  {{if plus}}
-                    <a href="{{:plus}}"><i class="fa fa-plus"></i></a>
-                  {{/if}}
-                  {{if minus}}
-                    <a href="{{:minus}}"><i class="fa fa-minus"></i></a>
-                  {{/if}}
-
+                  <a href="{{:icon_href}}"><i class="fa fa-{{:icon}}""></i></a>
                 </td>
               </tr>
               {{/for}}
@@ -359,6 +351,13 @@
 
           <div class="col-md-6">
             <div class="row">
+              <div class="panel panel-default" id="main-search-box">
+                <div class="panel-body">
+                  <div id="main-search-container">
+                  </div>
+                </div>
+              </div>
+
               <div class="panel panel-default">
                 <div class="panel-heading">
                   <h4>Keys</h4>
@@ -370,15 +369,6 @@
                 </div>
               </div>
 
-              <div class="panel panel-default" id="main-search-box">
-                <div class="panel-heading">
-                  <h4>Search for keys (use '.' and ';' to get subkeys)</h4>
-                </div>
-                <div class="panel-body">
-                  <div id="main-search-container">
-                  </div>
-                </div>
-              </div>
 
               <div class="panel panel-default">
                 <div class="panel-heading">
