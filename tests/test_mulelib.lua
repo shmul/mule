@@ -1482,5 +1482,25 @@ function test_parent_and_dashes()
   for_each_db("test_parent_and_dashes",helper)
 end
 
+function test_full_match()
+    local function helper(m)
+  -- TODO test prefix and full matches for matching_keys
+      m.configure(table_itr({"beer. parent",":.ale-mild 3m:1h"}))
+      m.process({"beer.ale-mild 20 74857843",
+                 "beer.ale-mild.bitter 20 74857843",
+                 "beer.ale-mild.sweet 30 74857843",
+                 "beer.lager.mild 720 74857843",
+                 "beer.lager.mild.bitter 72 74857843",
+                 "beer.lager.mild.sweet 74 74857843"
+      })
+      local keys = m.key("beer",{level=1,count=100,in_memory=true,search=true})
+      assert_equal(3,table_size(keys))
+      keys = m.key("beer",{level=2,count=100,in_memory=true,prefix=true})
+      assert_equal(1+3+6,table_size(keys))
+      keys = m.key("be",{level=1,count=100,in_memory=true,search=true,prefix=false})
+      assert_equal(0,table_size(keys))
+    end
+    for_each_db("test_full_match",helper)
+end
 --verbose_log(true)
 --profiler.start("profiler.out")

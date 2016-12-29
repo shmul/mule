@@ -965,12 +965,7 @@ function app() {
       }
       event.stopPropagation();
 
-      var all_data = $target.data("plot").getData();
-      var tooltip_data = [];
-      var ts,dv;
-      var first_graph = all_data[0].data,
-          first_ts = time_format(date_from_utc_time(first_graph[0][0])),
-          last_ts = time_format(date_from_utc_time(first_graph[first_graph.length-1][0]));
+      var all_data = $target.data("plot").getData(), tooltip_data = [], ts,dv;
 
       for (var j=0; j<all_data.length; ++j) {
         var dataset = all_data[j].data,
@@ -1126,7 +1121,7 @@ function app() {
     function callback(raw_data_) {
       if ( !raw_data_ || !raw_data_[name_] || raw_data_[name_].length==0 ) {
         if ( !notified_graphs[name_] ) {
-          notify('Unable to load graph','No data for "'+name_+'".');
+          //notify('Unable to load graph','No data for "'+name_+'".');
           notified_graphs[name_] = true;
         }
         //return;
