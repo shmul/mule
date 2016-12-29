@@ -8,6 +8,7 @@ local posix_unistd = require "posix.unistd"
 local posix_errno = require "posix.errno"
 local posix_sys_stat = require "posix.sys.stat"
 local posix_sys_wait = require "posix.sys.wait"
+local posix_time = require "posix.sys.time"
 local stp_exists,stp = pcall(require,"StackTracePlus")
 require "conf"
 
@@ -134,7 +135,7 @@ function tablein(tbl_)
 
   return {
     read = read,
-         }
+  }
 
 end
 
@@ -148,12 +149,12 @@ function ioout_generic(writer_,delim_)
 
   return {
     write = write,
-         }
+  }
 end
 
 function ioout(io_,delim_)
   return ioout_generic(function(o_)
-                         io_:write(o_)
+      io_:write(o_)
                        end,delim_)
 end
 
@@ -163,21 +164,21 @@ end
 
 function ioin_generic(lines_itr_,delim_)
   local read = coroutine.wrap(function()
-                                for l in lines_itr_() do
-                                  for p in split_helper(l,delim_) do
-                                    -- as our arrays write the delimiter after every
-                                    -- item, we have to skip the last, empty, one
-                                    if #p~=0 then
-                                      coroutine.yield(p)
-                                    end
-                                  end
-                                end
-                              end)
+      for l in lines_itr_() do
+        for p in split_helper(l,delim_) do
+          -- as our arrays write the delimiter after every
+          -- item, we have to skip the last, empty, one
+          if #p~=0 then
+            coroutine.yield(p)
+          end
+        end
+      end
+  end)
 
 
   return {
     read = read,
-         }
+  }
 
 
 end
@@ -189,7 +190,7 @@ end
 function strout(delim_)
   local str = {}
   local out = ioout_generic(function(o_)
-                              table.insert(str,o_)
+      table.insert(str,o_)
                             end,delim_ or ",")
   out.get_string = function()
     return table.concat(str,"")
@@ -225,7 +226,7 @@ function collectionout(out_,bra_,ckt_)
       first = false
       out_.write(...)
     end
-         }
+  }
 
 end
 
@@ -284,20 +285,20 @@ end
 
 function lines_without_comments(lines_iterator)
   return coroutine.wrap(function()
-                          for line in lines_iterator do
-                            line = remove_comment(line)
-                            if #line>0 then coroutine.yield(line) end
-                          end
-                        end)
+      for line in lines_iterator do
+        line = remove_comment(line)
+        if #line>0 then coroutine.yield(line) end
+      end
+  end)
 end
 
 function n_lines(n,lines_iterator)
   return coroutine.wrap(function()
-                          for line in lines_iterator do
-                            n = n - 1
-                            if n>=0 then coroutine.yield(line) end
-                          end
-                        end)
+      for line in lines_iterator do
+        n = n - 1
+        if n>=0 then coroutine.yield(line) end
+      end
+  end)
 end
 
 function concat_arrays(lhs_,rhs_,callback_)
@@ -457,22 +458,22 @@ end
 
 local TIME_UNITS = {s=1, m=60, h=3600, d=3600*24, w=3600*24*7, y=3600*24*365}
 local TIME_UNITS_SORTED = (function()
-                             local array = {}
-                             for u,f in pairs(TIME_UNITS) do
-                               table.insert(array,{f,u})
-                             end
-                             table.sort(array,function(a,b)
-                                          return a[1]>b[1]
-                                              end)
-                             return array
-                           end)()
+    local array = {}
+    for u,f in pairs(TIME_UNITS) do
+      table.insert(array,{f,u})
+    end
+    table.sort(array,function(a,b)
+                 return a[1]>b[1]
+    end)
+    return array
+                          end)()
 
 
 -- to handle 5.3's integers
 local tointeger = _VERSION>"Lua 5.2" and
-  function(num_) return math.tointeger(num_) end
+function(num_) return math.tointeger(num_) end
   or
-  function(num_) return num_ end
+function(num_) return num_ end
 
 local parse_time_unit_cache = {}
 
@@ -485,7 +486,7 @@ function parse_time_unit(str_)
     string.gsub(str_,"^(%d+)([smhdwy])$",
                 function(num,unit)
                   secs = tointeger(num*TIME_UNITS[unit])
-                end)
+    end)
     parse_time_unit_cache[str_] = secs or tonumber(str_) or 0
   end
   return parse_time_unit_cache[str_]
@@ -573,13 +574,13 @@ if lunit then
   function set_hard_coded_time(v)
     hard_coded_time = v
   end
-function time_now()
+  function time_now()
     return hard_coded_time or os.time()
   end
-  else
-    function time_now()
-  return os.time()
-end
+else
+  function time_now()
+    return os.time()
+  end
 end
 
 function parse_input_line(line_)
@@ -619,12 +620,17 @@ function metric_hierarchy(metric_)
         current = i==1 and p or format("%s.%s",current,p)
         coroutine.yield(current)
       end
-    end)
+  end)
 end
 
 TRUTH = { [true]=true,["true"]=true, yes=true, on=true, [1]=true }
 function is_true(str_)
   return str_ and TRUTH[str_]
+end
+
+FALSEHOOD = { [false]=true,["false"]=true, no=true, off=true, [0]=true }
+function is_false(str_)
+  return str_ and FALSEHOOD[str_]
 end
 
 function qs_params(raw_qs_)
@@ -697,7 +703,7 @@ function iterate_table(table_,start_,end_)
         end_ = end_ - 1
         if end_==0 then return end
       end
-    end)
+  end)
 end
 
 function split_name(name_)
@@ -733,7 +739,7 @@ function printf(format_,...)
 end
 
 function hex(s)
- return string.gsub(s,"(.)",function (x) return string.format("%02X",string.byte(x)) end)
+  return string.gsub(s,"(.)",function (x) return string.format("%02X",string.byte(x)) end)
 end
 
 
@@ -919,7 +925,7 @@ function weak_hash(string_)
   string.gsub(string_,"(.)",
               function (x)
                 c = c + byte(x)
-              end)
+  end)
   return c
 end
 
@@ -1038,7 +1044,7 @@ function sparse_sequence(name_,slots_)
     latest_timestamp = function() return _latest_timestamp end,
     slots = function() return _slots end,
     metric = function() return _metric end
-         }
+  }
 end
 
 function count_dots(string_)
@@ -1068,12 +1074,12 @@ function every_nth_call(n_,callback_)
   local counter = 0
 
   return
-  function()
-    counter = counter + 1
-    if counter%n_==0 then
-      callback_(counter)
+    function()
+      counter = counter + 1
+      if counter%n_==0 then
+        callback_(counter)
+      end
     end
-  end
 end
 
 function delete_keys(table_,keys_)
@@ -1175,18 +1181,18 @@ function simple_cache(capacity_)
       end
       if end_ then
         end_ = end_ - 1
-          if end_==0 then return ks end
+        if end_==0 then return ks end
       end
     end
     return ks
   end
 
   local function out(k)
-      if cache[k] then
-        cache[k] = nil
-        num_keys = num_keys - 1
-      end
+    if cache[k] then
+      cache[k] = nil
+      num_keys = num_keys - 1
     end
+  end
 
   return {
     get = function(k)
@@ -1237,4 +1243,9 @@ function array_contains(array_,element_)
     if a==element_ then return true end
   end
   return false
+end
+
+function now_ms()
+  local now = posix_time.gettimeofday()
+  return now.sec+now.usec/1000000
 end

@@ -138,6 +138,8 @@ local function incoming_queue(db_path_,incoming_queue_path_)
           num_files = num_files + 1
           logi("incoming_queue file",file,sz)
           -- we DON'T want to process commands as we get raw data files from the clients (so we hope)
+          local n = now_ms()
+          logi("processing",file)
           m.process(file,true,true,step_callback_)
           local cm = os.date("%y/%m/%d/%H/%M")
           if minute_dir~=cm then
@@ -146,7 +148,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
           end
           new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix_libgen.basename(file)),"//","/")
           os.rename(file,new_name)
-          logi("incoming_queue file processed",new_name)
+          logi("processed",new_name,now_ms()-n)
       end)
     end
     executing = false
@@ -259,6 +261,7 @@ function main(opts,out_)
                 -- when it is called without a param we simply return the flag
                 -- BUT we check that the stop functionality is supported at all
                 stopped = stopped or httpd_can_be_stopped and token_==httpd_can_be_stopped
+                logi("http stop",stopped)
                 return stopped
               end,
               opts["R"] and strip_slash(opts["R"]),

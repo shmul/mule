@@ -25,7 +25,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function flush_cache_logger()
     local a = _cache.size()
     local b = _nodes_cache.size()
-    if a>0 or b>0 then
+    if (a>0 or b>0) and a~=b then
       logi("lightning_mdb flush_cache",a,b)
     end
   end
@@ -297,20 +297,24 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
         for j=i,math.min(#keys_array,i+9) do
           local k = keys_array[j]
           local vidx = cache_.get(k)
-          local v,idx,dirty = vidx[1],vidx[2],vidx[3]
-          local payload = v
-          if dirty then
-            if meta_ then
-              payload = pack_node(v)
-              if not payload then
-                loge("flush_cache unable to pack",k)
+          if not vidx then
+            loge("failed retrieving from cache",i,j,k)
+          else
+            local v,idx,dirty = vidx[1],vidx[2],vidx[3]
+            local payload = v
+            if dirty then
+              if meta_ then
+                payload = pack_node(v)
+                if not payload then
+                  loge("flush_cache unable to pack",k)
+                end
+              end
+              if payload then
+                native_put(k,payload,meta_,idx)
               end
             end
-            if payload then
-              native_put(k,payload,meta_,idx)
-            end
+            cache_.out(k)
           end
-          cache_.out(k)
         end
         if step_ then step_() end
         if log_progress then log_progress() end
@@ -597,7 +601,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     end
   end
 
-  local function matching_keys(prefix_,level_)
+  local function matching_keys(prefix_,level_,full_match_)
     local reported = {}
     local function helper(env,db)
       local t,err = acquire_readonly_txn(env)
@@ -608,10 +612,11 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local find = string.find
       local cur = t:cursor_open(db)
       local k = cur:get_key(prefix_,#prefix_==0 and lightningmdb.MDB_FIRST or lightningmdb.MDB_SET_RANGE)
-
+      if full_match_ then
+        prefix_ = prefix_.."."
+      end
       repeat
-        local prefixed = k and find(k,prefix_,1,true)
-        if prefixed then
+        if k and find(k,prefix_,1,true) then
           if bounded_by_level(k,prefix_,level_) then
             if not reported[k] then
               -- since keys may appear in multiple DBs (probably due to a bug), we want to report them only once

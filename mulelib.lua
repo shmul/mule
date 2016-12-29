@@ -339,7 +339,7 @@ function sequence(db_,name_)
 end
 
 
-local function sequences_for_prefix(db_,prefix_,retention_pair_,level_,just_key_)
+local function sequences_for_prefix(db_,prefix_,retention_pair_,level_,just_key_,full_match_)
   return coroutine.wrap(
     function()
       local find = string.find
@@ -358,17 +358,17 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_,level_,just_key_
       if head and tail then
         -- we split by the (first) asterix, look for the prefix and then add the tail to each.
         local uniq_heads = {}
-        for h in db_.matching_keys(head,1) do
+        for h in db_.matching_keys(head,1,full_match_) do
           local m,_,_ = split_name(h)
           uniq_heads[m] = true
         end
         for h,_ in pairs(uniq_heads) do
-          for t in sequences_for_prefix(db_,h..tail,retention_pair_,level_,just_key_) do
+          for t in sequences_for_prefix(db_,h..tail,retention_pair_,level_,just_key_,full_match_) do
             yield(t)
           end
         end
       else
-        for name in db_.matching_keys(prefix_,level_) do
+        for name in db_.matching_keys(prefix_,level_,full_match_) do
           if not retention_pair_ or find(name,retention_pair_,1,true) then
             yield(just_key_ and name or sequence(db_,name))
           end
@@ -377,12 +377,12 @@ local function sequences_for_prefix(db_,prefix_,retention_pair_,level_,just_key_
   end)
 end
 
-function immediate_metrics(db_,name_,level_)
+function immediate_metrics(db_,name_,level_,full_match_)
   -- if the name_ has th retention pair in it, we just return it
   -- otherwise we provide all the retention pairs
   return coroutine.wrap(
     function()
-      for name in db_.matching_keys(name_,0) do
+      for name in db_.matching_keys(name_,0,full_match_) do
         coroutine.yield(sequence(db_,name))
       end
   end)
@@ -838,6 +838,7 @@ function mule(db_,indexer_)
     local find = string.find
     local in_memory = options_.in_memory and {}
     local count = 0
+    local full_match = is_false(opts.prefix)
 
     col.head()
     for m in split_helper(resource_,"/") do
@@ -846,7 +847,7 @@ function mule(db_,indexer_)
         local metric,rp = string.match(m,"^([^;]+)(;%w+:%w+)$")
         metric = metric or m
 
-        for seq in sequences_for_prefix(db_,metric,rp,level) do
+        for seq in sequences_for_prefix(db_,metric,rp,level,false,full_match) do
           local name = seq.name()
           local name_level = count_dots(name)
           -- we call update_rank to get adjusted ranks (in case the previous update was
@@ -973,7 +974,7 @@ function mule(db_,indexer_)
     local count = 0
     local in_memory = options_.in_memory and {}
     local search = is_true(options_.search)
-
+    local full_match = is_true(options_.prefix)
     col.head()
 
     if not resource_ or resource_=="" or resource_=="*" then
@@ -983,7 +984,7 @@ function mule(db_,indexer_)
     end
     local selector = function(prefix_,level_)
       local _,rp = string.match(prefix_,"^([^;]+)(;%w+:%w+)$")
-      return sequences_for_prefix(db_,prefix_,rp,level_,true)
+      return sequences_for_prefix(db_,prefix_,rp,level_,true,full_match)
     end
 
     if options_.substring then

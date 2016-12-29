@@ -24,12 +24,16 @@ function in_memory_db()
     end
   end
 
-  local function matching_keys(prefix_,level_)
+  local function matching_keys(prefix_,level_,full_match_)
     local find = string.find
+    if full_match_ then
+        prefix_ = prefix_.."."
+      end
+
     return coroutine.wrap(
       function()
         for k,_ in pairs(_storage) do
-          if is_prefix(k,prefix_) and bounded_by_level(k,prefix_,level_)  then
+          if  is_prefix(k,prefix_) and bounded_by_level(k,prefix_,level_) then
             coroutine.yield(k)
           end
         end
