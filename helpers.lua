@@ -1247,5 +1247,5 @@ end
 
 function now_ms()
   local now = posix_time.gettimeofday()
-  return now.sec+now.usec/1000000
+  return now.tv_sec+now.tv_usec/1000000
 end
