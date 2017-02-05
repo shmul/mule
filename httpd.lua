@@ -388,7 +388,7 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
         if process_files and process_files>0 then
           adaptive_timeout = 0
         else
-          adaptive_timeout = 1
+          adaptive_timeout = 0
         end
     end)
   end
