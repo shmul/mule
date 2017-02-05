@@ -675,7 +675,7 @@ function mule(db_,indexer_)
     _updated_sequences.out(name_)
   end
 
-  local function flush_cache(max_,step_)
+  local function flush_cache(max_)
     _flush_cache_logger()
 
     local self_metrics = _self_metrics
@@ -1619,7 +1619,7 @@ function mule(db_,indexer_)
         lines_count = lines_count + 1
         if lines_count==UPDATED_SEQUENCES_MAX then
           logi("process - forcing an update",lines_count)
-          flush_cache(UPDATED_SEQUENCES_MAX)
+          flush(UPDATED_SEQUENCES_MAX)
           lines_count = 0
         end
         yield(lines_count)
@@ -1674,7 +1674,7 @@ function mule(db_,indexer_)
 
     local rv = helper()
     if not dont_update_ then
-      flush_all_caches()
+      flush_all_caches(UPDATE_AMOUNT,step_func_)
     end
     return rv
   end
