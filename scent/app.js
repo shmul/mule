@@ -1611,6 +1611,7 @@ function app() {
   }
 
   function populate_keys_table(parent_key_,keys_,target_,plus_) {
+    parent_key_ = parent_key_ ? parent_key_ : "";
     var unified = {};
 
     for (var i in keys_) {
@@ -1633,8 +1634,11 @@ function app() {
 
     for (var i in unified) {
       var in_url = hash.indexOf(i+";"), // we add the ";" to make sure this isn't a prefix match
-          short_key = i.startsWith(parent_key_) ? i.substring(parent_key_.length+1) : i;
-
+          short_key = parent_key_.length>0 && i.startsWith(parent_key_) ?
+                      i.substring(parent_key_.length+1) : i;
+      if ( i==parent_key_ ) { // relevant for the tests only
+        continue;
+      }
       var record = {key: i, short_key: short_key, links: unified[i]}
       if ( first_graph_rp && plus_ && unified[i].length>1 ) {
         if ( in_url==-1 ) {
@@ -1726,6 +1730,7 @@ function app() {
   }
 
   function teardown_main() {
+    $("#keys-table").remove();
     hide("#main-box");
   }
 
