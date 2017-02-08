@@ -73,6 +73,7 @@ local function save_and_close(m,db,readonly_)
   if not readonly_ then
     logi("saving")
     m.save()
+    m.close()
   end
   logi("closing")
   db.close()
@@ -262,7 +263,9 @@ function main(opts,out_)
                 -- when it is called without a param we simply return the flag
                 -- BUT we check that the stop functionality is supported at all
                 stopped = stopped or httpd_can_be_stopped and token_==httpd_can_be_stopped
-                logi("http stop",stopped)
+                if stopped then
+                  logi("http stop",stopped)
+                end
                 return stopped
               end,
               opts["R"] and strip_slash(opts["R"]),

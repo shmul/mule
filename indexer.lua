@@ -90,6 +90,14 @@ function indexer(path_)
     end
   end
 
+  local function close()
+    if db then
+      db:close_vm()
+      local rv = db:close()
+      logi("close",rv)
+    end
+  end
+
   if not open_db() then
     return nil
   end
@@ -106,6 +114,8 @@ function indexer(path_)
     end,
     dump = function()
       return coroutine.wrap(dump)
-    end
+    end,
+    close = close,
+
   }
 end

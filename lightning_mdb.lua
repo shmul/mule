@@ -275,7 +275,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     helper(_metas)
     helper(_pages)
   end
-  local _delayed_sync = every_nth_call(10,sync)
+  local _delayed_sync = every_nth_call(100,sync)
 
   local function flush_cache(amount_,step_)
     _flush_cache_logger()

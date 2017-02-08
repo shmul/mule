@@ -1037,6 +1037,12 @@ function mule(db_,indexer_)
     return _db.out("kvs="..key_,true)
   end
 
+  local function close()
+    if _indexer then
+      _indexer.close()
+    end
+  end
+
   local function save(skip_flushing_)
     logi("save",table_size(_factories),table_size(_alerts),table_size(_hints))
     _db.put("metadata=version",pp.pack(CURRENT_VERSION))
@@ -1705,6 +1711,7 @@ function mule(db_,indexer_)
     process = process,
     flush_cache = flush_all_caches,
     save = save,
+    close = close,
     load = load,
     alert_set = alert_set,
     alert_remove = alert_remove,
