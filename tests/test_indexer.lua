@@ -26,8 +26,7 @@ local function search_as_list(ind,query)
   return t
 end
 
-function test_simple()
-  local ind = indexer()
+local function the_tests(ind)
   ind.insert({
       "beer.ale.pale",
       "beer.stout.irish",
@@ -48,6 +47,14 @@ function test_simple()
   assert_equal(2,#t)
 
   assert_equal(1,#search_as_list(ind,"south"))
+end
+
+function test_simple()
+  the_tests(indexer())
+end
+
+function test_with_path()
+  the_tests(indexer("./tests/temp/with_path"))
 end
 
 
