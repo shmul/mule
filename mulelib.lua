@@ -1519,7 +1519,7 @@ function mule(db_,indexer_)
 
   local function flush_all_caches(amount_,step_)
     amount_ = amount_ or UPDATE_AMOUNT
-    local fc1 = flush_cache(amount_,step_)
+    local fc1 = flush_cache(amount_)
     local fc2 = _db.flush_cache(amount_/4,step_)
     return fc1 or fc2
   end

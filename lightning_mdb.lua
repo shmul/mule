@@ -275,7 +275,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     helper(_metas)
     helper(_pages)
   end
-  local _delayed_sync = every_nth_call(100,sync)
+  local _delayed_sync = every_nth_call(5,sync)
 
   local function flush_cache(amount_,step_)
     _flush_cache_logger()
@@ -294,6 +294,8 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       local keys_array = cache_.keys(st,en)
 
       for i=1,#keys_array,10 do
+        if step_ then step_(true) end
+        if log_progress then log_progress() end
         for j=i,math.min(#keys_array,i+9) do
           local k = keys_array[j]
           local vidx = cache_.get(k)
@@ -316,8 +318,6 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
             cache_.out(k)
           end
         end
-        if step_ then step_() end
-        if log_progress then log_progress() end
       end
       return size
     end

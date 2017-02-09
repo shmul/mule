@@ -150,7 +150,8 @@ local function incoming_queue(db_path_,incoming_queue_path_)
           new_name = string.gsub(string.format("%s/%s/%s",processed,minute_dir,posix_libgen.basename(file)),"//","/")
           os.rename(file,new_name)
           local delta = now_ms()-n
-          logi("processed",new_name,delta,string.format("%.3f",delta>0 and sz/delta or 0))
+          logi("processed",new_name,string.format("%.3f",delta),
+               string.format("%.3f",delta>0 and sz/delta or 0))
       end)
     end
     executing = false
