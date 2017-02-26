@@ -1,6 +1,5 @@
 local _,lr = require "luarocks.require"
 local url = require "socket.url"
-local socket = require "socket"
 local pp = require "purepack"
 local posix_fcntl = require "posix.fcntl"
 local posix_glob = require "posix.glob"
@@ -26,7 +25,6 @@ local logfile_name = nil
 local verbose_logging = false
 local logfile_rotation_day = nil
 local rotation_counter = 0
-local gettime = socket.gettime
 local floor = math.floor
 
 local function mantissa(num)
@@ -588,7 +586,7 @@ function parse_input_line(line_)
   if string.sub(line_,1,1)=='.' then
     -- command
     items = split(line_,' ')
-    items[1] = trim(string.sub(items[1],2))
+    items[1] = string.sub(items[1],2)
     return items,"command"
   end
   -- metrics
@@ -964,8 +962,8 @@ function sparse_sequence(name_,slots_)
     end
   end
 
-  local function add_slot(timestamp_)
-    local s = { _timestamp = timestamp_, _hits = 0, _sum = 0}
+  local function add_slot(timestamp_,idx_)
+    local s = { _timestamp = timestamp_, _hits = 0, _sum = 0, _idx = idx_}
     table.insert(_slots,1,s)
     update_latest(timestamp_)
     return s
@@ -981,7 +979,11 @@ function sparse_sequence(name_,slots_)
   local function find_by_index(idx_)
     -- there is only one timestamp that fits the index
     for _,s in ipairs(_slots) do
-      local i,_ = calculate_idx(s._timestamp,_step,_period)
+      local i = s._idx
+      if not i then
+        i,_ = calculate_idx(s._timestamp,_step,_period)
+        s._idx = i
+      end
       if i==idx_ then
         return s
       end
@@ -1005,7 +1007,7 @@ function sparse_sequence(name_,slots_)
     if not idx then
       return nil
     end
-    local slot = find_by_index(idx) or add_slot(adjusted_timestamp)
+    local slot = find_by_index(idx) or add_slot(adjusted_timestamp,idx)
     slot._sum = sum_
     slot._hits = hits_
     slot._timestamp = adjusted_timestamp
@@ -1164,9 +1166,11 @@ function lua_version_number()
   return lua_version_number_memo
 end
 
-function simple_cache(capacity_)
+function simple_cache(capacity_,page_size_)
   local num_keys = 0
   local cache = {}
+  local pages = {} -- array of pages of items. Fast to remove a
+  page_size_ = page_size_ or UPDATE_AMOUNT
 
   local function key_value_list(start_,end_)
     local ks = {}
@@ -1189,9 +1193,24 @@ function simple_cache(capacity_)
 
   local function out(k)
     if cache[k] then
+      -- note that the key is NOT extracted from the pages
       cache[k] = nil
       num_keys = num_keys - 1
     end
+  end
+
+  local function add_to_pages(key_)
+    local page = pages[#pages]
+    if not page or #page==page_size_ then
+      table.insert(pages,{})
+      page = pages[#pages]
+    end
+    table.insert(page,key_)
+  end
+
+  local function pop_page()
+    local p = table.remove(pages,1)
+    return p
   end
 
   return {
@@ -1208,6 +1227,7 @@ function simple_cache(capacity_)
       end
       if not cache[k] then
         num_keys = num_keys + 1
+        add_to_pages(k)
       end
       cache[k] = v
     end,
@@ -1216,23 +1236,12 @@ function simple_cache(capacity_)
 
     keys = key_value_list,
 
-    random_region = function(region_size_)
-      local st = 1
-      local en = num_keys
-      if en==0 then
-        return {}
-      end
-
-      if region_size_ and en>region_size_ then
-        st = math.random(math.max(en-region_size_,1))
-        en = st+region_size_
-      end
-      return key_value_list(st,en)
-    end,
+    pop_page = pop_page,
 
     flush = function()
       cache = {}
       num_keys = 0
+      pages = {}
     end
   }
 end

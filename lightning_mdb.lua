@@ -288,20 +288,19 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local insert = table.insert
 
     local function helper(cache_,meta_)
-      local size,st,en = random_table_region(nil,amount_,cache_.size())
-      if size==0 then return 0 end
+      local page = cache_.pop_page()
+      if not page then return 0 end
+      local size = #page
 
-      local keys_array = cache_.keys(st,en)
-
-      for i=1,#keys_array,10 do
+      for i=1,size,10 do
         if step_ then step_(true) end
         if log_progress then log_progress() end
-        for j=i,math.min(#keys_array,i+9) do
-          local k = keys_array[j]
+        for j=i,math.min(size,i+9) do
+          local k = page[j]
           local vidx = cache_.get(k)
-          if not vidx then
-            loge("failed retrieving from cache",i,j,k)
-          else
+          -- it can happend that the key was removed from the cache
+          -- but the page still contains it.
+          if vidx then
             local v,idx,dirty = vidx[1],vidx[2],vidx[3]
             local payload = v
             if dirty then

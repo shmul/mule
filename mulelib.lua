@@ -675,7 +675,7 @@ function mule(db_,indexer_)
     _updated_sequences.out(name_)
   end
 
-  local function flush_cache(max_)
+  local function flush_cache()
     _flush_cache_logger()
 
     local self_metrics = _self_metrics
@@ -686,16 +686,17 @@ function mule(db_,indexer_)
     end
 
     -- we now update the real sequences
-    -- why bother with randomness? to avoid starvation
-    local kvs = _updated_sequences.random_region(max_)
-    if #kvs==0 then return false end
+    local kvs = _updated_sequences.pop_page()
+    if not kvs or #kvs==0 then return false end
     increment("mule.mulelib.flush_cache")
     local metrics = {}
 
     for _,n in ipairs(kvs) do
       local seq = _updated_sequences.get(n)
-      flush_cache_of_sequence(n,seq)
-      metrics[#metrics+1] = seq.metric()
+      if seq then
+        flush_cache_of_sequence(n,seq)
+        metrics[#metrics+1] = seq.metric()
+      end
     end
 
     if _indexer then
@@ -1036,6 +1037,19 @@ function mule(db_,indexer_)
   local function kvs_out(key_)
     return _db.out("kvs="..key_,true)
   end
+
+  local function flush_all_caches(amount_,step_,exhaustive_)
+    amount_ = amount_ or UPDATE_AMOUNT
+    local fc1 = flush_cache()
+    local fc2 = _db.flush_cache(amount_/4,step_)
+    local flushed_some = fc1 or fc2
+    if exhaustive_ and flushed_some then
+      flush_all_caches(amount_,step_,exhaustive_)
+    end
+
+    return flushed_some
+  end
+
 
   local function close()
     if _indexer then
@@ -1517,18 +1531,11 @@ function mule(db_,indexer_)
 
   end
 
-  local function flush_all_caches(amount_,step_)
-    amount_ = amount_ or UPDATE_AMOUNT
-    local fc1 = flush_cache(amount_)
-    local fc2 = _db.flush_cache(amount_/4,step_)
-    return fc1 or fc2
-  end
-
 
   local function modify_factories(factories_modifications_)
     -- the factories_modifications_ is a list of triples,
     -- <pattern, original retention, new retention>
-    flush_all_caches()
+    flush_all_caches(nil,nil,true)
     _factories_cache.flush()
     _factories_seq_cache.flush()
     local to_remove = {}
@@ -1561,7 +1568,7 @@ function mule(db_,indexer_)
       end
     end
     logd(#to_remove,"sequence(s) removed")
-    flush_all_caches()
+    flush_all_caches(nil,nil,true)
     for _,seq in ipairs(to_create) do
       seq[1].update_batch(seq[2],0,1,2)
     end
@@ -1632,22 +1639,22 @@ function mule(db_,indexer_)
       end
     )
 
+    local function file_process(f)
+      for l in f:lines() do
+        process_line(l,no_commands_)
+        resume(spillover_protection)
+        if step_func_ and lines_count%10==0 then
+          step_func_()
+        end
+      end
+      return true
+    end
+
     -- strings are handled as file pointers if they exist or as a line
     -- tables as arrays of lines
     -- functions as iterators of lines
     local function helper()
       if type(data_)=="string" then
-
-        local function file_process(f)
-          for l in f:lines() do
-            process_line(l,no_commands_)
-            resume(spillover_protection)
-            if step_func_ and lines_count%10==0 then
-              step_func_()
-            end
-          end
-          return true
-        end
 
         local file_exists = with_file(data_,file_process)
         if file_exists then
