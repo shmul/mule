@@ -6,6 +6,7 @@ ENV lmdb_ver 0.9.17
 ENV lightningmdb_ver 0.9.17.4-1
 
 RUN apt-get update -y && apt-get install -y gcc libreadline-dev unzip curl make git
+RUN apt-get install -y libsqlite3-dev sqlite3
 
 # Install lua
 RUN cd /tmp && \

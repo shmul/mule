@@ -8,6 +8,17 @@ ENV lightningmdb_ver 0.9.17.4-1
 RUN apt-get update -y && apt-get install -y unzip curl make git
 
 RUN apt-get install -y lua${lua_ver} liblua${lua_ver} liblua${lua_ver}-dev
+RUN apt-get install -y libsqlite3-dev sqlite3
+
+#install luajit
+RUN cd /tmp && \
+    curl -L -O http://luajit.org/download/LuaJIT-2.0.4.tar.gz && \
+    tar zxpf LuaJIT-2.0.4.tar.gz && \
+    rm LuaJIT-2.0.4.tar.gz && \
+    cd LuaJIT-2.0.4 && \
+    make install
+#    cd /tmp && \
+#    rm -r /tmp/LuaJIT-2.0.4
 
 # Install luarocks
 RUN cd /tmp && \

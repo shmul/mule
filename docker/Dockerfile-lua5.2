@@ -7,6 +7,7 @@ ENV lightningmdb_ver 0.9.17.4-1
 RUN apt-get update -y && apt-get install -y unzip curl make git
 
 RUN apt-get install -y lua${lua_ver} liblua${lua_ver} liblua${lua_ver}-dev
+RUN apt-get install -y libsqlite3-dev sqlite3
 
 # Install luarocks
 RUN cd /tmp && \
