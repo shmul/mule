@@ -1210,6 +1210,7 @@ function simple_cache(capacity_,page_size_)
 
   local function pop_page()
     local p = table.remove(pages,1)
+    -- num_keys will be update when the key is removed
     return p
   end
 

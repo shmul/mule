@@ -151,7 +151,7 @@ local function incoming_queue(db_path_,incoming_queue_path_)
           os.rename(file,new_name)
           local delta = now_ms()-n
           logi("processed",new_name,string.format("%.3f",delta),
-               string.format("%.3f",delta>0 and sz/delta or 0))
+               string.format("%.1f",delta>0 and sz/delta or 0))
       end)
     end
     executing = false

@@ -265,12 +265,14 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function sync()
     local function helper(array_)
       if not array_ then return end
+      local start = now_ms()
       for _,ed in ipairs(array_) do
         local rv,err = ed[1]:sync(1)
         if err then
           logw("sync",err)
         end
       end
+      logi("sync",now_ms()-start)
     end
     helper(_metas)
     helper(_pages)
@@ -283,7 +285,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if not amount_ then -- if we are flushing everything, we want to know how much we are going to flush
       flush_cache_logger()
     end
-
+    local start = now_ms()
     local log_progress = not amount_ and every_nth_call(PROGRESS_AMOUNT/10,function(count_) logi("flush_cache - progress",count_*10) end)
     local insert = table.insert
 
@@ -324,6 +326,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     helper(_cache,false)
     local size = helper(_nodes_cache,true)
     _delayed_sync()
+    logi("flush_cache",now_ms()-start)
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 

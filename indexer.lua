@@ -45,7 +45,7 @@ function indexer(path_)
       return sqlite_error("create table failed")
     end
 
-    if db:exec("PRAGMA journal_mode=DELETE")~=sqlite3.OK then
+    if db:exec("PRAGMA journal_mode=OFF")~=sqlite3.OK then
       return sqlite_error("pragma failed")
     end
     insert_st = db:prepare("INSERT INTO metrics_index(rowid,content) VALUES (:1,:2)")

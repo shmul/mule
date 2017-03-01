@@ -374,9 +374,6 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
   end)
   local adaptive_timeout = 0
   local function step(verbose)
-    if verbose then
-      logd(step,adaptive_timeout)
-    end
     copas.step(adaptive_timeout)
   end
 
