@@ -374,7 +374,10 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
   end)
   local adaptive_timeout = 0
   local function step(verbose)
-    copas.step(adaptive_timeout)
+    local some_data,err = copas.step(adaptive_timeout)
+    if some_data then
+      logd("step", some_data and "has data",err)
+    end
   end
 
   local function run()
@@ -383,12 +386,12 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
       noblock_wait_for_children()
     end
     with_mule_(function(mule_)
-        mule_.flush_cache(UPDATE_AMOUNT,step)
         local process_files = incoming_queue_callback_(mule_,NUM_INCOMING_FILES,step)
         if process_files and process_files>0 then
           adaptive_timeout = 0
+          mule_.flush_cache(UPDATE_AMOUNT,step)
         else
-          adaptive_timeout = 0
+          adaptive_timeout = 1
         end
     end)
   end

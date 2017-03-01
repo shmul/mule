@@ -277,7 +277,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     helper(_metas)
     helper(_pages)
   end
-  local _delayed_sync = every_nth_call(5,sync)
+  local _delayed_sync = every_nth_call(1,sync)
 
   local function flush_cache(amount_,step_)
     _flush_cache_logger()
@@ -326,7 +326,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     helper(_cache,false)
     local size = helper(_nodes_cache,true)
     _delayed_sync()
-    logi("flush_cache",now_ms()-start)
+    logi("flush_cache",string.format("%.1f",now_ms()-start))
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
 
