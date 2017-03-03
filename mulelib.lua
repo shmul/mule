@@ -425,6 +425,7 @@ function mule(db_,indexer_)
   local _self_metrics = {}
   local _factories_seq_cache = simple_cache(FACTORIES_CACHE_CAPACITY)
   local _factories_cache = simple_cache(FACTORIES_CACHE_CAPACITY)
+  local _last_line = nil
 
   _db._zero_sum_latest = simple_cache(ZERO_SUM_LATEST_CACHE)
 
@@ -672,16 +673,18 @@ function mule(db_,indexer_)
     local kvs = _updated_sequences.pop_page()
     if not kvs or #kvs==0 then return false end
     increment("mule.mulelib.flush_cache")
+    local flushed = false
 
     for _,n in ipairs(kvs) do
       local seq = _updated_sequences.get(n)
       if seq then
+        flushed = true
         flush_cache_of_sequence(n,seq)
       end
     end
 
-    -- returns true if there are more items to process
-    return _updated_sequences and _updated_sequences.size()>0
+    -- returns true if some flushing was performed
+    return flushed
   end
 
 
@@ -1568,7 +1571,13 @@ function mule(db_,indexer_)
 
       -- 1) standard update
       if not string.find(items[1],";",1,true) then
-        return update_line(items[1],items[2],items[3],items[4])
+        local metric = items[1]
+        if metric=='+' and _last_line~=nil then
+          metric = _last_line
+        end
+
+        local rv = update_line(metric,items[2],items[3],items[4])
+        _last_line = metric
       end
 
       -- 2) an entire sequence

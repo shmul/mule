@@ -1364,7 +1364,6 @@ function test_parent_nodes()
       m.process("beer.ale.pale 4 "..(now+120))
       m.process("beer.ale.pale 8 "..(now+120))
 
-      m.flush_cache()
       assert(string.find(m.latest("beer.ale.pale;1m:1h"),"[8,1,120]",1,true))
       local k = m.key("beer",{level=2})
       assert(string.find(k,"beer;",1,true),k)
@@ -1484,5 +1483,29 @@ function test_full_match()
     end
     for_each_db("test_full_match",helper)
 end
+
+function test_ditto()
+    local function helper(m)
+      m.configure(table_itr({"beer 60s:1h"}))
+      set_hard_coded_time(0)
+      local now = time_now()
+      m.process("beer.ale.pale 1 "..(now+0))
+      m.process("+ 10 "..(now+0))
+      m.process("+ 20 "..(now+0))
+      m.process("beer.ale.pale 2 "..(now+60))
+      m.process("+ 80 "..(now+60))
+      m.process("beer.lager 4 "..(now+120))
+      m.process("beer.ale.pale 4 "..(now+120))
+      m.process("+ 4 "..(now+120))
+
+      assert(string.find(m.graph("beer.ale.pale",{level=1}),"[31,3,0]",1,true))
+      assert(string.find(m.graph("beer.ale.pale",{level=1}),"[82,2,60]",1,true))
+      assert(string.find(m.graph("beer.ale.pale",{level=1}),"[8,2,120]",1,true))
+      assert(string.find(m.graph("beer.lager",{level=1}),"[4,1,120]",1,true))
+      set_hard_coded_time(nil)
+    end
+    for_each_db("test_full_match",helper)
+end
+
 --verbose_log(true)
 --profiler.start("profiler.out")
