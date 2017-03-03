@@ -49,8 +49,8 @@ end
 
 local function new_mule(db_path_,readonly_)
   local db = guess_db(db_path_,readonly_)
-  local ind = indexer(db_path_.."/fts.sqlite3")
-  if not db or not ind then
+  local ind = nil -- indexer(db_path_.."/fts.sqlite3")
+  if not db then
     return
   end
   local m = mule(db,ind)

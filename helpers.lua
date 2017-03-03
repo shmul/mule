@@ -1222,20 +1222,26 @@ function simple_cache(capacity_,page_size_)
     out = out,
 
     set = function(k,v)
+      local overflow = false
       if num_keys==capacity_ then
-        local key_to_remove,_ = next(cache)
-        out(key_to_remove)
+        logw("simple_cache overflow",k)
+        overflow = true
       end
       if not cache[k] then
         num_keys = num_keys + 1
         add_to_pages(k)
       end
       cache[k] = v
+      return overflow
     end,
 
     size = function() return num_keys end,
 
     keys = key_value_list,
+
+    num_pages = function()
+      return #pages
+    end,
 
     pop_page = pop_page,
 

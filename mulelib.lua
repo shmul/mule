@@ -689,20 +689,14 @@ function mule(db_,indexer_)
     local kvs = _updated_sequences.pop_page()
     if not kvs or #kvs==0 then return false end
     increment("mule.mulelib.flush_cache")
-    local metrics = {}
 
     for _,n in ipairs(kvs) do
       local seq = _updated_sequences.get(n)
       if seq then
         flush_cache_of_sequence(n,seq)
-        metrics[#metrics+1] = seq.metric()
       end
     end
 
-    if _indexer then
-      local count = _indexer.insert(metrics)
-      increment("mule.mulelib.indexed_metrics",count)
-    end
     -- returns true if there are more items to process
     return _updated_sequences and _updated_sequences.size()>0
   end
@@ -1038,13 +1032,12 @@ function mule(db_,indexer_)
     return _db.out("kvs="..key_,true)
   end
 
-  local function flush_all_caches(amount_,step_,exhaustive_)
-    amount_ = amount_ or UPDATE_AMOUNT
+  local function flush_all_caches(step_,exhaustive_)
     local fc1 = flush_cache()
-    local fc2 = _db.flush_cache(amount_/4,step_)
+    local fc2 = _db.flush_cache(step_)
     local flushed_some = fc1 or fc2
     if exhaustive_ and flushed_some then
-      flush_all_caches(amount_,step_,exhaustive_)
+      flush_all_caches(step_,exhaustive_)
     end
 
     return flushed_some
@@ -1535,7 +1528,7 @@ function mule(db_,indexer_)
   local function modify_factories(factories_modifications_)
     -- the factories_modifications_ is a list of triples,
     -- <pattern, original retention, new retention>
-    flush_all_caches(nil,nil,true)
+    flush_all_caches(nil,true)
     _factories_cache.flush()
     _factories_seq_cache.flush()
     local to_remove = {}
@@ -1568,7 +1561,7 @@ function mule(db_,indexer_)
       end
     end
     logd(#to_remove,"sequence(s) removed")
-    flush_all_caches(nil,nil,true)
+    flush_all_caches(nil,true)
     for _,seq in ipairs(to_create) do
       seq[1].update_batch(seq[2],0,1,2)
     end
@@ -1687,7 +1680,7 @@ function mule(db_,indexer_)
 
     local rv = helper()
     if not dont_update_ then
-      flush_all_caches(UPDATE_AMOUNT,step_func_)
+      flush_all_caches(step_func_)
     end
     return rv
   end

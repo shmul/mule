@@ -105,7 +105,8 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     local e = lightningmdb.env_create()
     local _,err = e:set_mapsize((num_pages_ or NUM_PAGES)*4096)
-    local flags = lightningmdb.MDB_NOTLS+(read_only_ and lightningmdb.MDB_RDONLY or (lightningmdb.MDB_MAPASYNC + lightningmdb.MDB_WRITEMAP))
+    local flags = lightningmdb.MDB_NOTLS+(read_only_ and lightningmdb.MDB_RDONLY or
+                                            lightningmdb.MDB_WRITEMAP)
     _,err = e:open(full_path,flags,420) -- 420 is the open mode
     if err then
       loge("new_env_factory failed",err)
@@ -279,14 +280,11 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   end
   local _delayed_sync = every_nth_call(1,sync)
 
-  local function flush_cache(amount_,step_)
+  local function flush_cache(step_)
     _flush_cache_logger()
 
-    if not amount_ then -- if we are flushing everything, we want to know how much we are going to flush
-      flush_cache_logger()
-    end
     local start = now_ms()
-    local log_progress = not amount_ and every_nth_call(PROGRESS_AMOUNT/10,function(count_) logi("flush_cache - progress",count_*10) end)
+
     local insert = table.insert
 
     local function helper(cache_,meta_)
@@ -296,7 +294,6 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
       for i=1,size,10 do
         if step_ then step_(true) end
-        if log_progress then log_progress() end
         for j=i,math.min(size,i+9) do
           local k = page[j]
           local vidx = cache_.get(k)
@@ -325,7 +322,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
     helper(_cache,false)
     local size = helper(_nodes_cache,true)
-    _delayed_sync()
+    --_delayed_sync()
     logi("flush_cache",string.format("%.1f",now_ms()-start))
     return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
   end
