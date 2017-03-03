@@ -167,7 +167,7 @@ end
 
 local function usage()
   return [[
-        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] [-i <incoming-queue-path>] [-m <key-prefix> (write all lightningmdb keys)] [-a <key-prefix> (write all lightningmdb keys and values)] files....
+        -h (help) -v (verbose) -y profile -l <log-path> -d <db-path> [-c <cfg-file> (configure)] [-r (create)] [-f (force)] [-n <line>] [-w <writable>] [-t <address:port> (http daemon)] [-x (httpd stoppable)] [-R <static-files-root-path>] [-i <incoming-queue-path>] [-m <key-prefix> (write all lightningmdb keys)] [-a <key-prefix> (write all lightningmdb keys and values)] files....
 
       If -c is given the database is (re)created but if it exists, -f is required to prevent accidental overwrite. Otherwise load is performed.
       Files are processed in order
@@ -176,14 +176,19 @@ local function usage()
 end
 
 function main(opts,out_)
+  local read_only = true
+
   if opts["h"] then
     out_.write(usage())
     return true
   end
 
-
   if opts["v"] then
     verbose_log(true)
+  end
+
+  if opts["w"] then
+    read_only = false
   end
 
   if opts.y then
@@ -208,6 +213,8 @@ function main(opts,out_)
     return with_mule(opts["d"],true,function(m) return callback_(m) end)
   end
 
+  local with_mule_wrapper = read_only and readonly_mule or writable_mule
+
   local db_exists = file_exists(opts["d"])
   if opts["r"] and db_exists and not opts["f"] then
     fatal("database exists and may be overwriten. use -f to force re-creation. exiting",out_)
@@ -227,13 +234,14 @@ function main(opts,out_)
 
   if opts["c"] then
     logi("configure",opts["c"])
-    local rv = writable_mule(function(m)
-                               return with_file(opts["c"],
-                                                function(f)
-                                                  return m.configure(f:lines())
-                                                end
-                               )
-                             end
+    local rv = with_mule_wrapper(
+      function(m)
+        return with_file(opts["c"],
+                         function(f)
+                           return m.configure(f:lines())
+                         end
+        )
+      end
     )
 
     if not rv then
@@ -276,9 +284,11 @@ function main(opts,out_)
   end
 
   if opts["n"] then
-    local rv = writable_mule(function(m)
-                               return m.process(opts["n"])
-                             end)
+    local rv = with_mule_wrapper(
+      function(m)
+        return m.process(opts["n"])
+      end
+    )
     out_.write(rv)
   end
 
@@ -298,16 +308,17 @@ function main(opts,out_)
   end
 
   if opts["rest"] then
-    writable_mule(function(m)
-                    for i,f in ipairs(opts["rest"]) do
-                      logi("processing",f)
-                      local rv = m.process(f,(i%100)>0) -- we update the DB every 100th file
-                      out_.write(rv)
-                    end
-                    while m.flush_cache() do
-                      -- nothing to do as update does all that we need
-                    end
-                  end)
+    with_mule_wrapper(
+      function(m)
+        for i,f in ipairs(opts["rest"]) do
+          logi("processing",f)
+          local rv = m.process(f,(i%100)>0) -- we update the DB every 100th file
+          out_.write(rv)
+        end
+        while m.flush_cache() do
+          -- nothing to do as update does all that we need
+        end
+    end)
   end
 
   if opts.y then
@@ -320,7 +331,7 @@ end
 
 
 if not lunit then
-  opts = getopt(arg,"ldcnmtxRia")
+  opts = getopt(arg,"ldcnmtxRiaw")
   local rv = main(opts,stdout("\n"))
   logd("done")
   os.exit(rv and 0 or -1)

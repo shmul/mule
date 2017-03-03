@@ -1156,7 +1156,7 @@ function lua_version_number()
   return lua_version_number_memo
 end
 
-function simple_cache(capacity_,page_size_)
+function simple_cache(capacity_,page_size_,no_overflow_permitted_)
   local num_keys = 0
   local cache = {}
   local pages = {} -- array of pages of items. Fast to remove a
@@ -1217,6 +1217,10 @@ function simple_cache(capacity_,page_size_)
         logw("simple_cache overflow",k)
         overflow = true
       end
+      if overflow and no_overflow_permitted_ then
+        out(next(cache))
+      end
+
       if not cache[k] then
         num_keys = num_keys + 1
         add_to_pages(k)

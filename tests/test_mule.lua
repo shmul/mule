@@ -20,28 +20,28 @@ local function new_db(p)
   return db(p)
 end
 
-function test_create()
-  main({ v=false,c="./tests/fixtures/mule.cfg", r=true,f=true,d=new_db("test_create")})
+function create_helper(writable_)
+  main({ v=false,w=writable_,c="./tests/fixtures/mule.cfg", r=true,f=true,d=new_db("test_create")})
 
   local str = strout("")
-  main({ v=false,d=db("test_create"),rest = {".key *"}},str)
+  main({ v=false,w=writable_,d=db("test_create"),rest = {".key *"}},str)
   assert(string.find(str.get_string(),'"data": {}',1,true))
   str = strout("")
-  main({ v=false,y=false,d=db("test_create"),rest={"./tests/fixtures/input1.mule"}},str)
+  main({ v=false,w=writable_,y=false,d=db("test_create"),rest={"./tests/fixtures/input1.mule"}},str)
   assert_equal('true',str.get_string())
-  main({ v=false,d=db("test_create"),g="beer.stout.irish"},str)
+  main({ v=false,w=writable_,d=db("test_create"),g="beer.stout.irish"},str)
 
   str = strout("")
-  main({ v=false,d=db("test_create"),rest = {".key beer.ale"}},str)
+  main({ v=false,w=writable_,d=db("test_create"),rest = {".key beer.ale"}},str)
 
   assert_equal(weak_hash('{"version": 4,\n"data": {"beer.ale;1d:3y": true,"beer.ale;1h:30d": true,"beer.ale;5m:2d": true}\n}'),weak_hash(str.get_string()))
 
   str = strout("")
-  main({ v=false,d=db("test_create"),rest={"./tests/fixtures/input2.mule"}},str)
+  main({ v=false,w=writable_,d=db("test_create"),rest={"./tests/fixtures/input2.mule"}},str)
   assert_equal('true',str.get_string())
 
   str = strout("")
-  main({ v=false,d=db("test_create"),rest ={".graph beer.stout.irish"}},str)
+  main({ v=false,w=writable_,d=db("test_create"),rest ={".graph beer.stout.irish"}},str)
 
   -- we have 2 beer.stout.irish lines in the 2 processed files
   -- beer.stout.irish 2 1293836375
@@ -50,8 +50,21 @@ function test_create()
 
   local slot1,adj1 = calculate_idx(1293836375,parse_time_unit("5m"),parse_time_unit("2d"))
   local slot2,adj2 = calculate_idx(1293837096,parse_time_unit("5m"),parse_time_unit("2d"))
-  assert(string.find(str.get_string(),string.format("%d,1,%d",2,adj1),1,true),adj1)
-  assert(string.find(str.get_string(),string.format("%d,1,%d",1,adj2),1,true),adj2)
+  if writable_ then
+    assert(string.find(str.get_string(),string.format("%d,1,%d",2,adj1),1,true),adj1)
+    assert(string.find(str.get_string(),string.format("%d,1,%d",1,adj2),1,true),adj2)
+  else
+    -- no data should be available
+    assert_nil(string.find(str.get_string(),"%d+,%d+,%d+"))
+  end
+end
+
+function test_create_writable()
+  create_helper(true)
+end
+
+function test_create_readonly()
+  create_helper(false)
 end
 
 function test_first_files()

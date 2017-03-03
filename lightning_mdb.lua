@@ -13,13 +13,14 @@ local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
 local CACHE_CAPACITY = 10000
 local CACHE_PAGE_SIZE = 3500
+local STEP_BY = 20
 
 local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _metas = {}
   local _pages = {}
   local _slots_per_page
-  local _cache = simple_cache(CACHE_CAPACITY,CACHE_PAGE_SIZE)
-  local _nodes_cache = simple_cache(CACHE_CAPACITY,CACHE_PAGE_SIZE)
+  local _cache = simple_cache(CACHE_CAPACITY,CACHE_PAGE_SIZE,read_only_)
+  local _nodes_cache = simple_cache(CACHE_CAPACITY,CACHE_PAGE_SIZE,read_only_)
   local _readonly_txn = {}
   local _increment = nil
 
@@ -292,14 +293,14 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       if not page then return 0 end
       local size = #page
 
-      for i=1,size,10 do
+      for i=1,size,STEP_BY do
         if step_ then step_(true) end
-        for j=i,math.min(size,i+9) do
+        for j=i,math.min(size,i+STEP_BY-1) do
           local k = page[j]
           local vidx = cache_.get(k)
           -- it can happend that the key was removed from the cache
           -- but the page still contains it.
-          if vidx then
+          if vidx and not read_only_ then
             local v,idx,dirty = vidx[1],vidx[2],vidx[3]
             local payload = v
             if dirty then
