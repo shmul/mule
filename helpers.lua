@@ -1242,7 +1242,6 @@ function simple_cache(capacity_,page_size_)
     num_pages = function()
       return #pages
     end,
-
     pop_page = pop_page,
 
     flush = function()

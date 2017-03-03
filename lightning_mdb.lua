@@ -11,26 +11,27 @@ local lightningmdb = _VERSION>="Lua 5.2" and lightningmdb_lib or lightningmdb
 local NUM_PAGES = 256000
 local MAX_SLOTS_IN_SPARSE_SEQ = 10
 local SLOTS_PER_PAGE = 16
-local CACHE_CAPACITY = 100000
+local CACHE_CAPACITY = 10000
+local CACHE_PAGE_SIZE = 3500
 
 local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _metas = {}
   local _pages = {}
   local _slots_per_page
-  local _cache = simple_cache(CACHE_CAPACITY)
-  local _nodes_cache = simple_cache(CACHE_CAPACITY)
+  local _cache = simple_cache(CACHE_CAPACITY,CACHE_PAGE_SIZE)
+  local _nodes_cache = simple_cache(CACHE_CAPACITY,CACHE_PAGE_SIZE)
   local _readonly_txn = {}
   local _increment = nil
 
   local function flush_cache_logger()
     local a = _cache.size()
     local b = _nodes_cache.size()
-    if (a>0 or b>0) and a~=b then
+    if a>0 or b>0 then
       logi("lightning_mdb flush_cache",a,b)
     end
   end
 
-  local _flush_cache_logger = every_nth_call(10,flush_cache_logger)
+  local _flush_cache_logger = every_nth_call(1,flush_cache_logger)
 
 
   local function acquire_readonly_txn(env_)
@@ -278,16 +279,15 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     helper(_metas)
     helper(_pages)
   end
-  local _delayed_sync = every_nth_call(1,sync)
+  local _delayed_sync = every_nth_call(100,sync)
 
-  local function flush_cache(step_)
-    _flush_cache_logger()
-
+  local function flush_cache(step_,force_sync_)
     local start = now_ms()
 
     local insert = table.insert
 
     local function helper(cache_,meta_)
+      _flush_cache_logger()
       local page = cache_.pop_page()
       if not page then return 0 end
       local size = #page
@@ -319,12 +319,15 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       end
       return size
     end
-
-    helper(_cache,false)
-    local size = helper(_nodes_cache,true)
-    --_delayed_sync()
+    local size1 = helper(_cache,false)
+    local size2 = helper(_nodes_cache,true)
+    if force_sync_ then
+      sync()
+    else
+      _delayed_sync()
+    end
     logi("flush_cache",string.format("%.1f",now_ms()-start))
-    return size>0 -- this only addresses the nodes cache but it actually suffices as for every page there is a node
+    return size1>0 and size2>0
   end
 
 

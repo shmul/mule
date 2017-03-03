@@ -1057,7 +1057,7 @@ function mule(db_,indexer_)
     _db.put("metadata=alerts",pp.pack(_alerts))
     _db.put("metadata=hints",pp.pack({})) -- we don't save the hints but recalc them every time we start
     logi("save - flushing uncommited data",skip_flushing_)
-    while not skip_flushing_ and flush_cache(UPDATE_AMOUNT) do
+    while not skip_flushing_ and flush_cache(nil,true) do
       -- nop
     end
   end
