@@ -898,16 +898,6 @@ function block_wait_for_children()
 end
 
 
-function update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
-  -- it is assumed both timestamps are already normalized
-  if rank_timestamp_==timestamp_ or rank_timestamp_==0 then
-    return timestamp_,rank_+value_,true
-  end
-
-  -- we need to multiply the current rank
-  return timestamp_,value_+rank_/(2^((timestamp_-rank_timestamp_)/step_)),false
-end
-
 local use_stp = false
 function pcall_wrapper(callback_)
   if not use_stp or not stp then

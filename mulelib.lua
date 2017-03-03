@@ -414,7 +414,6 @@ function mule(db_,indexer_)
   local _indexer = indexer_
 
   local _updated_sequences = simple_cache(MAX_CACHE_SIZE)
-  local _hints = {}
   local _flush_cache_logger = every_nth_call(10,
                                              function()
                                                local a = _updated_sequences.size()
@@ -584,12 +583,6 @@ function mule(db_,indexer_)
     end)
   end
 
-  local function update_rank(rank_timestamp_,rank_,timestamp_,value_,name_,step_)
-    local ts,rk,same_ts = update_rank_helper(rank_timestamp_,rank_,timestamp_,value_,step_)
-    return ts,rk
-  end
-
-
   local function alert_check_stale(seq_,timestamp_)
     local alert = _alerts[seq_.name()]
     if not alert then
@@ -657,16 +650,6 @@ function mule(db_,indexer_)
     increment("mule.mulelib.flush_cache_of_sequence")
     for j,sl in ipairs(sparse_.slots()) do
       local adjusted_timestamp,sum = seq.update(sl._timestamp,sl._hits or 1,sl._sum,sl._type)
-      if adjusted_timestamp and sum then
-        _hints[name_] = _hints[name_] or {}
-        if not _hints[name_]._rank_ts then
-          _hints[name_]._rank = 0
-          _hints[name_]._rank_ts = 0
-        end
-        _hints[name_]._rank_ts,_hints[name_]._rank = update_rank(
-          _hints[name_]._rank_ts,_hints[name_]._rank,
-          adjusted_timestamp,sum,name_,seq.step())
-      end
       alert_check(seq,now)
     end
     if _indexer then
@@ -845,15 +828,9 @@ function mule(db_,indexer_)
         for seq in sequences_for_prefix(db_,metric,rp,level,false,full_match) do
           local name = seq.name()
           local name_level = count_dots(name)
-          -- we call update_rank to get adjusted ranks (in case the previous update was
-          -- long ago). This is a readonly operation
-          local hint = _hints[seq.name()] or {}
-          local _,seq_rank = update_rank(
-            hint._rank_ts or 0 ,hint._rank or 0,
-            normalize_timestamp(now,seq.step(),seq.period()),0,seq.name(),seq.step())
-          insert(ranked_children,{seq,seq_rank,name_level})
+          insert(ranked_children,{seq,name,name_level})
         end
-        table.sort(ranked_children,function(a,b) return a[3]<b[3] or (a[3]==b[3] and a[2]>b[2]) end)
+        table.sort(ranked_children,function(a,b) return a[3]<b[3] or (a[3]==b[3] and a[2]<b[2]) end)
         sequences_generator = function()
           return coroutine.wrap(
             function()
@@ -1051,11 +1028,10 @@ function mule(db_,indexer_)
   end
 
   local function save(skip_flushing_)
-    logi("save",table_size(_factories),table_size(_alerts),table_size(_hints))
+    logi("save",table_size(_factories),table_size(_alerts))
     _db.put("metadata=version",pp.pack(CURRENT_VERSION))
     _db.put("metadata=factories",pp.pack(_factories))
     _db.put("metadata=alerts",pp.pack(_alerts))
-    _db.put("metadata=hints",pp.pack({})) -- we don't save the hints but recalc them every time we start
     logi("save - flushing uncommited data",skip_flushing_)
     while not skip_flushing_ and flush_cache(nil,true) do
       -- nop
@@ -1430,8 +1406,7 @@ function mule(db_,indexer_)
     -- there was a bug which caused factories to be non-uniq so we fix it
     uniq_factories()
     _alerts = helper("metadata=alerts",true,{})
-    _hints = {}
-    logi("load",table_size(_factories),table_size(_alerts),table_size(_hints))
+    logi("load",table_size(_factories),table_size(_alerts))
   end
 
 
