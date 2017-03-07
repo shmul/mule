@@ -374,6 +374,8 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
   end)
   local adaptive_timeout = 0
   local count = 0
+  local last_flush = 0
+
   local function step(verbose)
     local some_data,err = copas.step(adaptive_timeout)
     if some_data then
@@ -390,12 +392,15 @@ function http_loop(address_port_,with_mule_,backup_callback_,incoming_queue_call
         local process_files = incoming_queue_callback_(mule_,NUM_INCOMING_FILES,step)
         if process_files and process_files>0 then
           adaptive_timeout = 0
-          count = count + 1
-          if (count%10)==0 then
-            mule_.flush_cache(UPDATE_AMOUNT,step)
-          end
         else
           adaptive_timeout = 1
+        end
+        count = count + 1
+        if (count%100)==0 then
+          if time_now()>last_flush+FLUSH_PERIOD then
+            mule_.flush_cache(UPDATE_AMOUNT,step)
+            last_flush = time_now()
+          end
         end
     end)
   end

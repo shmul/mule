@@ -141,7 +141,6 @@ function sequence(db_,name_)
   end
 
   _name = name_
-
   _metric,_step,_period = split_name(name_)
   if not (_metric and _step and _period ) then
     loge("failed creating sequence",name_)
@@ -406,7 +405,7 @@ local function each_metric(db_,metrics_,retention_pair_,callback_)
   end
 end
 
-function mule(db_,indexer_)
+function mule(db_,indexer_,readonly_)
   local _factories = {}
   local _alerts = {}
   local _anomalies = {} -- these do not persist as they can be recalulated
@@ -1013,6 +1012,7 @@ function mule(db_,indexer_)
   end
 
   local function flush_all_caches(step_,exhaustive_)
+    if readonly_ then return false end
     local fc1 = flush_cache()
     local fc2 = _db.flush_cache(step_)
     local flushed_some = fc1 or fc2
@@ -1031,6 +1031,9 @@ function mule(db_,indexer_)
   end
 
   local function save(skip_flushing_)
+    if readonly_ then
+      logw("readonly mule; not saving")
+    end
     logi("save",table_size(_factories),table_size(_alerts))
     _db.put("metadata=version",pp.pack(CURRENT_VERSION))
     _db.put("metadata=factories",pp.pack(_factories))
@@ -1574,10 +1577,10 @@ function mule(db_,indexer_)
         local metric = items[1]
         if metric=='+' and _last_line~=nil then
           metric = _last_line
+        else
+          _last_line = metric
         end
-
-        local rv = update_line(metric,items[2],items[3],items[4])
-        _last_line = metric
+        return update_line(metric,items[2],items[3],items[4])
       end
 
       -- 2) an entire sequence

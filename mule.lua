@@ -53,7 +53,7 @@ local function new_mule(db_path_,readonly_)
   if not db then
     return
   end
-  local m = mule(db,ind)
+  local m = mule(db,ind,readonly_)
   logi("loading",db_path_,readonly_ and "read" or "write")
   m.load()
   return m,db

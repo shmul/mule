@@ -23,17 +23,13 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local _nodes_cache = simple_cache(CACHE_CAPACITY,CACHE_PAGE_SIZE,read_only_)
   local _readonly_txn = {}
   local _increment = nil
+  local _flushing = false
 
-  local function flush_cache_logger()
-    local a = _cache.size()
-    local b = _nodes_cache.size()
-    if a>0 or b>0 then
-      logi("lightning_mdb flush_cache",a,b)
+  local function increment(metric)
+    if _increment and not _flushing then
+      _increment(metric)
     end
   end
-
-  local _flush_cache_logger = every_nth_call(1,flush_cache_logger)
-
 
   local function acquire_readonly_txn(env_)
     if not _readonly_txn[env_] then
@@ -280,27 +276,28 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     helper(_metas)
     helper(_pages)
   end
-  local _delayed_sync = every_nth_call(100,sync)
 
   local function flush_cache(step_,force_sync_)
+    if read_only_ then return false end
     local start = now_ms()
-
     local insert = table.insert
+    _flushing = true
 
     local function helper(cache_,meta_)
-      _flush_cache_logger()
+      logi("lightning_mdb flush_cache",_cache.size(),_nodes_cache.size())
+
       local page = cache_.pop_page()
       if not page then return 0 end
       local size = #page
-
       for i=1,size,STEP_BY do
         if step_ then step_(true) end
         for j=i,math.min(size,i+STEP_BY-1) do
           local k = page[j]
           local vidx = cache_.get(k)
+          cache_.out(k)
           -- it can happend that the key was removed from the cache
           -- but the page still contains it.
-          if vidx and not read_only_ then
+          if vidx then
             local v,idx,dirty = vidx[1],vidx[2],vidx[3]
             local payload = v
             if dirty then
@@ -314,7 +311,6 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
                 native_put(k,payload,meta_,idx)
               end
             end
-            cache_.out(k)
           end
         end
       end
@@ -324,18 +320,17 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     local size2 = helper(_nodes_cache,true)
     if force_sync_ then
       sync()
-    else
-      _delayed_sync()
     end
-    logi("flush_cache",string.format("%.1f",now_ms()-start))
-    return size1>0 and size2>0
+    _flushing = false
+    logi("flush_cache",_cache.size(),_nodes_cache.size(),string.format("%.1f",now_ms()-start))
+    return _cache.size()>0 or _nodes_cache.size()>0
   end
 
 
   local function get(k,dont_cache_)
     local cached = _cache.get(k)
     if not (dont_cache_ or disable_cache) and cached then
-      _increment("mule.lightning_mdb.get.cache_hit")
+      increment("mule.lightning_mdb.get.cache_hit")
       return cached[1]
     end
 
@@ -344,7 +339,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if dont_cache_ or disable_cache then
       return v
     end
-    _increment("mule.lightning_mdb.get.cache_miss")
+    increment("mule.lightning_mdb.get.cache_miss")
     _cache.set(k,{v,idx})
     return v
   end
@@ -352,14 +347,14 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
   local function get_node(k)
     local cached = _nodes_cache.get(k)
     if not disable_cache and cached then
-      _increment("mule.lightning_mdb.get_node.cache_hit")
+      increment("mule.lightning_mdb.get_node.cache_hit")
       return cached[1]
     end
 
     local v,idx = native_get(k,true)
     v = v and unpack_node(k,v)
     if not v or disable_cache then return v end
-    _increment("mule.lightning_mdb.get_node.cache_miss")
+    increment("mule.lightning_mdb.get_node.cache_miss")
     _nodes_cache.set(k,{v,idx})
     return v
   end
@@ -474,7 +469,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
 
   local function internal_set_slot(name_,idx_,offset_,timestamp_,hits_,sum_)
     local function new_page_data()
-      _increment("mule.lightning_mdb.internal_set_slot.new_page_data")
+      increment("mule.lightning_mdb.internal_set_slot.new_page_data")
       return string.rep(string.char(0),pp.PNS*3*_slots_per_page)
     end
 
@@ -491,7 +486,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
     if node._seq then
       node._seq.set(timestamp_,hits_,sum_)
       if #node._seq.slots()==MAX_SLOTS_IN_SPARSE_SEQ then
-        _increment("mule.lightning_mdb.internal_set_slot.create_pages")
+        increment("mule.lightning_mdb.internal_set_slot.create_pages")
         -- time to create actual pages
         local slots = node._seq.slots()
         node._latest = node._seq.latest_timestamp()
@@ -644,7 +639,7 @@ local function lightning_mdb(base_dir_,read_only_,num_pages_,slots_per_page_)
       cur:close()
       release_readonly_txn(env)
     end
-    _increment("mule.lightning_mdb.matching_keys")
+    increment("mule.lightning_mdb.matching_keys")
     return coroutine.wrap(
       function()
         for _,ed in ipairs(_metas) do
